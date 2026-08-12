@@ -32,27 +32,31 @@ da-forms/
 └── README.md
 ```
 
-Each app has its own `package.json` and is installed/run independently.
+Each app has its own `package.json`. Root `package.json` runs both together.
 
 ## Setup
 
 ```bash
-cd backend && npm install && cp .env.example .env
-cd ../frontend && npm install
+npm run install:all
+cp backend/.env.example backend/.env
 ```
 
-## Run (two terminals)
+## Run
 
 ```bash
-cd backend  && npm run dev   # http://localhost:4000
-cd frontend && npm run dev   # http://localhost:5173
+npm run dev
 ```
 
-Vite proxies `/api/*` to `http://localhost:4000`.
+- backend: http://localhost:8081
+- frontend: http://localhost:3001
+
+Vite proxies `/api/*` to `http://localhost:8081`.
+
+Run one only: `npm run dev:backend` / `npm run dev:frontend`.
 
 ## Build
 
 ```bash
-cd backend  && npm run build && npm start
-cd frontend && npm run build
+npm run build
+npm start        # serves built backend
 ```

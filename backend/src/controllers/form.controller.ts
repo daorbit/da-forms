@@ -14,13 +14,15 @@ export const getForm: RequestHandler = async (req, res) => {
 };
 
 export const createForm: RequestHandler = async (req, res) => {
-  const { title, description, fields, redirectUrl, thankYouMessage, projectKey } = req.body;
+  const { title, description, fields, redirectUrl, thankYouMessage, hideHeader, projectKey } =
+    req.body;
   const form = await formService.createForm({
     title,
     description,
     fields: fields ?? [],
     redirectUrl,
     thankYouMessage,
+    hideHeader,
     projectKey: projectKey ?? 'default',
   });
   res.status(201).json(form);

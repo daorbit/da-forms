@@ -86,6 +86,8 @@ export interface Form {
   status: 'draft' | 'published';
   redirectUrl?: string;
   thankYouMessage?: string;
+  /** Hides the title/description block on the rendered form. */
+  hideHeader?: boolean;
   createdAt: string;
   updatedAt: string;
 }

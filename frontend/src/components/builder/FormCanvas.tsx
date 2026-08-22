@@ -35,22 +35,37 @@ export function FormCanvas({
     <Box className={classes.canvasScroll}>
       <Box className={`${classes.canvasArea} ${offsetRight ? classes.canvasAreaOffset : ''}`}>
       <Paper className={classes.formCard} radius="md" withBorder>
-        <Box className={`${classes.fieldRow} ${classes.header}`}>
-          <Title order={3} ta="center">
-            {title || 'Untitled form'}
-          </Title>
-          {description && (
-            <Text c="dimmed" size="sm" ta="center" mt={4}>
-              {description}
-            </Text>
-          )}
+        {!hideHeader && (
+          <Box className={`${classes.fieldRow} ${classes.header}`}>
+            <Title order={3} ta="center">
+              {title || 'Untitled form'}
+            </Title>
+            {description && (
+              <Text c="dimmed" size="sm" ta="center" mt={4}>
+                {description}
+              </Text>
+            )}
 
-          <Stack gap={0} className={classes.hoverToolbar}>
-            <ActionIcon variant="filled" color="dark" radius={0} size="lg" onClick={onOpenFormSettings}>
-              <IconSettings size={16} />
-            </ActionIcon>
-          </Stack>
-        </Box>
+            <Stack gap={6} className={classes.hoverToolbar}>
+              <Tooltip label="Form properties" position="left" withArrow>
+                <ActionIcon
+                  variant="filled"
+                  color="dark"
+                  radius="md"
+                  size="lg"
+                  onClick={onOpenFormSettings}
+                >
+                  <IconSettings size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Hide header" position="left" withArrow>
+                <ActionIcon variant="filled" color="red" radius="md" size="lg" onClick={onHideHeader}>
+                  <IconEyeOff size={16} />
+                </ActionIcon>
+              </Tooltip>
+            </Stack>
+          </Box>
+        )}
 
         <Stack gap={0}>
           {fields.length === 0 && (

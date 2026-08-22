@@ -67,6 +67,7 @@ export interface FormDocument {
   status: 'draft' | 'published';
   redirectUrl?: string;
   thankYouMessage?: string;
+  hideHeader?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -105,6 +106,7 @@ const formSchema = new Schema<FormDocument>(
     status: { type: String, enum: ['draft', 'published'], default: 'draft' },
     redirectUrl: { type: String },
     thankYouMessage: { type: String },
+    hideHeader: { type: Boolean },
   },
   { timestamps: true }
 );

@@ -17,6 +17,7 @@ export function createForm(input: {
   fields: FormField[];
   redirectUrl?: string;
   thankYouMessage?: string;
+  hideHeader?: boolean;
 }) {
   return FormModel.create(input);
 }
@@ -30,6 +31,7 @@ export function updateForm(
     status: 'draft' | 'published';
     redirectUrl: string;
     thankYouMessage: string;
+    hideHeader: boolean;
   }>
 ) {
   return FormModel.findByIdAndUpdate(id, input, { new: true });

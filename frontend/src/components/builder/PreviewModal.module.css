@@ -45,21 +45,6 @@
   justify-content: center;
   padding: 40px 24px 64px;
   background-color: var(--mantine-color-gray-1);
-  scrollbar-width: thin;
-  scrollbar-color: var(--mantine-color-gray-4) transparent;
-}
-
-.stage::-webkit-scrollbar {
-  width: 8px;
-}
-
-.stage::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.stage::-webkit-scrollbar-thumb {
-  background-color: var(--mantine-color-gray-4);
-  border-radius: 4px;
 }
 
 .viewport {

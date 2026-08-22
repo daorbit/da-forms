@@ -4,17 +4,6 @@
   overflow-y: auto;
   background-color: var(--mantine-color-gray-1);
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: var(--mantine-color-gray-4) transparent;
-}
-
-.canvasScroll::-webkit-scrollbar {
-  width: 8px;
-}
-
-.canvasScroll::-webkit-scrollbar-thumb {
-  background-color: var(--mantine-color-gray-4);
-  border-radius: 4px;
 }
 
 .canvasArea {

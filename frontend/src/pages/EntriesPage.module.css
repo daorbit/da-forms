@@ -24,17 +24,6 @@
 .tableWrap {
   padding: 16px;
   overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #adb5bd transparent;
-}
-
-.tableWrap::-webkit-scrollbar {
-  height: 10px;
-}
-
-.tableWrap::-webkit-scrollbar-thumb {
-  background-color: #adb5bd;
-  border-radius: 5px;
 }
 
 .table {

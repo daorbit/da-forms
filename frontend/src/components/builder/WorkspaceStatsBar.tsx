@@ -1,6 +1,6 @@
 import { SimpleGrid, Paper, Text, Group, ThemeIcon } from '@mantine/core';
-import { IconEye, IconInbox, IconTrendingUp } from '@tabler/icons-react';
-import type { Analytics } from '@/lib/api';
+import { IconFiles, IconWorldUpload, IconFilePencil, IconInbox } from '@tabler/icons-react';
+import type { WorkspaceStats } from '@/lib/api';
 
 function Stat({
   icon: Icon,
@@ -8,7 +8,7 @@ function Stat({
   value,
   color,
 }: {
-  icon: typeof IconEye;
+  icon: typeof IconFiles;
   label: string;
   value: string;
   color: string;
@@ -32,23 +32,24 @@ function Stat({
   );
 }
 
-export function AnalyticsBar({ analytics }: { analytics: Analytics | null }) {
-  if (!analytics) return null;
+export function WorkspaceStatsBar({ stats }: { stats: WorkspaceStats | null }) {
+  if (!stats) return null;
 
   return (
-    <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" px="md" py="md">
-      <Stat icon={IconEye} label="Views" value={analytics.viewCount.toLocaleString()} color="blue" />
+    <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" px="xl" pt="lg" pb="lg">
+      <Stat icon={IconFiles} label="Total forms" value={stats.totalForms.toLocaleString()} color="gray" />
       <Stat
-        icon={IconInbox}
-        label="Submissions"
-        value={analytics.submissionCount.toLocaleString()}
+        icon={IconWorldUpload}
+        label="Live forms"
+        value={stats.publishedForms.toLocaleString()}
         color="emerald"
       />
+      <Stat icon={IconFilePencil} label="Drafts" value={stats.draftForms.toLocaleString()} color="orange" />
       <Stat
-        icon={IconTrendingUp}
-        label="Completion rate"
-        value={`${Math.round(analytics.completionRate * 100)}%`}
-        color="grape"
+        icon={IconInbox}
+        label="Total submissions"
+        value={stats.totalSubmissions.toLocaleString()}
+        color="blue"
       />
     </SimpleGrid>
   );

@@ -21,12 +21,13 @@ import {
   IconWorldUpload,
   IconX,
 } from '@tabler/icons-react';
-import { listForms, deleteForm, updateForm, publicFormPath, publicFormUrl } from '@/lib/api';
+import { listForms, deleteForm, updateForm, publicFormPath, publicFormUrl, type WorkspaceStats } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
+import { WorkspaceStatsBar } from '@/components/builder/WorkspaceStatsBar';
 import classes from './FormListPage.module.css';
 
 function formatDate(iso: string) {
@@ -59,6 +60,7 @@ export function FormListPage() {
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState<Form | null>(null);
+  const [stats, setStats] = useState<WorkspaceStats | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -66,6 +68,7 @@ export function FormListPage() {
       .then((res) => {
         setForms(res.items);
         setTotal(res.total);
+        setStats(res.stats);
       })
       .finally(() => setLoading(false));
   }, [workspaceId, page, debouncedSearch, sort]);
@@ -166,6 +169,8 @@ export function FormListPage() {
           </Button>
         </Group>
       </Group>
+
+      <WorkspaceStatsBar stats={stats} />
 
       <Stack gap="xs" px="xl" py="md">
         {forms.length === 0 && !loading && (

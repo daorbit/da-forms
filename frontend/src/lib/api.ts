@@ -50,6 +50,19 @@ export function getHealth() {
   return request<HealthResponse>('/health');
 }
 
+export interface WorkspaceStats {
+  totalForms: number;
+  publishedForms: number;
+  draftForms: number;
+  totalViews: number;
+  totalSubmissions: number;
+}
+
+export interface FormListResult extends Paginated<Form> {
+  /** Workspace-wide, unaffected by the current search/page. */
+  stats: WorkspaceStats;
+}
+
 export function listForms(
   workspaceId = DEFAULT_WORKSPACE,
   options: { page?: number; limit?: number; q?: string; sort?: string } = {}
@@ -60,7 +73,7 @@ export function listForms(
   if (options.q) params.set('q', options.q);
   if (options.sort) params.set('sort', options.sort);
   const qs = params.toString();
-  return request<Paginated<Form>>(`${ws(workspaceId)}${qs ? `?${qs}` : ''}`);
+  return request<FormListResult>(`${ws(workspaceId)}${qs ? `?${qs}` : ''}`);
 }
 
 export function getForm(id: string, workspaceId = DEFAULT_WORKSPACE) {

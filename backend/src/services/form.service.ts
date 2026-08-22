@@ -17,25 +17,59 @@ const sortMap = {
   status: { status: 1 as const },
 };
 
+export interface WorkspaceStats {
+  totalForms: number;
+  publishedForms: number;
+  draftForms: number;
+  totalViews: number;
+  totalSubmissions: number;
+}
+
+export interface FormListResult extends Paginated<InstanceType<typeof FormModel>> {
+  /** Workspace-wide, unaffected by the current search/page — the stat tiles above the list. */
+  stats: WorkspaceStats;
+}
+
 export async function listForms(
   workspaceId: string,
   options: { page?: number; limit?: number; q?: string; sort?: keyof typeof sortMap } = {}
-): Promise<Paginated<InstanceType<typeof FormModel>>> {
+): Promise<FormListResult> {
   const page = Math.max(1, options.page ?? 1);
   const limit = Math.max(1, options.limit ?? 10);
   const filter: Record<string, unknown> = { workspaceId };
   if (options.q) filter.title = { $regex: options.q, $options: 'i' };
   const sort = sortMap[options.sort ?? 'date'];
 
-  const [items, total] = await Promise.all([
+  const [items, total, allForms] = await Promise.all([
     FormModel.find(filter)
       .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit),
     FormModel.countDocuments(filter),
+    // Unfiltered — the stat tiles reflect the whole workspace, not the
+    // current search, so this cannot reuse the `filter` query above.
+    FormModel.find({ workspaceId }, { status: 1, viewCount: 1 }),
   ]);
 
-  return { items, total, page, limit };
+  const formIds = allForms.map((f) => f._id);
+  const [totalSubmissions, publishedForms] = await Promise.all([
+    formIds.length ? SubmissionModel.countDocuments({ formId: { $in: formIds } }) : 0,
+    allForms.filter((f) => f.status === 'published').length,
+  ]);
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+    stats: {
+      totalForms: allForms.length,
+      publishedForms,
+      draftForms: allForms.length - publishedForms,
+      totalViews: allForms.reduce((sum, f) => sum + (f.viewCount ?? 0), 0),
+      totalSubmissions,
+    },
+  };
 }
 
 export function getForm(id: string) {

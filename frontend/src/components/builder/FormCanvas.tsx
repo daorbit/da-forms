@@ -38,7 +38,8 @@ export function FormCanvas({
   return (
     <Box className={classes.canvasScroll}>
       <Box className={`${classes.canvasArea} ${offsetRight ? classes.canvasAreaOffset : ''}`}>
-      <Paper className={classes.formCard} radius="md" withBorder>
+      {/* The card renders as respondents see it, never in the host's dark theme. */}
+      <Paper className={classes.formCard} radius="md" withBorder data-mantine-color-scheme="light">
         {!hideHeader && (
           <Box className={`${classes.fieldRow} ${classes.header}`}>
             <Title order={3} ta="center">

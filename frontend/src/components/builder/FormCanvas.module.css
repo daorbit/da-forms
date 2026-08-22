@@ -1,8 +1,14 @@
-/* the only scroll container in the builder */
+/*
+ * The only scroll container in the builder.
+ *
+ * The stage and the card below it keep the respondent's own colours whatever
+ * theme the host app passes: the canvas is a preview of the live form, so it
+ * has to match what people filling it in will see, not the editor around it.
+ */
 .canvasScroll {
   height: 100%;
   overflow-y: auto;
-  background-color: var(--mantine-color-gray-1);
+  background-color: #eef0f3;
   scrollbar-gutter: stable;
 }
 
@@ -20,7 +26,8 @@
 .formCard {
   max-width: 760px;
   margin: 0 auto;
-  background-color: var(--mantine-color-white);
+  background-color: #fff;
+  color: #1a1b1e;
   /* the hover toolbar sits just outside the right edge */
   overflow: visible;
 }

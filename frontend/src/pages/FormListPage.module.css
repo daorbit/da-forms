@@ -1,18 +1,18 @@
 .topbar {
-  border-bottom: 1px solid #e9ecef;
-  background-color: #fff;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-body);
 }
 
 .row {
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--mantine-color-default-border);
   border-radius: 8px;
   padding: 14px 20px;
-  background-color: #fff;
+  background-color: var(--mantine-color-body);
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .row:hover {
-  border-color: #ced4da;
+  border-color: var(--mantine-color-gray-4);
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
 }
 
@@ -20,10 +20,10 @@
   display: inline-block;
   font-weight: 500;
   font-size: 15px;
-  color: #1a1b1e;
+  color: var(--mantine-color-text);
   text-decoration: none;
 }
 
 .title:hover {
-  color: #0ca678;
+  color: var(--mantine-color-emerald-7);
 }

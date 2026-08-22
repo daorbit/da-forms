@@ -1,20 +1,20 @@
 .topbar {
-  border-bottom: 1px solid #e9ecef;
-  background-color: #fff;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-body);
 }
 
 .formLink {
-  color: #1a1b1e;
+  color: var(--mantine-color-text);
   text-decoration: none;
 }
 
 .formLink:hover {
-  color: #12b886;
+  color: var(--mantine-color-emerald-6);
 }
 
 .filterbar {
-  border-bottom: 1px solid #e9ecef;
-  background-color: #fff;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-body);
 }
 
 .filterItem {
@@ -27,13 +27,13 @@
 }
 
 .table {
-  background-color: #fff;
+  background-color: var(--mantine-color-body);
   min-width: 100%;
   width: max-content;
 }
 
 .thead {
-  background-color: #f8f9fa;
+  background-color: var(--mantine-color-default);
 }
 
 .th {

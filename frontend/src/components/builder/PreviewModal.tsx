@@ -75,7 +75,8 @@ export function PreviewModal({ opened, onClose, title, description, fields, hide
         </Group>
       </Group>
 
-      <Box className={classes.stage}>
+      {/* Always the respondent's own colours, whatever theme the host passes. */}
+      <Box className={classes.stage} data-mantine-color-scheme="light">
         <Box className={classes.viewport} style={{ width: active.width, maxWidth: '100%' }}>
           {/* Remount per open so each preview starts from the initial values. */}
           <FormRenderer

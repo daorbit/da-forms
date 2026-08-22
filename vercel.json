@@ -9,9 +9,20 @@
           "destination": "/index.html"
         }
       ]
+    },
+    "backend": {
+      "root": "backend",
+      "entrypoint": "src/server.ts"
     }
   },
   "rewrites": [
+    {
+      "source": "/api(/.*)?",
+      "destination": {
+        "type": "service",
+        "service": "backend"
+      }
+    },
     {
       "source": "/(.*)",
       "destination": {

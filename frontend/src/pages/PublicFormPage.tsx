@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Paper, Text, Center, Loader, Stack, Button, ThemeIcon } from '@mantine/core';
-import { IconCircleCheck } from '@tabler/icons-react';
+import { Container, Text, Center, Loader, Stack, Button, ThemeIcon } from '@mantine/core';
+import { IconCheck } from '@tabler/icons-react';
 import { getPublicForm, submitForm } from '@/lib/api';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
@@ -46,37 +46,48 @@ export function PublicFormPage() {
       </Center>
     );
 
-  return (
-    // Respondents see the form's own colours, never a host app's theme — the
-    // share link and the embed are public pages, not part of anyone's dashboard.
-    <Container size="sm" py="xl" className="da-forms-light-surface" data-mantine-color-scheme="light">
-      {submitted ? (
-        <Paper withBorder radius="md" p="xl">
-          <Stack align="center" gap="md" py="xl">
-            <ThemeIcon size={56} radius="xl" color="emerald" variant="light">
-              <IconCircleCheck size={32} />
+  if (submitted)
+    return (
+      // Respondents see the form's own colours, never a host app's theme — the
+      // share link and the embed are public pages, not part of anyone's dashboard.
+      <Center h="100vh" className="da-forms-light-surface" data-mantine-color-scheme="light" style={{ background: '#fff' }}>
+        <Container size="xs" px="md" style={{ width: '100%', textAlign: 'center' }}>
+          <Center>
+            <ThemeIcon size={64} radius="xl" color="emerald" variant="light">
+              <IconCheck size={30} stroke={3} />
             </ThemeIcon>
-            <Text ta="center" size="lg" fw={600}>
-              {form.thankYouMessage || 'Thanks! Your response has been recorded.'}
+          </Center>
+          <Text ta="center" size="34px" fw={800} mt="xl" style={{ lineHeight: 1.15, letterSpacing: '-0.02em' }}>
+            {form.thankYouMessage || 'Thanks — that reached us.'}
+          </Text>
+          <Stack align="center" gap={2} mt="md">
+            <Text size="sm" c="dimmed">
+              Your response has been recorded.
             </Text>
-            <Button color="emerald" radius="md" onClick={() => setSubmitted(false)}>
-              Submit another response
-            </Button>
+            <Text size="sm" c="dimmed">
+              You can safely close this page now.
+            </Text>
           </Stack>
-        </Paper>
-      ) : (
-        <FormRenderer
-          title={form.title}
-          description={form.description}
-          fields={form.fields}
-          hideHeader={form.hideHeader}
-          labelPlacement={form.labelPlacement}
-          submitLabel={form.submitLabel}
-          submitButtonSize={form.submitButtonSize}
-          submitting={submitting}
-          onSubmit={handleSubmit}
-        />
-      )}
+          <Button color="emerald" radius="md" mt="xl" onClick={() => setSubmitted(false)}>
+            Submit another response
+          </Button>
+        </Container>
+      </Center>
+    );
+
+  return (
+    <Container size="sm" py="xl" className="da-forms-light-surface" data-mantine-color-scheme="light">
+      <FormRenderer
+        title={form.title}
+        description={form.description}
+        fields={form.fields}
+        hideHeader={form.hideHeader}
+        labelPlacement={form.labelPlacement}
+        submitLabel={form.submitLabel}
+        submitButtonSize={form.submitButtonSize}
+        submitting={submitting}
+        onSubmit={handleSubmit}
+      />
     </Container>
   );
 }

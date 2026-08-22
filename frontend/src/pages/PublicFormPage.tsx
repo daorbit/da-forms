@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Paper, Text, Center, Loader } from '@mantine/core';
+import { Container, Paper, Text, Center, Loader, MantineProvider } from '@mantine/core';
 import { getPublicForm, submitForm } from '@/lib/api';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
@@ -46,6 +46,9 @@ export function PublicFormPage() {
     );
 
   return (
+    // Respondents see the form's own colours, never a host app's theme — the
+    // share link and the embed are public pages, not part of anyone's dashboard.
+    <MantineProvider forceColorScheme="light">
     <Container size="sm" py="xl">
       {submitted ? (
         <Paper withBorder radius="md" p="xl">
@@ -64,5 +67,6 @@ export function PublicFormPage() {
         />
       )}
     </Container>
+    </MantineProvider>
   );
 }

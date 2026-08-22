@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Group, Text, ActionIcon, Box, Badge } from '@mantine/core';
+import { Modal, Group, Text, ActionIcon, Box, Badge, MantineProvider } from '@mantine/core';
 import { IconX, IconDeviceDesktop, IconDeviceTablet, IconDeviceMobile } from '@tabler/icons-react';
 import type { FormField } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
@@ -76,7 +76,8 @@ export function PreviewModal({ opened, onClose, title, description, fields, hide
       </Group>
 
       {/* Always the respondent's own colours, whatever theme the host passes. */}
-      <Box className={classes.stage} data-mantine-color-scheme="light">
+      <MantineProvider forceColorScheme="light" cssVariablesSelector=".da-forms-light-surface">
+      <Box className={`${classes.stage} da-forms-light-surface`}>
         <Box className={classes.viewport} style={{ width: active.width, maxWidth: '100%' }}>
           {/* Remount per open so each preview starts from the initial values. */}
           <FormRenderer
@@ -91,6 +92,7 @@ export function PreviewModal({ opened, onClose, title, description, fields, hide
           </Text>
         </Box>
       </Box>
+      </MantineProvider>
     </Modal>
   );
 }

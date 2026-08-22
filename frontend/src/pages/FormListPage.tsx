@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -29,15 +29,27 @@ function formatDate(iso: string) {
 
 export function FormListPage() {
   const workspaceId = useWorkspaceId();
+  const location = useLocation();
   const [forms, setForms] = useState<Form[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newFormOpen, setNewFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState<Form | null>(null);
 
-  useEffect(() => {
-    listForms(workspaceId).then(setForms);
+  const load = useCallback(() => {
+    setLoading(true);
+    return listForms(workspaceId)
+      .then(setForms)
+      .finally(() => setLoading(false));
   }, [workspaceId]);
+
+  // Keyed on the location as well as the loader, so returning from the builder
+  // refetches rather than showing the list as it was before the edit — however
+  // the page is reached, our own link or the browser's back button.
+  useEffect(() => {
+    load();
+  }, [location.key, load]);
 
   async function confirmDelete() {
     if (!pendingDelete) return;
@@ -65,6 +77,19 @@ export function FormListPage() {
           <ActionIcon variant="subtle" color="gray" radius="xl" size="lg">
             <IconArrowsSort size={18} />
           </ActionIcon>
+          <Tooltip label="Refresh" withArrow>
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              radius="xl"
+              size="lg"
+              onClick={() => load()}
+              loading={loading}
+              aria-label="Refresh"
+            >
+              <IconRefresh size={18} />
+            </ActionIcon>
+          </Tooltip>
           <Button
             radius="xl"
             color="emerald"

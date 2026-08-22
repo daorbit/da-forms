@@ -1,4 +1,6 @@
-import { Box, Stack, Text, Paper, Title, ActionIcon, Group, Tooltip } from '@mantine/core';
+import {
+  Box, Stack, Text, Paper, Title, ActionIcon, Group, Tooltip, MantineProvider,
+} from '@mantine/core';
 import { IconTrash, IconSettings, IconCopyPlus, IconEyeOff } from '@tabler/icons-react';
 import type { FormField } from '@/types';
 import { staticTypes } from '@/lib/fieldPalette';
@@ -38,8 +40,15 @@ export function FormCanvas({
   return (
     <Box className={classes.canvasScroll}>
       <Box className={`${classes.canvasArea} ${offsetRight ? classes.canvasAreaOffset : ''}`}>
-      {/* The card renders as respondents see it, never in the host's dark theme. */}
-      <Paper className={classes.formCard} radius="md" withBorder data-mantine-color-scheme="light">
+      {/*
+        A nested provider rather than a data attribute: the attribute alone does
+        not re-emit Mantine's variables, so inputs inside kept the host's dark
+        palette. The card is a preview of the live form and has to look the way
+        respondents will see it, whatever theme the host passes.
+      */}
+      <MantineProvider forceColorScheme="light" cssVariablesSelector=".da-forms-light-surface">
+      <div className="da-forms-light-surface">
+      <Paper className={classes.formCard} radius="md" withBorder>
         {!hideHeader && (
           <Box className={`${classes.fieldRow} ${classes.header}`}>
             <Title order={3} ta="center">
@@ -168,6 +177,8 @@ export function FormCanvas({
           })}
         </Stack>
       </Paper>
+      </div>
+      </MantineProvider>
       </Box>
     </Box>
   );

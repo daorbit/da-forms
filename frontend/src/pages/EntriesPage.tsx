@@ -9,6 +9,7 @@ import {
   IconFilter,
   IconDots,
   IconCalendarPlus,
+  IconArrowLeft,
 } from '@tabler/icons-react';
 import { getForm, listSubmissions } from '@/lib/api';
 import type { Form, Submission } from '@/types';
@@ -50,7 +51,10 @@ export function EntriesPage() {
     <Box>
       <Group justify="space-between" px="md" py="sm" className={classes.topbar} wrap="nowrap">
         <Group gap="xs" wrap="nowrap">
-          <ThemeIcon variant="light" color="blue" radius="sm">
+          <ActionIcon component={Link} to="/" variant="subtle" color="gray" size="lg" aria-label="Back to all forms">
+            <IconArrowLeft size={19} />
+          </ActionIcon>
+          <ThemeIcon variant="light" color="gray" radius="sm">
             <IconFileText size={18} />
           </ThemeIcon>
           <Text fw={600} component={Link} to={`/forms/${form._id}/edit`} className={classes.formLink}>

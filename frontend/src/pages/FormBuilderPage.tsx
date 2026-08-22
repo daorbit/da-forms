@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { AppShell, Group, TextInput, Button, ThemeIcon } from '@mantine/core';
-import { IconFileText, IconEye } from '@tabler/icons-react';
+import { useLocation, useParams, useNavigate, Link } from 'react-router-dom';
+import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip } from '@mantine/core';
+import { IconFileText, IconEye, IconArrowLeft } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import type { Form, FormField, FieldType } from '@/types';
@@ -112,6 +112,18 @@ export function FormBuilderPage() {
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="xs" wrap="nowrap" style={{ flex: 1 }}>
+            <Tooltip label="Back to all forms" position="bottom" withArrow>
+              <ActionIcon
+                component={Link}
+                to="/"
+                variant="subtle"
+                color="gray"
+                size="lg"
+                aria-label="Back to all forms"
+              >
+                <IconArrowLeft size={19} />
+              </ActionIcon>
+            </Tooltip>
             <ThemeIcon variant="light" color="gray" radius="sm">
               <IconFileText size={18} />
             </ThemeIcon>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, ScrollArea, UnstyledButton } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconPlus } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
 import { formTemplates } from '@/lib/formTemplates';
@@ -64,6 +64,7 @@ export function NewFormModal({ opened, onClose }: Props) {
       centered
       size={step === 2 ? 960 : 'md'}
       radius="lg"
+      styles={step === 2 ? { body: { overflow: 'hidden' } } : undefined}
     >
       {step === 1 ? (
         <form onSubmit={handleContinue}>
@@ -110,21 +111,35 @@ export function NewFormModal({ opened, onClose }: Props) {
         <Stack gap="md">
           <Box className={classes.stepBody}>
             <div className={classes.templateList}>
-              {formTemplates.map((tpl) => (
-                <UnstyledButton
-                  key={tpl.id}
-                  onClick={() => setTemplateId(tpl.id)}
-                  className={`${classes.templateItem} ${tpl.id === templateId ? classes.templateItemActive : ''}`}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', boxSizing: 'border-box' }}
-                >
-                  <Text size="sm" fw={600}>
-                    {tpl.name}
-                  </Text>
-                  <Text size="xs" c="dimmed" mt={2}>
-                    {tpl.description}
-                  </Text>
-                </UnstyledButton>
-              ))}
+              {formTemplates.map((tpl) =>
+                tpl.id === 'blank' ? (
+                  <UnstyledButton
+                    key={tpl.id}
+                    onClick={() => setTemplateId(tpl.id)}
+                    className={`${classes.templateItem} ${classes.blankItem} ${tpl.id === templateId ? classes.templateItemActive : ''}`}
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                  >
+                    <IconPlus size={20} color="var(--mantine-color-emerald-6)" />
+                    <Text size="sm" fw={600}>
+                      {tpl.name}
+                    </Text>
+                  </UnstyledButton>
+                ) : (
+                  <UnstyledButton
+                    key={tpl.id}
+                    onClick={() => setTemplateId(tpl.id)}
+                    className={`${classes.templateItem} ${tpl.id === templateId ? classes.templateItemActive : ''}`}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', boxSizing: 'border-box' }}
+                  >
+                    <Text size="sm" fw={600}>
+                      {tpl.name}
+                    </Text>
+                    <Text size="xs" c="dimmed" mt={2}>
+                      {tpl.description}
+                    </Text>
+                  </UnstyledButton>
+                )
+              )}
             </div>
 
             <ScrollArea className={classes.previewPane} type="auto">

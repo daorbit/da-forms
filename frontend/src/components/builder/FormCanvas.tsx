@@ -1,5 +1,5 @@
-import { Box, Stack, Text, Paper, Title, ActionIcon, Group } from '@mantine/core';
-import { IconTrash, IconSettings, IconCopyPlus } from '@tabler/icons-react';
+import { Box, Stack, Text, Paper, Title, ActionIcon, Group, Tooltip } from '@mantine/core';
+import { IconTrash, IconSettings, IconCopyPlus, IconEyeOff } from '@tabler/icons-react';
 import type { FormField } from '@/types';
 import { staticTypes } from '@/lib/fieldPalette';
 import { FieldPreview } from './FieldPreview';
@@ -15,6 +15,8 @@ interface Props {
   onDuplicate: (id: string) => void;
   onOpenProperties: (id: string) => void;
   onOpenFormSettings: () => void;
+  hideHeader?: boolean;
+  onHideHeader: () => void;
   /** Shifts the card clear of the properties drawer while it is open. */
   offsetRight?: boolean;
 }
@@ -29,6 +31,8 @@ export function FormCanvas({
   onDuplicate,
   onOpenProperties,
   onOpenFormSettings,
+  hideHeader = false,
+  onHideHeader,
   offsetRight = false,
 }: Props) {
   return (

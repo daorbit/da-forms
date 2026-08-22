@@ -32,6 +32,7 @@ export function FormBuilderPage() {
     'Thanks! Your response has been recorded.'
   );
   const [redirectUrl, setRedirectUrl] = useState('');
+  const [hideHeader, setHideHeader] = useState(false);
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -46,6 +47,7 @@ export function FormBuilderPage() {
       setDescription(form.description ?? '');
       setFields(form.fields);
       setRedirectUrl(form.redirectUrl ?? '');
+      setHideHeader(form.hideHeader ?? false);
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
     });
   }, [routeFormId]);
@@ -76,7 +78,7 @@ export function FormBuilderPage() {
 
   async function handleSave() {
     setSaving(true);
-    const payload = { title, description, fields, redirectUrl, thankYouMessage };
+    const payload = { title, description, fields, redirectUrl, thankYouMessage, hideHeader };
     const form = savedFormId
       ? await updateForm(savedFormId, payload)
       : await createForm(payload);
@@ -167,6 +169,8 @@ export function FormBuilderPage() {
           onDuplicate={duplicateField}
           onOpenProperties={setEditingId}
           onOpenFormSettings={() => setFormSettingsOpen(true)}
+          hideHeader={hideHeader}
+          onHideHeader={() => setHideHeader(true)}
           offsetRight={!!editingId}
         />
       </AppShell.Main>
@@ -178,8 +182,10 @@ export function FormBuilderPage() {
         onClose={() => setFormSettingsOpen(false)}
         title={title}
         description={description}
+        hideHeader={hideHeader}
         onTitleChange={setTitle}
         onDescriptionChange={setDescription}
+        onHideHeaderChange={setHideHeader}
       />
 
       <AppShell.Aside>

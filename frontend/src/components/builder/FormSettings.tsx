@@ -1,4 +1,4 @@
-import { Drawer, Stack, TextInput, Textarea } from '@mantine/core';
+import { Drawer, Stack, TextInput, Textarea, Switch, Divider } from '@mantine/core';
 import classes from './drawer.module.css';
 
 interface Props {
@@ -6,8 +6,10 @@ interface Props {
   onClose: () => void;
   title: string;
   description: string;
+  hideHeader: boolean;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
+  onHideHeaderChange: (value: boolean) => void;
 }
 
 export function FormSettings({
@@ -15,8 +17,10 @@ export function FormSettings({
   onClose,
   title,
   description,
+  hideHeader,
   onTitleChange,
   onDescriptionChange,
+  onHideHeaderChange,
 }: Props) {
   return (
     <Drawer
@@ -37,6 +41,15 @@ export function FormSettings({
           onChange={(e) => onDescriptionChange(e.target.value)}
           autosize
           minRows={3}
+        />
+
+        <Divider />
+
+        <Switch
+          label="Hide header on the form"
+          description="The title and description stay for your reference but are not shown to respondents."
+          checked={hideHeader}
+          onChange={(e) => onHideHeaderChange(e.target.checked)}
         />
       </Stack>
     </Drawer>

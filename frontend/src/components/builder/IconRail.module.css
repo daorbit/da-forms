@@ -24,11 +24,11 @@
 }
 
 .railButton:hover {
-  background-color: var(--mantine-color-default-hover);
-  color: var(--mantine-color-text);
+  border-color: var(--mantine-color-gray-3);
+  background-color: var(--mantine-color-gray-0);
 }
 
 .railButtonActive {
-  background-color: var(--mantine-color-emerald-0);
-  color: var(--mantine-color-emerald-7);
+  border-color: var(--mantine-color-gray-3);
+  background-color: var(--mantine-color-gray-1);
 }

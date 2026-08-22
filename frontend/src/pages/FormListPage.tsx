@@ -17,6 +17,7 @@ import {
   IconExternalLink,
 } from '@tabler/icons-react';
 import { listForms, deleteForm } from '@/lib/api';
+import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
@@ -27,6 +28,7 @@ function formatDate(iso: string) {
 }
 
 export function FormListPage() {
+  const workspaceId = useWorkspaceId();
   const [forms, setForms] = useState<Form[]>([]);
   const [newFormOpen, setNewFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
@@ -34,13 +36,13 @@ export function FormListPage() {
   const [sharing, setSharing] = useState<Form | null>(null);
 
   useEffect(() => {
-    listForms().then(setForms);
-  }, []);
+    listForms(workspaceId).then(setForms);
+  }, [workspaceId]);
 
   async function confirmDelete() {
     if (!pendingDelete) return;
     setDeleting(true);
-    await deleteForm(pendingDelete._id);
+    await deleteForm(pendingDelete._id, workspaceId);
     setForms((prev) => prev.filter((f) => f._id !== pendingDelete._id));
     setDeleting(false);
     setPendingDelete(null);
@@ -89,7 +91,7 @@ export function FormListPage() {
                   <IconFileText size={20} />
                 </ThemeIcon>
                 <div>
-                  <Link to={`/forms/${form._id}/edit`} className={classes.title}>
+                  <Link to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.title}>
                     {form.title}
                   </Link>
                   <Group gap={6}>
@@ -109,7 +111,7 @@ export function FormListPage() {
               <Group gap="xs" wrap="nowrap">
                 <Button
                   component={Link}
-                  to={`/forms/${form._id}/edit`}
+                  to={`/${workspaceId}/forms/${form._id}/edit`}
                   variant="default"
                   radius="xl"
                   size="xs"
@@ -119,7 +121,7 @@ export function FormListPage() {
                 </Button>
                 <Button
                   component={Link}
-                  to={`/forms/${form._id}/entries`}
+                  to={`/${workspaceId}/forms/${form._id}/entries`}
                   variant="default"
                   radius="xl"
                   size="xs"

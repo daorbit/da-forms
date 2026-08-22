@@ -62,7 +62,7 @@ export interface FormField {
 export interface FormDocument {
   title: string;
   description?: string;
-  projectKey: string;
+  workspaceId: string;
   fields: FormField[];
   status: 'draft' | 'published';
   redirectUrl?: string;
@@ -101,7 +101,7 @@ const formSchema = new Schema<FormDocument>(
   {
     title: { type: String, required: true },
     description: { type: String },
-    projectKey: { type: String, required: true, index: true },
+    workspaceId: { type: String, required: true, index: true },
     fields: { type: [fieldSchema], default: [] },
     status: { type: String, enum: ['draft', 'published'], default: 'draft' },
     redirectUrl: { type: String },

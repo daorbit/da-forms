@@ -81,7 +81,7 @@ export interface Form {
   _id: string;
   title: string;
   description?: string;
-  projectKey: string;
+  workspaceId: string;
   fields: FormField[];
   status: 'draft' | 'published';
   redirectUrl?: string;

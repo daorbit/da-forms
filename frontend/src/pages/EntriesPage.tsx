@@ -12,6 +12,7 @@ import {
   IconArrowLeft,
 } from '@tabler/icons-react';
 import { getForm, listSubmissions } from '@/lib/api';
+import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
 import { paletteByType, staticTypes } from '@/lib/fieldPalette';
 import classes from './EntriesPage.module.css';
@@ -28,14 +29,15 @@ function formatDateTime(iso: string) {
 
 export function EntriesPage() {
   const { id } = useParams<{ id: string }>();
+  const workspaceId = useWorkspaceId();
   const [form, setForm] = useState<Form | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
   useEffect(() => {
     if (!id) return;
-    getForm(id).then(setForm);
-    listSubmissions(id).then(setSubmissions);
-  }, [id]);
+    getForm(id, workspaceId).then(setForm);
+    listSubmissions(id, workspaceId).then(setSubmissions);
+  }, [id, workspaceId]);
 
   if (!form)
     return (
@@ -51,13 +53,13 @@ export function EntriesPage() {
     <Box>
       <Group justify="space-between" px="md" py="sm" className={classes.topbar} wrap="nowrap">
         <Group gap="xs" wrap="nowrap">
-          <ActionIcon component={Link} to="/" variant="subtle" color="gray" size="lg" aria-label="Back to all forms">
+          <ActionIcon component={Link} to={`/${workspaceId}/forms`} variant="subtle" color="gray" size="lg" aria-label="Back to all forms">
             <IconArrowLeft size={19} />
           </ActionIcon>
           <ThemeIcon variant="light" color="gray" radius="sm">
             <IconFileText size={18} />
           </ThemeIcon>
-          <Text fw={600} component={Link} to={`/forms/${form._id}/edit`} className={classes.formLink}>
+          <Text fw={600} component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.formLink}>
             {form.title}
           </Text>
         </Group>

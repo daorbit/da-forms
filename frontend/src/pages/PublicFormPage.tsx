@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Paper, Text, Center, Loader } from '@mantine/core';
-import { getForm, submitForm } from '@/lib/api';
+import { getPublicForm, submitForm } from '@/lib/api';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 
@@ -14,7 +14,7 @@ export function PublicFormPage() {
 
   useEffect(() => {
     if (!id) return;
-    getForm(id)
+    getPublicForm(id)
       .then(setForm)
       .catch((e: Error) => setError(e.message));
   }, [id]);

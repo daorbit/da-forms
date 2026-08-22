@@ -2,8 +2,8 @@ import { FormModel } from '../models/form.model.js';
 import { SubmissionModel } from '../models/submission.model.js';
 import type { FormField } from '../models/form.model.js';
 
-export function listForms(projectKey: string) {
-  return FormModel.find({ projectKey }).sort({ createdAt: -1 });
+export function listForms(workspaceId: string) {
+  return FormModel.find({ workspaceId }).sort({ createdAt: -1 });
 }
 
 export function getForm(id: string) {
@@ -13,7 +13,7 @@ export function getForm(id: string) {
 export function createForm(input: {
   title: string;
   description?: string;
-  projectKey: string;
+  workspaceId: string;
   fields: FormField[];
   redirectUrl?: string;
   thankYouMessage?: string;
@@ -24,6 +24,7 @@ export function createForm(input: {
 
 export function updateForm(
   id: string,
+  workspaceId: string,
   input: Partial<{
     title: string;
     description: string;
@@ -34,11 +35,11 @@ export function updateForm(
     hideHeader: boolean;
   }>
 ) {
-  return FormModel.findByIdAndUpdate(id, input, { new: true });
+  return FormModel.findOneAndUpdate({ _id: id, workspaceId }, input, { new: true });
 }
 
-export function deleteForm(id: string) {
-  return FormModel.findByIdAndDelete(id);
+export function deleteForm(id: string, workspaceId: string) {
+  return FormModel.findOneAndDelete({ _id: id, workspaceId });
 }
 
 export function submitForm(formId: string, data: Record<string, string>, sourceUrl?: string) {

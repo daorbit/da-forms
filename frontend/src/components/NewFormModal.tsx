@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, TextInput, Button, Group, Stack } from '@mantine/core';
+import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 
 interface Props {
   opened: boolean;
@@ -9,13 +10,14 @@ interface Props {
 
 export function NewFormModal({ opened, onClose }: Props) {
   const navigate = useNavigate();
+  const workspaceId = useWorkspaceId();
   const [name, setName] = useState('');
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     const title = name.trim();
     if (!title) return;
-    navigate('/new', { state: { title } });
+    navigate(`/${workspaceId}/forms/new`, { state: { title } });
   }
 
   return (

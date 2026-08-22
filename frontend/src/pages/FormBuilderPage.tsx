@@ -4,6 +4,7 @@ import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip } fr
 import { IconFileText, IconEye, IconArrowLeft } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
+import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, FormField, FieldType } from '@/types';
 import { ShareModal } from '@/components/share/ShareModal';
 import { makeField } from '@/lib/fieldPalette';
@@ -20,6 +21,7 @@ export function FormBuilderPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { id: routeFormId } = useParams<{ id: string }>();
+  const workspaceId = useWorkspaceId();
   const initialTitle = (location.state as { title?: string } | null)?.title ?? 'Untitled form';
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState('');
@@ -41,7 +43,7 @@ export function FormBuilderPage() {
 
   useEffect(() => {
     if (!routeFormId) return;
-    getForm(routeFormId).then((form) => {
+    getForm(routeFormId, workspaceId).then((form) => {
       setSavedForm(form);
       setTitle(form.title);
       setDescription(form.description ?? '');
@@ -50,7 +52,7 @@ export function FormBuilderPage() {
       setHideHeader(form.hideHeader ?? false);
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
     });
-  }, [routeFormId]);
+  }, [routeFormId, workspaceId]);
 
   function addField(type: FieldType) {
     const field = makeField(type);
@@ -80,8 +82,8 @@ export function FormBuilderPage() {
     setSaving(true);
     const payload = { title, description, fields, redirectUrl, thankYouMessage, hideHeader };
     const form = savedFormId
-      ? await updateForm(savedFormId, payload)
-      : await createForm(payload);
+      ? await updateForm(savedFormId, payload, workspaceId)
+      : await createForm(payload, workspaceId);
     setSaving(false);
     setSavedFormId(form._id);
     setSavedForm(form);
@@ -117,7 +119,7 @@ export function FormBuilderPage() {
             <Tooltip label="Back to all forms" position="bottom" withArrow>
               <ActionIcon
                 component={Link}
-                to="/"
+                to={`/${workspaceId}/forms`}
                 variant="subtle"
                 color="gray"
                 size="lg"

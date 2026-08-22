@@ -9,10 +9,10 @@ import {
   Box,
   Menu,
   ActionIcon,
-  Loader,
-  Center,
   Pagination,
   Tooltip,
+  Skeleton,
+  Stack,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -22,8 +22,6 @@ import {
   IconFilter,
   IconCalendarPlus,
   IconArrowLeft,
-  IconStar,
-  IconStarFilled,
   IconFileExport,
   IconLayoutList,
   IconLayoutKanban,
@@ -34,6 +32,7 @@ import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
 import { paletteByType, staticTypes } from '@/lib/fieldPalette';
 import { valueFields } from '@/lib/fieldTree';
+import { EntriesKanban } from '@/components/builder/EntriesKanban';
 import classes from './EntriesPage.module.css';
 
 function formatDateTime(iso: string) {
@@ -46,14 +45,13 @@ function formatDateTime(iso: string) {
   });
 }
 
-type StatusFilter = 'all' | 'unread' | 'read' | 'starred';
+type StatusFilter = 'all' | 'unread' | 'read';
 type DayFilter = 'all' | 'today' | '7' | '30';
 
 const STATUS_LABEL: Record<StatusFilter, string> = {
   all: 'All Entries',
   unread: 'Unread',
   read: 'Read',
-  starred: 'Starred',
 };
 
 const DAY_LABEL: Record<DayFilter, string> = {
@@ -91,9 +89,9 @@ export function EntriesPage() {
     if (!id) return;
     setLoading(true);
     listSubmissions(id, workspaceId, {
-      page,
-      limit: PAGE_SIZE,
-      status,
+      page: view === 'kanban' ? 1 : page,
+      limit: view === 'kanban' ? 200 : PAGE_SIZE,
+      status: view === 'kanban' ? 'all' : status,
       ...dayFilterToRange(day),
     })
       .then((res) => {
@@ -101,7 +99,7 @@ export function EntriesPage() {
         setTotal(res.total);
       })
       .finally(() => setLoading(false));
-  }, [id, workspaceId, page, status, day]);
+  }, [id, workspaceId, page, status, day, view]);
 
   useEffect(() => {
     if (!id) return;
@@ -117,9 +115,9 @@ export function EntriesPage() {
     setPage(1);
   }, [status, day]);
 
-  async function toggleStarred(submission: Submission) {
+  async function moveSubmission(submissionId: string, patch: Partial<Pick<Submission, 'read' | 'starred'>>) {
     if (!id) return;
-    const updated = await updateSubmission(id, submission._id, { starred: !submission.starred }, workspaceId);
+    const updated = await updateSubmission(id, submissionId, patch, workspaceId);
     setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
   }
 
@@ -234,7 +232,7 @@ export function EntriesPage() {
             <Menu.Target>
               <Tooltip label="View" withArrow>
                 <ActionIcon variant="subtle" color="gray">
-                  <IconLayoutList size={17} />
+                  {view === 'list' ? <IconLayoutList size={17} /> : <IconLayoutKanban size={17} />}
                 </ActionIcon>
               </Tooltip>
             </Menu.Target>
@@ -249,10 +247,7 @@ export function EntriesPage() {
               <Menu.Item
                 leftSection={<IconLayoutKanban size={15} />}
                 rightSection={view === 'kanban' ? <IconCheck size={14} color="var(--mantine-color-emerald-6)" /> : undefined}
-                onClick={() => {
-                  setView('kanban');
-                  notifications.show({ message: 'Kanban view is coming soon', color: 'gray' });
-                }}
+                onClick={() => setView('kanban')}
               >
                 Kanban View
               </Menu.Item>
@@ -287,90 +282,96 @@ export function EntriesPage() {
         </Group>
       </Group>
 
-      <Box className={classes.tableWrap}>
-        <Table withTableBorder highlightOnHover className={classes.table}>
-          <Table.Thead className={classes.thead}>
-            <Table.Tr>
-              <Table.Th className={classes.th} style={{ width: 32 }} />
-              {columns.map((field) => {
-                const meta = paletteByType[field.type];
-                return (
-                  <Table.Th key={field.id} className={classes.th}>
+      {view === 'kanban' ? (
+        <EntriesKanban submissions={submissions} columns={columns} onMove={moveSubmission} />
+      ) : (
+        <>
+          <Box className={classes.tableWrap}>
+            <Table withTableBorder highlightOnHover className={classes.table}>
+              <Table.Thead className={classes.thead}>
+                <Table.Tr>
+                  <Table.Th className={classes.th} style={{ width: 32 }} />
+                  {columns.map((field) => {
+                    const meta = paletteByType[field.type];
+                    return (
+                      <Table.Th key={field.id} className={classes.th}>
+                        <Group gap={6} wrap="nowrap">
+                          <meta.icon size={15} stroke={1.6} color="var(--mantine-color-gray-6)" />
+                          <Text size="sm" fw={600}>
+                            {field.label}
+                          </Text>
+                        </Group>
+                      </Table.Th>
+                    );
+                  })}
+                  <Table.Th className={classes.th}>
                     <Group gap={6} wrap="nowrap">
-                      <meta.icon size={15} stroke={1.6} color="var(--mantine-color-gray-6)" />
+                      <IconCalendarPlus size={15} stroke={1.6} color="var(--mantine-color-gray-6)" />
                       <Text size="sm" fw={600}>
-                        {field.label}
+                        Added Time
                       </Text>
                     </Group>
                   </Table.Th>
-                );
-              })}
-              <Table.Th className={classes.th}>
-                <Group gap={6} wrap="nowrap">
-                  <IconCalendarPlus size={15} stroke={1.6} color="var(--mantine-color-gray-6)" />
-                  <Text size="sm" fw={600}>
-                    Added Time
-                  </Text>
-                </Group>
-              </Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-
-          <Table.Tbody>
-            {submissions.length === 0 ? (
-              <Table.Tr>
-                <Table.Td colSpan={columns.length + 2}>
-                  <Text ta="center" py="xl" c="emerald">
-                    {loading ? 'Loading…' : 'No entries'}
-                  </Text>
-                </Table.Td>
-              </Table.Tr>
-            ) : (
-              submissions.map((submission) => (
-                <Table.Tr
-                  key={submission._id}
-                  onClick={() => markRead(submission)}
-                  style={{ fontWeight: submission.read ? 400 : 700 }}
-                >
-                  <Table.Td style={{ width: 32, padding: '0 8px' }}>
-                    <ActionIcon
-                      variant="subtle"
-                      color={submission.starred ? 'yellow' : 'gray'}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStarred(submission);
-                      }}
-                      aria-label="Star entry"
-                    >
-                      {submission.starred ? <IconStarFilled size={16} /> : <IconStar size={16} />}
-                    </ActionIcon>
-                  </Table.Td>
-                  {columns.map((field) => (
-                    <Table.Td key={field.id}>
-                      <Text size="sm">{submission.data[field.id] ?? ''}</Text>
-                    </Table.Td>
-                  ))}
-                  <Table.Td>
-                    <Text size="sm" c="dimmed">
-                      {formatDateTime(submission.createdAt)}
-                    </Text>
-                  </Table.Td>
                 </Table.Tr>
-              ))
-            )}
-          </Table.Tbody>
-        </Table>
-      </Box>
+              </Table.Thead>
 
-      <Group justify="flex-end" px="md" py="md">
-        <Pagination
-          total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
-          value={page}
-          onChange={setPage}
-          color="emerald"
-          disabled={total <= PAGE_SIZE}
-        />
-      </Group>
+              <Table.Tbody>
+                {submissions.length === 0 ? (
+                  <Table.Tr>
+                    <Table.Td colSpan={columns.length + 2}>
+                      <Text ta="center" py="xl" c="emerald">
+                        {loading ? 'Loading…' : 'No entries'}
+                      </Text>
+                    </Table.Td>
+                  </Table.Tr>
+                ) : (
+                  submissions.map((submission) => (
+                    <Table.Tr
+                      key={submission._id}
+                      onClick={() => markRead(submission)}
+                      style={{ fontWeight: submission.read ? 400 : 700 }}
+                    >
+                      <Table.Td style={{ width: 32, padding: '0 8px' }}>
+                        <ActionIcon
+                          variant="subtle"
+                          color={submission.starred ? 'yellow' : 'gray'}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleStarred(submission);
+                          }}
+                          aria-label="Star entry"
+                        >
+                          {submission.starred ? <IconStarFilled size={16} /> : <IconStar size={16} />}
+                        </ActionIcon>
+                      </Table.Td>
+                      {columns.map((field) => (
+                        <Table.Td key={field.id}>
+                          <Text size="sm">{submission.data[field.id] ?? ''}</Text>
+                        </Table.Td>
+                      ))}
+                      <Table.Td>
+                        <Text size="sm" c="dimmed">
+                          {formatDateTime(submission.createdAt)}
+                        </Text>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))
+                )}
+              </Table.Tbody>
+            </Table>
+          </Box>
+
+          <Group justify="flex-end" px="md" py="md">
+            <Pagination
+              total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+              value={page}
+              onChange={setPage}
+              color="emerald"
+              disabled={total <= PAGE_SIZE}
+            />
+          </Group>
+        </>
+      )}
     </Box>
   );
 }

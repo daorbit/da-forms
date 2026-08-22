@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Container, Paper, Title, Text, Button, Stack, Center, Loader } from '@mantine/core';
 import { getForm, submitForm } from '@/lib/api';
 import type { Form } from '@/types';
-import { FieldInput } from '@/components/FieldInput';
+import { FieldControl } from '@/components/FieldControl';
 
 export function PublicFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -10,6 +11,7 @@ export function PublicFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -21,35 +23,59 @@ export function PublicFormPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!id) return;
+    setSubmitting(true);
     await submitForm(id, values);
+    setSubmitting(false);
     setSubmitted(true);
   }
 
-  if (error) return <p>Form not found.</p>;
-  if (!form) return <p>Loading...</p>;
+  if (error)
+    return (
+      <Center h="100vh">
+        <Text c="dimmed">Form not found.</Text>
+      </Center>
+    );
 
-  if (submitted) {
-    return <p>Thanks! Your response has been recorded.</p>;
-  }
+  if (!form)
+    return (
+      <Center h="100vh">
+        <Loader />
+      </Center>
+    );
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>{form.title}</h2>
-      {form.description && <p>{form.description}</p>}
-      {form.fields.map((field) => (
-        <div key={field.id}>
-          <label>
-            {field.label}
-            {field.required && ' *'}
-          </label>
-          <FieldInput
-            field={field}
-            value={values[field.id] ?? ''}
-            onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
-          />
-        </div>
-      ))}
-      <button type="submit">Submit</button>
-    </form>
+    <Container size="sm" py="xl">
+      <Paper withBorder radius="md" p="xl">
+        {submitted ? (
+          <Text ta="center" py="xl">
+            Thanks! Your response has been recorded.
+          </Text>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <Title order={3} ta="center" mb={4}>
+              {form.title}
+            </Title>
+            {form.description && (
+              <Text c="dimmed" size="sm" ta="center" mb="lg">
+                {form.description}
+              </Text>
+            )}
+            <Stack gap="md">
+              {form.fields.map((field) => (
+                <FieldControl
+                  key={field.id}
+                  field={field}
+                  value={values[field.id] ?? ''}
+                  onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
+                />
+              ))}
+              <Button type="submit" loading={submitting} fullWidth mt="sm" color="teal">
+                Submit
+              </Button>
+            </Stack>
+          </form>
+        )}
+      </Paper>
+    </Container>
   );
 }

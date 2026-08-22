@@ -1,0 +1,24 @@
+.searchWrap {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--mantine-color-white);
+}
+
+.paletteItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 4px;
+  border: 1px solid var(--mantine-color-gray-3);
+  border-radius: var(--mantine-radius-md);
+  text-align: center;
+  transition: border-color 100ms ease, box-shadow 100ms ease;
+}
+
+.paletteItem:hover {
+  border-color: var(--mantine-color-teal-5);
+  border-style: dashed;
+  box-shadow: var(--mantine-shadow-xs);
+}

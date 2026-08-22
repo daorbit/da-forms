@@ -29,6 +29,7 @@ export function createForm(input: {
   description?: string;
   fields: FormField[];
   projectKey?: string;
+  redirectUrl?: string;
 }) {
   return request<Form>('/forms', { method: 'POST', body: JSON.stringify(input) });
 }

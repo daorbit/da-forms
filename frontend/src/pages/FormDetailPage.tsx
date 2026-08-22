@@ -1,7 +1,45 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import {
+  Container,
+  Title,
+  Badge,
+  Button,
+  Group,
+  TextInput,
+  Textarea,
+  Card,
+  Stack,
+  Text,
+  CopyButton,
+  ActionIcon,
+  Tooltip,
+} from '@mantine/core';
+import { IconCopy, IconCheck } from '@tabler/icons-react';
 import { getForm, listSubmissions, updateForm } from '@/lib/api';
 import type { Form, Submission } from '@/types';
+
+function CopyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <Text size="sm" fw={500} mb={4}>
+        {label}
+      </Text>
+      <Group gap="xs" wrap="nowrap">
+        <TextInput readOnly value={value} style={{ flex: 1 }} onFocus={(e) => e.target.select()} />
+        <CopyButton value={value}>
+          {({ copied, copy }) => (
+            <Tooltip label={copied ? 'Copied' : 'Copy'}>
+              <ActionIcon variant="light" onClick={copy} color={copied ? 'teal' : 'blue'}>
+                {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+              </ActionIcon>
+            </Tooltip>
+          )}
+        </CopyButton>
+      </Group>
+    </div>
+  );
+}
 
 export function FormDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,7 +52,7 @@ export function FormDetailPage() {
     listSubmissions(id).then(setSubmissions);
   }, [id]);
 
-  if (!form || !id) return <p>Loading...</p>;
+  if (!form || !id) return null;
 
   const shareUrl = `${window.location.origin}/f/${id}`;
   const embedCode = `<iframe src="${shareUrl}" width="100%" height="600" frameborder="0"></iframe>`;
@@ -25,23 +63,42 @@ export function FormDetailPage() {
   }
 
   return (
-    <main>
-      <h1>{form.title}</h1>
-      <p>Status: {form.status}</p>
-      {form.status === 'draft' && <button onClick={publish}>Publish</button>}
+    <Container size="md" py="xl">
+      <Group justify="space-between" mb="lg">
+        <div>
+          <Title order={2}>{form.title}</Title>
+          <Badge color={form.status === 'published' ? 'green' : 'gray'} variant="light" mt={4}>
+            {form.status}
+          </Badge>
+        </div>
+        {form.status === 'draft' && <Button onClick={publish}>Publish</Button>}
+      </Group>
 
-      <h3>Share link</h3>
-      <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
+      <Stack gap="md">
+        <Card withBorder radius="md" padding="md">
+          <CopyField label="Share link" value={shareUrl} />
+        </Card>
 
-      <h3>Embed code</h3>
-      <textarea readOnly value={embedCode} rows={3} onFocus={(e) => e.target.select()} />
+        <Card withBorder radius="md" padding="md">
+          <Text size="sm" fw={500} mb={4}>
+            Embed code
+          </Text>
+          <Textarea readOnly value={embedCode} autosize minRows={2} onFocus={(e) => e.target.select()} />
+        </Card>
 
-      <h3>Submissions ({submissions.length})</h3>
-      <ul>
-        {submissions.map((s) => (
-          <li key={s._id}>{JSON.stringify(s.data)}</li>
-        ))}
-      </ul>
-    </main>
+        <Card withBorder radius="md" padding="md">
+          <Text size="sm" fw={500} mb="sm">
+            Submissions ({submissions.length})
+          </Text>
+          <Stack gap="xs">
+            {submissions.map((s) => (
+              <Text key={s._id} size="sm" c="dimmed">
+                {JSON.stringify(s.data)}
+              </Text>
+            ))}
+          </Stack>
+        </Card>
+      </Stack>
+    </Container>
   );
 }

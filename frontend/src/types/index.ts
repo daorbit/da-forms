@@ -8,14 +8,38 @@ export interface ApiError {
   message: string;
 }
 
-export type FieldType = 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'checkbox';
+export type FieldType =
+  | 'name'
+  | 'address'
+  | 'phone'
+  | 'email'
+  | 'website'
+  | 'text'
+  | 'textarea'
+  | 'regex'
+  | 'number'
+  | 'decimal'
+  | 'currency'
+  | 'select'
+  | 'radio'
+  | 'checkbox'
+  | 'date'
+  | 'time'
+  | 'rating'
+  | 'file';
 
 export interface FormField {
   id: string;
   type: FieldType;
   label: string;
   required: boolean;
+  placeholder?: string;
+  helpText?: string;
   options?: string[];
+  pattern?: string;
+  min?: number;
+  max?: number;
+  maxRating?: number;
 }
 
 export interface Form {

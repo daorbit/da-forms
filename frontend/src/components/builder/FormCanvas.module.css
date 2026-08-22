@@ -1,0 +1,65 @@
+.canvasArea {
+  padding: 32px;
+  background-color: var(--mantine-color-gray-1);
+  min-height: 100%;
+}
+
+.formCard {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: var(--mantine-color-white);
+  overflow: hidden;
+}
+
+.header {
+  padding: 32px 24px 24px;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+}
+
+.fieldRow {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  cursor: pointer;
+}
+
+.fieldRow:hover {
+  background-color: var(--mantine-color-gray-0);
+}
+
+.fieldRowSelected {
+  background-color: var(--mantine-color-teal-0);
+  box-shadow: inset 3px 0 0 var(--mantine-color-teal-6);
+}
+
+.gripIcon {
+  color: var(--mantine-color-gray-4);
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.fieldRow:hover .gripIcon,
+.fieldRowSelected .gripIcon {
+  opacity: 1;
+}
+
+.fieldLabel {
+  width: 200px;
+  padding-top: 8px;
+  flex-shrink: 0;
+}
+
+.fieldInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowActions {
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.fieldRow:hover .rowActions,
+.fieldRowSelected .rowActions {
+  opacity: 1;
+}

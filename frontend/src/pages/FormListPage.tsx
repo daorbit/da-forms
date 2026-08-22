@@ -19,6 +19,7 @@ import {
 import { listForms, deleteForm } from '@/lib/api';
 import type { Form } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
+import { ShareModal } from '@/components/share/ShareModal';
 import classes from './FormListPage.module.css';
 
 function formatDate(iso: string) {
@@ -30,6 +31,7 @@ export function FormListPage() {
   const [newFormOpen, setNewFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [sharing, setSharing] = useState<Form | null>(null);
 
   useEffect(() => {
     listForms().then(setForms);
@@ -126,12 +128,12 @@ export function FormListPage() {
                   All Entries
                 </Button>
                 <ActionIcon
-                  component={Link}
-                  to={`/forms/${form._id}`}
                   variant="subtle"
                   color="gray"
                   radius="xl"
                   size="lg"
+                  onClick={() => setSharing(form)}
+                  aria-label="Share"
                 >
                   <IconShare2 size={16} />
                 </ActionIcon>
@@ -177,6 +179,17 @@ export function FormListPage() {
       </Stack>
 
       <NewFormModal opened={newFormOpen} onClose={() => setNewFormOpen(false)} />
+
+      {sharing && (
+        <ShareModal
+          opened
+          onClose={() => setSharing(null)}
+          form={sharing}
+          onStatusChange={(status) =>
+            setForms((prev) => prev.map((f) => (f._id === sharing._id ? { ...f, status } : f)))
+          }
+        />
+      )}
 
       <Modal
         opened={!!pendingDelete}

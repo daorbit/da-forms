@@ -53,7 +53,7 @@ export function EntriesPage() {
           <ThemeIcon variant="light" color="blue" radius="sm">
             <IconFileText size={18} />
           </ThemeIcon>
-          <Text fw={600} component={Link} to={`/forms/${form._id}`} className={classes.formLink}>
+          <Text fw={600} component={Link} to={`/forms/${form._id}/edit`} className={classes.formLink}>
             {form.title}
           </Text>
         </Group>

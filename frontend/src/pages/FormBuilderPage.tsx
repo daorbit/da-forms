@@ -4,7 +4,8 @@ import { AppShell, Group, TextInput, Button, ThemeIcon } from '@mantine/core';
 import { IconFileText, IconEye } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
-import type { FormField, FieldType } from '@/types';
+import type { Form, FormField, FieldType } from '@/types';
+import { ShareModal } from '@/components/share/ShareModal';
 import { makeField } from '@/lib/fieldPalette';
 import { FieldPalette } from '@/components/builder/FieldPalette';
 import { FormCanvas } from '@/components/builder/FormCanvas';
@@ -31,11 +32,14 @@ export function FormBuilderPage() {
   );
   const [redirectUrl, setRedirectUrl] = useState('');
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
+  const [savedForm, setSavedForm] = useState<Form | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!routeFormId) return;
     getForm(routeFormId).then((form) => {
+      setSavedForm(form);
       setTitle(form.title);
       setDescription(form.description ?? '');
       setFields(form.fields);
@@ -76,11 +80,9 @@ export function FormBuilderPage() {
       : await createForm(payload);
     setSaving(false);
     setSavedFormId(form._id);
-    if (savedFormId) {
-      notifications.show({ message: 'Form saved', color: 'teal' });
-    } else {
-      navigate(`/forms/${form._id}`);
-    }
+    setSavedForm(form);
+    notifications.show({ message: 'Form saved', color: 'teal' });
+    if (!savedFormId) setShareOpen(true);
   }
 
   function handleRailSelect(panel: RailPanel) {
@@ -92,7 +94,7 @@ export function FormBuilderPage() {
       notifications.show({ message: 'Save the form first to get its embed code', color: 'yellow' });
       return;
     }
-    navigate(`/forms/${savedFormId}?tab=embed`);
+    setShareOpen(true);
   }
 
   const editingField = fields.find((f) => f.id === editingId) ?? null;
@@ -173,6 +175,14 @@ export function FormBuilderPage() {
         onRedirectChange={setRedirectUrl}
       />
 
+      {savedForm && (
+        <ShareModal
+          opened={shareOpen}
+          onClose={() => setShareOpen(false)}
+          form={savedForm}
+          onStatusChange={(status) => setSavedForm({ ...savedForm, status })}
+        />
+      )}
     </AppShell>
   );
 }

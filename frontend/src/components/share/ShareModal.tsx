@@ -344,7 +344,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                     {shareUrl}
                   </Text>
                 </Box>
-                <iframe src={shareUrl} title="Form preview" className={classes.frame} />
+                <iframe src={`${shareUrl}?preview=1`} title="Form preview" className={classes.frame} />
               </Paper>
             )}
           </Box>

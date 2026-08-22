@@ -46,6 +46,12 @@ interface Props {
   labelPlacement?: LabelPlacement;
   /** Overrides the label's text color — set from the form's theme. */
   labelColor?: string;
+  /** Overrides the input's background — set from the form's theme. */
+  inputBg?: string;
+  /** Overrides the input's border — set from the form's theme. */
+  inputBorder?: string;
+  /** Overrides the typed-text color inside inputs — set from the form's theme. */
+  inputTextColor?: string;
 }
 
 const sizeWidth: Record<FieldSize, string> = {
@@ -62,6 +68,9 @@ export function FieldControl({
   hideLabel,
   labelPlacement = 'top',
   labelColor,
+  inputBg,
+  inputBorder,
+  inputTextColor,
 }: Props) {
   const showLabel = !hideLabel && !field.hideLabel;
   const sideLabel = showLabel && labelPlacement !== 'top';
@@ -90,6 +99,15 @@ export function FieldControl({
     </>
   ) : undefined;
 
+  const inputStyle =
+    inputBg || inputBorder || inputTextColor
+      ? {
+          backgroundColor: inputBg,
+          borderColor: inputBorder,
+          color: inputTextColor,
+        }
+      : undefined;
+
   const base = {
     label,
     description: showLabel && !sideLabel ? field.instructions : undefined,
@@ -101,7 +119,10 @@ export function FieldControl({
     title: field.hoverText,
     readOnly,
     style: { maxWidth: sizeWidth[field.size ?? 'large'] },
-    styles: labelColor ? { label: { color: labelColor } } : undefined,
+    styles:
+      labelColor || inputStyle
+        ? { label: labelColor ? { color: labelColor } : undefined, input: inputStyle }
+        : undefined,
   };
 
   const control = (node: React.ReactNode) => {

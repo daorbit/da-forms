@@ -76,6 +76,12 @@ export interface FormTheme {
   accentColor?: string;
   /** Field label text color. Falls back to the resolved body text color when unset. */
   labelColor?: string;
+  /** Input/textarea/select field background. */
+  inputBg?: string;
+  /** Input/textarea/select field border. */
+  inputBorder?: string;
+  /** Text typed into input fields. Falls back to the resolved body text color when unset. */
+  inputTextColor?: string;
   /** 'auto' picks light or dark text based on cardBg's luminance; 'light'/'dark' pin it manually. */
   textMode?: 'auto' | 'light' | 'dark';
 }

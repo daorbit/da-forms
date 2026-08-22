@@ -146,8 +146,7 @@ export function NewFormModal({ opened, onClose }: Props) {
               <Box
                 className={`da-forms-light-surface ${classes.previewInner}`}
                 data-mantine-color-scheme="light"
-                p="xl"
-                style={{ backgroundColor: activeTemplate.theme?.pageBg }}
+                style={{ backgroundColor: activeTemplate.theme?.pageBg ?? 'var(--mantine-color-gray-1)' }}
               >
                 <Box className={classes.previewCard}>
                   <FormRenderer

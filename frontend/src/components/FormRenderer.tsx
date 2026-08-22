@@ -84,6 +84,9 @@ export function FormRenderer({
         onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
         labelPlacement={labelPlacement}
         labelColor={theme?.labelColor ?? textColor}
+        inputBg={theme?.inputBg}
+        inputBorder={theme?.inputBorder}
+        inputTextColor={theme?.inputTextColor}
       />
     );
   }

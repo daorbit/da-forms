@@ -16,7 +16,7 @@ const { theme, colorScheme } = themeFromParams(BOOT_SEARCH);
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <MantineProvider theme={theme} defaultColorScheme={colorScheme} forceColorScheme={colorScheme === 'auto' ? undefined : colorScheme}>
-      <Notifications />
+      <Notifications position="top-right" />
       <App />
     </MantineProvider>
   </React.StrictMode>,

@@ -75,6 +75,9 @@ export interface FormTheme {
   cardBorder?: string;
   accentColor?: string;
   labelColor?: string;
+  inputBg?: string;
+  inputBorder?: string;
+  inputTextColor?: string;
   textMode?: 'auto' | 'light' | 'dark';
 }
 
@@ -152,6 +155,9 @@ const formSchema = new Schema<FormDocument>(
           cardBorder: { type: String },
           accentColor: { type: String },
           labelColor: { type: String },
+          inputBg: { type: String },
+          inputBorder: { type: String },
+          inputTextColor: { type: String },
           textMode: { type: String, enum: ['auto', 'light', 'dark'] },
         },
         { _id: false }

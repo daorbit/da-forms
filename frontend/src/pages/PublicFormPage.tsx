@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Container, Text, Center, Loader, Stack, Button, ThemeIcon } from '@mantine/core';
 import { IconCheck, IconClockPause } from '@tabler/icons-react';
 import { getPublicForm, submitForm } from '@/lib/api';
@@ -8,6 +8,8 @@ import { FormRenderer } from '@/components/FormRenderer';
 
 export function PublicFormPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get('preview') === '1';
   const [form, setForm] = useState<Form | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -54,7 +56,7 @@ export function PublicFormPage() {
       </Center>
     );
 
-  if (form.status !== 'published')
+  if (form.status !== 'published' && !isPreview)
     return (
       <Center h="100vh" className="da-forms-light-surface" data-mantine-color-scheme="light" style={{ background: '#fff' }}>
         <Container size="xs" px="md" style={{ width: '100%', textAlign: 'center' }}>

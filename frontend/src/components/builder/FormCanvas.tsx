@@ -81,7 +81,17 @@ export function FormCanvas({
             ))}
           </div>
         ) : isStatic ? (
-          <FieldControl field={field} value="" onChange={() => {}} readOnly hideLabel labelColor={labelColor} />
+          <FieldControl
+            field={field}
+            value=""
+            onChange={() => {}}
+            readOnly
+            hideLabel
+            labelColor={labelColor}
+            inputBg={theme?.inputBg}
+            inputBorder={theme?.inputBorder}
+            inputTextColor={theme?.inputTextColor}
+          />
         ) : (
           <>
             {!field.hideLabel && (
@@ -101,7 +111,17 @@ export function FormCanvas({
               </Text>
             )}
             <Box mt={8}>
-              <FieldControl field={field} value="" onChange={() => {}} readOnly hideLabel labelColor={labelColor} />
+              <FieldControl
+            field={field}
+            value=""
+            onChange={() => {}}
+            readOnly
+            hideLabel
+            labelColor={labelColor}
+            inputBg={theme?.inputBg}
+            inputBorder={theme?.inputBorder}
+            inputTextColor={theme?.inputTextColor}
+          />
             </Box>
           </>
         )}

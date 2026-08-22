@@ -100,6 +100,30 @@ export function ThemeDrawer({ opened, onClose, theme, onChange }: Props) {
           swatches={SWATCHES}
         />
 
+        <Divider label="Input fields" labelPosition="left" />
+
+        <ColorInput
+          label="Input background"
+          value={theme.inputBg ?? ''}
+          onChange={(value) => onChange({ inputBg: value })}
+          swatches={SWATCHES}
+        />
+
+        <ColorInput
+          label="Input border"
+          value={theme.inputBorder ?? ''}
+          onChange={(value) => onChange({ inputBorder: value })}
+          swatches={SWATCHES}
+        />
+
+        <ColorInput
+          label="Input text color"
+          description="Text typed into fields — leave empty to match the text color below"
+          value={theme.inputTextColor ?? ''}
+          onChange={(value) => onChange({ inputTextColor: value })}
+          swatches={SWATCHES}
+        />
+
         <div>
           <Text size="sm" fw={500} mb={8}>
             Text color

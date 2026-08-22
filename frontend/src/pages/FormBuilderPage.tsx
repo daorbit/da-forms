@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { AppShell, Group, TextInput, Button, ThemeIcon } from '@mantine/core';
 import { IconFileText, IconEye } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -12,10 +12,11 @@ import { FormSettings } from '@/components/builder/FormSettings';
 import { PropertiesDrawer } from '@/components/builder/PropertiesDrawer';
 import { IconRail, type RailPanel } from '@/components/builder/IconRail';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
-import { EmbedDrawer } from '@/components/builder/EmbedDrawer';
+import classes from './FormBuilderPage.module.css';
 
 export function FormBuilderPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { id: routeFormId } = useParams<{ id: string }>();
   const initialTitle = (location.state as { title?: string } | null)?.title ?? 'Untitled form';
   const [title, setTitle] = useState(initialTitle);
@@ -75,7 +76,23 @@ export function FormBuilderPage() {
       : await createForm(payload);
     setSaving(false);
     setSavedFormId(form._id);
-    notifications.show({ message: 'Form saved', color: 'teal' });
+    if (savedFormId) {
+      notifications.show({ message: 'Form saved', color: 'teal' });
+    } else {
+      navigate(`/forms/${form._id}`);
+    }
+  }
+
+  function handleRailSelect(panel: RailPanel) {
+    if (panel !== 'embed') {
+      setRailPanel(panel);
+      return;
+    }
+    if (!savedFormId) {
+      notifications.show({ message: 'Save the form first to get its embed code', color: 'yellow' });
+      return;
+    }
+    navigate(`/forms/${savedFormId}?tab=embed`);
   }
 
   const editingField = fields.find((f) => f.id === editingId) ?? null;
@@ -84,7 +101,9 @@ export function FormBuilderPage() {
     <AppShell
       header={{ height: 60 }}
       navbar={{ width: 300, breakpoint: 'sm' }}
+      aside={{ width: 52, breakpoint: 'sm' }}
       padding={0}
+      classNames={{ main: classes.main }}
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
@@ -141,7 +160,9 @@ export function FormBuilderPage() {
         onDescriptionChange={setDescription}
       />
 
-      <IconRail active={railPanel} onSelect={(panel) => setRailPanel(panel)} />
+      <AppShell.Aside>
+        <IconRail active={railPanel} onSelect={handleRailSelect} />
+      </AppShell.Aside>
 
       <ThankYouDrawer
         opened={railPanel === 'thankYou'}
@@ -152,11 +173,6 @@ export function FormBuilderPage() {
         onRedirectChange={setRedirectUrl}
       />
 
-      <EmbedDrawer
-        opened={railPanel === 'embed'}
-        onClose={() => setRailPanel(null)}
-        formId={savedFormId}
-      />
     </AppShell>
   );
 }

@@ -1,15 +1,16 @@
-.canvasArea {
-  /* extra right padding clears the fixed icon rail */
-  padding: 32px 84px 32px 32px;
-  background-color: var(--mantine-color-gray-1);
-  min-height: 100%;
-}
-
+/* the only scroll container in the builder */
 .canvasScroll {
-  height: calc(100vh - 60px);
+  height: 100%;
   overflow-y: auto;
+  background-color: var(--mantine-color-gray-1);
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--mantine-color-gray-4) transparent;
+}
+
+.canvasArea {
+  padding: 32px;
+  min-height: 100%;
 }
 
 .canvasScroll::-webkit-scrollbar {

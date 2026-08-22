@@ -7,7 +7,23 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  padding: 2rem;
+  padding: 0;
+}
+
+/*
+ * Mantine compensates for the hidden scrollbar when a drawer/modal locks body
+ * scroll, which shifts the fixed builder chrome. The builder never scrolls the
+ * body, so the compensation is unnecessary.
+ */
+body[data-mantine-scroll-locked] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
 }

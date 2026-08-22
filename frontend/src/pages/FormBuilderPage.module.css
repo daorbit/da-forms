@@ -1,0 +1,12 @@
+/*
+ * AppShell pads main by the header height; box-sizing keeps the total at one
+ * viewport so only the canvas inside it scrolls.
+ */
+.main {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main > * {
+  height: 100%;
+}

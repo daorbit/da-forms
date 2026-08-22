@@ -29,7 +29,8 @@ export function FormCanvas({
   onOpenFormSettings,
 }: Props) {
   return (
-    <Box className={`${classes.canvasScroll} ${classes.canvasArea}`}>
+    <Box className={classes.canvasScroll}>
+      <Box className={classes.canvasArea}>
       <Paper className={classes.formCard} radius="md" withBorder>
         <Box className={`${classes.fieldRow} ${classes.header}`}>
           <Title order={3} ta="center">
@@ -136,6 +137,7 @@ export function FormCanvas({
           })}
         </Stack>
       </Paper>
+      </Box>
     </Box>
   );
 }

@@ -8,7 +8,6 @@ import {
   IconPlus,
   IconSearch,
   IconArrowsSort,
-  IconChevronDown,
   IconFileText,
   IconPencil,
   IconGridDots,

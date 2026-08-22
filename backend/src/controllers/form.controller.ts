@@ -117,6 +117,9 @@ export const getPublicForm: RequestHandler = async (req, res) => {
 export const submitForm: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  if (form.status !== 'published') {
+    return res.status(403).json({ error: 'not_published', message: 'This form is not accepting responses yet' });
+  }
   const sourceUrl = req.get('referer');
   const submission = await formService.submitForm(req.params.id, req.body, sourceUrl);
   res.status(201).json(submission);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Text, Center, Loader, Stack, Button, ThemeIcon } from '@mantine/core';
-import { IconCheck } from '@tabler/icons-react';
+import { IconCheck, IconClockPause } from '@tabler/icons-react';
 import { getPublicForm, submitForm } from '@/lib/api';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
@@ -23,7 +23,15 @@ export function PublicFormPage() {
   async function handleSubmit(values: Record<string, string>) {
     if (!id) return;
     setSubmitting(true);
-    await submitForm(id, values);
+    try {
+      await submitForm(id, values);
+    } catch {
+      setSubmitting(false);
+      // The form was unpublished after this page loaded — refetch so the
+      // "not accepting responses" screen takes over instead of a dead end.
+      getPublicForm(id).then(setForm);
+      return;
+    }
     setSubmitting(false);
     if (form?.redirectUrl) {
       window.location.href = form.redirectUrl;
@@ -43,6 +51,25 @@ export function PublicFormPage() {
     return (
       <Center h="100vh">
         <Loader />
+      </Center>
+    );
+
+  if (form.status !== 'published')
+    return (
+      <Center h="100vh" className="da-forms-light-surface" data-mantine-color-scheme="light" style={{ background: '#fff' }}>
+        <Container size="xs" px="md" style={{ width: '100%', textAlign: 'center' }}>
+          <Center>
+            <ThemeIcon size={64} radius="xl" color="gray" variant="light">
+              <IconClockPause size={30} stroke={1.8} />
+            </ThemeIcon>
+          </Center>
+          <Text ta="center" size="28px" fw={800} mt="xl" style={{ lineHeight: 1.15, letterSpacing: '-0.02em' }}>
+            This form isn't accepting responses yet
+          </Text>
+          <Text size="sm" c="dimmed" mt="md">
+            The owner hasn't published it. Check back later or contact whoever shared this link.
+          </Text>
+        </Container>
       </Center>
     );
 

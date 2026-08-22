@@ -25,7 +25,7 @@ export function FormSettings({
       position="right"
       size={480}
       title="Form Properties"
-      padding={0}
+      padding="lg"
       classNames={classes}
     >
       <Stack gap="md">

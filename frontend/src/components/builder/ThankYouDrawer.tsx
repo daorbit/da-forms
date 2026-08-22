@@ -25,7 +25,7 @@ export function ThankYouDrawer({
       position="right"
       size={480}
       title="Thank You Page & Redirection"
-      padding={0}
+      padding="lg"
       classNames={classes}
     >
       <Stack gap="md">

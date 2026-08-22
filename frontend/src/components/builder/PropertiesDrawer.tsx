@@ -52,8 +52,10 @@ export function PropertiesDrawer({ field, onClose, onChange }: Props) {
       opened={!!field}
       onClose={onClose}
       position="right"
-      size={440}
-      padding={0}
+      size={520}
+      // Mantine writes this onto the content element, which then drives the
+      // header and body insets — setting the prop to 0 flattens both.
+      padding="lg"
       // The canvas must stay visible and clickable while properties are edited,
       // so changes can be watched as they are typed.
       withOverlay={false}

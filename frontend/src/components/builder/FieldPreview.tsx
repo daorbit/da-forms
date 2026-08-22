@@ -145,14 +145,24 @@ export function FieldPreview({ field }: { field: FormField }) {
     case 'monthYear':
       return wrap(<TextInput {...common} leftSection={<IconCalendar size={16} />} placeholder="mm/yyyy" />);
     case 'file':
-      return wrap(<FileInput {...common} placeholder="Choose file" />);
+      return wrap(<FileInput readOnly title={field.hoverText} placeholder={ph('Choose file')} />);
     case 'imageUpload':
       return wrap(
-        <FileInput {...common} leftSection={<IconPhotoUp size={16} />} placeholder="Choose image" />
+        <FileInput
+          readOnly
+          title={field.hoverText}
+          leftSection={<IconPhotoUp size={16} />}
+          placeholder={ph('Choose image')}
+        />
       );
     case 'mediaUpload':
       return wrap(
-        <FileInput {...common} leftSection={<IconVideo size={16} />} placeholder="Choose audio or video" />
+        <FileInput
+          readOnly
+          title={field.hoverText}
+          leftSection={<IconVideo size={16} />}
+          placeholder={ph('Choose audio or video')}
+        />
       );
     case 'rating':
       return <Rating count={field.maxRating ?? 5} readOnly />;

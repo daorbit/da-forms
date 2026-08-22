@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { Paper, Title, Text, Button, Stack, SimpleGrid } from '@mantine/core';
-import type {
-  FormField,
-  LabelPlacement,
-  SubmitButtonSize,
-  SubmitButtonColor,
-  SubmitButtonWidth,
-  FormTheme,
-} from '@/types';
+import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, FormTheme } from '@/types';
 import { FieldControl } from '@/components/FieldControl';
 import { valueFields } from '@/lib/fieldTree';
 import { resolveTextColor } from '@/lib/formTheme';
@@ -20,7 +13,6 @@ interface Props {
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
-  submitButtonColor?: SubmitButtonColor;
   submitButtonWidth?: SubmitButtonWidth;
   theme?: FormTheme;
   submitting?: boolean;
@@ -56,7 +48,6 @@ export function FormRenderer({
   labelPlacement,
   submitLabel,
   submitButtonSize,
-  submitButtonColor,
   submitButtonWidth,
   theme,
   submitting,
@@ -138,7 +129,7 @@ export function FormRenderer({
                 loading={submitting}
                 mt="sm"
                 size={buttonSize[submitButtonSize ?? 'medium']}
-                color={accent ? undefined : (submitButtonColor ?? 'emerald')}
+                color={accent ? undefined : 'emerald'}
                 style={{
                   width: `${submitButtonWidth ?? 100}%`,
                   alignSelf: 'center',

@@ -6,7 +6,7 @@ import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
-import type { Form, FormField, FieldType, LabelPlacement, SubmitButtonSize, SubmitButtonColor, SubmitButtonWidth, FormTheme } from '@/types';
+import type { Form, FormField, FieldType, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, FormTheme } from '@/types';
 import { ShareModal } from '@/components/share/ShareModal';
 import {
   DndContext,
@@ -61,7 +61,6 @@ export function FormBuilderPage() {
   const [labelPlacement, setLabelPlacement] = useState<LabelPlacement>('top');
   const [submitLabel, setSubmitLabel] = useState('');
   const [submitButtonSize, setSubmitButtonSize] = useState<SubmitButtonSize>('medium');
-  const [submitButtonColor, setSubmitButtonColor] = useState<SubmitButtonColor>('emerald');
   const [submitButtonWidth, setSubmitButtonWidth] = useState<SubmitButtonWidth>(100);
   const [theme, setTheme] = useState<FormTheme>({ scope: locationState?.themeScope ?? 'page' });
   const [collectIp, setCollectIp] = useState(false);
@@ -92,7 +91,6 @@ export function FormBuilderPage() {
         labelPlacement,
         submitLabel,
         submitButtonSize,
-        submitButtonColor,
         submitButtonWidth,
         theme,
         collectIp,
@@ -108,7 +106,6 @@ export function FormBuilderPage() {
       submitLabel,
       theme,
       submitButtonSize,
-      submitButtonColor,
       submitButtonWidth,
       collectIp,
     ]
@@ -138,7 +135,6 @@ export function FormBuilderPage() {
       setLabelPlacement(form.labelPlacement ?? 'top');
       setSubmitLabel(form.submitLabel ?? '');
       setSubmitButtonSize(form.submitButtonSize ?? 'medium');
-      setSubmitButtonColor(form.submitButtonColor ?? 'emerald');
       setSubmitButtonWidth(form.submitButtonWidth ?? 100);
       setTheme(form.theme ?? { scope: 'page' });
       setCollectIp(form.collectIp ?? false);
@@ -154,7 +150,6 @@ export function FormBuilderPage() {
           labelPlacement: form.labelPlacement ?? 'top',
           submitLabel: form.submitLabel ?? '',
           submitButtonSize: form.submitButtonSize ?? 'medium',
-          submitButtonColor: form.submitButtonColor ?? 'emerald',
           submitButtonWidth: form.submitButtonWidth ?? 100,
           theme: form.theme ?? { scope: 'page' },
           collectIp: form.collectIp ?? false,
@@ -275,7 +270,6 @@ export function FormBuilderPage() {
       labelPlacement,
       submitLabel,
       submitButtonSize,
-      submitButtonColor,
       submitButtonWidth,
       theme,
       collectIp,
@@ -424,7 +418,6 @@ export function FormBuilderPage() {
           labelPlacement,
           submitLabel,
           submitButtonSize,
-          submitButtonColor,
           submitButtonWidth,
           collectIp,
         }}
@@ -433,7 +426,6 @@ export function FormBuilderPage() {
           if (patch.labelPlacement) setLabelPlacement(patch.labelPlacement);
           if (patch.submitLabel !== undefined) setSubmitLabel(patch.submitLabel);
           if (patch.submitButtonSize) setSubmitButtonSize(patch.submitButtonSize);
-          if (patch.submitButtonColor) setSubmitButtonColor(patch.submitButtonColor);
           if (patch.submitButtonWidth) setSubmitButtonWidth(patch.submitButtonWidth);
           if (patch.collectIp !== undefined) setCollectIp(patch.collectIp);
         }}
@@ -465,7 +457,6 @@ export function FormBuilderPage() {
         labelPlacement={labelPlacement}
         submitLabel={submitLabel}
         submitButtonSize={submitButtonSize}
-        submitButtonColor={submitButtonColor}
         submitButtonWidth={submitButtonWidth}
         theme={theme}
       />

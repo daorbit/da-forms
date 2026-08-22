@@ -63,10 +63,6 @@ export type SubmitButtonSize = 'small' | 'medium' | 'large';
 
 export type SubmitButtonWidth = 25 | 50 | 75 | 100;
 
-export const SUBMIT_BUTTON_COLORS = ['emerald', 'blue', 'violet', 'red', 'orange', 'gray', 'dark'] as const;
-
-export type SubmitButtonColor = (typeof SUBMIT_BUTTON_COLORS)[number];
-
 export interface FormTheme {
   /** 'page' themes the full share-link page (Google Forms style); 'card' themes only the card, for embeds where the host page's own background should show through. */
   scope?: 'page' | 'card';
@@ -76,7 +72,7 @@ export interface FormTheme {
   cardBg?: string;
   /** The form card's border. */
   cardBorder?: string;
-  /** Labels, focus rings, links — one accent used across the form's interactive bits. */
+  /** The submit button's color, and other interactive highlights across the form. */
   accentColor?: string;
   /** Field label text color. Falls back to the resolved body text color when unset. */
   labelColor?: string;
@@ -128,7 +124,6 @@ export interface Form {
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
-  submitButtonColor?: SubmitButtonColor;
   submitButtonWidth?: SubmitButtonWidth;
   theme?: FormTheme;
   /** Records the respondent's IP with each submission. Off by default. */

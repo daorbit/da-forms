@@ -1,7 +1,5 @@
-import { Drawer, Stack, TextInput, Radio, Group, Text, Divider, SegmentedControl, ColorSwatch, Slider, UnstyledButton } from '@mantine/core';
-import { IconCheck } from '@tabler/icons-react';
-import type { LabelPlacement, SubmitButtonSize, SubmitButtonColor, SubmitButtonWidth } from '@/types';
-import { SUBMIT_BUTTON_COLORS } from '@/types';
+import { Drawer, Stack, TextInput, Radio, Group, Text, Divider, SegmentedControl, Slider } from '@mantine/core';
+import type { LabelPlacement, SubmitButtonSize, SubmitButtonWidth } from '@/types';
 import classes from './drawer.module.css';
 
 export interface QuickSettings {
@@ -9,7 +7,6 @@ export interface QuickSettings {
   labelPlacement: LabelPlacement;
   submitLabel: string;
   submitButtonSize: SubmitButtonSize;
-  submitButtonColor: SubmitButtonColor;
   submitButtonWidth: SubmitButtonWidth;
   collectIp: boolean;
 }
@@ -102,31 +99,6 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange }: Pro
                 { value: 'large', label: 'Large' },
               ]}
             />
-          </div>
-
-          <div>
-            <Text size="sm" fw={500} mb={8}>
-              Submit button color
-            </Text>
-            <Group gap="xs">
-              {SUBMIT_BUTTON_COLORS.map((color) => (
-                <UnstyledButton
-                  key={color}
-                  onClick={() => onChange({ submitButtonColor: color })}
-                  aria-label={color}
-                  style={{ position: 'relative', lineHeight: 0 }}
-                >
-                  <ColorSwatch color={`var(--mantine-color-${color}-6)`} size={26} />
-                  {settings.submitButtonColor === color && (
-                    <IconCheck
-                      size={13}
-                      color="white"
-                      style={{ position: 'absolute', top: 6, left: 6 }}
-                    />
-                  )}
-                </UnstyledButton>
-              ))}
-            </Group>
           </div>
 
           <div>

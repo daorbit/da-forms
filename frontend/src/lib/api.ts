@@ -56,7 +56,6 @@ export function createForm(
     labelPlacement?: Form['labelPlacement'];
     submitLabel?: string;
     submitButtonSize?: Form['submitButtonSize'];
-    submitButtonColor?: Form['submitButtonColor'];
     submitButtonWidth?: Form['submitButtonWidth'];
     theme?: Form['theme'];
     collectIp?: boolean;

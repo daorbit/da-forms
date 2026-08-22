@@ -84,8 +84,8 @@ export function ThemeDrawer({ opened, onClose, theme, onChange }: Props) {
         />
 
         <ColorInput
-          label="Accent color"
-          description="The submit button and other interactive highlights"
+          label="Submit button color"
+          description="Also used for focus rings and other interactive highlights"
           placeholder="#0ca678"
           value={theme.accentColor ?? ''}
           onChange={(value) => onChange({ accentColor: value })}

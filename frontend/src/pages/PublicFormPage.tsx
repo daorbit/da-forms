@@ -119,7 +119,6 @@ export function PublicFormPage() {
           labelPlacement={form.labelPlacement}
           submitLabel={form.submitLabel}
           submitButtonSize={form.submitButtonSize}
-          submitButtonColor={form.submitButtonColor}
           submitButtonWidth={form.submitButtonWidth}
           theme={form.theme}
           submitting={submitting}

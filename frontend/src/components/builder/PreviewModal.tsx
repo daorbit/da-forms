@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Group, Text, ActionIcon, Box, Badge } from '@mantine/core';
 import { IconX, IconDeviceDesktop, IconDeviceTablet, IconDeviceMobile } from '@tabler/icons-react';
-import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonColor, SubmitButtonWidth, FormTheme } from '@/types';
+import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, FormTheme } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import classes from './PreviewModal.module.css';
 
@@ -23,7 +23,6 @@ interface Props {
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
-  submitButtonColor?: SubmitButtonColor;
   submitButtonWidth?: SubmitButtonWidth;
   theme?: FormTheme;
 }
@@ -42,7 +41,6 @@ export function PreviewModal({
   labelPlacement,
   submitLabel,
   submitButtonSize,
-  submitButtonColor,
   submitButtonWidth,
   theme,
 }: Props) {
@@ -111,7 +109,6 @@ export function PreviewModal({
             labelPlacement={labelPlacement}
             submitLabel={submitLabel}
             submitButtonSize={submitButtonSize}
-            submitButtonColor={submitButtonColor}
             submitButtonWidth={submitButtonWidth}
             theme={theme}
           />

@@ -26,7 +26,7 @@ import {
   IconPhotoUp,
   IconVideo,
 } from '@tabler/icons-react';
-import type { FormField, FieldSize } from '@/types';
+import type { FormField, FieldSize, LabelPlacement } from '@/types';
 
 interface Props {
   field: FormField;
@@ -42,6 +42,8 @@ interface Props {
   readOnly?: boolean;
   /** Suppresses the label, for a canvas that draws its own above the control. */
   hideLabel?: boolean;
+  /** Where the label sits relative to the input. Defaults to 'top'. */
+  labelPlacement?: LabelPlacement;
 }
 
 const sizeWidth: Record<FieldSize, string> = {
@@ -50,10 +52,23 @@ const sizeWidth: Record<FieldSize, string> = {
   large: '100%',
 };
 
-export function FieldControl({ field, value, onChange, readOnly, hideLabel }: Props) {
+export function FieldControl({ field, value, onChange, readOnly, hideLabel, labelPlacement = 'top' }: Props) {
   const showLabel = !hideLabel && !field.hideLabel;
+  const sideLabel = showLabel && labelPlacement !== 'top';
 
-  const label = showLabel ? (
+  const label = showLabel && !sideLabel ? (
+    <>
+      {field.label}
+      {field.required && (
+        <Text span c="red">
+          {' '}
+          *
+        </Text>
+      )}
+    </>
+  ) : undefined;
+
+  const labelText = showLabel ? (
     <>
       {field.label}
       {field.required && (
@@ -67,12 +82,33 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel }: Pr
 
   const base = {
     label,
-    description: showLabel ? field.instructions : undefined,
+    description: showLabel && !sideLabel ? field.instructions : undefined,
     required: field.required,
     placeholder: field.placeholder,
     title: field.hoverText,
     readOnly,
     style: { maxWidth: sizeWidth[field.size ?? 'large'] },
+  };
+
+  const control = (node: React.ReactNode) => {
+    if (!sideLabel) return node;
+    return (
+      <Group align="flex-start" wrap="nowrap" gap="sm">
+        <Text
+          size="sm"
+          fw={500}
+          style={{
+            width: 140,
+            flexShrink: 0,
+            textAlign: labelPlacement === 'right' ? 'right' : 'left',
+            order: labelPlacement === 'right' ? 2 : 0,
+          }}
+        >
+          {labelText}
+        </Text>
+        <div style={{ flex: 1, minWidth: 0 }}>{node}</div>
+      </Group>
+    );
   };
 
   const text = (extra?: Record<string, unknown>) => (
@@ -96,6 +132,10 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel }: Pr
     />
   );
 
+  const noLabelTypes: FormField['type'][] = ['heading', 'description', 'divider', 'spacer'];
+  return noLabelTypes.includes(field.type) ? renderControl() : control(renderControl());
+
+  function renderControl(): React.ReactNode {
   switch (field.type) {
     case 'name': {
       const [first = '', last = ''] = value.split(' ');
@@ -433,5 +473,6 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel }: Pr
       return <Box h={32} />;
     default:
       return text();
+  }
   }
 }

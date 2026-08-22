@@ -46,6 +46,7 @@ export function createForm(
     hideHeader?: boolean;
     labelPlacement?: Form['labelPlacement'];
     submitLabel?: string;
+    submitButtonSize?: Form['submitButtonSize'];
     collectIp?: boolean;
   },
   workspaceId = DEFAULT_WORKSPACE

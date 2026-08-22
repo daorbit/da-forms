@@ -1,11 +1,12 @@
 import { Drawer, Stack, TextInput, Radio, Group, Text, Divider, SegmentedControl } from '@mantine/core';
-import type { LabelPlacement } from '@/types';
+import type { LabelPlacement, SubmitButtonSize } from '@/types';
 import classes from './drawer.module.css';
 
 export interface QuickSettings {
   hideHeader: boolean;
   labelPlacement: LabelPlacement;
   submitLabel: string;
+  submitButtonSize: SubmitButtonSize;
   collectIp: boolean;
 }
 
@@ -82,6 +83,22 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange }: Pro
             placeholder="Submit"
             onChange={(e) => onChange({ submitLabel: e.target.value })}
           />
+
+          <div>
+            <Text size="sm" fw={500} mb={8}>
+              Submit button size
+            </Text>
+            <SegmentedControl
+              fullWidth
+              value={settings.submitButtonSize}
+              onChange={(value) => onChange({ submitButtonSize: value as SubmitButtonSize })}
+              data={[
+                { value: 'small', label: 'Small' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'large', label: 'Large' },
+              ]}
+            />
+          </div>
         </Section>
 
         <Divider />

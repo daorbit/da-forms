@@ -61,6 +61,9 @@ export function PublicFormPage() {
           description={form.description}
           fields={form.fields}
           hideHeader={form.hideHeader}
+          labelPlacement={form.labelPlacement}
+          submitLabel={form.submitLabel}
+          submitButtonSize={form.submitButtonSize}
           submitting={submitting}
           onSubmit={handleSubmit}
         />

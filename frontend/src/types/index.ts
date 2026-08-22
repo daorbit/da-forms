@@ -59,6 +59,8 @@ export type FieldSize = 'small' | 'medium' | 'large';
 
 export type LabelPlacement = 'top' | 'left' | 'right';
 
+export type SubmitButtonSize = 'small' | 'medium' | 'large';
+
 export interface FormField {
   id: string;
   type: FieldType;
@@ -102,6 +104,7 @@ export interface Form {
   /** Where each field's label sits relative to its input. */
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
+  submitButtonSize?: SubmitButtonSize;
   /** Records the respondent's IP with each submission. Off by default. */
   collectIp?: boolean;
   createdAt: string;

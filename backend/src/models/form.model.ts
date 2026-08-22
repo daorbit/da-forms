@@ -40,6 +40,8 @@ export type FieldSize = 'small' | 'medium' | 'large';
 
 export type LabelPlacement = 'top' | 'left' | 'right';
 
+export type SubmitButtonSize = 'small' | 'medium' | 'large';
+
 export interface FormField {
   id: string;
   type: FieldType;
@@ -75,6 +77,7 @@ export interface FormDocument {
   hideHeader?: boolean;
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
+  submitButtonSize?: SubmitButtonSize;
   collectIp?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -124,6 +127,7 @@ const formSchema = new Schema<FormDocument>(
     hideHeader: { type: Boolean },
     labelPlacement: { type: String, enum: ['top', 'left', 'right'] },
     submitLabel: { type: String },
+    submitButtonSize: { type: String, enum: ['small', 'medium', 'large'] },
     collectIp: { type: Boolean },
   },
   { timestamps: true }

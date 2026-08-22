@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Group, Text, ActionIcon, Box, Badge } from '@mantine/core';
 import { IconX, IconDeviceDesktop, IconDeviceTablet, IconDeviceMobile } from '@tabler/icons-react';
-import type { FormField } from '@/types';
+import type { FormField, LabelPlacement, SubmitButtonSize } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import classes from './PreviewModal.module.css';
 
@@ -20,13 +20,26 @@ interface Props {
   description?: string;
   fields: FormField[];
   hideHeader?: boolean;
+  labelPlacement?: LabelPlacement;
+  submitLabel?: string;
+  submitButtonSize?: SubmitButtonSize;
 }
 
 /**
  * Shows exactly what respondents see, rendered from the editor's current
  * state — so unsaved changes are previewable without a round trip.
  */
-export function PreviewModal({ opened, onClose, title, description, fields, hideHeader }: Props) {
+export function PreviewModal({
+  opened,
+  onClose,
+  title,
+  description,
+  fields,
+  hideHeader,
+  labelPlacement,
+  submitLabel,
+  submitButtonSize,
+}: Props) {
   const [device, setDevice] = useState<Device>('desktop');
   const active = DEVICES.find((d) => d.id === device) ?? DEVICES[0];
 
@@ -85,6 +98,9 @@ export function PreviewModal({ opened, onClose, title, description, fields, hide
             description={description}
             fields={fields}
             hideHeader={hideHeader}
+            labelPlacement={labelPlacement}
+            submitLabel={submitLabel}
+            submitButtonSize={submitButtonSize}
           />
           <Text size="xs" c="dimmed" ta="center" mt="md">
             Submissions are not recorded in preview.

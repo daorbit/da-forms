@@ -20,6 +20,7 @@ export function createForm(input: {
   hideHeader?: boolean;
   labelPlacement?: 'top' | 'left' | 'right';
   submitLabel?: string;
+  submitButtonSize?: 'small' | 'medium' | 'large';
   collectIp?: boolean;
 }) {
   return FormModel.create(input);
@@ -38,6 +39,7 @@ export function updateForm(
     hideHeader: boolean;
     labelPlacement: 'top' | 'left' | 'right';
     submitLabel: string;
+    submitButtonSize: 'small' | 'medium' | 'large';
     collectIp: boolean;
   }>
 ) {

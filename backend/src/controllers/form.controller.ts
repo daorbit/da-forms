@@ -31,6 +31,7 @@ export const createForm: RequestHandler = async (req, res) => {
     hideHeader,
     labelPlacement,
     submitLabel,
+    submitButtonSize,
     collectIp,
   } = req.body;
   const form = await formService.createForm({
@@ -42,6 +43,7 @@ export const createForm: RequestHandler = async (req, res) => {
     hideHeader,
     labelPlacement,
     submitLabel,
+    submitButtonSize,
     collectIp,
     workspaceId: workspaceIdOf(req),
   });

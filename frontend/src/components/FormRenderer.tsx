@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Paper, Title, Text, Button, Stack, SimpleGrid } from '@mantine/core';
-import type { FormField } from '@/types';
+import type { FormField, LabelPlacement, SubmitButtonSize } from '@/types';
 import { FieldControl } from '@/components/FieldControl';
 import { valueFields } from '@/lib/fieldTree';
 
@@ -9,10 +9,19 @@ interface Props {
   description?: string;
   fields: FormField[];
   hideHeader?: boolean;
+  labelPlacement?: LabelPlacement;
+  submitLabel?: string;
+  submitButtonSize?: SubmitButtonSize;
   submitting?: boolean;
   /** Omitted in preview, where nothing is recorded. */
   onSubmit?: (values: Record<string, string>) => void;
 }
+
+const buttonSize: Record<SubmitButtonSize, string> = {
+  small: 'xs',
+  medium: 'sm',
+  large: 'md',
+};
 
 function initialValues(fields: FormField[]) {
   const values: Record<string, string> = {};
@@ -32,6 +41,9 @@ export function FormRenderer({
   description,
   fields,
   hideHeader,
+  labelPlacement,
+  submitLabel,
+  submitButtonSize,
   submitting,
   onSubmit,
 }: Props) {
@@ -62,6 +74,7 @@ export function FormRenderer({
         field={field}
         value={values[field.id] ?? ''}
         onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
+        labelPlacement={labelPlacement}
       />
     );
   }
@@ -90,8 +103,14 @@ export function FormRenderer({
           ) : (
             <>
               {fields.map(renderField)}
-              <Button type="submit" loading={submitting} fullWidth mt="sm">
-                Submit
+              <Button
+                type="submit"
+                loading={submitting}
+                fullWidth
+                mt="sm"
+                size={buttonSize[submitButtonSize ?? 'medium']}
+              >
+                {submitLabel || 'Submit'}
               </Button>
             </>
           )}

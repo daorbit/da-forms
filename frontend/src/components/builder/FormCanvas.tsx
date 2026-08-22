@@ -207,7 +207,9 @@ export function FormCanvas({
                     // The empty state is the drop zone itself, so it reads as
                     // somewhere to aim rather than as a notice about absence.
                     <Box className={classes.emptyState}>
-                      <IconPlus size={22} className={classes.emptyIcon} />
+                      <div className={classes.emptyIcon}>
+                        <IconPlus size={20} />
+                      </div>
                       <Text size="sm" fw={500} mt="sm">
                         Drag a field here
                       </Text>

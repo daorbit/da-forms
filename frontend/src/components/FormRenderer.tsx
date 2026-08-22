@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Paper, Title, Text, Button, Stack, SimpleGrid } from '@mantine/core';
+import { Paper, Title, Text, Button, Stack, SimpleGrid, TextInput } from '@mantine/core';
 import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, FormTheme } from '@/types';
 import { FieldControl } from '@/components/FieldControl';
 import { valueFields } from '@/lib/fieldTree';
@@ -16,8 +16,12 @@ interface Props {
   submitButtonWidth?: SubmitButtonWidth;
   theme?: FormTheme;
   submitting?: boolean;
-  /** Omitted in preview, where nothing is recorded. */
+  /** Omitted in preview, where nothing is recorded and there is no spam to guard against. */
   onSubmit?: (values: Record<string, string>) => void;
+  /** A math challenge to answer before submitting. Omitted in preview/builder contexts. */
+  captchaQuestion?: string;
+  captchaAnswer?: string;
+  onCaptchaAnswerChange?: (value: string) => void;
 }
 
 const buttonSize: Record<SubmitButtonSize, string> = {
@@ -52,14 +56,18 @@ export function FormRenderer({
   theme,
   submitting,
   onSubmit,
+  captchaQuestion,
+  captchaAnswer,
+  onCaptchaAnswerChange,
 }: Props) {
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(fields));
+  const [honeypot, setHoneypot] = useState('');
   const textColor = resolveTextColor(theme);
   const accent = theme?.accentColor;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSubmit?.(values);
+    onSubmit?.(honeypot ? { ...values, _hp: honeypot } : values);
   }
 
   /** Grids lay their columns out; everything else is a control. */
@@ -127,6 +135,35 @@ export function FormRenderer({
           ) : (
             <>
               {fields.map(renderField)}
+
+              {/* Invisible to a real respondent (off-screen, no tab stop) —
+                  a bot's form-filler script still finds and fills it. */}
+              <input
+                type="text"
+                name="_hp"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+              />
+
+              {captchaQuestion && (
+                <TextInput
+                  label={`Quick check: what is ${captchaQuestion}?`}
+                  value={captchaAnswer ?? ''}
+                  onChange={(e) => onCaptchaAnswerChange?.(e.target.value)}
+                  required
+                  inputMode="numeric"
+                  styles={
+                    theme?.labelColor || textColor
+                      ? { label: { color: theme?.labelColor ?? textColor } }
+                      : undefined
+                  }
+                />
+              )}
+
               <Button
                 type="submit"
                 loading={submitting}

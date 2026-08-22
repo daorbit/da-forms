@@ -2,12 +2,25 @@ import type { HealthResponse, Form, FormField, Submission, Paginated } from '@/t
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public code: string | undefined,
+    message: string
+  ) {
+    super(message);
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...init,
   });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new ApiError(res.status, body?.error, body?.message ?? `${res.status} ${res.statusText}`);
+  }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
@@ -109,15 +122,48 @@ export function updateSubmission(
   });
 }
 
+export interface Analytics {
+  viewCount: number;
+  submissionCount: number;
+  completionRate: number;
+}
+
+export function getAnalytics(id: string, workspaceId = DEFAULT_WORKSPACE) {
+  return request<Analytics>(`${ws(workspaceId)}/${id}/analytics`);
+}
+
 /* ---- Public: reachable by form id alone, no workspace ---- */
 
 export function getPublicForm(id: string) {
   return request<Form>(`/public/forms/${id}`);
 }
 
-export function submitForm(id: string, data: Record<string, string>) {
+export function recordView(id: string) {
+  return request<void>(`/public/forms/${id}/view`, { method: 'POST' });
+}
+
+export interface CaptchaChallenge {
+  question: string;
+  token: string;
+}
+
+export function getCaptcha(id: string) {
+  return request<CaptchaChallenge>(`/public/forms/${id}/captcha`);
+}
+
+export function submitForm(
+  id: string,
+  data: Record<string, string>,
+  captcha: { token: string; answer: string }
+) {
   return request<Submission>(`/public/forms/${id}/submissions`, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      // `_hp` rides along in `data` when the honeypot got filled (a bot did
+      // it — never a real respondent); otherwise it is simply absent.
+      ...data,
+      _captchaToken: captcha.token,
+      _captchaAnswer: captcha.answer,
+    }),
   });
 }

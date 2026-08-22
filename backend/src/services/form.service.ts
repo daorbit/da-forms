@@ -86,8 +86,16 @@ export function deleteForm(id: string, workspaceId: string) {
   return FormModel.findOneAndDelete({ _id: id, workspaceId });
 }
 
+export function recordView(id: string) {
+  return FormModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
+}
+
 export function submitForm(formId: string, data: Record<string, string>, sourceUrl?: string) {
   return SubmissionModel.create({ formId, data, sourceUrl });
+}
+
+export function submissionCount(formId: string) {
+  return SubmissionModel.countDocuments({ formId });
 }
 
 export async function listSubmissions(

@@ -1,5 +1,6 @@
 import type { RequestHandler } from 'express';
 import * as formService from '../services/form.service.js';
+import { generateCaptcha, verifyCaptcha } from '../lib/captcha.js';
 
 /** Every workspace-scoped route carries the id in the path. */
 function workspaceIdOf(req: { params: Record<string, string> }) {
@@ -105,6 +106,17 @@ export const updateSubmission: RequestHandler = async (req, res) => {
   res.json(submission);
 };
 
+export const getAnalytics: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form || form.workspaceId !== workspaceIdOf(req)) {
+    return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  }
+  const submissionCount = await formService.submissionCount(req.params.id);
+  const viewCount = form.viewCount ?? 0;
+  const completionRate = viewCount > 0 ? submissionCount / viewCount : 0;
+  res.json({ viewCount, submissionCount, completionRate });
+};
+
 /* ---- Public routes: no workspace in the path ---- */
 
 /** The form as respondents see it. Reachable by id alone — that is the share link. */
@@ -114,13 +126,39 @@ export const getPublicForm: RequestHandler = async (req, res) => {
   res.json(form);
 };
 
+export const getCaptcha: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  res.json(generateCaptcha());
+};
+
+export const recordView: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  await formService.recordView(req.params.id);
+  res.status(204).send();
+};
+
 export const submitForm: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
   if (form.status !== 'published') {
     return res.status(403).json({ error: 'not_published', message: 'This form is not accepting responses yet' });
   }
+
+  // `_hp` is a field real respondents never see or fill — a bot filling
+  // every input trips it. `_captchaToken`/`_captchaAnswer` verify the math
+  // challenge issued for this session; neither is part of the form's own
+  // data and both are stripped before the submission is stored.
+  const { _hp, _captchaToken, _captchaAnswer, ...data } = req.body;
+  if (_hp) {
+    return res.status(400).json({ error: 'spam_detected', message: 'Submission rejected' });
+  }
+  if (!verifyCaptcha(_captchaToken, _captchaAnswer)) {
+    return res.status(400).json({ error: 'captcha_failed', message: 'Verification failed — please try again' });
+  }
+
   const sourceUrl = req.get('referer');
-  const submission = await formService.submitForm(req.params.id, req.body, sourceUrl);
+  const submission = await formService.submitForm(req.params.id, data, sourceUrl);
   res.status(201).json(submission);
 };

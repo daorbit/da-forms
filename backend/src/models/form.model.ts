@@ -96,6 +96,8 @@ export interface FormDocument {
   submitButtonWidth?: SubmitButtonWidth;
   theme?: FormTheme;
   collectIp?: boolean;
+  /** Total public-page loads — the denominator for completion rate. */
+  viewCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -164,6 +166,7 @@ const formSchema = new Schema<FormDocument>(
       ),
     },
     collectIp: { type: Boolean },
+    viewCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

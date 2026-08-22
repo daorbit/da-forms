@@ -1,12 +1,12 @@
 import {
-  Box, Stack, Text, Paper, Title, ActionIcon, Tooltip, MantineProvider,
+  Box, Stack, Text, Paper, Title, ActionIcon, Tooltip,
 } from '@mantine/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
-import { IconTrash, IconSettings, IconCopyPlus, IconEyeOff } from '@tabler/icons-react';
+import { IconTrash, IconSettings, IconCopyPlus, IconEyeOff, IconPlus } from '@tabler/icons-react';
 import type { FormField } from '@/types';
 import { staticTypes } from '@/lib/fieldPalette';
-import { FieldPreview } from './FieldPreview';
+import { FieldControl } from '@/components/FieldControl';
 import { SortableField } from './SortableField';
 import { GridColumn } from './GridColumn';
 import classes from './FormCanvas.module.css';
@@ -76,7 +76,7 @@ export function FormCanvas({
             ))}
           </div>
         ) : isStatic ? (
-          <FieldPreview field={field} />
+          <FieldControl field={field} value="" onChange={() => {}} readOnly hideLabel />
         ) : (
           <>
             {!field.hideLabel && (
@@ -96,7 +96,7 @@ export function FormCanvas({
               </Text>
             )}
             <Box mt={8}>
-              <FieldPreview field={field} />
+              <FieldControl field={field} value="" onChange={() => {}} readOnly hideLabel />
             </Box>
           </>
         )}
@@ -149,19 +149,12 @@ export function FormCanvas({
     <Box className={classes.canvasScroll}>
       <Box className={`${classes.canvasArea} ${offsetRight ? classes.canvasAreaOffset : ''}`}>
         {/*
-          A nested provider rather than a data attribute: the attribute alone
-          does not re-emit Mantine's variables, so inputs inside kept the host's
-          dark palette. The card is a preview of the live form and has to look
-          the way respondents will see it, whatever theme the host passes.
+          The card is a preview of the live form, so it keeps the respondent's
+          own colours whatever theme the host passes. `data-mantine-color-scheme`
+          scopes Mantine's own light variables to this subtree; the stylesheet
+          adds the few surfaces that attribute does not cover.
         */}
-        <MantineProvider
-          forceColorScheme="light"
-          cssVariablesSelector=".da-forms-light-surface"
-          // Without this the nested provider also writes its light variables
-          // onto <html>, repainting the whole editor around the card.
-          getRootElement={() => undefined}
-        >
-          <div className="da-forms-light-surface">
+        <div className="da-forms-light-surface" data-mantine-color-scheme="light">
             <Paper className={classes.formCard} radius="md" withBorder>
               {!hideHeader && (
                 <Box className={`${classes.fieldRow} ${classes.header}`}>
@@ -211,12 +204,15 @@ export function FormCanvas({
                   strategy={verticalListSortingStrategy}
                 >
                   {fields.length === 0 ? (
+                    // The empty state is the drop zone itself, so it reads as
+                    // somewhere to aim rather than as a notice about absence.
                     <Box className={classes.emptyState}>
-                      <Text c="dimmed" size="sm">
-                        No fields yet
+                      <IconPlus size={22} className={classes.emptyIcon} />
+                      <Text size="sm" fw={500} mt="sm">
+                        Drag a field here
                       </Text>
                       <Text c="dimmed" size="xs" mt={4}>
-                        Drag a field from the left panel, or click one to add it.
+                        Or click any field in the left panel to add it.
                       </Text>
                     </Box>
                   ) : (
@@ -225,8 +221,7 @@ export function FormCanvas({
                 </SortableContext>
               </div>
             </Paper>
-          </div>
-        </MantineProvider>
+        </div>
       </Box>
     </Box>
   );

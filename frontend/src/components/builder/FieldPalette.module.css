@@ -57,14 +57,19 @@
     background-color 120ms ease;
 }
 
+/*
+ * A tinted fill would need a different tint per colour scheme to keep the label
+ * readable — the light emerald wash turned the text invisible in dark mode. The
+ * dashed border carries the same "grabbable" meaning in both.
+ */
 .paletteItem:hover {
-  border-color: var(--mantine-color-emerald-5);
-  background-color: var(--mantine-color-emerald-0);
+  border: 1px dashed var(--mantine-color-emerald-5);
+  background-color: var(--mantine-color-default-hover);
 }
 
 .paletteItem:active {
   cursor: grabbing;
-  background-color: var(--mantine-color-emerald-1);
+  border-style: solid;
 }
 
 .paletteItemDragging {

@@ -39,7 +39,47 @@
  */
 .da-forms-light-surface {
   color-scheme: light;
+
+  /*
+   * Mantine resolves these from the root's colour scheme, so a dark host theme
+   * reaches inside the card unless they are restated here. Literal values
+   * rather than tokens: the tokens are exactly what is being overridden.
+   */
+  --mantine-color-body: #ffffff;
+  --mantine-color-text: #1a1b1e;
+  --mantine-color-dimmed: #6d737e;
+  --mantine-color-default: #ffffff;
+  --mantine-color-default-hover: #f8f9fa;
+  --mantine-color-default-color: #1a1b1e;
+  --mantine-color-default-border: #dee2e6;
+  --mantine-color-placeholder: #adb5bd;
+  --mantine-color-error: #e03131;
+  --mantine-color-anchor: #047857;
+
+  --mantine-color-gray-0: #f8f9fa;
+  --mantine-color-gray-1: #f1f3f5;
+  --mantine-color-gray-2: #e9ecef;
+  --mantine-color-gray-3: #dee2e6;
+  --mantine-color-gray-4: #ced4da;
+  --mantine-color-gray-5: #adb5bd;
+  --mantine-color-gray-6: #868e96;
+  --mantine-color-gray-7: #495057;
+
   color: var(--mantine-color-text);
+  background-color: transparent;
+}
+
+/* Inputs read their surface from these, which the block above has already
+   flipped — restating them on the controls themselves covers the variants
+   Mantine resolves at the component level. */
+.da-forms-light-surface :is(input, textarea, select) {
+  background-color: #ffffff;
+  color: #1a1b1e;
+  border-color: #dee2e6;
+}
+
+.da-forms-light-surface :is(input, textarea)::placeholder {
+  color: #adb5bd;
 }
 
 html,

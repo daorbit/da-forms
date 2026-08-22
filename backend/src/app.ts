@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { env } from './config/env.js';
+import { connectDb } from './config/db.js';
 import { routes } from './routes/index.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { notFound } from './middleware/not-found.js';
@@ -8,14 +9,21 @@ import { notFound } from './middleware/not-found.js';
 export function createApp() {
   const app = express();
 
-  app.use(cors({ origin: env.corsOrigin }));
+  // Open to every origin: the forms are embedded on sites we do not know in
+  // advance, and the management API is called by whichever product embeds the
+  // builder. Nothing here is authorised by origin.
+  app.use(cors());
   app.use(express.json());
 
-  // Public embed endpoints: any site embedding a form needs cross-origin access.
-  app.use('/api/public', cors());
-  // The management API is called by Quantalog's frontend, which is a different
-  // origin from this service.
-  app.use('/api/workspaces', cors({ origin: env.corsOrigin }));
+  // Serverless has no startup phase to connect in, so every request makes sure
+  // the connection is up. After the first one this resolves immediately — see
+  // `connectDb`.
+  app.use((_req, _res, next) => {
+    connectDb().then(
+      () => next(),
+      (error) => next(error)
+    );
+  });
 
   app.use('/api', routes);
 

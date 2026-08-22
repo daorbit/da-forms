@@ -18,6 +18,8 @@ interface Props {
   fields: FormField[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Clears the selection when the canvas background itself is clicked. */
+  onDeselect?: () => void;
   onRemove: (id: string) => void;
   onDuplicate: (id: string) => void;
   onOpenProperties: (id: string) => void;
@@ -35,6 +37,7 @@ export function FormCanvas({
   fields,
   selectedId,
   onSelect,
+  onDeselect,
   onRemove,
   onDuplicate,
   onOpenProperties,
@@ -50,15 +53,20 @@ export function FormCanvas({
   const textColor = resolveTextColor(theme);
   const labelColor = theme?.labelColor ?? textColor;
 
+  // A dark card needs a dark selection tint too — the default mint highlight
+  // reads fine on white but swallows light-colored label text on a dark theme.
+  const isDarkCard = textColor === '#f8f9fa';
+
   function renderField(field: FormField) {
     const isStatic = staticTypes.includes(field.type);
     const isGrid = field.type === 'grid';
+    const isSelected = selectedId === field.id;
 
     return (
       <SortableField
         key={field.id}
         field={field}
-        className={`${classes.fieldRow} ${selectedId === field.id ? classes.fieldRowSelected : ''}`}
+        className={`${classes.fieldRow} ${isSelected ? classes.fieldRowSelected : ''} ${isDarkCard ? classes.fieldRowDark : ''}`}
         onClick={() => {
           onSelect(field.id);
           if (!isGrid) onOpenProperties(field.id);
@@ -174,8 +182,18 @@ export function FormCanvas({
   }
 
   return (
-    <Box className={classes.canvasScroll}>
-      <Box className={`${classes.canvasArea} ${offsetRight ? classes.canvasAreaOffset : ''}`}>
+    <Box
+      className={classes.canvasScroll}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onDeselect?.();
+      }}
+    >
+      <Box
+        className={`${classes.canvasArea} ${offsetRight ? classes.canvasAreaOffset : ''}`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onDeselect?.();
+        }}
+      >
         {/*
           The card is a preview of the live form, so it keeps the respondent's
           own light-mode base (never the builder's own theme) — but the

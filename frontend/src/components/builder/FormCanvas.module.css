@@ -85,6 +85,15 @@
   border-radius: 4px;
   background-color: var(--mantine-color-emerald-0);
 }
+ 
+/* On a dark-themed card the default mint tint swallows light label text —
+   this covers every hover/selected state on the row, not just the selected
+   one, since a plain (unselected) hover hits the same rule otherwise. */
+.fieldRowDark:hover,
+.fieldRowDark.fieldRowSelected {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--mantine-color-emerald-4) !important;
+}
 
 .emptyState {
   display: flex;

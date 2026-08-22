@@ -396,6 +396,7 @@ export function FormBuilderPage() {
           fields={fields}
           selectedId={selectedId}
           onSelect={setSelectedId}
+          onDeselect={() => setSelectedId(null)}
           onRemove={removeField}
           onDuplicate={duplicateField}
           onOpenProperties={setEditingId}

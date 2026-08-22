@@ -1,36 +1,29 @@
 .topbar {
-  border-bottom: 1px solid var(--mantine-color-gray-2);
+  border-bottom: 1px solid #e9ecef;
+  background-color: #fff;
 }
 
 .row {
-  border: 1px solid var(--mantine-color-gray-2);
-  border-radius: var(--mantine-radius-md);
-  padding: 16px 20px;
-  background-color: var(--mantine-color-white);
-  transition: border-color 100ms ease, background-color 100ms ease;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 14px 20px;
+  background-color: #fff;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
-.rowActive {
-  border-color: var(--mantine-color-teal-3);
-  background-color: var(--mantine-color-teal-0);
+.row:hover {
+  border-color: #ced4da;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
 }
 
 .title {
+  display: inline-block;
   font-weight: 500;
-  font-size: var(--mantine-font-size-md);
-  color: var(--mantine-color-dark-8);
+  font-size: 15px;
+  color: #1a1b1e;
   text-decoration: none;
 }
 
-.rowActive .title {
-  color: var(--mantine-color-teal-7);
-}
-
-.quickLinks a {
-  color: var(--mantine-color-teal-7);
-  text-decoration: none;
-}
-
-.quickLinks a:hover {
-  text-decoration: underline;
+.title:hover {
+  color: #0ca678;
 }

@@ -1,6 +1,9 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
+import { connectDb } from './config/db.js';
 
-createApp().listen(env.port, () => {
-  console.log(`backend listening on http://localhost:${env.port}`);
+connectDb().then(() => {
+  createApp().listen(env.port, () => {
+    console.log(`backend listening on http://localhost:${env.port}`);
+  });
 });

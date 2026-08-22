@@ -1,22 +1,18 @@
-import { useEffect, useState } from 'react';
-import { getHealth } from '@/lib/api';
-import type { HealthResponse } from '@/types';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { FormListPage } from '@/pages/FormListPage';
+import { NewFormPage } from '@/pages/NewFormPage';
+import { FormDetailPage } from '@/pages/FormDetailPage';
+import { PublicFormPage } from '@/pages/PublicFormPage';
 
 export function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getHealth()
-      .then(setHealth)
-      .catch((e: Error) => setError(e.message));
-  }, []);
-
   return (
-    <main>
-      <h1>da-forms</h1>
-      {error && <p>API error: {error}</p>}
-      {health && <p>API status: {health.status}</p>}
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<FormListPage />} />
+        <Route path="/new" element={<NewFormPage />} />
+        <Route path="/forms/:id" element={<FormDetailPage />} />
+        <Route path="/f/:id" element={<PublicFormPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

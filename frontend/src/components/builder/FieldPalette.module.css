@@ -2,51 +2,51 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #fff;
+  background-color: var(--mantine-color-body);
 }
 
 .searchWrap {
-  padding: 14px;
-  background-color: #fff;
-  border-bottom: 1px solid #e9ecef;
+  padding: 12px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  flex-shrink: 0;
 }
 
 .scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 16px 14px;
+  padding: 12px;
   scrollbar-width: thin;
-  scrollbar-color: #ced4da transparent;
+  scrollbar-color: var(--mantine-color-gray-4) transparent;
 }
 
 .scroll::-webkit-scrollbar {
   width: 6px;
 }
 
-.scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
 .scroll::-webkit-scrollbar-thumb {
-  background-color: #ced4da;
+  background-color: var(--mantine-color-gray-4);
   border-radius: 3px;
 }
 
-.group {
-  margin-bottom: 22px;
+.group + .group {
+  margin-top: 18px;
 }
 
 .groupLabel {
-  font-size: 13px;
+  display: block;
+  font-size: 11px;
   font-weight: 600;
-  color: #1a1b1e;
-  margin: 0 0 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+  margin: 0 0 8px 2px;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 6px;
 }
 
 .paletteItem {
@@ -54,30 +54,39 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 84px;
+  gap: 7px;
+  height: 72px;
   padding: 8px 4px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--mantine-color-default-border);
   border-radius: 8px;
-  background-color: #fff;
+  background-color: var(--mantine-color-body);
   cursor: pointer;
   font: inherit;
   text-align: center;
   transition:
     border-color 120ms ease,
-    box-shadow 120ms ease;
+    background-color 120ms ease;
 }
 
 .paletteItem:hover {
-  border: 1px dashed #12b886;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  border-color: var(--mantine-color-emerald-5);
+  background-color: var(--mantine-color-emerald-0);
+}
+
+.paletteItem:active {
+  background-color: var(--mantine-color-emerald-1);
+}
+
+.itemIcon {
+  color: var(--mantine-color-dimmed);
+}
+
+.paletteItem:hover .itemIcon {
+  color: var(--mantine-color-emerald-7);
 }
 
 .itemLabel {
-  font-size: 11.5px;
-  line-height: 1.2;
-  color: #343a40;
-  /* keep two-word names on one line where they fit, wrap cleanly when they don't */
-  word-break: break-word;
-  hyphens: none;
+  font-size: 11px;
+  line-height: 1.15;
+  color: var(--mantine-color-text);
 }

@@ -44,7 +44,7 @@ export function FormListPage() {
     setForms((prev) => prev.filter((f) => f._id !== pendingDelete._id));
     setDeleting(false);
     setPendingDelete(null);
-    notifications.show({ message: 'Form deleted', color: 'teal' });
+    notifications.show({ message: 'Form deleted', color: 'emerald' });
   }
 
   return (
@@ -65,7 +65,7 @@ export function FormListPage() {
           </ActionIcon>
           <Button
             radius="xl"
-            color="teal"
+            color="emerald"
             leftSection={<IconPlus size={16} />}
             onClick={() => setNewFormOpen(true)}
           >
@@ -99,7 +99,7 @@ export function FormListPage() {
                     <Text size="sm" c="dimmed">
                       &bull;
                     </Text>
-                    <Text size="sm" c={form.status === 'published' ? 'teal' : 'dimmed'}>
+                    <Text size="sm" c={form.status === 'published' ? 'emerald' : 'dimmed'}>
                       {form.status}
                     </Text>
                   </Group>
@@ -157,7 +157,7 @@ export function FormListPage() {
                       leftSection={<IconCopy size={15} />}
                       onClick={() => {
                         navigator.clipboard.writeText(`${window.location.origin}/f/${form._id}`);
-                        notifications.show({ message: 'Link copied', color: 'teal' });
+                        notifications.show({ message: 'Link copied', color: 'emerald' });
                       }}
                     >
                       Copy link

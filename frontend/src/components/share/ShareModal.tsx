@@ -87,7 +87,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
     onStatusChange?.(updated.status);
     notifications.show({
       message: next ? 'Form is now public' : 'Form unpublished',
-      color: next ? 'teal' : 'gray',
+      color: next ? 'emerald' : 'gray',
     });
   }
 
@@ -163,7 +163,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
               <Switch
                 checked={published}
                 onChange={(e) => togglePublished(e.target.checked)}
-                color="teal"
+                color="emerald"
                 size="md"
               />
             </Group>
@@ -185,7 +185,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                     {({ copied, copy }) => (
                       <Button
                         variant={copied ? 'light' : 'filled'}
-                        color={copied ? 'teal' : 'teal'}
+                        color={copied ? 'emerald' : 'emerald'}
                         onClick={copy}
                         leftSection={copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
                       >
@@ -233,7 +233,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                   {({ copied, copy }) => (
                     <Button
                       variant={copied ? 'light' : 'filled'}
-                      color="teal"
+                      color="emerald"
                       onClick={copy}
                       leftSection={copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
                     >

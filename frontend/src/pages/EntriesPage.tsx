@@ -58,10 +58,10 @@ export function EntriesPage() {
           </Text>
         </Group>
         <Group gap="xs">
-          <Button variant="default" radius="md" color="teal">
+          <Button variant="default" radius="md" color="emerald">
             Share
           </Button>
-          <Button color="teal" radius="md">
+          <Button color="emerald" radius="md">
             New Report
           </Button>
         </Group>
@@ -142,7 +142,7 @@ export function EntriesPage() {
             {submissions.length === 0 ? (
               <Table.Tr>
                 <Table.Td colSpan={columns.length + 1}>
-                  <Text ta="center" py="xl" c="teal">
+                  <Text ta="center" py="xl" c="emerald">
                     No entries
                   </Text>
                 </Table.Td>

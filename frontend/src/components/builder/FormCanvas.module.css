@@ -8,17 +8,8 @@
   scrollbar-color: var(--mantine-color-gray-4) transparent;
 }
 
-.canvasArea {
-  padding: 32px;
-  min-height: 100%;
-}
-
 .canvasScroll::-webkit-scrollbar {
   width: 8px;
-}
-
-.canvasScroll::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 .canvasScroll::-webkit-scrollbar-thumb {
@@ -26,38 +17,50 @@
   border-radius: 4px;
 }
 
+.canvasArea {
+  padding: 28px 32px 64px;
+  min-height: 100%;
+}
+
 .formCard {
-  max-width: 800px;
+  max-width: 760px;
   margin: 0 auto;
   background-color: var(--mantine-color-white);
-  /* hover toolbar overflows the right edge */
+  /* the hover toolbar sits just outside the right edge */
   overflow: visible;
 }
 
 .header {
-  padding: 32px 24px 24px;
+  padding: 28px 28px 22px;
 }
 
 .fieldRow {
   position: relative;
-  padding: 20px 24px;
-  border: 1px dashed transparent;
+  padding: 18px 28px;
+  border: 1px solid transparent;
   border-bottom: 1px solid var(--mantine-color-gray-2);
   cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.fieldRow:last-child {
+  border-bottom-color: transparent;
 }
 
 .fieldRow:hover {
-  border: 1px dashed var(--mantine-color-teal-5);
-  background-color: var(--mantine-color-teal-0);
+  border-color: var(--mantine-color-emerald-3);
+  background-color: var(--mantine-color-emerald-0);
 }
 
 .fieldRowSelected {
-  border: 1px dashed var(--mantine-color-teal-4);
+  border-color: var(--mantine-color-emerald-4);
+  background-color: var(--mantine-color-emerald-0);
+  box-shadow: inset 2px 0 0 var(--mantine-color-emerald-6);
 }
 
 .fieldLabel {
-  width: 200px;
-  padding-top: 8px;
+  width: 190px;
+  padding-top: 7px;
   flex-shrink: 0;
 }
 
@@ -66,15 +69,22 @@
   min-width: 0;
 }
 
+.emptyState {
+  padding: 56px 24px;
+  text-align: center;
+}
+
 .hoverToolbar {
   position: absolute;
-  top: 0;
+  top: 8px;
   left: 100%;
+  margin-left: 8px;
   opacity: 0;
   pointer-events: none;
-  border-radius: 0 var(--mantine-radius-sm) var(--mantine-radius-sm) 0;
+  border-radius: var(--mantine-radius-sm);
   overflow: hidden;
-  transition: opacity 100ms ease;
+  box-shadow: var(--mantine-shadow-sm);
+  transition: opacity 120ms ease;
 }
 
 .fieldRow:hover .hoverToolbar {

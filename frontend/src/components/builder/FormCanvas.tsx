@@ -51,9 +51,14 @@ export function FormCanvas({
 
         <Stack gap={0}>
           {fields.length === 0 && (
-            <Text c="dimmed" ta="center" py={60}>
-              Click a field on the left to add it here
-            </Text>
+            <Box className={classes.emptyState}>
+              <Text c="dimmed" size="sm">
+                No fields yet
+              </Text>
+              <Text c="dimmed" size="xs" mt={4}>
+                Pick a field type from the left panel to start building.
+              </Text>
+            </Box>
           )}
 
           {fields.map((field) => {

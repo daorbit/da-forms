@@ -80,7 +80,7 @@ export function PublicFormPage() {
                   onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
                 />
               ))}
-              <Button type="submit" loading={submitting} fullWidth mt="sm" color="teal">
+              <Button type="submit" loading={submitting} fullWidth mt="sm" color="emerald">
                 Submit
               </Button>
             </Stack>

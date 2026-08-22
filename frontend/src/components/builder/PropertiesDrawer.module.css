@@ -4,26 +4,16 @@
 }
 
 .header {
-  background-color: #1a2027;
-  padding: 16px 24px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  padding: 14px 20px;
   min-height: 56px;
 }
 
 .title {
-  color: #fff;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
 }
 
-.close {
-  color: #fff;
-}
-
-.close:hover {
-  background-color: rgba(255, 255, 255, 0.12);
-}
-
-/* body fills remaining height so the footer can pin to the bottom */
 .body {
   flex: 1;
   display: flex;
@@ -34,27 +24,53 @@
 
 .scrollArea {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 24px;
+  padding: 20px;
   scrollbar-width: thin;
-  scrollbar-color: #ced4da transparent;
+  scrollbar-color: var(--mantine-color-gray-4) transparent;
 }
 
 .scrollArea::-webkit-scrollbar {
   width: 8px;
 }
 
-.scrollArea::-webkit-scrollbar-track {
-  background: transparent;
-}
-
 .scrollArea::-webkit-scrollbar-thumb {
-  background-color: #ced4da;
+  background-color: var(--mantine-color-gray-4);
   border-radius: 4px;
 }
 
 .footer {
-  padding: 16px 24px;
-  border-top: 1px solid #e9ecef;
-  background-color: #f8f9fa;
+  padding: 14px 20px;
+  border-top: 1px solid var(--mantine-color-default-border);
+  flex-shrink: 0;
+}
+
+/* ---- Sections ---- */
+
+.section + .section {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.sectionLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+  margin-bottom: 12px;
+}
+
+.fieldTypeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
 }

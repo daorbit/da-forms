@@ -34,7 +34,7 @@ export function NewFormModal({ opened, onClose }: Props) {
             <Button variant="default" radius="xl" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" color="teal" radius="xl" disabled={!name.trim()}>
+            <Button type="submit" color="emerald" radius="xl" disabled={!name.trim()}>
               Create
             </Button>
           </Group>

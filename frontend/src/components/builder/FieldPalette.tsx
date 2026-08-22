@@ -35,7 +35,7 @@ export function FieldPalette({ onAdd }: Props) {
 
       <div className={classes.scroll}>
         {groups.map((group) => (
-          <div key={group.group} className={classes.group}>
+          <section key={group.group} className={classes.group}>
             <p className={classes.groupLabel}>{group.group}</p>
             <div className={classes.grid}>
               {group.items.map((item) => (
@@ -45,12 +45,12 @@ export function FieldPalette({ onAdd }: Props) {
                   className={classes.paletteItem}
                   onClick={() => onAdd(item.type)}
                 >
-                  <item.icon size={20} stroke={1.6} color={`var(--mantine-color-${item.color}-6)`} />
+                  <item.icon size={19} stroke={1.6} className={classes.itemIcon} />
                   <span className={classes.itemLabel}>{item.label}</span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         ))}
 
         {groups.length === 0 && (

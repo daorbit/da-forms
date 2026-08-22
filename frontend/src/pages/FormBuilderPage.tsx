@@ -81,7 +81,7 @@ export function FormBuilderPage() {
     setSaving(false);
     setSavedFormId(form._id);
     setSavedForm(form);
-    notifications.show({ message: 'Form saved', color: 'teal' });
+    notifications.show({ message: 'Form saved', color: 'emerald' });
     if (!savedFormId) setShareOpen(true);
   }
 
@@ -110,7 +110,7 @@ export function FormBuilderPage() {
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="xs" wrap="nowrap" style={{ flex: 1 }}>
-            <ThemeIcon variant="light" color="blue" radius="sm">
+            <ThemeIcon variant="light" color="gray" radius="sm">
               <IconFileText size={18} />
             </ThemeIcon>
             <TextInput
@@ -126,7 +126,7 @@ export function FormBuilderPage() {
             <Button variant="default" radius="md" leftSection={<IconEye size={16} />}>
               Preview
             </Button>
-            <Button color="teal" radius="md" onClick={handleSave} loading={saving}>
+            <Button color="emerald" radius="md" onClick={handleSave} loading={saving}>
               {savedFormId ? 'Save' : 'Access Form'}
             </Button>
           </Group>

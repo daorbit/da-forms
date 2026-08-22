@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text } from '@mantine/core';
-import { IconFileText, IconEye, IconArrowLeft } from '@tabler/icons-react';
+import { IconFileText, IconEye, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
@@ -36,7 +36,23 @@ import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
 import { QuickSettingsDrawer } from '@/components/builder/QuickSettingsDrawer';
 import { ThemeDrawer } from '@/components/builder/ThemeDrawer';
 import { PreviewModal } from '@/components/builder/PreviewModal';
+import { useUndoHistory } from '@/hooks/useUndoHistory';
 import classes from './FormBuilderPage.module.css';
+
+interface EditableState {
+  title: string;
+  description: string;
+  fields: FormField[];
+  redirectUrl: string;
+  thankYouMessage: string;
+  hideHeader: boolean;
+  labelPlacement: LabelPlacement;
+  submitLabel: string;
+  submitButtonSize: SubmitButtonSize;
+  submitButtonWidth: SubmitButtonWidth;
+  theme: FormTheme;
+  collectIp: boolean;
+}
 
 export function FormBuilderPage() {
   const location = useLocation();
@@ -123,6 +139,87 @@ export function FormBuilderPage() {
     ]
   );
   const isDirty = currentSnapshot !== savedSnapshot;
+
+  const editableState: EditableState = useMemo(
+    () => ({
+      title,
+      description,
+      fields,
+      redirectUrl,
+      thankYouMessage,
+      hideHeader,
+      labelPlacement,
+      submitLabel,
+      submitButtonSize,
+      submitButtonWidth,
+      theme,
+      collectIp,
+    }),
+    [
+      title,
+      description,
+      fields,
+      redirectUrl,
+      thankYouMessage,
+      hideHeader,
+      labelPlacement,
+      submitLabel,
+      submitButtonSize,
+      submitButtonWidth,
+      theme,
+      collectIp,
+    ]
+  );
+
+  const applyEditableState = useCallback((state: EditableState) => {
+    setTitle(state.title);
+    setDescription(state.description);
+    setFields(state.fields);
+    setRedirectUrl(state.redirectUrl);
+    setThankYouMessage(state.thankYouMessage);
+    setHideHeader(state.hideHeader);
+    setLabelPlacement(state.labelPlacement);
+    setSubmitLabel(state.submitLabel);
+    setSubmitButtonSize(state.submitButtonSize);
+    setSubmitButtonWidth(state.submitButtonWidth);
+    setTheme(state.theme);
+    setCollectIp(state.collectIp);
+    // The selected/editing field may not exist in this snapshot's tree.
+    setSelectedId((id) => (id && findField(state.fields, id) ? id : null));
+    setEditingId((id) => (id && findField(state.fields, id) ? id : null));
+  }, []);
+
+  const { undo, redo, canUndo, canRedo } = useUndoHistory(
+    editableState,
+    JSON.stringify,
+    applyEditableState,
+    // Re-seeds history once the real form data has loaded in (async, after
+    // mount) — without this the first snapshot is the pre-load empty state.
+    { resetKey: savedForm?._id }
+  );
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const isMeta = e.ctrlKey || e.metaKey;
+      if (!isMeta) return;
+      // A text input mid-edit should keep its own native undo, not the
+      // builder's structural one — otherwise typing and Ctrl+Z fight.
+      const target = e.target as HTMLElement;
+      const isEditable =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      if (isEditable) return;
+
+      if (e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   // A browser-level close/refresh/tab-nav can't be intercepted with a custom
   // dialog — this is the one native hook that still warns the respondent.
@@ -364,6 +461,30 @@ export function FormBuilderPage() {
             />
           </Group>
           <Group gap="xs">
+            <Tooltip label="Undo (Ctrl+Z)" position="bottom" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="lg"
+                aria-label="Undo"
+                disabled={!canUndo}
+                onClick={undo}
+              >
+                <IconArrowBackUp size={18} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Redo (Ctrl+Y)" position="bottom" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="lg"
+                aria-label="Redo"
+                disabled={!canRedo}
+                onClick={redo}
+              >
+                <IconArrowForwardUp size={18} />
+              </ActionIcon>
+            </Tooltip>
             <Button
               variant="default"
               radius="md"

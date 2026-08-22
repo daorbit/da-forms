@@ -13,6 +13,7 @@ import { FormSettings } from '@/components/builder/FormSettings';
 import { PropertiesDrawer } from '@/components/builder/PropertiesDrawer';
 import { IconRail, type RailPanel } from '@/components/builder/IconRail';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
+import { PreviewModal } from '@/components/builder/PreviewModal';
 import classes from './FormBuilderPage.module.css';
 
 export function FormBuilderPage() {
@@ -34,6 +35,7 @@ export function FormBuilderPage() {
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -123,7 +125,12 @@ export function FormBuilderPage() {
             />
           </Group>
           <Group gap="xs">
-            <Button variant="default" radius="md" leftSection={<IconEye size={16} />}>
+            <Button
+              variant="default"
+              radius="md"
+              leftSection={<IconEye size={16} />}
+              onClick={() => setPreviewOpen(true)}
+            >
               Preview
             </Button>
             <Button color="emerald" radius="md" onClick={handleSave} loading={saving}>
@@ -148,10 +155,11 @@ export function FormBuilderPage() {
           onDuplicate={duplicateField}
           onOpenProperties={setEditingId}
           onOpenFormSettings={() => setFormSettingsOpen(true)}
+          offsetRight={!!editingId}
         />
       </AppShell.Main>
 
-      <PropertiesDrawer field={editingField} onClose={() => setEditingId(null)} onSave={updateField} />
+      <PropertiesDrawer field={editingField} onClose={() => setEditingId(null)} onChange={updateField} />
 
       <FormSettings
         opened={formSettingsOpen}
@@ -173,6 +181,14 @@ export function FormBuilderPage() {
         redirectUrl={redirectUrl}
         onThankYouChange={setThankYouMessage}
         onRedirectChange={setRedirectUrl}
+      />
+
+      <PreviewModal
+        opened={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={title}
+        description={description}
+        fields={fields}
       />
 
       {savedForm && (

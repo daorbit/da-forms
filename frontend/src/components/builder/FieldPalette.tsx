@@ -45,7 +45,11 @@ export function FieldPalette({ onAdd }: Props) {
                   className={classes.paletteItem}
                   onClick={() => onAdd(item.type)}
                 >
-                  <item.icon size={19} stroke={1.6} className={classes.itemIcon} />
+                  <item.icon
+                    size={19}
+                    stroke={1.6}
+                    color={`var(--mantine-color-${item.color}-6)`}
+                  />
                   <span className={classes.itemLabel}>{item.label}</span>
                 </button>
               ))}

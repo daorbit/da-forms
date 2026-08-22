@@ -1,0 +1,68 @@
+.topbar {
+  height: 56px;
+  flex-shrink: 0;
+  background-color: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-gray-3);
+}
+
+.deviceGroup {
+  padding: 3px;
+  border-radius: var(--mantine-radius-md);
+  background-color: var(--mantine-color-gray-1);
+}
+
+.deviceButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mantine-color-dimmed);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.deviceButton:hover {
+  color: var(--mantine-color-text);
+}
+
+.deviceButtonActive {
+  background-color: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+  box-shadow: var(--mantine-shadow-xs);
+}
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 40px 24px 64px;
+  background-color: var(--mantine-color-gray-1);
+  scrollbar-width: thin;
+  scrollbar-color: var(--mantine-color-gray-4) transparent;
+}
+
+.stage::-webkit-scrollbar {
+  width: 8px;
+}
+
+.stage::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.stage::-webkit-scrollbar-thumb {
+  background-color: var(--mantine-color-gray-4);
+  border-radius: 4px;
+}
+
+.viewport {
+  align-self: flex-start;
+  transition: width 200ms ease;
+}

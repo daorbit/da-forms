@@ -20,6 +20,12 @@
 .canvasArea {
   padding: 28px 32px 64px;
   min-height: 100%;
+  transition: padding-right 200ms ease;
+}
+
+/* Keeps the card clear of the open properties drawer. */
+.canvasAreaOffset {
+  padding-right: 472px;
 }
 
 .formCard {
@@ -40,7 +46,9 @@
   border: 1px solid transparent;
   border-bottom: 1px solid var(--mantine-color-gray-2);
   cursor: pointer;
-  transition: background-color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
 }
 
 .fieldRow:last-child {

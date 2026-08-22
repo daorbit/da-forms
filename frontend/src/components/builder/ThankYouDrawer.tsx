@@ -1,4 +1,5 @@
 import { Drawer, Stack, Textarea, TextInput, Text, Divider } from '@mantine/core';
+import classes from './drawer.module.css';
 
 interface Props {
   opened: boolean;
@@ -22,9 +23,10 @@ export function ThankYouDrawer({
       opened={opened}
       onClose={onClose}
       position="right"
-      size={520}
+      size={480}
       title="Thank You Page & Redirection"
-      padding="lg"
+      padding={0}
+      classNames={classes}
     >
       <Stack gap="md">
         <Textarea

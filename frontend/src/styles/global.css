@@ -13,6 +13,16 @@ body,
   height: 100%;
 }
 
+/* The document never scrolls — #root does, so drawers can leave it unlocked. */
+html,
+body {
+  overflow: hidden;
+}
+
+#root {
+  overflow-y: auto;
+}
+
 body {
   margin: 0;
   padding: 0;

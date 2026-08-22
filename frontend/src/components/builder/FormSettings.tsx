@@ -1,4 +1,5 @@
 import { Drawer, Stack, TextInput, Textarea } from '@mantine/core';
+import classes from './drawer.module.css';
 
 interface Props {
   opened: boolean;
@@ -18,7 +19,15 @@ export function FormSettings({
   onDescriptionChange,
 }: Props) {
   return (
-    <Drawer opened={opened} onClose={onClose} position="right" size={520} title="Form Properties" padding="lg">
+    <Drawer
+      opened={opened}
+      onClose={onClose}
+      position="right"
+      size={480}
+      title="Form Properties"
+      padding={0}
+      classNames={classes}
+    >
       <Stack gap="md">
         <TextInput label="Title" value={title} onChange={(e) => onTitleChange(e.target.value)} />
         <Textarea

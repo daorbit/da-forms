@@ -60,7 +60,7 @@
   border: 1px solid var(--mantine-color-default-border);
   border-radius: 8px;
   background-color: var(--mantine-color-body);
-  cursor: pointer;
+  cursor: grab;
   font: inherit;
   text-align: center;
   transition:
@@ -74,15 +74,8 @@
 }
 
 .paletteItem:active {
+  cursor: grabbing;
   background-color: var(--mantine-color-emerald-1);
-}
-
-.itemIcon {
-  color: var(--mantine-color-dimmed);
-}
-
-.paletteItem:hover .itemIcon {
-  color: var(--mantine-color-emerald-7);
 }
 
 .itemLabel {

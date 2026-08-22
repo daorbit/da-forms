@@ -15,6 +15,8 @@ interface Props {
   onDuplicate: (id: string) => void;
   onOpenProperties: (id: string) => void;
   onOpenFormSettings: () => void;
+  /** Shifts the card clear of the properties drawer while it is open. */
+  offsetRight?: boolean;
 }
 
 export function FormCanvas({
@@ -27,10 +29,11 @@ export function FormCanvas({
   onDuplicate,
   onOpenProperties,
   onOpenFormSettings,
+  offsetRight = false,
 }: Props) {
   return (
     <Box className={classes.canvasScroll}>
-      <Box className={classes.canvasArea}>
+      <Box className={`${classes.canvasArea} ${offsetRight ? classes.canvasAreaOffset : ''}`}>
       <Paper className={classes.formCard} radius="md" withBorder>
         <Box className={`${classes.fieldRow} ${classes.header}`}>
           <Title order={3} ta="center">
@@ -68,7 +71,10 @@ export function FormCanvas({
               <Box
                 key={field.id}
                 className={`${classes.fieldRow} ${selectedId === field.id ? classes.fieldRowSelected : ''}`}
-                onClick={() => onSelect(field.id)}
+                onClick={() => {
+                  onSelect(field.id);
+                  onOpenProperties(field.id);
+                }}
               >
                 {isStatic ? (
                   <FieldPreview field={field} />

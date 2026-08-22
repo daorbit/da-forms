@@ -36,8 +36,19 @@ const sizeWidth: Record<FieldSize, string> = {
 
 /** Read-only rendering of a field as it will appear to respondents. */
 export function FieldPreview({ field }: { field: FormField }) {
-  const common = { readOnly: true, placeholder: field.placeholder };
   const width = sizeWidth[field.size ?? 'large'];
+  const value = field.initialValue || undefined;
+
+  /** The author's placeholder always wins; the argument is only a fallback. */
+  const ph = (fallback?: string) => field.placeholder || fallback;
+
+  const common = {
+    readOnly: true,
+    title: field.hoverText,
+    // Controlled with a no-op handler so edits in the panel show immediately.
+    value: value ?? '',
+    onChange: () => {},
+  };
 
   const wrap = (node: React.ReactNode) => <Box style={{ maxWidth: width }}>{node}</Box>;
 
@@ -45,38 +56,56 @@ export function FieldPreview({ field }: { field: FormField }) {
     case 'name':
       return wrap(
         <Group grow>
-          <TextInput {...common} placeholder="First" />
-          <TextInput {...common} placeholder="Last" />
+          <TextInput {...common} placeholder={ph('First')} />
+          <TextInput readOnly title={field.hoverText} placeholder="Last" />
         </Group>
       );
     case 'address':
       return wrap(
         <Stack gap="xs">
-          <TextInput {...common} placeholder="Street address" />
+          <TextInput {...common} placeholder={ph('Street address')} />
           <Group grow>
-            <TextInput {...common} placeholder="City" />
-            <TextInput {...common} placeholder="Postal code" />
+            <TextInput readOnly placeholder="City" />
+            <TextInput readOnly placeholder="Postal code" />
           </Group>
         </Stack>
       );
     case 'email':
-      return wrap(<TextInput {...common} leftSection={<IconMail size={16} />} />);
+      return wrap(<TextInput {...common} placeholder={ph()} leftSection={<IconMail size={16} />} />);
     case 'phone':
-      return wrap(<TextInput {...common} leftSection={<IconPhone size={16} />} />);
+      return wrap(<TextInput {...common} placeholder={ph()} leftSection={<IconPhone size={16} />} />);
     case 'website':
-      return wrap(<TextInput {...common} leftSection={<IconWorld size={16} />} placeholder="https://" />);
+      return wrap(
+        <TextInput {...common} placeholder={ph('https://')} leftSection={<IconWorld size={16} />} />
+      );
     case 'textarea':
-      return wrap(<Textarea {...common} autosize minRows={3} />);
+      return wrap(<Textarea {...common} placeholder={ph()} autosize minRows={3} />);
     case 'regex':
-      return wrap(<TextInput {...common} placeholder={field.placeholder ?? field.pattern ?? 'Pattern'} />);
+      return wrap(<TextInput {...common} placeholder={ph(field.pattern || 'Pattern')} />);
     case 'number':
-      return wrap(<NumberInput {...common} placeholder="123" />);
+      return wrap(<NumberInput {...common} placeholder={ph('123')} />);
     case 'decimal':
-      return wrap(<NumberInput {...common} decimalScale={2} placeholder="0.00" />);
+      return wrap(<NumberInput {...common} placeholder={ph('0.00')} decimalScale={2} />);
     case 'currency':
-      return wrap(<NumberInput {...common} leftSection={<IconCurrencyDollar size={16} />} decimalScale={2} />);
+      return wrap(
+        <NumberInput
+          {...common}
+          placeholder={ph()}
+          leftSection={<IconCurrencyDollar size={16} />}
+          decimalScale={2}
+        />
+      );
     case 'select':
-      return wrap(<Select readOnly placeholder={field.placeholder ?? 'Select...'} data={field.options ?? []} />);
+      return wrap(
+        <Select
+          readOnly
+          title={field.hoverText}
+          value={value ?? null}
+          onChange={() => {}}
+          placeholder={ph('Select...')}
+          data={field.options ?? []}
+        />
+      );
     case 'radio':
       return (
         <Radio.Group>

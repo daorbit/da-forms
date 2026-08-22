@@ -5,6 +5,7 @@ import { IconFileText, IconEye, IconArrowLeft } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
+import { useEmbedded } from '@/hooks/useEmbedded';
 import type { Form, FormField, FieldType } from '@/types';
 import { ShareModal } from '@/components/share/ShareModal';
 import { makeField } from '@/lib/fieldPalette';
@@ -22,6 +23,7 @@ export function FormBuilderPage() {
   const navigate = useNavigate();
   const { id: routeFormId } = useParams<{ id: string }>();
   const workspaceId = useWorkspaceId();
+  const embedded = useEmbedded();
   const initialTitle = (location.state as { title?: string } | null)?.title ?? 'Untitled form';
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState('');
@@ -128,9 +130,12 @@ export function FormBuilderPage() {
                 <IconArrowLeft size={19} />
               </ActionIcon>
             </Tooltip>
-            <ThemeIcon variant="light" color="gray" radius="sm">
-              <IconFileText size={18} />
-            </ThemeIcon>
+            {/* The app icon is the host's job when embedded. */}
+            {!embedded && (
+              <ThemeIcon variant="light" color="gray" radius="sm">
+                <IconFileText size={18} />
+              </ThemeIcon>
+            )}
             <TextInput
               variant="unstyled"
               value={title}

@@ -27,12 +27,13 @@ import {
   IconLayoutKanban,
   IconCheck,
 } from '@tabler/icons-react';
-import { getForm, listSubmissions, updateSubmission } from '@/lib/api';
+import { getForm, listSubmissions, updateSubmission, publicFormUrl, getAnalytics, type Analytics } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
 import { paletteByType, staticTypes } from '@/lib/fieldPalette';
 import { valueFields } from '@/lib/fieldTree';
 import { EntriesKanban } from '@/components/builder/EntriesKanban';
+import { AnalyticsBar } from '@/components/builder/AnalyticsBar';
 import classes from './EntriesPage.module.css';
 
 function formatDateTime(iso: string) {
@@ -84,6 +85,7 @@ export function EntriesPage() {
   const [day, setDay] = useState<DayFilter>('all');
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [loading, setLoading] = useState(false);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
   const loadSubmissions = useCallback(() => {
     if (!id) return;
@@ -104,6 +106,7 @@ export function EntriesPage() {
   useEffect(() => {
     if (!id) return;
     getForm(id, workspaceId).then(setForm);
+    getAnalytics(id, workspaceId).then(setAnalytics);
   }, [id, workspaceId]);
 
   useEffect(() => {
@@ -129,7 +132,7 @@ export function EntriesPage() {
 
   function copyShareLink() {
     if (!id) return;
-    navigator.clipboard.writeText(`${window.location.origin}/f/${id}`);
+    navigator.clipboard.writeText(publicFormUrl(id));
     notifications.show({ message: 'Link copied', color: 'emerald' });
   }
 
@@ -215,6 +218,8 @@ export function EntriesPage() {
           </Button>
         </Group>
       </Group>
+
+      <AnalyticsBar analytics={analytics} />
 
       <Group justify="space-between" px="md" py="xs" className={classes.filterbar} wrap="nowrap">
         <Group gap="lg">

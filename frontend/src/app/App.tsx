@@ -18,7 +18,7 @@ export function App() {
         <Route path="/:workspaceId/forms/:id/entries" element={<EntriesPage />} />
 
         {/* The public share link: form id only, no workspace. */}
-        <Route path="/f/:id" element={<PublicFormPage />} />
+        <Route path="/from/:id/view" element={<PublicFormPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -21,7 +21,7 @@ import {
   IconWorldUpload,
   IconX,
 } from '@tabler/icons-react';
-import { listForms, deleteForm, updateForm } from '@/lib/api';
+import { listForms, deleteForm, updateForm, publicFormPath, publicFormUrl } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form } from '@/types';
@@ -273,7 +273,7 @@ export function FormListPage() {
                     <Menu.Divider />
                     <Menu.Item
                       component="a"
-                      href={`/f/${form._id}`}
+                      href={publicFormPath(form._id)}
                       target="_blank"
                       leftSection={<IconExternalLink size={15} />}
                     >
@@ -282,7 +282,7 @@ export function FormListPage() {
                     <Menu.Item
                       leftSection={<IconCopy size={15} />}
                       onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/f/${form._id}`);
+                        navigator.clipboard.writeText(publicFormUrl(form._id));
                         notifications.show({ message: 'Link copied', color: 'emerald' });
                       }}
                     >

@@ -28,7 +28,7 @@ import {
 } from '@tabler/icons-react';
 import QRCode from 'qrcode';
 import { notifications } from '@mantine/notifications';
-import { updateForm } from '@/lib/api';
+import { updateForm, publicFormUrl } from '@/lib/api';
 import type { Form } from '@/types';
 import classes from './ShareModal.module.css';
 
@@ -54,7 +54,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
   const [height, setHeight] = useState<number | string>(600);
   const [qr, setQr] = useState('');
 
-  const shareUrl = `${window.location.origin}/f/${form._id}`;
+  const shareUrl = publicFormUrl(form._id);
 
   const embedCode = useMemo(
     () =>

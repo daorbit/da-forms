@@ -2,6 +2,15 @@ import type { HealthResponse, Form, FormField, Submission, Paginated } from '@/t
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
+/** The public, respondent-facing URL for a form's share link. */
+export function publicFormPath(formId: string) {
+  return `/from/${formId}/view`;
+}
+
+export function publicFormUrl(formId: string) {
+  return `${window.location.origin}${publicFormPath(formId)}`;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,

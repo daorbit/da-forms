@@ -1,4 +1,8 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "functions": {
+    "dist/server.js": {
+      "includeFiles": "dist/**"
+    }
+  }
 }

@@ -7,8 +7,14 @@ function workspaceIdOf(req: { params: Record<string, string> }) {
 }
 
 export const listForms: RequestHandler = async (req, res) => {
-  const forms = await formService.listForms(workspaceIdOf(req));
-  res.json(forms);
+  const { page, limit, q, sort } = req.query as Record<string, string | undefined>;
+  const result = await formService.listForms(workspaceIdOf(req), {
+    page: page ? Number(page) : undefined,
+    limit: limit ? Number(limit) : undefined,
+    q,
+    sort: sort as never,
+  });
+  res.json(result);
 };
 
 export const getForm: RequestHandler = async (req, res) => {
@@ -70,8 +76,29 @@ export const listSubmissions: RequestHandler = async (req, res) => {
   if (!form || form.workspaceId !== workspaceIdOf(req)) {
     return res.status(404).json({ error: 'not_found', message: 'Form not found' });
   }
-  const submissions = await formService.listSubmissions(req.params.id);
-  res.json(submissions);
+  const { page, limit, status, from, to } = req.query as Record<string, string | undefined>;
+  const result = await formService.listSubmissions(req.params.id, {
+    page: page ? Number(page) : undefined,
+    limit: limit ? Number(limit) : undefined,
+    status: status as never,
+    from,
+    to,
+  });
+  res.json(result);
+};
+
+export const updateSubmission: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form || form.workspaceId !== workspaceIdOf(req)) {
+    return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  }
+  const { read, starred } = req.body;
+  const submission = await formService.updateSubmission(req.params.subId, req.params.id, {
+    read,
+    starred,
+  });
+  if (!submission) return res.status(404).json({ error: 'not_found', message: 'Submission not found' });
+  res.json(submission);
 };
 
 /* ---- Public routes: no workspace in the path ---- */

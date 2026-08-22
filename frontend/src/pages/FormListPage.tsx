@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip,
+  Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -20,9 +20,11 @@ import {
   IconRefresh,
   IconEyeOff,
   IconWorldUpload,
+  IconX,
 } from '@tabler/icons-react';
 import { listForms, deleteForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
+import { useDebouncedValue } from '@mantine/hooks';
 import type { Form } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
@@ -32,10 +34,27 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+type SortOption = 'date' | 'dateAsc' | 'name' | 'nameDesc' | 'status';
+
+const SORT_LABEL: Record<SortOption, string> = {
+  date: 'Newest first',
+  dateAsc: 'Oldest first',
+  name: 'Name (A-Z)',
+  nameDesc: 'Name (Z-A)',
+  status: 'Status',
+};
+
+const PAGE_SIZE = 10;
+
 export function FormListPage() {
   const workspaceId = useWorkspaceId();
   const location = useLocation();
   const [forms, setForms] = useState<Form[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebouncedValue(search, 300);
+  const [sort, setSort] = useState<SortOption>('date');
   const [loading, setLoading] = useState(true);
   const [newFormOpen, setNewFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
@@ -44,10 +63,13 @@ export function FormListPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    return listForms(workspaceId)
-      .then(setForms)
+    return listForms(workspaceId, { page, limit: PAGE_SIZE, q: debouncedSearch, sort })
+      .then((res) => {
+        setForms(res.items);
+        setTotal(res.total);
+      })
       .finally(() => setLoading(false));
-  }, [workspaceId]);
+  }, [workspaceId, page, debouncedSearch, sort]);
 
   // Keyed on the location as well as the loader, so returning from the builder
   // refetches rather than showing the list as it was before the edit — however
@@ -55,6 +77,12 @@ export function FormListPage() {
   useEffect(() => {
     load();
   }, [location.key, load]);
+
+  // A new search or sort narrows/reorders the result set, so paging resets to
+  // the top rather than landing on a page that may no longer exist.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, sort]);
 
   async function toggleStatus(form: Form) {
     const status = form.status === 'published' ? 'draft' : 'published';
@@ -70,10 +98,10 @@ export function FormListPage() {
     if (!pendingDelete) return;
     setDeleting(true);
     await deleteForm(pendingDelete._id, workspaceId);
-    setForms((prev) => prev.filter((f) => f._id !== pendingDelete._id));
     setDeleting(false);
     setPendingDelete(null);
     notifications.show({ message: 'Form deleted', color: 'emerald' });
+    load();
   }
 
   return (
@@ -86,12 +114,38 @@ export function FormListPage() {
           <IconChevronDown size={16} />
         </Group>
         <Group gap="xs">
-          <ActionIcon variant="subtle" color="gray" radius="xl" size="lg">
-            <IconSearch size={18} />
-          </ActionIcon>
-          <ActionIcon variant="subtle" color="gray" radius="xl" size="lg">
-            <IconArrowsSort size={18} />
-          </ActionIcon>
+          <TextInput
+            placeholder="Search forms"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            leftSection={<IconSearch size={16} />}
+            rightSection={
+              search ? (
+                <ActionIcon variant="subtle" color="gray" onClick={() => setSearch('')} aria-label="Clear search">
+                  <IconX size={14} />
+                </ActionIcon>
+              ) : undefined
+            }
+            radius="xl"
+            size="sm"
+            w={220}
+          />
+          <Menu shadow="md" width={180}>
+            <Menu.Target>
+              <Tooltip label="Sort" withArrow>
+                <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" aria-label="Sort">
+                  <IconArrowsSort size={18} />
+                </ActionIcon>
+              </Tooltip>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {(Object.keys(SORT_LABEL) as SortOption[]).map((key) => (
+                <Menu.Item key={key} onClick={() => setSort(key)} fw={sort === key ? 700 : 400}>
+                  {SORT_LABEL[key]}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
           <Tooltip label="Refresh" withArrow>
             <ActionIcon
               variant="subtle"
@@ -124,10 +178,12 @@ export function FormListPage() {
               <IconFileText size={38} stroke={1.25} />
             </div>
             <Text fw={650} fz="lg" mt="lg">
-              No forms yet
+              {debouncedSearch ? 'No forms match your search' : 'No forms yet'}
             </Text>
             <Text size="sm" c="dimmed" mt={6} className={classes.emptyText}>
-              Build a form to collect leads, then share its link or embed it on your site.
+              {debouncedSearch
+                ? 'Try a different search term.'
+                : 'Build a form to collect leads, then share its link or embed it on your site.'}
             </Text>
             <Button
               mt="xl"
@@ -251,6 +307,16 @@ export function FormListPage() {
           </Box>
         ))}
       </Stack>
+
+      <Group justify="flex-end" px="xl" py="md">
+        <Pagination
+          total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+          value={page}
+          onChange={setPage}
+          color="emerald"
+          disabled={total <= PAGE_SIZE}
+        />
+      </Group>
 
       <NewFormModal opened={newFormOpen} onClose={() => setNewFormOpen(false)} />
 

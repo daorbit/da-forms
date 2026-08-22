@@ -1,4 +1,4 @@
-import type { HealthResponse, Form, FormField, Submission } from '@/types';
+import type { HealthResponse, Form, FormField, Submission, Paginated } from '@/types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -28,8 +28,17 @@ export function getHealth() {
   return request<HealthResponse>('/health');
 }
 
-export function listForms(workspaceId = DEFAULT_WORKSPACE) {
-  return request<Form[]>(ws(workspaceId));
+export function listForms(
+  workspaceId = DEFAULT_WORKSPACE,
+  options: { page?: number; limit?: number; q?: string; sort?: string } = {}
+) {
+  const params = new URLSearchParams();
+  if (options.page) params.set('page', String(options.page));
+  if (options.limit) params.set('limit', String(options.limit));
+  if (options.q) params.set('q', options.q);
+  if (options.sort) params.set('sort', options.sort);
+  const qs = params.toString();
+  return request<Paginated<Form>>(`${ws(workspaceId)}${qs ? `?${qs}` : ''}`);
 }
 
 export function getForm(id: string, workspaceId = DEFAULT_WORKSPACE) {
@@ -65,8 +74,37 @@ export function deleteForm(id: string, workspaceId = DEFAULT_WORKSPACE) {
   return request<void>(`${ws(workspaceId)}/${id}`, { method: 'DELETE' });
 }
 
-export function listSubmissions(id: string, workspaceId = DEFAULT_WORKSPACE) {
-  return request<Submission[]>(`${ws(workspaceId)}/${id}/submissions`);
+export function listSubmissions(
+  id: string,
+  workspaceId = DEFAULT_WORKSPACE,
+  options: {
+    page?: number;
+    limit?: number;
+    status?: 'all' | 'read' | 'unread' | 'starred';
+    from?: string;
+    to?: string;
+  } = {}
+) {
+  const params = new URLSearchParams();
+  if (options.page) params.set('page', String(options.page));
+  if (options.limit) params.set('limit', String(options.limit));
+  if (options.status && options.status !== 'all') params.set('status', options.status);
+  if (options.from) params.set('from', options.from);
+  if (options.to) params.set('to', options.to);
+  const qs = params.toString();
+  return request<Paginated<Submission>>(`${ws(workspaceId)}/${id}/submissions${qs ? `?${qs}` : ''}`);
+}
+
+export function updateSubmission(
+  formId: string,
+  submissionId: string,
+  patch: Partial<Pick<Submission, 'read' | 'starred'>>,
+  workspaceId = DEFAULT_WORKSPACE
+) {
+  return request<Submission>(`${ws(workspaceId)}/${formId}/submissions/${submissionId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
 }
 
 /* ---- Public: reachable by form id alone, no workspace ---- */

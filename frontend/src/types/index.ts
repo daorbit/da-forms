@@ -116,5 +116,14 @@ export interface Submission {
   formId: string;
   data: Record<string, string>;
   sourceUrl?: string;
+  read: boolean;
+  starred: boolean;
   createdAt: string;
+}
+
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
 }

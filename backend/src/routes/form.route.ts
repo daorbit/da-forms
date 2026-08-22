@@ -16,6 +16,7 @@ workspaceFormRouter.get('/:id', formController.getForm);
 workspaceFormRouter.patch('/:id', formController.updateForm);
 workspaceFormRouter.delete('/:id', formController.deleteForm);
 workspaceFormRouter.get('/:id/submissions', formController.listSubmissions);
+workspaceFormRouter.patch('/:id/submissions/:subId', formController.updateSubmission);
 
 /**
  * The respondent-facing routes: reachable by form id alone, because that id is

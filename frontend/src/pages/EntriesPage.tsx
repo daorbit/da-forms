@@ -1,17 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Group, Text, Button, ThemeIcon, Table, Box, Menu, ActionIcon, Loader, Center } from '@mantine/core';
+import {
+  Group,
+  Text,
+  Button,
+  ThemeIcon,
+  Table,
+  Box,
+  Menu,
+  ActionIcon,
+  Loader,
+  Center,
+  Pagination,
+  Tooltip,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconFileText,
   IconChevronDown,
-  IconClock,
   IconShare2,
   IconFilter,
-  IconDots,
   IconCalendarPlus,
   IconArrowLeft,
+  IconStar,
+  IconStarFilled,
+  IconFileExport,
+  IconLayoutList,
+  IconLayoutKanban,
+  IconCheck,
 } from '@tabler/icons-react';
-import { getForm, listSubmissions } from '@/lib/api';
+import { getForm, listSubmissions, updateSubmission } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
 import { paletteByType, staticTypes } from '@/lib/fieldPalette';
@@ -28,17 +46,111 @@ function formatDateTime(iso: string) {
   });
 }
 
+type StatusFilter = 'all' | 'unread' | 'read' | 'starred';
+type DayFilter = 'all' | 'today' | '7' | '30';
+
+const STATUS_LABEL: Record<StatusFilter, string> = {
+  all: 'All Entries',
+  unread: 'Unread',
+  read: 'Read',
+  starred: 'Starred',
+};
+
+const DAY_LABEL: Record<DayFilter, string> = {
+  all: 'All Days',
+  today: 'Today',
+  '7': 'Last 7 Days',
+  '30': 'Last 30 Days',
+};
+
+function dayFilterToRange(day: DayFilter): { from?: string } {
+  if (day === 'all') return {};
+  const now = new Date();
+  const days = day === 'today' ? 0 : Number(day) - 1;
+  const from = new Date(now);
+  from.setDate(from.getDate() - days);
+  from.setHours(0, 0, 0, 0);
+  return { from: from.toISOString() };
+}
+
+const PAGE_SIZE = 10;
+
 export function EntriesPage() {
   const { id } = useParams<{ id: string }>();
   const workspaceId = useWorkspaceId();
   const [form, setForm] = useState<Form | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState<StatusFilter>('all');
+  const [day, setDay] = useState<DayFilter>('all');
+  const [view, setView] = useState<'list' | 'kanban'>('list');
+  const [loading, setLoading] = useState(false);
+
+  const loadSubmissions = useCallback(() => {
+    if (!id) return;
+    setLoading(true);
+    listSubmissions(id, workspaceId, {
+      page,
+      limit: PAGE_SIZE,
+      status,
+      ...dayFilterToRange(day),
+    })
+      .then((res) => {
+        setSubmissions(res.items);
+        setTotal(res.total);
+      })
+      .finally(() => setLoading(false));
+  }, [id, workspaceId, page, status, day]);
 
   useEffect(() => {
     if (!id) return;
     getForm(id, workspaceId).then(setForm);
-    listSubmissions(id, workspaceId).then(setSubmissions);
   }, [id, workspaceId]);
+
+  useEffect(() => {
+    loadSubmissions();
+  }, [loadSubmissions]);
+
+  // Filters reset paging so a narrower result set never lands on a page past its end.
+  useEffect(() => {
+    setPage(1);
+  }, [status, day]);
+
+  async function toggleStarred(submission: Submission) {
+    if (!id) return;
+    const updated = await updateSubmission(id, submission._id, { starred: !submission.starred }, workspaceId);
+    setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
+  }
+
+  async function markRead(submission: Submission) {
+    if (!id || submission.read) return;
+    const updated = await updateSubmission(id, submission._id, { read: true }, workspaceId);
+    setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
+  }
+
+  function copyShareLink() {
+    if (!id) return;
+    navigator.clipboard.writeText(`${window.location.origin}/f/${id}`);
+    notifications.show({ message: 'Link copied', color: 'emerald' });
+  }
+
+  function exportCsv() {
+    if (!form) return;
+    const header = [...columns.map((f) => f.label), 'Added Time'];
+    const rows = submissions.map((s) => [
+      ...columns.map((f) => JSON.stringify(s.data[f.id] ?? '')),
+      JSON.stringify(formatDateTime(s.createdAt)),
+    ]);
+    const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${form.title || 'entries'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   if (!form)
     return (
@@ -67,7 +179,7 @@ export function EntriesPage() {
           </Text>
         </Group>
         <Group gap="xs">
-          <Button variant="default" radius="md" color="emerald">
+          <Button variant="default" radius="md" color="emerald" onClick={copyShareLink}>
             Share
           </Button>
           <Button color="emerald" radius="md">
@@ -78,44 +190,100 @@ export function EntriesPage() {
 
       <Group justify="space-between" px="md" py="xs" className={classes.filterbar} wrap="nowrap">
         <Group gap="lg">
-          <Menu>
+          <Menu shadow="md" width={160}>
             <Menu.Target>
               <Group gap={4} className={classes.filterItem}>
                 <Text fw={600} size="sm">
-                  All Entries
+                  {STATUS_LABEL[status]}
                 </Text>
                 <IconChevronDown size={14} />
               </Group>
             </Menu.Target>
+            <Menu.Dropdown>
+              {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => (
+                <Menu.Item key={key} onClick={() => setStatus(key)}>
+                  {STATUS_LABEL[key]}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
           </Menu>
 
           <Text c="dimmed">|</Text>
 
-          <Menu>
+          <Menu shadow="md" width={160}>
             <Menu.Target>
               <Group gap={4} className={classes.filterItem}>
                 <Text fw={600} size="sm">
-                  All Days
+                  {DAY_LABEL[day]}
                 </Text>
                 <IconChevronDown size={14} />
               </Group>
             </Menu.Target>
+            <Menu.Dropdown>
+              {(Object.keys(DAY_LABEL) as DayFilter[]).map((key) => (
+                <Menu.Item key={key} onClick={() => setDay(key)}>
+                  {DAY_LABEL[key]}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
           </Menu>
         </Group>
 
         <Group gap="xs">
-          <ActionIcon variant="subtle" color="gray">
-            <IconClock size={17} />
-          </ActionIcon>
-          <ActionIcon variant="subtle" color="gray">
-            <IconShare2 size={17} />
-          </ActionIcon>
-          <ActionIcon variant="subtle" color="gray">
-            <IconFilter size={17} />
-          </ActionIcon>
-          <ActionIcon variant="subtle" color="gray">
-            <IconDots size={17} />
-          </ActionIcon>
+          <Menu shadow="md" width={160} position="bottom-end">
+            <Menu.Target>
+              <Tooltip label="View" withArrow>
+                <ActionIcon variant="subtle" color="gray">
+                  <IconLayoutList size={17} />
+                </ActionIcon>
+              </Tooltip>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item
+                leftSection={<IconLayoutList size={15} />}
+                rightSection={view === 'list' ? <IconCheck size={14} color="var(--mantine-color-emerald-6)" /> : undefined}
+                onClick={() => setView('list')}
+              >
+                List View
+              </Menu.Item>
+              <Menu.Item
+                leftSection={<IconLayoutKanban size={15} />}
+                rightSection={view === 'kanban' ? <IconCheck size={14} color="var(--mantine-color-emerald-6)" /> : undefined}
+                onClick={() => {
+                  setView('kanban');
+                  notifications.show({ message: 'Kanban view is coming soon', color: 'gray' });
+                }}
+              >
+                Kanban View
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+          <Tooltip label="Copy share link" withArrow>
+            <ActionIcon variant="subtle" color="gray" onClick={copyShareLink}>
+              <IconShare2 size={17} />
+            </ActionIcon>
+          </Tooltip>
+          <Menu shadow="md" width={160}>
+            <Menu.Target>
+              <Tooltip label="Filter" withArrow>
+                <ActionIcon variant="subtle" color="gray">
+                  <IconFilter size={17} />
+                </ActionIcon>
+              </Tooltip>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => (
+                <Menu.Item key={key} onClick={() => setStatus(key)}>
+                  {STATUS_LABEL[key]}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
+          <Tooltip label="Export CSV" withArrow>
+            <ActionIcon variant="subtle" color="gray" onClick={exportCsv}>
+              <IconFileExport size={17} />
+            </ActionIcon>
+          </Tooltip>
         </Group>
       </Group>
 
@@ -123,6 +291,7 @@ export function EntriesPage() {
         <Table withTableBorder highlightOnHover className={classes.table}>
           <Table.Thead className={classes.thead}>
             <Table.Tr>
+              <Table.Th className={classes.th} style={{ width: 32 }} />
               {columns.map((field) => {
                 const meta = paletteByType[field.type];
                 return (
@@ -150,15 +319,32 @@ export function EntriesPage() {
           <Table.Tbody>
             {submissions.length === 0 ? (
               <Table.Tr>
-                <Table.Td colSpan={columns.length + 1}>
+                <Table.Td colSpan={columns.length + 2}>
                   <Text ta="center" py="xl" c="emerald">
-                    No entries
+                    {loading ? 'Loading…' : 'No entries'}
                   </Text>
                 </Table.Td>
               </Table.Tr>
             ) : (
               submissions.map((submission) => (
-                <Table.Tr key={submission._id}>
+                <Table.Tr
+                  key={submission._id}
+                  onClick={() => markRead(submission)}
+                  style={{ fontWeight: submission.read ? 400 : 700 }}
+                >
+                  <Table.Td style={{ width: 32, padding: '0 8px' }}>
+                    <ActionIcon
+                      variant="subtle"
+                      color={submission.starred ? 'yellow' : 'gray'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleStarred(submission);
+                      }}
+                      aria-label="Star entry"
+                    >
+                      {submission.starred ? <IconStarFilled size={16} /> : <IconStar size={16} />}
+                    </ActionIcon>
+                  </Table.Td>
                   {columns.map((field) => (
                     <Table.Td key={field.id}>
                       <Text size="sm">{submission.data[field.id] ?? ''}</Text>
@@ -175,6 +361,16 @@ export function EntriesPage() {
           </Table.Tbody>
         </Table>
       </Box>
+
+      <Group justify="flex-end" px="md" py="md">
+        <Pagination
+          total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+          value={page}
+          onChange={setPage}
+          color="emerald"
+          disabled={total <= PAGE_SIZE}
+        />
+      </Group>
     </Box>
   );
 }

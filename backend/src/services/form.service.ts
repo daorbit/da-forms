@@ -2,8 +2,40 @@ import { FormModel } from '../models/form.model.js';
 import { SubmissionModel } from '../models/submission.model.js';
 import type { FormField } from '../models/form.model.js';
 
-export function listForms(workspaceId: string) {
-  return FormModel.find({ workspaceId }).sort({ createdAt: -1 });
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+const sortMap = {
+  name: { title: 1 as const },
+  nameDesc: { title: -1 as const },
+  date: { createdAt: -1 as const },
+  dateAsc: { createdAt: 1 as const },
+  status: { status: 1 as const },
+};
+
+export async function listForms(
+  workspaceId: string,
+  options: { page?: number; limit?: number; q?: string; sort?: keyof typeof sortMap } = {}
+): Promise<Paginated<InstanceType<typeof FormModel>>> {
+  const page = Math.max(1, options.page ?? 1);
+  const limit = Math.max(1, options.limit ?? 10);
+  const filter: Record<string, unknown> = { workspaceId };
+  if (options.q) filter.title = { $regex: options.q, $options: 'i' };
+  const sort = sortMap[options.sort ?? 'date'];
+
+  const [items, total] = await Promise.all([
+    FormModel.find(filter)
+      .sort(sort)
+      .skip((page - 1) * limit)
+      .limit(limit),
+    FormModel.countDocuments(filter),
+  ]);
+
+  return { items, total, page, limit };
 }
 
 export function getForm(id: string) {
@@ -54,6 +86,46 @@ export function submitForm(formId: string, data: Record<string, string>, sourceU
   return SubmissionModel.create({ formId, data, sourceUrl });
 }
 
-export function listSubmissions(formId: string) {
-  return SubmissionModel.find({ formId }).sort({ createdAt: -1 });
+export async function listSubmissions(
+  formId: string,
+  options: {
+    page?: number;
+    limit?: number;
+    status?: 'all' | 'read' | 'unread' | 'starred';
+    from?: string;
+    to?: string;
+  } = {}
+): Promise<Paginated<InstanceType<typeof SubmissionModel>>> {
+  const page = Math.max(1, options.page ?? 1);
+  const limit = Math.max(1, options.limit ?? 10);
+  const filter: Record<string, unknown> = { formId };
+
+  if (options.status === 'read') filter.read = true;
+  else if (options.status === 'unread') filter.read = false;
+  else if (options.status === 'starred') filter.starred = true;
+
+  if (options.from || options.to) {
+    const createdAt: Record<string, Date> = {};
+    if (options.from) createdAt.$gte = new Date(options.from);
+    if (options.to) createdAt.$lte = new Date(options.to);
+    filter.createdAt = createdAt;
+  }
+
+  const [items, total] = await Promise.all([
+    SubmissionModel.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    SubmissionModel.countDocuments(filter),
+  ]);
+
+  return { items, total, page, limit };
+}
+
+export function updateSubmission(
+  id: string,
+  formId: string,
+  patch: Partial<{ read: boolean; starred: boolean }>
+) {
+  return SubmissionModel.findOneAndUpdate({ _id: id, formId }, patch, { new: true });
 }

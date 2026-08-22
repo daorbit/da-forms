@@ -107,12 +107,9 @@ export function FormListPage() {
   return (
     <Box>
       <Group justify="space-between" px="xl" py="md" className={classes.topbar}>
-        <Group gap={6}>
-          <Text fw={600} size="lg">
-            All Forms
-          </Text>
-          <IconChevronDown size={16} />
-        </Group>
+        <Text fw={600} size="lg">
+          DA Forms
+        </Text>
         <Group gap="xs">
           <TextInput
             placeholder="Search forms"

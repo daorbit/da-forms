@@ -207,6 +207,7 @@ export function FormBuilderPage() {
         title={title}
         description={description}
         fields={fields}
+        hideHeader={hideHeader}
       />
 
       {savedForm && (

@@ -31,6 +31,7 @@ export function createForm(input: {
   projectKey?: string;
   redirectUrl?: string;
   thankYouMessage?: string;
+  hideHeader?: boolean;
 }) {
   return request<Form>('/forms', { method: 'POST', body: JSON.stringify(input) });
 }

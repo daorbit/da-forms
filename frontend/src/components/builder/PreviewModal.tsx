@@ -19,13 +19,14 @@ interface Props {
   title: string;
   description?: string;
   fields: FormField[];
+  hideHeader?: boolean;
 }
 
 /**
  * Shows exactly what respondents see, rendered from the editor's current
  * state — so unsaved changes are previewable without a round trip.
  */
-export function PreviewModal({ opened, onClose, title, description, fields }: Props) {
+export function PreviewModal({ opened, onClose, title, description, fields, hideHeader }: Props) {
   const [device, setDevice] = useState<Device>('desktop');
   const active = DEVICES.find((d) => d.id === device) ?? DEVICES[0];
 
@@ -82,6 +83,7 @@ export function PreviewModal({ opened, onClose, title, description, fields }: Pr
             title={title}
             description={description}
             fields={fields}
+            hideHeader={hideHeader}
           />
           <Text size="xs" c="dimmed" ta="center" mt="md">
             Submissions are not recorded in preview.

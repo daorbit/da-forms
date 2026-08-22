@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { TextInput, Text } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
-import { fieldPalette } from '@/lib/fieldPalette';
+import { fieldPalette, paletteKey } from '@/lib/fieldPalette';
+import { PaletteTile } from './PaletteTile';
 import type { FieldType } from '@/types';
 import classes from './FieldPalette.module.css';
 
 interface Props {
-  onAdd: (type: FieldType) => void;
+  onAdd: (type: FieldType, columns?: number) => void;
 }
 
 export function FieldPalette({ onAdd }: Props) {
@@ -39,19 +40,11 @@ export function FieldPalette({ onAdd }: Props) {
             <p className={classes.groupLabel}>{group.group}</p>
             <div className={classes.grid}>
               {group.items.map((item) => (
-                <button
-                  key={item.type}
-                  type="button"
-                  className={classes.paletteItem}
-                  onClick={() => onAdd(item.type)}
-                >
-                  <item.icon
-                    size={24}
-                    stroke={1.5}
-                    color={`var(--mantine-color-${item.color}-6)`}
-                  />
-                  <span className={classes.itemLabel}>{item.label}</span>
-                </button>
+                <PaletteTile
+                  key={paletteKey(item)}
+                  item={item}
+                  onAdd={() => onAdd(item.type, item.columns)}
+                />
               ))}
             </div>
           </section>

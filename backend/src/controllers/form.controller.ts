@@ -22,7 +22,17 @@ export const getForm: RequestHandler = async (req, res) => {
 };
 
 export const createForm: RequestHandler = async (req, res) => {
-  const { title, description, fields, redirectUrl, thankYouMessage, hideHeader } = req.body;
+  const {
+    title,
+    description,
+    fields,
+    redirectUrl,
+    thankYouMessage,
+    hideHeader,
+    labelPlacement,
+    submitLabel,
+    collectIp,
+  } = req.body;
   const form = await formService.createForm({
     title,
     description,
@@ -30,6 +40,9 @@ export const createForm: RequestHandler = async (req, res) => {
     redirectUrl,
     thankYouMessage,
     hideHeader,
+    labelPlacement,
+    submitLabel,
+    collectIp,
     workspaceId: workspaceIdOf(req),
   });
   res.status(201).json(form);

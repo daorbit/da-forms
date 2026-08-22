@@ -44,6 +44,9 @@ export function createForm(
     redirectUrl?: string;
     thankYouMessage?: string;
     hideHeader?: boolean;
+    labelPlacement?: Form['labelPlacement'];
+    submitLabel?: string;
+    collectIp?: boolean;
   },
   workspaceId = DEFAULT_WORKSPACE
 ) {

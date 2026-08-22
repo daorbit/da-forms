@@ -10,3 +10,15 @@
 .main > * {
   height: 100%;
 }
+
+/* What the cursor carries during a drag. */
+.dragChip {
+  padding: 8px 14px;
+  border-radius: 6px;
+  background-color: var(--mantine-color-dark-8);
+  color: var(--mantine-color-white);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--mantine-shadow-md);
+  cursor: grabbing;
+}

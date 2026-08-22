@@ -33,44 +33,55 @@
 }
 
 .header {
-  padding: 28px 28px 22px;
+  padding: 30px 28px 26px;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+}
+
+.header:hover {
+  border-bottom-color: transparent;
 }
 
 .fieldRow {
   position: relative;
-  padding: 18px 28px;
+  padding: 22px 28px;
   border: 1px solid transparent;
-  border-bottom: 1px solid var(--mantine-color-gray-2);
   cursor: pointer;
   transition:
     background-color 120ms ease,
     border-color 120ms ease;
 }
 
-.fieldRow:last-child {
-  border-bottom-color: transparent;
+/*
+ * A hairline between fields rather than under every one: the separator is an
+ * editor affordance marking where one field ends, so it has no business above
+ * the first or below the last.
+ */
+.fieldRow + .fieldRow::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 28px;
+  right: 28px;
+  height: 1px;
+  background-color: var(--mantine-color-gray-2);
 }
 
-.fieldRow:hover {
-  border-color: var(--mantine-color-emerald-3);
-  background-color: var(--mantine-color-emerald-0);
+/* The outline replaces the separator while a row is active, or the two draw
+   over each other. */
+.fieldRow:hover::before,
+.fieldRowSelected::before,
+.fieldRow:hover + .fieldRow::before,
+.fieldRowSelected + .fieldRow::before {
+  opacity: 0;
 }
 
+/* Dashed while hovered or selected: it reads as an editable region rather than
+   as a solid card the respondent would see. */
+.fieldRow:hover,
 .fieldRowSelected {
-  border-color: var(--mantine-color-emerald-4);
+  border: 1px dashed var(--mantine-color-emerald-5);
+  border-radius: 4px;
   background-color: var(--mantine-color-emerald-0);
-  box-shadow: inset 2px 0 0 var(--mantine-color-emerald-6);
-}
-
-.fieldLabel {
-  width: 190px;
-  padding-top: 7px;
-  flex-shrink: 0;
-}
-
-.fieldInput {
-  flex: 1;
-  min-width: 0;
 }
 
 .emptyState {
@@ -78,16 +89,62 @@
   text-align: center;
 }
 
+/* ---- Grid layout ---- */
+
+.grid {
+  display: grid;
+  gap: 12px;
+}
+
+.gridColumn {
+  border: 1px dashed var(--mantine-color-gray-3);
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 96px;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.gridColumnOver {
+  border-color: var(--mantine-color-emerald-5);
+  background-color: var(--mantine-color-emerald-0);
+}
+
+/* An invisible drop target is one nobody aims at, so an empty column says
+   what it is for. */
+.gridColumnEmpty {
+  display: grid;
+  place-items: center;
+  min-height: 78px;
+  border-radius: 4px;
+  background-color: var(--mantine-color-gray-0);
+}
+
+/* ---- Drag states ---- */
+
+.rootDrop {
+  min-height: 40px;
+}
+
+.rootDropOver {
+  background-color: var(--mantine-color-emerald-0);
+}
+
+.rowDragging {
+  opacity: 0.4;
+}
+
+/* Butted against the row's right edge, so it reads as attached to the field
+   rather than floating beside the card. */
 .hoverToolbar {
   position: absolute;
-  top: 8px;
+  top: 0;
   left: 100%;
-  margin-left: 8px;
   opacity: 0;
   pointer-events: none;
-  border-radius: var(--mantine-radius-sm);
+  border-radius: 0 6px 6px 0;
   overflow: hidden;
-  box-shadow: var(--mantine-shadow-sm);
   transition: opacity 120ms ease;
 }
 

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Paper, Title, Text, Button, Stack } from '@mantine/core';
+import { Paper, Title, Text, Button, Stack, SimpleGrid } from '@mantine/core';
 import type { FormField } from '@/types';
 import { FieldControl } from '@/components/FieldControl';
+import { valueFields } from '@/lib/fieldTree';
 
 interface Props {
   title: string;
@@ -15,7 +16,8 @@ interface Props {
 
 function initialValues(fields: FormField[]) {
   const values: Record<string, string> = {};
-  for (const field of fields) {
+  // Walks into grids: a prefilled field inside a column is still prefilled.
+  for (const field of valueFields(fields)) {
     if (field.initialValue) values[field.id] = field.initialValue;
   }
   return values;
@@ -38,6 +40,30 @@ export function FormRenderer({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     onSubmit?.(values);
+  }
+
+  /** Grids lay their columns out; everything else is a control. */
+  function renderField(field: FormField): React.ReactNode {
+    if (field.type === 'grid') {
+      return (
+        <SimpleGrid key={field.id} cols={{ base: 1, sm: field.columns?.length ?? 1 }} spacing="md">
+          {(field.columns ?? []).map((column, index) => (
+            <Stack key={index} gap="md">
+              {column.map(renderField)}
+            </Stack>
+          ))}
+        </SimpleGrid>
+      );
+    }
+
+    return (
+      <FieldControl
+        key={field.id}
+        field={field}
+        value={values[field.id] ?? ''}
+        onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
+      />
+    );
   }
 
   return (
@@ -63,14 +89,7 @@ export function FormRenderer({
             </Text>
           ) : (
             <>
-              {fields.map((field) => (
-                <FieldControl
-                  key={field.id}
-                  field={field}
-                  value={values[field.id] ?? ''}
-                  onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
-                />
-              ))}
+              {fields.map(renderField)}
               <Button type="submit" loading={submitting} fullWidth mt="sm">
                 Submit
               </Button>

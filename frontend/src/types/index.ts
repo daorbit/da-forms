@@ -51,9 +51,13 @@ export type FieldType =
   | 'heading'
   | 'description'
   | 'divider'
-  | 'spacer';
+  | 'spacer'
+  // Layout — these hold other fields rather than collecting a value
+  | 'grid';
 
 export type FieldSize = 'small' | 'medium' | 'large';
+
+export type LabelPlacement = 'top' | 'left' | 'right';
 
 export interface FormField {
   id: string;
@@ -75,6 +79,13 @@ export interface FormField {
   maxLength?: number;
   maxRating?: number;
   content?: string;
+  /**
+   * A grid's columns, each holding its own fields.
+   *
+   * Only `grid` fields carry this. Nesting a grid inside a grid is refused at
+   * the drop site rather than by the type, which keeps the shape simple.
+   */
+  columns?: FormField[][];
 }
 
 export interface Form {
@@ -88,6 +99,11 @@ export interface Form {
   thankYouMessage?: string;
   /** Hides the title/description block on the rendered form. */
   hideHeader?: boolean;
+  /** Where each field's label sits relative to its input. */
+  labelPlacement?: LabelPlacement;
+  submitLabel?: string;
+  /** Records the respondent's IP with each submission. Off by default. */
+  collectIp?: boolean;
   createdAt: string;
   updatedAt: string;
 }

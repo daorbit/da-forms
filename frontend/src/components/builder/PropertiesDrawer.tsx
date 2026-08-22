@@ -9,16 +9,14 @@ import {
   Group,
   Text,
   Switch,
-  Select,
 } from '@mantine/core';
-import type { FormField, FieldSize, FieldType } from '@/types';
+import type { FormField, FieldSize } from '@/types';
 import {
   optionTypes,
   numericTypes,
   textTypes,
   staticTypes,
   paletteByType,
-  fieldPalette,
 } from '@/lib/fieldPalette';
 import classes from './PropertiesDrawer.module.css';
 
@@ -28,11 +26,6 @@ interface Props {
   /** Applied immediately — the canvas reflects every keystroke. */
   onChange: (id: string, patch: Partial<FormField>) => void;
 }
-
-const typeOptions = fieldPalette.map((group) => ({
-  group: group.group,
-  items: group.items.map((item) => ({ value: item.type, label: item.label })),
-}));
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -105,14 +98,6 @@ export function PropertiesDrawer({ field, onClose, onChange }: Props) {
                   label="Field label"
                   value={field.label}
                   onChange={(e) => set({ label: e.target.value })}
-                />
-
-                <Select
-                  label="Field type"
-                  value={field.type}
-                  data={typeOptions}
-                  onChange={(value) => value && set({ type: value as FieldType })}
-                  searchable
                 />
 
                 <Checkbox

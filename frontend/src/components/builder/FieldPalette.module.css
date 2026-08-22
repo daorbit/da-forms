@@ -67,6 +67,10 @@
   background-color: var(--mantine-color-emerald-1);
 }
 
+.paletteItemDragging {
+  opacity: 0.4;
+}
+
 .itemLabel {
   font-size: 11px;
   line-height: 1.15;

@@ -33,6 +33,9 @@ import {
   IconTypography,
   IconMinus,
   IconArrowAutofitHeight,
+  IconColumns1,
+  IconColumns2,
+  IconColumns3,
   type Icon,
 } from '@tabler/icons-react';
 
@@ -41,6 +44,8 @@ export interface PaletteItem {
   label: string;
   icon: Icon;
   color: string;
+  /** Grid tiles only: how many columns the dropped grid starts with. */
+  columns?: number;
 }
 
 export interface PaletteGroup {
@@ -49,6 +54,14 @@ export interface PaletteGroup {
 }
 
 export const fieldPalette: PaletteGroup[] = [
+  {
+    group: 'Grid',
+    items: [
+      { type: 'grid', label: '1-Column', icon: IconColumns1, color: 'orange', columns: 1 },
+      { type: 'grid', label: '2-Column', icon: IconColumns2, color: 'orange', columns: 2 },
+      { type: 'grid', label: '3-Column', icon: IconColumns3, color: 'orange', columns: 3 },
+    ],
+  },
   {
     group: 'Basic Info',
     items: [
@@ -134,8 +147,26 @@ export const fieldPalette: PaletteGroup[] = [
   },
 ];
 
+/**
+ * Every tile keyed for drag payloads.
+ *
+ * Keyed by type *and* column count because the three grid tiles share one
+ * type and would otherwise collide with each other.
+ */
+export function paletteKey(item: PaletteItem): string {
+  return item.columns ? `${item.type}-${item.columns}` : item.type;
+}
+
+export const paletteByKey = Object.fromEntries(
+  fieldPalette.flatMap((g) => g.items).map((item) => [paletteKey(item), item])
+) as Record<string, PaletteItem>;
+
+/** The first tile for a type, for reading a field's icon and label back. */
 export const paletteByType = Object.fromEntries(
-  fieldPalette.flatMap((g) => g.items).map((item) => [item.type, item])
+  fieldPalette
+    .flatMap((g) => g.items)
+    .map((item) => [item.type, item])
+    .reverse()
 ) as Record<FieldType, PaletteItem>;
 
 /** Layout-only elements: no label column, no value collected. */
@@ -156,7 +187,7 @@ export const textTypes: FieldType[] = [
   'regex',
 ];
 
-export function makeField(type: FieldType): FormField {
+export function makeField(type: FieldType, columns?: number): FormField {
   const field: FormField = {
     id: crypto.randomUUID(),
     type,
@@ -164,6 +195,11 @@ export function makeField(type: FieldType): FormField {
     required: false,
     size: 'large',
   };
+  if (type === 'grid') {
+    field.columns = Array.from({ length: columns ?? 2 }, () => []);
+    field.label = '';
+    return field;
+  }
   if (optionTypes.includes(type)) field.options = ['Option 1', 'Option 2'];
   if (type === 'rating') field.maxRating = 5;
   if (type === 'slider') {

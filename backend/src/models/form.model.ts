@@ -33,9 +33,12 @@ export type FieldType =
   | 'heading'
   | 'description'
   | 'divider'
-  | 'spacer';
+  | 'spacer'
+  | 'grid';
 
 export type FieldSize = 'small' | 'medium' | 'large';
+
+export type LabelPlacement = 'top' | 'left' | 'right';
 
 export interface FormField {
   id: string;
@@ -57,6 +60,8 @@ export interface FormField {
   maxLength?: number;
   maxRating?: number;
   content?: string;
+  /** A grid's columns, each holding its own fields. */
+  columns?: FormField[][];
 }
 
 export interface FormDocument {
@@ -68,6 +73,9 @@ export interface FormDocument {
   redirectUrl?: string;
   thankYouMessage?: string;
   hideHeader?: boolean;
+  labelPlacement?: LabelPlacement;
+  submitLabel?: string;
+  collectIp?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -93,6 +101,13 @@ const fieldSchema = new Schema<FormField>(
     maxLength: { type: Number },
     maxRating: { type: Number },
     content: { type: String },
+    /*
+     * Mixed because the shape is recursive: a column holds fields, and one of
+     * those may itself be a grid. A subdocument schema cannot reference itself,
+     * and the alternative — a flat list with parent pointers — moves the
+     * nesting into every query that reads a form.
+     */
+    columns: { type: Schema.Types.Mixed },
   },
   { _id: false }
 );
@@ -107,6 +122,9 @@ const formSchema = new Schema<FormDocument>(
     redirectUrl: { type: String },
     thankYouMessage: { type: String },
     hideHeader: { type: Boolean },
+    labelPlacement: { type: String, enum: ['top', 'left', 'right'] },
+    submitLabel: { type: String },
+    collectIp: { type: Boolean },
   },
   { timestamps: true }
 );

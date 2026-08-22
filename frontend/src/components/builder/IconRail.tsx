@@ -1,8 +1,8 @@
 import { Tooltip } from '@mantine/core';
-import { IconCircleCheck, IconCode } from '@tabler/icons-react';
+import { IconCircleCheck, IconCode, IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import classes from './IconRail.module.css';
 
-export type RailPanel = 'thankYou' | 'embed';
+export type RailPanel = 'quickSettings' | 'thankYou' | 'embed';
 
 interface Props {
   active: RailPanel | null;
@@ -10,6 +10,7 @@ interface Props {
 }
 
 const items: { id: RailPanel; label: string; icon: typeof IconCode; color: string }[] = [
+  { id: 'quickSettings', label: 'Quick Settings', icon: IconAdjustmentsHorizontal, color: 'blue' },
   { id: 'thankYou', label: 'Thank You Page & Redirection', icon: IconCircleCheck, color: 'emerald' },
   { id: 'embed', label: 'Share & Embed', icon: IconCode, color: 'grape' },
 ];

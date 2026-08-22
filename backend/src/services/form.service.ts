@@ -18,6 +18,9 @@ export function createForm(input: {
   redirectUrl?: string;
   thankYouMessage?: string;
   hideHeader?: boolean;
+  labelPlacement?: 'top' | 'left' | 'right';
+  submitLabel?: string;
+  collectIp?: boolean;
 }) {
   return FormModel.create(input);
 }
@@ -33,6 +36,9 @@ export function updateForm(
     redirectUrl: string;
     thankYouMessage: string;
     hideHeader: boolean;
+    labelPlacement: 'top' | 'left' | 'right';
+    submitLabel: string;
+    collectIp: boolean;
   }>
 ) {
   return FormModel.findOneAndUpdate({ _id: id, workspaceId }, input, { new: true });

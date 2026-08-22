@@ -15,6 +15,7 @@ import { getForm, listSubmissions } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
 import { paletteByType, staticTypes } from '@/lib/fieldPalette';
+import { valueFields } from '@/lib/fieldTree';
 import classes from './EntriesPage.module.css';
 
 function formatDateTime(iso: string) {
@@ -47,7 +48,9 @@ export function EntriesPage() {
     );
 
   // layout-only elements never collect a value, so they get no column
-  const columns = form.fields.filter((field) => !staticTypes.includes(field.type));
+  const columns = valueFields(form.fields).filter(
+    (field) => !staticTypes.includes(field.type)
+  );
 
   return (
     <Box>

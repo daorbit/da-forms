@@ -6,15 +6,34 @@ import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
-import type { Form, FormField, FieldType } from '@/types';
+import type { Form, FormField, FieldType, LabelPlacement } from '@/types';
 import { ShareModal } from '@/components/share/ShareModal';
-import { makeField } from '@/lib/fieldPalette';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  pointerWithin,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { makeField, paletteByKey, paletteByType } from '@/lib/fieldPalette';
+import {
+  cloneWithNewIds,
+  findField,
+  insertIntoColumn,
+  locateField,
+  removeFromTree,
+  updateInTree,
+} from '@/lib/fieldTree';
+import { parseColumnDroppableId, type DragData } from '@/components/builder/dnd';
 import { FieldPalette } from '@/components/builder/FieldPalette';
 import { FormCanvas } from '@/components/builder/FormCanvas';
 import { FormSettings } from '@/components/builder/FormSettings';
 import { PropertiesDrawer } from '@/components/builder/PropertiesDrawer';
 import { IconRail, type RailPanel } from '@/components/builder/IconRail';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
+import { QuickSettingsDrawer } from '@/components/builder/QuickSettingsDrawer';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import classes from './FormBuilderPage.module.css';
 
@@ -37,11 +56,19 @@ export function FormBuilderPage() {
   );
   const [redirectUrl, setRedirectUrl] = useState('');
   const [hideHeader, setHideHeader] = useState(false);
+  const [labelPlacement, setLabelPlacement] = useState<LabelPlacement>('top');
+  const [submitLabel, setSubmitLabel] = useState('');
+  const [collectIp, setCollectIp] = useState(false);
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [dragging, setDragging] = useState<DragData | null>(null);
+
+  // A few pixels of travel before a drag starts, so clicking a field to open
+  // its properties is not read as the beginning of one.
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
     if (!routeFormId) return;
@@ -52,37 +79,118 @@ export function FormBuilderPage() {
       setFields(form.fields);
       setRedirectUrl(form.redirectUrl ?? '');
       setHideHeader(form.hideHeader ?? false);
+      setLabelPlacement(form.labelPlacement ?? 'top');
+      setSubmitLabel(form.submitLabel ?? '');
+      setCollectIp(form.collectIp ?? false);
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
     });
   }, [routeFormId, workspaceId]);
 
-  function addField(type: FieldType) {
-    const field = makeField(type);
+  function addField(type: FieldType, columns?: number) {
+    const field = makeField(type, columns);
     setFields((prev) => [...prev, field]);
     setSelectedId(field.id);
   }
 
   function updateField(id: string, patch: Partial<FormField>) {
-    setFields((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+    setFields((prev) => updateInTree(prev, id, patch));
   }
 
   function removeField(id: string) {
-    setFields((prev) => prev.filter((f) => f.id !== id));
+    setFields((prev) => removeFromTree(prev, id));
     if (selectedId === id) setSelectedId(null);
   }
 
   function duplicateField(id: string) {
     setFields((prev) => {
+      const source = findField(prev, id);
+      if (!source) return prev;
+      // A fresh id for the copy and for everything inside it, or the tree would
+      // hold the same id twice and dnd-kit would address both at once.
+      const copy = cloneWithNewIds(source);
+      const place = locateField(prev, id);
+      if (place && 'gridId' in place) {
+        return insertIntoColumn(prev, place.gridId, place.columnIndex, copy, place.index + 1);
+      }
       const index = prev.findIndex((f) => f.id === id);
-      if (index === -1) return prev;
-      const copy = { ...prev[index], id: crypto.randomUUID() };
       return [...prev.slice(0, index + 1), copy, ...prev.slice(index + 1)];
     });
   }
 
+  /**
+   * Resolves a drop into a new tree.
+   *
+   * Both a palette tile and an existing row land here — the first creates a
+   * field, the second moves the one being dragged out of wherever it was.
+   */
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setDragging(null);
+    if (!over) return;
+
+    const data = active.data.current as DragData | undefined;
+    if (!data) return;
+
+    const field =
+      data.kind === 'palette'
+        ? (() => {
+            const item = paletteByKey[data.paletteKey];
+            return item ? makeField(item.type, item.columns) : null;
+          })()
+        : data.field;
+    if (!field) return;
+
+    // A grid cannot be dropped into a column: one level of nesting is what the
+    // layout is for, and deeper would render columns too narrow to use.
+    const overColumn = parseColumnDroppableId(String(over.id));
+    if (field.type === 'grid' && overColumn) return;
+
+    setFields((prev) => {
+      // Moving: lift it out first so the insert index counts the same list the
+      // drop was measured against.
+      const without = data.kind === 'field' ? removeFromTree(prev, field.id) : prev;
+
+      if (overColumn) {
+        return insertIntoColumn(without, overColumn.gridId, overColumn.columnIndex, field);
+      }
+
+      // Dropped on another row: take that row's place.
+      const overPlace = locateField(without, String(over.id));
+      if (overPlace && 'gridId' in overPlace) {
+        return insertIntoColumn(
+          without,
+          overPlace.gridId,
+          overPlace.columnIndex,
+          field,
+          overPlace.index
+        );
+      }
+      if (overPlace) {
+        const next = [...without];
+        next.splice(overPlace.index, 0, field);
+        return next;
+      }
+
+      // The card itself: append.
+      return [...without, field];
+    });
+
+    setSelectedId(field.id);
+  }
+
   async function handleSave() {
     setSaving(true);
-    const payload = { title, description, fields, redirectUrl, thankYouMessage, hideHeader };
+    const payload = {
+      title,
+      description,
+      fields,
+      redirectUrl,
+      thankYouMessage,
+      hideHeader,
+      labelPlacement,
+      submitLabel,
+      collectIp,
+    };
     const form = savedFormId
       ? await updateForm(savedFormId, payload, workspaceId)
       : await createForm(payload, workspaceId);
@@ -105,9 +213,16 @@ export function FormBuilderPage() {
     setShareOpen(true);
   }
 
-  const editingField = fields.find((f) => f.id === editingId) ?? null;
+  const editingField = editingId ? findField(fields, editingId) : null;
 
   return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={(event) => setDragging((event.active.data.current as DragData) ?? null)}
+      onDragCancel={() => setDragging(null)}
+      onDragEnd={handleDragEnd}
+    >
     <AppShell
       header={{ height: 60 }}
       navbar={{ width: 300, breakpoint: 'sm' }}
@@ -199,6 +314,18 @@ export function FormBuilderPage() {
         <IconRail active={railPanel} onSelect={handleRailSelect} />
       </AppShell.Aside>
 
+      <QuickSettingsDrawer
+        opened={railPanel === 'quickSettings'}
+        onClose={() => setRailPanel(null)}
+        settings={{ hideHeader, labelPlacement, submitLabel, collectIp }}
+        onChange={(patch) => {
+          if (patch.hideHeader !== undefined) setHideHeader(patch.hideHeader);
+          if (patch.labelPlacement) setLabelPlacement(patch.labelPlacement);
+          if (patch.submitLabel !== undefined) setSubmitLabel(patch.submitLabel);
+          if (patch.collectIp !== undefined) setCollectIp(patch.collectIp);
+        }}
+      />
+
       <ThankYouDrawer
         opened={railPanel === 'thankYou'}
         onClose={() => setRailPanel(null)}
@@ -226,5 +353,18 @@ export function FormBuilderPage() {
         />
       )}
     </AppShell>
+
+      {/* Follows the cursor so the drag has something to carry — without it a
+          palette tile appears to do nothing until it lands. */}
+      <DragOverlay dropAnimation={null}>
+        {dragging ? (
+          <div className={classes.dragChip}>
+            {dragging.kind === 'palette'
+              ? (paletteByKey[dragging.paletteKey]?.label ?? 'Field')
+              : dragging.field.label || paletteByType[dragging.field.type]?.label || 'Field'}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }

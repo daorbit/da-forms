@@ -94,6 +94,9 @@ export function FieldControl({
     label,
     description: showLabel && !sideLabel ? field.instructions : undefined,
     required: field.required,
+    // The manual `*` above already marks required fields — this suppresses
+    // Mantine's own asterisk so only one shows.
+    withAsterisk: false,
     placeholder: field.placeholder,
     title: field.hoverText,
     readOnly,

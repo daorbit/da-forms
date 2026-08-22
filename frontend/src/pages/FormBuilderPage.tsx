@@ -44,11 +44,21 @@ export function FormBuilderPage() {
   const { id: routeFormId } = useParams<{ id: string }>();
   const workspaceId = useWorkspaceId();
   const embedded = useEmbedded();
-  const locationState = location.state as { title?: string; themeScope?: FormTheme['scope'] } | null;
+  const locationState = location.state as
+    | {
+        title?: string;
+        themeScope?: FormTheme['scope'];
+        templateFields?: FormField[];
+        templateDescription?: string;
+        templateTheme?: FormTheme;
+      }
+    | null;
   const initialTitle = locationState?.title ?? 'Untitled form';
   const [title, setTitle] = useState(initialTitle);
-  const [description, setDescription] = useState('');
-  const [fields, setFields] = useState<FormField[]>([]);
+  const [description, setDescription] = useState(locationState?.templateDescription ?? '');
+  const [fields, setFields] = useState<FormField[]>(
+    () => locationState?.templateFields?.map(cloneWithNewIds) ?? []
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formSettingsOpen, setFormSettingsOpen] = useState(false);
@@ -62,7 +72,9 @@ export function FormBuilderPage() {
   const [submitLabel, setSubmitLabel] = useState('');
   const [submitButtonSize, setSubmitButtonSize] = useState<SubmitButtonSize>('medium');
   const [submitButtonWidth, setSubmitButtonWidth] = useState<SubmitButtonWidth>(100);
-  const [theme, setTheme] = useState<FormTheme>({ scope: locationState?.themeScope ?? 'page' });
+  const [theme, setTheme] = useState<FormTheme>(
+    locationState?.templateTheme ?? { scope: locationState?.themeScope ?? 'page' }
+  );
   const [collectIp, setCollectIp] = useState(false);
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
@@ -160,8 +172,10 @@ export function FormBuilderPage() {
 
   // A brand-new, never-saved form: its own starting state is "clean" — the
   // save button should stay disabled until something actually changes.
+  // Skipped when a template pre-filled it: that's already a change worth
+  // saving, not a blank slate.
   useEffect(() => {
-    if (routeFormId) return;
+    if (routeFormId || locationState?.templateFields?.length) return;
     setSavedSnapshot(currentSnapshot);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeFormId]);

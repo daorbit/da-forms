@@ -115,7 +115,7 @@ export function EntriesPage() {
     setPage(1);
   }, [status, day]);
 
-  async function moveSubmission(submissionId: string, patch: Partial<Pick<Submission, 'read' | 'starred'>>) {
+  async function moveSubmission(submissionId: string, patch: Partial<Pick<Submission, 'read'>>) {
     if (!id) return;
     const updated = await updateSubmission(id, submissionId, patch, workspaceId);
     setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
@@ -152,9 +152,39 @@ export function EntriesPage() {
 
   if (!form)
     return (
-      <Center h="100vh">
-        <Loader />
-      </Center>
+      <Box>
+        <Group justify="space-between" px="md" py="sm" className={classes.topbar} wrap="nowrap">
+          <Group gap="xs" wrap="nowrap">
+            <Skeleton height={28} width={28} radius="sm" />
+            <Skeleton height={20} width={160} radius="sm" />
+          </Group>
+          <Group gap="xs">
+            <Skeleton height={32} width={80} radius="md" />
+            <Skeleton height={32} width={110} radius="md" />
+          </Group>
+        </Group>
+
+        <Group justify="space-between" px="md" py="xs" className={classes.filterbar} wrap="nowrap">
+          <Group gap="lg">
+            <Skeleton height={18} width={90} />
+            <Skeleton height={18} width={90} />
+          </Group>
+          <Group gap="xs">
+            <Skeleton height={28} width={28} radius="xl" circle />
+            <Skeleton height={28} width={28} radius="xl" circle />
+            <Skeleton height={28} width={28} radius="xl" circle />
+            <Skeleton height={28} width={28} radius="xl" circle />
+          </Group>
+        </Group>
+
+        <Box className={classes.tableWrap} px="md" py="md">
+          <Stack gap="sm">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} height={40} radius="sm" />
+            ))}
+          </Stack>
+        </Box>
+      </Box>
     );
 
   // layout-only elements never collect a value, so they get no column
@@ -290,7 +320,6 @@ export function EntriesPage() {
             <Table withTableBorder highlightOnHover className={classes.table}>
               <Table.Thead className={classes.thead}>
                 <Table.Tr>
-                  <Table.Th className={classes.th} style={{ width: 32 }} />
                   {columns.map((field) => {
                     const meta = paletteByType[field.type];
                     return (
@@ -318,7 +347,7 @@ export function EntriesPage() {
               <Table.Tbody>
                 {submissions.length === 0 ? (
                   <Table.Tr>
-                    <Table.Td colSpan={columns.length + 2}>
+                    <Table.Td colSpan={columns.length + 1}>
                       <Text ta="center" py="xl" c="emerald">
                         {loading ? 'Loading…' : 'No entries'}
                       </Text>
@@ -331,19 +360,6 @@ export function EntriesPage() {
                       onClick={() => markRead(submission)}
                       style={{ fontWeight: submission.read ? 400 : 700 }}
                     >
-                      <Table.Td style={{ width: 32, padding: '0 8px' }}>
-                        <ActionIcon
-                          variant="subtle"
-                          color={submission.starred ? 'yellow' : 'gray'}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleStarred(submission);
-                          }}
-                          aria-label="Star entry"
-                        >
-                          {submission.starred ? <IconStarFilled size={16} /> : <IconStar size={16} />}
-                        </ActionIcon>
-                      </Table.Td>
                       {columns.map((field) => (
                         <Table.Td key={field.id}>
                           <Text size="sm">{submission.data[field.id] ?? ''}</Text>

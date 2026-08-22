@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Paper, Text, Center, Loader } from '@mantine/core';
+import { Container, Paper, Text, Center, Loader, Stack, Button, ThemeIcon } from '@mantine/core';
+import { IconCircleCheck } from '@tabler/icons-react';
 import { getPublicForm, submitForm } from '@/lib/api';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
@@ -51,9 +52,17 @@ export function PublicFormPage() {
     <Container size="sm" py="xl" className="da-forms-light-surface" data-mantine-color-scheme="light">
       {submitted ? (
         <Paper withBorder radius="md" p="xl">
-          <Text ta="center" py="xl">
-            {form.thankYouMessage || 'Thanks! Your response has been recorded.'}
-          </Text>
+          <Stack align="center" gap="md" py="xl">
+            <ThemeIcon size={56} radius="xl" color="emerald" variant="light">
+              <IconCircleCheck size={32} />
+            </ThemeIcon>
+            <Text ta="center" size="lg" fw={600}>
+              {form.thankYouMessage || 'Thanks! Your response has been recorded.'}
+            </Text>
+            <Button color="emerald" radius="md" onClick={() => setSubmitted(false)}>
+              Submit another response
+            </Button>
+          </Stack>
         </Paper>
       ) : (
         <FormRenderer

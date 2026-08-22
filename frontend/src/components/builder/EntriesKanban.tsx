@@ -6,23 +6,19 @@ import { Badge, Box, Group, Paper, ScrollArea, Stack, Text } from '@mantine/core
 import { IconGripVertical } from '@tabler/icons-react';
 import type { FormField, Submission } from '@/types';
 
-type Column = 'unread' | 'read' | 'starred';
+type Column = 'unread' | 'read';
 
 const COLUMNS: { id: Column; label: string; color: string }[] = [
   { id: 'unread', label: 'Unread', color: 'gray' },
   { id: 'read', label: 'Read', color: 'blue' },
-  { id: 'starred', label: 'Starred', color: 'yellow' },
 ];
 
 function columnOf(submission: Submission): Column {
-  if (submission.starred) return 'starred';
   return submission.read ? 'read' : 'unread';
 }
 
-function patchFor(column: Column): Partial<Pick<Submission, 'read' | 'starred'>> {
-  if (column === 'starred') return { starred: true };
-  if (column === 'read') return { read: true, starred: false };
-  return { read: false, starred: false };
+function patchFor(column: Column): Partial<Pick<Submission, 'read'>> {
+  return { read: column === 'read' };
 }
 
 function formatDateTime(iso: string) {
@@ -119,7 +115,7 @@ function ColumnDropZone({
 interface Props {
   submissions: Submission[];
   columns: FormField[];
-  onMove: (submissionId: string, patch: Partial<Pick<Submission, 'read' | 'starred'>>) => void;
+  onMove: (submissionId: string, patch: Partial<Pick<Submission, 'read'>>) => void;
 }
 
 export function EntriesKanban({ submissions, columns, onMove }: Props) {
@@ -128,7 +124,7 @@ export function EntriesKanban({ submissions, columns, onMove }: Props) {
   const primaryField = columns[0];
 
   const grouped = useMemo(() => {
-    const map: Record<Column, Submission[]> = { unread: [], read: [], starred: [] };
+    const map: Record<Column, Submission[]> = { unread: [], read: [] };
     for (const s of submissions) map[columnOf(s)].push(s);
     return map;
   }, [submissions]);

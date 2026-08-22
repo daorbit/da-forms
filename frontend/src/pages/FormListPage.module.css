@@ -27,3 +27,34 @@
 .title:hover {
   color: var(--mantine-color-emerald-7);
 }
+
+/*
+ * Floats on the page rather than sitting in a bordered card: a frame around
+ * "there is nothing here" draws a box around empty space as if the box were
+ * the content.
+ */
+.emptyState {
+  min-height: 52vh;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 88px;
+  height: 88px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--mantine-color-emerald-6);
+  /* Tinted toward the accent — a grey disc on a grey page reads as a failed
+     load rather than as a state. */
+  background: radial-gradient(
+    circle at 50% 35%,
+    color-mix(in srgb, var(--mantine-color-emerald-6) 22%, transparent),
+    color-mix(in srgb, var(--mantine-color-emerald-6) 8%, transparent) 70%
+  );
+}
+
+.emptyText {
+  max-width: 42ch;
+  line-height: 1.6;
+}

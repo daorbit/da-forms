@@ -33,17 +33,20 @@ export const theme = createTheme({
       '#065f46',
       '#064e3b',
     ],
+    // Matched to the host app's own surfaces: text, then muted tones, then
+    // borders, then the card and shell fills at 6-9. Cards sit a step above
+    // the shell rather than below it, or they read as holes in the page.
     dark: [
-      '#c9ced6',
-      '#a8aeb8',
-      '#8b929e',
-      '#5f6673',
-      '#3a3f4a',
-      '#2b2f38',
-      '#22252c',
-      '#1a1c22',
-      '#131519',
-      '#0b0c0f',
+      '#f2f4f6',
+      '#a9afba',
+      '#6d737e',
+      '#34383e',
+      '#26292e',
+      '#1c1f23',
+      '#16181b',
+      '#111316',
+      '#0e0f12',
+      '#0b0c0e',
     ],
   },
   shadows: {

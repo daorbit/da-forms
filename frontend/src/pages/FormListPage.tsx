@@ -18,8 +18,10 @@ import {
   IconCopy,
   IconExternalLink,
   IconRefresh,
+  IconEyeOff,
+  IconWorldUpload,
 } from '@tabler/icons-react';
-import { listForms, deleteForm } from '@/lib/api';
+import { listForms, deleteForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
@@ -54,6 +56,16 @@ export function FormListPage() {
     load();
   }, [location.key, load]);
 
+  async function toggleStatus(form: Form) {
+    const status = form.status === 'published' ? 'draft' : 'published';
+    const updated = await updateForm(form._id, { status }, workspaceId);
+    setForms((prev) => prev.map((f) => (f._id === form._id ? updated : f)));
+    notifications.show({
+      message: status === 'published' ? 'Form published' : 'Form moved back to draft',
+      color: status === 'published' ? 'emerald' : 'gray',
+    });
+  }
+
   async function confirmDelete() {
     if (!pendingDelete) return;
     setDeleting(true);
@@ -83,8 +95,9 @@ export function FormListPage() {
           <Tooltip label="Refresh" withArrow>
             <ActionIcon
               variant="subtle"
-              color="gray"
               radius="xl"
+              color="gray"
+             
               size="lg"
               onClick={() => load()}
               loading={loading}
@@ -94,7 +107,7 @@ export function FormListPage() {
             </ActionIcon>
           </Tooltip>
           <Button
-            radius="xl"
+           
             color="emerald"
             leftSection={<IconPlus size={16} />}
             onClick={() => setNewFormOpen(true)}
@@ -105,10 +118,27 @@ export function FormListPage() {
       </Group>
 
       <Stack gap="xs" px="xl" py="md">
-        {forms.length === 0 && (
-          <Text c="dimmed" ta="center" py="xl">
-            No forms yet. Create your first one.
-          </Text>
+        {forms.length === 0 && !loading && (
+          <Stack align="center" justify="center" gap={0} className={classes.emptyState}>
+            <div className={classes.emptyIcon} aria-hidden>
+              <IconFileText size={38} stroke={1.25} />
+            </div>
+            <Text fw={650} fz="lg" mt="lg">
+              No forms yet
+            </Text>
+            <Text size="sm" c="dimmed" mt={6} className={classes.emptyText}>
+              Build a form to collect leads, then share its link or embed it on your site.
+            </Text>
+            <Button
+              mt="xl"
+              size="md"
+             
+              leftSection={<IconPlus size={16} />}
+              onClick={() => setNewFormOpen(true)}
+            >
+              Create your first form
+            </Button>
+          </Stack>
         )}
 
         {forms.map((form) => (
@@ -141,7 +171,7 @@ export function FormListPage() {
                   component={Link}
                   to={`/${workspaceId}/forms/${form._id}/edit`}
                   variant="default"
-                  radius="xl"
+                 
                   size="xs"
                   leftSection={<IconPencil size={14} />}
                 >
@@ -151,7 +181,7 @@ export function FormListPage() {
                   component={Link}
                   to={`/${workspaceId}/forms/${form._id}/entries`}
                   variant="default"
-                  radius="xl"
+                 
                   size="xs"
                   leftSection={<IconGridDots size={14} />}
                 >
@@ -159,8 +189,9 @@ export function FormListPage() {
                 </Button>
                 <ActionIcon
                   variant="subtle"
-                  color="gray"
                   radius="xl"
+                  color="gray"
+                 
                   size="lg"
                   onClick={() => setSharing(form)}
                   aria-label="Share"
@@ -175,6 +206,19 @@ export function FormListPage() {
                     </ActionIcon>
                   </Menu.Target>
                   <Menu.Dropdown>
+                    <Menu.Item
+                      leftSection={
+                        form.status === 'published' ? (
+                          <IconEyeOff size={15} />
+                        ) : (
+                          <IconWorldUpload size={15} />
+                        )
+                      }
+                      onClick={() => toggleStatus(form)}
+                    >
+                      {form.status === 'published' ? 'Unpublish' : 'Publish'}
+                    </Menu.Item>
+                    <Menu.Divider />
                     <Menu.Item
                       component="a"
                       href={`/f/${form._id}`}
@@ -232,10 +276,10 @@ export function FormListPage() {
           form and its public link stop working.
         </Text>
         <Group justify="flex-end" mt="lg">
-          <Button variant="default" radius="xl" onClick={() => setPendingDelete(null)}>
+          <Button variant="default" onClick={() => setPendingDelete(null)}>
             Cancel
           </Button>
-          <Button color="red" radius="xl" loading={deleting} onClick={confirmDelete}>
+          <Button color="red" loading={deleting} onClick={confirmDelete}>
             Delete
           </Button>
         </Group>

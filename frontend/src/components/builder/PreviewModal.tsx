@@ -76,7 +76,11 @@ export function PreviewModal({ opened, onClose, title, description, fields, hide
       </Group>
 
       {/* Always the respondent's own colours, whatever theme the host passes. */}
-      <MantineProvider forceColorScheme="light" cssVariablesSelector=".da-forms-light-surface">
+      <MantineProvider
+        forceColorScheme="light"
+        cssVariablesSelector=".da-forms-light-surface"
+        getRootElement={() => undefined}
+      >
       <Box className={`${classes.stage} da-forms-light-surface`}>
         <Box className={classes.viewport} style={{ width: active.width, maxWidth: '100%' }}>
           {/* Remount per open so each preview starts from the initial values. */}

@@ -48,8 +48,12 @@ export function PublicFormPage() {
   return (
     // Respondents see the form's own colours, never a host app's theme — the
     // share link and the embed are public pages, not part of anyone's dashboard.
-    <MantineProvider forceColorScheme="light">
-    <Container size="sm" py="xl">
+    <MantineProvider
+      forceColorScheme="light"
+      cssVariablesSelector=".da-forms-light-surface"
+      getRootElement={() => undefined}
+    >
+    <Container size="sm" py="xl" className="da-forms-light-surface">
       {submitted ? (
         <Paper withBorder radius="md" p="xl">
           <Text ta="center" py="xl">

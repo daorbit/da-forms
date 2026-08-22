@@ -33,10 +33,10 @@ export function NewFormModal({ opened, onClose }: Props) {
             required
           />
           <Group justify="flex-end">
-            <Button variant="default" radius="xl" onClick={onClose}>
+            <Button variant="default" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" color="emerald" radius="xl" disabled={!name.trim()}>
+            <Button type="submit" color="emerald" disabled={!name.trim()}>
               Create
             </Button>
           </Group>

@@ -46,7 +46,13 @@ export function FormCanvas({
         palette. The card is a preview of the live form and has to look the way
         respondents will see it, whatever theme the host passes.
       */}
-      <MantineProvider forceColorScheme="light" cssVariablesSelector=".da-forms-light-surface">
+      <MantineProvider
+        forceColorScheme="light"
+        cssVariablesSelector=".da-forms-light-surface"
+        // Without this the nested provider also writes its light variables onto
+        // <html>, which repaints the whole editor around the card.
+        getRootElement={() => undefined}
+      >
       <div className="da-forms-light-surface">
       <Paper className={classes.formCard} radius="md" withBorder>
         {!hideHeader && (

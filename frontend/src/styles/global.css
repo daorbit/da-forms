@@ -31,6 +31,17 @@
   background-color: var(--mantine-color-gray-5);
 }
 
+/*
+ * Surfaces that always render in the respondent's own colours — the builder
+ * canvas, the preview, and the live form — whatever theme a host app passes.
+ * The nested providers that emit these variables are scoped to this class, so
+ * the class has to paint its own ground rather than inherit the editor's.
+ */
+.da-forms-light-surface {
+  color-scheme: light;
+  color: var(--mantine-color-text);
+}
+
 html,
 body,
 #root {

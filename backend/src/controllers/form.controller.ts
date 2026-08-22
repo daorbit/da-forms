@@ -40,6 +40,7 @@ export const createForm: RequestHandler = async (req, res) => {
     submitButtonSize,
     submitButtonColor,
     submitButtonWidth,
+    theme,
     collectIp,
   } = req.body;
   const form = await formService.createForm({
@@ -54,6 +55,7 @@ export const createForm: RequestHandler = async (req, res) => {
     submitButtonSize,
     submitButtonColor,
     submitButtonWidth,
+    theme,
     collectIp,
     workspaceId: workspaceIdOf(req),
   });

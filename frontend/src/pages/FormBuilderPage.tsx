@@ -6,7 +6,7 @@ import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
-import type { Form, FormField, FieldType, LabelPlacement, SubmitButtonSize, SubmitButtonColor, SubmitButtonWidth } from '@/types';
+import type { Form, FormField, FieldType, LabelPlacement, SubmitButtonSize, SubmitButtonColor, SubmitButtonWidth, FormTheme } from '@/types';
 import { ShareModal } from '@/components/share/ShareModal';
 import {
   DndContext,
@@ -34,6 +34,7 @@ import { PropertiesDrawer } from '@/components/builder/PropertiesDrawer';
 import { IconRail, type RailPanel } from '@/components/builder/IconRail';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
 import { QuickSettingsDrawer } from '@/components/builder/QuickSettingsDrawer';
+import { ThemeDrawer } from '@/components/builder/ThemeDrawer';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import classes from './FormBuilderPage.module.css';
 
@@ -43,7 +44,8 @@ export function FormBuilderPage() {
   const { id: routeFormId } = useParams<{ id: string }>();
   const workspaceId = useWorkspaceId();
   const embedded = useEmbedded();
-  const initialTitle = (location.state as { title?: string } | null)?.title ?? 'Untitled form';
+  const locationState = location.state as { title?: string; themeScope?: FormTheme['scope'] } | null;
+  const initialTitle = locationState?.title ?? 'Untitled form';
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<FormField[]>([]);
@@ -61,6 +63,7 @@ export function FormBuilderPage() {
   const [submitButtonSize, setSubmitButtonSize] = useState<SubmitButtonSize>('medium');
   const [submitButtonColor, setSubmitButtonColor] = useState<SubmitButtonColor>('emerald');
   const [submitButtonWidth, setSubmitButtonWidth] = useState<SubmitButtonWidth>(100);
+  const [theme, setTheme] = useState<FormTheme>({ scope: locationState?.themeScope ?? 'page' });
   const [collectIp, setCollectIp] = useState(false);
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
@@ -91,6 +94,7 @@ export function FormBuilderPage() {
         submitButtonSize,
         submitButtonColor,
         submitButtonWidth,
+        theme,
         collectIp,
       }),
     [
@@ -102,6 +106,7 @@ export function FormBuilderPage() {
       hideHeader,
       labelPlacement,
       submitLabel,
+      theme,
       submitButtonSize,
       submitButtonColor,
       submitButtonWidth,
@@ -135,6 +140,7 @@ export function FormBuilderPage() {
       setSubmitButtonSize(form.submitButtonSize ?? 'medium');
       setSubmitButtonColor(form.submitButtonColor ?? 'emerald');
       setSubmitButtonWidth(form.submitButtonWidth ?? 100);
+      setTheme(form.theme ?? { scope: 'page' });
       setCollectIp(form.collectIp ?? false);
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
       setSavedSnapshot(
@@ -150,6 +156,7 @@ export function FormBuilderPage() {
           submitButtonSize: form.submitButtonSize ?? 'medium',
           submitButtonColor: form.submitButtonColor ?? 'emerald',
           submitButtonWidth: form.submitButtonWidth ?? 100,
+          theme: form.theme ?? { scope: 'page' },
           collectIp: form.collectIp ?? false,
         })
       );
@@ -270,6 +277,7 @@ export function FormBuilderPage() {
       submitButtonSize,
       submitButtonColor,
       submitButtonWidth,
+      theme,
       collectIp,
     };
     const form = savedFormId
@@ -387,6 +395,7 @@ export function FormBuilderPage() {
           hideHeader={hideHeader}
           onHideHeader={() => setHideHeader(true)}
           offsetRight={!!editingId}
+          theme={theme}
         />
       </AppShell.Main>
 
@@ -430,6 +439,13 @@ export function FormBuilderPage() {
         }}
       />
 
+      <ThemeDrawer
+        opened={railPanel === 'theme'}
+        onClose={() => setRailPanel(null)}
+        theme={theme}
+        onChange={(patch) => setTheme((prev) => ({ ...prev, ...patch }))}
+      />
+
       <ThankYouDrawer
         opened={railPanel === 'thankYou'}
         onClose={() => setRailPanel(null)}
@@ -451,6 +467,7 @@ export function FormBuilderPage() {
         submitButtonSize={submitButtonSize}
         submitButtonColor={submitButtonColor}
         submitButtonWidth={submitButtonWidth}
+        theme={theme}
       />
 
       {savedForm && (

@@ -102,21 +102,30 @@ export function PublicFormPage() {
       </Center>
     );
 
+  const pageThemed = form.theme?.scope !== 'card' && form.theme?.pageBg;
+
   return (
-    <Container size="sm" py="xl" className="da-forms-light-surface" data-mantine-color-scheme="light">
-      <FormRenderer
-        title={form.title}
-        description={form.description}
-        fields={form.fields}
-        hideHeader={form.hideHeader}
-        labelPlacement={form.labelPlacement}
-        submitLabel={form.submitLabel}
-        submitButtonSize={form.submitButtonSize}
-        submitButtonColor={form.submitButtonColor}
-        submitButtonWidth={form.submitButtonWidth}
-        submitting={submitting}
-        onSubmit={handleSubmit}
-      />
-    </Container>
+    <div
+      className="da-forms-light-surface"
+      data-mantine-color-scheme="light"
+      style={pageThemed ? { minHeight: '100vh', backgroundColor: form.theme?.pageBg } : undefined}
+    >
+      <Container size="sm" py="xl">
+        <FormRenderer
+          title={form.title}
+          description={form.description}
+          fields={form.fields}
+          hideHeader={form.hideHeader}
+          labelPlacement={form.labelPlacement}
+          submitLabel={form.submitLabel}
+          submitButtonSize={form.submitButtonSize}
+          submitButtonColor={form.submitButtonColor}
+          submitButtonWidth={form.submitButtonWidth}
+          theme={form.theme}
+          submitting={submitting}
+          onSubmit={handleSubmit}
+        />
+      </Container>
+    </div>
   );
 }

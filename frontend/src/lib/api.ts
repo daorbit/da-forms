@@ -58,6 +58,7 @@ export function createForm(
     submitButtonSize?: Form['submitButtonSize'];
     submitButtonColor?: Form['submitButtonColor'];
     submitButtonWidth?: Form['submitButtonWidth'];
+    theme?: Form['theme'];
     collectIp?: boolean;
   },
   workspaceId = DEFAULT_WORKSPACE

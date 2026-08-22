@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Group, Text, ActionIcon, Box, Badge } from '@mantine/core';
 import { IconX, IconDeviceDesktop, IconDeviceTablet, IconDeviceMobile } from '@tabler/icons-react';
-import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonColor, SubmitButtonWidth } from '@/types';
+import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonColor, SubmitButtonWidth, FormTheme } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import classes from './PreviewModal.module.css';
 
@@ -25,6 +25,7 @@ interface Props {
   submitButtonSize?: SubmitButtonSize;
   submitButtonColor?: SubmitButtonColor;
   submitButtonWidth?: SubmitButtonWidth;
+  theme?: FormTheme;
 }
 
 /**
@@ -43,6 +44,7 @@ export function PreviewModal({
   submitButtonSize,
   submitButtonColor,
   submitButtonWidth,
+  theme,
 }: Props) {
   const [device, setDevice] = useState<Device>('desktop');
   const active = DEVICES.find((d) => d.id === device) ?? DEVICES[0];
@@ -93,7 +95,11 @@ export function PreviewModal({
       </Group>
 
       {/* Always the respondent's own colours, whatever theme the host passes. */}
-      <Box className={`${classes.stage} da-forms-light-surface`} data-mantine-color-scheme="light">
+      <Box
+        className={`${classes.stage} da-forms-light-surface`}
+        data-mantine-color-scheme="light"
+        style={theme?.scope !== 'card' ? { backgroundColor: theme?.pageBg } : undefined}
+      >
         <Box className={classes.viewport} style={{ width: active.width, maxWidth: '100%' }}>
           {/* Remount per open so each preview starts from the initial values. */}
           <FormRenderer
@@ -107,6 +113,7 @@ export function PreviewModal({
             submitButtonSize={submitButtonSize}
             submitButtonColor={submitButtonColor}
             submitButtonWidth={submitButtonWidth}
+            theme={theme}
           />
           <Text size="xs" c="dimmed" ta="center" mt="md">
             Submissions are not recorded in preview.

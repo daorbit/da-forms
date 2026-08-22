@@ -44,6 +44,8 @@ interface Props {
   hideLabel?: boolean;
   /** Where the label sits relative to the input. Defaults to 'top'. */
   labelPlacement?: LabelPlacement;
+  /** Overrides the label's text color — set from the form's theme. */
+  labelColor?: string;
 }
 
 const sizeWidth: Record<FieldSize, string> = {
@@ -52,7 +54,15 @@ const sizeWidth: Record<FieldSize, string> = {
   large: '100%',
 };
 
-export function FieldControl({ field, value, onChange, readOnly, hideLabel, labelPlacement = 'top' }: Props) {
+export function FieldControl({
+  field,
+  value,
+  onChange,
+  readOnly,
+  hideLabel,
+  labelPlacement = 'top',
+  labelColor,
+}: Props) {
   const showLabel = !hideLabel && !field.hideLabel;
   const sideLabel = showLabel && labelPlacement !== 'top';
 
@@ -88,6 +98,7 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel, labe
     title: field.hoverText,
     readOnly,
     style: { maxWidth: sizeWidth[field.size ?? 'large'] },
+    styles: labelColor ? { label: { color: labelColor } } : undefined,
   };
 
   const control = (node: React.ReactNode) => {
@@ -102,6 +113,7 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel, labe
             flexShrink: 0,
             textAlign: labelPlacement === 'right' ? 'right' : 'left',
             order: labelPlacement === 'right' ? 2 : 0,
+            color: labelColor,
           }}
         >
           {labelText}
@@ -142,7 +154,7 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel, labe
       return (
         <div style={base.style}>
           {label && (
-            <Text size="sm" fw={500} mb={4}>
+            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
               {label}
             </Text>
           )}
@@ -182,7 +194,7 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel, labe
       return (
         <div style={base.style}>
           {label && (
-            <Text size="sm" fw={500} mb={4}>
+            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
               {label}
             </Text>
           )}
@@ -298,7 +310,7 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel, labe
       return (
         <div style={base.style}>
           {label && (
-            <Text size="sm" fw={500} mb={4}>
+            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
               {label}
             </Text>
           )}
@@ -365,6 +377,7 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel, labe
           required={base.required}
           title={base.title}
           style={base.style}
+          styles={base.styles}
           readOnly={readOnly}
           leftSection={leftSection}
           placeholder={placeholder}
@@ -383,7 +396,7 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel, labe
       return (
         <div>
           {label && (
-            <Text size="sm" fw={500} mb={4}>
+            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
               {label}
             </Text>
           )}
@@ -399,7 +412,7 @@ export function FieldControl({ field, value, onChange, readOnly, hideLabel, labe
       return (
         <div style={base.style}>
           {label && (
-            <Text size="sm" fw={500} mb={4}>
+            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
               {label}
             </Text>
           )}

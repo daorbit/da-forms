@@ -72,6 +72,16 @@ export interface FormField {
   columns?: FormField[][];
 }
 
+export interface FormTheme {
+  scope?: 'page' | 'card';
+  pageBg?: string;
+  cardBg?: string;
+  cardBorder?: string;
+  accentColor?: string;
+  labelColor?: string;
+  textMode?: 'auto' | 'light' | 'dark';
+}
+
 export interface FormDocument {
   title: string;
   description?: string;
@@ -86,6 +96,7 @@ export interface FormDocument {
   submitButtonSize?: SubmitButtonSize;
   submitButtonColor?: SubmitButtonColor;
   submitButtonWidth?: SubmitButtonWidth;
+  theme?: FormTheme;
   collectIp?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -138,6 +149,20 @@ const formSchema = new Schema<FormDocument>(
     submitButtonSize: { type: String, enum: ['small', 'medium', 'large'] },
     submitButtonColor: { type: String, enum: SUBMIT_BUTTON_COLORS },
     submitButtonWidth: { type: Number, enum: [25, 50, 75, 100] },
+    theme: {
+      type: new Schema<FormTheme>(
+        {
+          scope: { type: String, enum: ['page', 'card'] },
+          pageBg: { type: String },
+          cardBg: { type: String },
+          cardBorder: { type: String },
+          accentColor: { type: String },
+          labelColor: { type: String },
+          textMode: { type: String, enum: ['auto', 'light', 'dark'] },
+        },
+        { _id: false }
+      ),
+    },
     collectIp: { type: Boolean },
   },
   { timestamps: true }

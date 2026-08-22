@@ -6,9 +6,11 @@ import type {
   SubmitButtonSize,
   SubmitButtonColor,
   SubmitButtonWidth,
+  FormTheme,
 } from '@/types';
 import { FieldControl } from '@/components/FieldControl';
 import { valueFields } from '@/lib/fieldTree';
+import { resolveTextColor } from '@/lib/formTheme';
 
 interface Props {
   title: string;
@@ -20,6 +22,7 @@ interface Props {
   submitButtonSize?: SubmitButtonSize;
   submitButtonColor?: SubmitButtonColor;
   submitButtonWidth?: SubmitButtonWidth;
+  theme?: FormTheme;
   submitting?: boolean;
   /** Omitted in preview, where nothing is recorded. */
   onSubmit?: (values: Record<string, string>) => void;
@@ -40,6 +43,7 @@ function initialValues(fields: FormField[]) {
   return values;
 }
 
+
 /**
  * The respondent-facing form. Shared by the public page and the builder's
  * preview so the two can never drift apart.
@@ -54,10 +58,13 @@ export function FormRenderer({
   submitButtonSize,
   submitButtonColor,
   submitButtonWidth,
+  theme,
   submitting,
   onSubmit,
 }: Props) {
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(fields));
+  const textColor = resolveTextColor(theme);
+  const accent = theme?.accentColor;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,20 +92,33 @@ export function FormRenderer({
         value={values[field.id] ?? ''}
         onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
         labelPlacement={labelPlacement}
+        labelColor={theme?.labelColor ?? textColor}
       />
     );
   }
 
   return (
-    <Paper withBorder radius="md" p="xl">
+    <Paper
+      withBorder
+      radius="md"
+      p="xl"
+      style={{
+        backgroundColor: theme?.cardBg,
+        borderColor: theme?.cardBorder,
+        color: textColor,
+        // Lets field labels/links pick up the accent without threading a prop
+        // through every FieldControl case.
+        ...(accent ? ({ '--mantine-color-emerald-6': accent } as React.CSSProperties) : {}),
+      }}
+    >
       <form onSubmit={handleSubmit}>
         {!hideHeader && (
           <>
-            <Title order={3} ta="center" mb={4}>
+            <Title order={3} ta="center" mb={4} c={textColor}>
               {title || 'Untitled form'}
             </Title>
             {description && (
-              <Text c="dimmed" size="sm" ta="center" mb="lg">
+              <Text size="sm" ta="center" mb="lg" c={textColor ? undefined : 'dimmed'} style={textColor ? { color: textColor, opacity: 0.75 } : undefined}>
                 {description}
               </Text>
             )}
@@ -118,8 +138,12 @@ export function FormRenderer({
                 loading={submitting}
                 mt="sm"
                 size={buttonSize[submitButtonSize ?? 'medium']}
-                color={submitButtonColor ?? 'emerald'}
-                style={{ width: `${submitButtonWidth ?? 100}%`, alignSelf: 'center' }}
+                color={accent ? undefined : (submitButtonColor ?? 'emerald')}
+                style={{
+                  width: `${submitButtonWidth ?? 100}%`,
+                  alignSelf: 'center',
+                  backgroundColor: accent,
+                }}
               >
                 {submitLabel || 'Submit'}
               </Button>

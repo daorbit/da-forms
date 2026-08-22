@@ -4,9 +4,10 @@ import {
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { IconTrash, IconSettings, IconCopyPlus, IconEyeOff, IconPlus } from '@tabler/icons-react';
-import type { FormField } from '@/types';
+import type { FormField, FormTheme } from '@/types';
 import { staticTypes } from '@/lib/fieldPalette';
 import { FieldControl } from '@/components/FieldControl';
+import { resolveTextColor } from '@/lib/formTheme';
 import { SortableField } from './SortableField';
 import { GridColumn } from './GridColumn';
 import classes from './FormCanvas.module.css';
@@ -25,6 +26,7 @@ interface Props {
   onHideHeader: () => void;
   /** Shifts the card clear of the properties drawer while it is open. */
   offsetRight?: boolean;
+  theme?: FormTheme;
 }
 
 export function FormCanvas({
@@ -40,10 +42,13 @@ export function FormCanvas({
   hideHeader = false,
   onHideHeader,
   offsetRight = false,
+  theme,
 }: Props) {
   // The card itself accepts drops, so a field can be added to an empty form
   // and dropped past the last row rather than only between existing ones.
   const { setNodeRef: setRootRef, isOver: isOverRoot } = useDroppable({ id: 'root' });
+  const textColor = resolveTextColor(theme);
+  const labelColor = theme?.labelColor ?? textColor;
 
   function renderField(field: FormField) {
     const isStatic = staticTypes.includes(field.type);
@@ -76,11 +81,11 @@ export function FormCanvas({
             ))}
           </div>
         ) : isStatic ? (
-          <FieldControl field={field} value="" onChange={() => {}} readOnly hideLabel />
+          <FieldControl field={field} value="" onChange={() => {}} readOnly hideLabel labelColor={labelColor} />
         ) : (
           <>
             {!field.hideLabel && (
-              <Text size="sm" fw={600} mb={2}>
+              <Text size="sm" fw={600} mb={2} style={labelColor ? { color: labelColor } : undefined}>
                 {field.label || 'Untitled field'}
                 {field.required && (
                   <Text span c="red">
@@ -96,7 +101,7 @@ export function FormCanvas({
               </Text>
             )}
             <Box mt={8}>
-              <FieldControl field={field} value="" onChange={() => {}} readOnly hideLabel />
+              <FieldControl field={field} value="" onChange={() => {}} readOnly hideLabel labelColor={labelColor} />
             </Box>
           </>
         )}
@@ -153,19 +158,36 @@ export function FormCanvas({
       <Box className={`${classes.canvasArea} ${offsetRight ? classes.canvasAreaOffset : ''}`}>
         {/*
           The card is a preview of the live form, so it keeps the respondent's
-          own colours whatever theme the host passes. `data-mantine-color-scheme`
+          own light-mode base (never the builder's own theme) — but the
+          form's own custom theme colors, when set, apply on top of that base
+          exactly as they will on the public page. `data-mantine-color-scheme`
           scopes Mantine's own light variables to this subtree; the stylesheet
           adds the few surfaces that attribute does not cover.
         */}
         <div className="da-forms-light-surface" data-mantine-color-scheme="light">
-            <Paper className={classes.formCard} radius="md" withBorder>
+            <Paper
+              className={classes.formCard}
+              radius="md"
+              withBorder
+              style={{
+                backgroundColor: theme?.cardBg,
+                borderColor: theme?.cardBorder,
+                color: textColor,
+              }}
+            >
               {!hideHeader && (
                 <Box className={`${classes.fieldRow} ${classes.header}`}>
-                  <Title order={3} ta="center">
+                  <Title order={3} ta="center" c={textColor}>
                     {title || 'Untitled form'}
                   </Title>
                   {description && (
-                    <Text c="dimmed" size="sm" ta="center" mt={4}>
+                    <Text
+                      size="sm"
+                      ta="center"
+                      mt={4}
+                      c={textColor ? undefined : 'dimmed'}
+                      style={textColor ? { color: textColor, opacity: 0.75 } : undefined}
+                    >
                       {description}
                     </Text>
                   )}

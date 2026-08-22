@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useLocation, useParams, useNavigate, Link } from 'react-router-dom';
-import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip } from '@mantine/core';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text } from '@mantine/core';
 import { IconFileText, IconEye, IconArrowLeft } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
@@ -68,10 +68,58 @@ export function FormBuilderPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dragging, setDragging] = useState<DragData | null>(null);
+  const [savedSnapshot, setSavedSnapshot] = useState('');
+  const [pendingLeave, setPendingLeave] = useState(false);
 
   // A few pixels of travel before a drag starts, so clicking a field to open
   // its properties is not read as the beginning of one.
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // Everything that ends up in the save payload, serialized — comparing this
+  // against the last-saved snapshot is what "unsaved changes" means here.
+  const currentSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        title,
+        description,
+        fields,
+        redirectUrl,
+        thankYouMessage,
+        hideHeader,
+        labelPlacement,
+        submitLabel,
+        submitButtonSize,
+        submitButtonColor,
+        submitButtonWidth,
+        collectIp,
+      }),
+    [
+      title,
+      description,
+      fields,
+      redirectUrl,
+      thankYouMessage,
+      hideHeader,
+      labelPlacement,
+      submitLabel,
+      submitButtonSize,
+      submitButtonColor,
+      submitButtonWidth,
+      collectIp,
+    ]
+  );
+  const isDirty = currentSnapshot !== savedSnapshot;
+
+  // A browser-level close/refresh/tab-nav can't be intercepted with a custom
+  // dialog — this is the one native hook that still warns the respondent.
+  useEffect(() => {
+    if (!isDirty) return;
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault();
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   useEffect(() => {
     if (!routeFormId) return;
@@ -89,8 +137,32 @@ export function FormBuilderPage() {
       setSubmitButtonWidth(form.submitButtonWidth ?? 100);
       setCollectIp(form.collectIp ?? false);
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
+      setSavedSnapshot(
+        JSON.stringify({
+          title: form.title,
+          description: form.description ?? '',
+          fields: form.fields,
+          redirectUrl: form.redirectUrl ?? '',
+          thankYouMessage: form.thankYouMessage || 'Thanks! Your response has been recorded.',
+          hideHeader: form.hideHeader ?? false,
+          labelPlacement: form.labelPlacement ?? 'top',
+          submitLabel: form.submitLabel ?? '',
+          submitButtonSize: form.submitButtonSize ?? 'medium',
+          submitButtonColor: form.submitButtonColor ?? 'emerald',
+          submitButtonWidth: form.submitButtonWidth ?? 100,
+          collectIp: form.collectIp ?? false,
+        })
+      );
     });
   }, [routeFormId, workspaceId]);
+
+  // A brand-new, never-saved form: its own starting state is "clean" — the
+  // save button should stay disabled until something actually changes.
+  useEffect(() => {
+    if (routeFormId) return;
+    setSavedSnapshot(currentSnapshot);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeFormId]);
 
   function addField(type: FieldType, columns?: number) {
     const field = makeField(type, columns);
@@ -206,6 +278,7 @@ export function FormBuilderPage() {
     setSaving(false);
     setSavedFormId(form._id);
     setSavedForm(form);
+    setSavedSnapshot(currentSnapshot);
     notifications.show({ message: 'Form saved', color: 'emerald' });
     if (!savedFormId) setShareOpen(true);
   }
@@ -244,12 +317,17 @@ export function FormBuilderPage() {
           <Group gap="xs" wrap="nowrap" style={{ flex: 1 }}>
             <Tooltip label="Back to all forms" position="bottom" withArrow>
               <ActionIcon
-                component={Link}
-                to={`/${workspaceId}/forms`}
                 variant="subtle"
                 color="gray"
                 size="lg"
                 aria-label="Back to all forms"
+                onClick={() => {
+                  if (isDirty) {
+                    setPendingLeave(true);
+                    return;
+                  }
+                  navigate(`/${workspaceId}/forms`);
+                }}
               >
                 <IconArrowLeft size={19} />
               </ActionIcon>
@@ -278,7 +356,13 @@ export function FormBuilderPage() {
             >
               Preview
             </Button>
-            <Button color="emerald" radius="md" onClick={handleSave} loading={saving}>
+            <Button
+              color="emerald"
+              radius="md"
+              onClick={handleSave}
+              loading={saving}
+              disabled={!isDirty}
+            >
               {savedFormId ? 'Save' : 'Access Form'}
             </Button>
           </Group>
@@ -377,6 +461,23 @@ export function FormBuilderPage() {
           onStatusChange={(status) => setSavedForm({ ...savedForm, status })}
         />
       )}
+
+      <Modal
+        opened={pendingLeave}
+        onClose={() => setPendingLeave(false)}
+        title="Leave without saving?"
+        centered
+      >
+        <Text size="sm">You have unsaved changes. If you leave now, they'll be lost.</Text>
+        <Group justify="flex-end" mt="lg">
+          <Button variant="default" onClick={() => setPendingLeave(false)}>
+            Stay
+          </Button>
+          <Button color="red" onClick={() => navigate(`/${workspaceId}/forms`)}>
+            Leave without saving
+          </Button>
+        </Group>
+      </Modal>
     </AppShell>
 
       {/* Follows the cursor so the drag has something to carry — without it a

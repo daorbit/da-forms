@@ -210,5 +210,18 @@ export function makeField(type: FieldType, columns?: number): FormField {
   if (type === 'heading') field.content = 'Heading';
   if (type === 'description') field.content = 'Description text';
   if (textTypes.includes(type)) field.maxLength = 255;
+  if (placeholderTypes.includes(type)) field.placeholder = `Enter ${field.label}`;
   return field;
 }
+
+/** Field types that render a text-style input a placeholder can sit in. */
+export const placeholderTypes: FieldType[] = [
+  ...textTypes,
+  'number',
+  'decimal',
+  'currency',
+  'date',
+  'time',
+  'datetime',
+  'monthYear',
+];

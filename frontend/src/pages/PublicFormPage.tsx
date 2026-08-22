@@ -16,7 +16,14 @@ export function PublicFormPage() {
   useEffect(() => {
     if (!id) return;
     getForm(id)
-      .then(setForm)
+      .then((loaded) => {
+        setForm(loaded);
+        const initial: Record<string, string> = {};
+        for (const field of loaded.fields) {
+          if (field.initialValue) initial[field.id] = field.initialValue;
+        }
+        setValues(initial);
+      })
       .catch((e: Error) => setError(e.message));
   }, [id]);
 
@@ -26,6 +33,10 @@ export function PublicFormPage() {
     setSubmitting(true);
     await submitForm(id, values);
     setSubmitting(false);
+    if (form?.redirectUrl) {
+      window.location.href = form.redirectUrl;
+      return;
+    }
     setSubmitted(true);
   }
 
@@ -48,7 +59,7 @@ export function PublicFormPage() {
       <Paper withBorder radius="md" p="xl">
         {submitted ? (
           <Text ta="center" py="xl">
-            Thanks! Your response has been recorded.
+            {form.thankYouMessage || 'Thanks! Your response has been recorded.'}
           </Text>
         ) : (
           <form onSubmit={handleSubmit}>

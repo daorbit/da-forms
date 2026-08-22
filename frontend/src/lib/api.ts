@@ -30,6 +30,7 @@ export function createForm(input: {
   fields: FormField[];
   projectKey?: string;
   redirectUrl?: string;
+  thankYouMessage?: string;
 }) {
   return request<Form>('/forms', { method: 'POST', body: JSON.stringify(input) });
 }

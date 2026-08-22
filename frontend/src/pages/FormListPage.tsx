@@ -24,6 +24,7 @@ import {
 } from '@tabler/icons-react';
 import { listForms } from '@/lib/api';
 import type { Form } from '@/types';
+import { NewFormModal } from '@/components/NewFormModal';
 import classes from './FormListPage.module.css';
 
 function formatDate(iso: string) {
@@ -33,6 +34,7 @@ function formatDate(iso: string) {
 export function FormListPage() {
   const [forms, setForms] = useState<Form[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [newFormOpen, setNewFormOpen] = useState(false);
 
   useEffect(() => {
     listForms().then(setForms);
@@ -54,7 +56,12 @@ export function FormListPage() {
           <ActionIcon variant="subtle" color="gray" radius="xl" size="lg">
             <IconArrowsSort size={18} />
           </ActionIcon>
-          <Button component={Link} to="/new" radius="xl" color="teal" leftSection={<IconPlus size={16} />}>
+          <Button
+            radius="xl"
+            color="teal"
+            leftSection={<IconPlus size={16} />}
+            onClick={() => setNewFormOpen(true)}
+          >
             New Form
           </Button>
         </Group>
@@ -82,31 +89,19 @@ export function FormListPage() {
                     <IconFileText size={20} />
                   </ThemeIcon>
                   <div>
-                    <Link to={`/forms/${form._id}`} className={classes.title}>
+                    <Link to={`/forms/${form._id}/edit`} className={classes.title}>
                       {form.title}
                     </Link>
                     {active ? (
                       <Group gap={6} className={classes.quickLinks}>
-                        <Text component={Link} to={`/forms/${form._id}`} size="sm">
-                          Reports
+                        <Text component={Link} to={`/forms/${form._id}/entries`} size="sm">
+                          Entries
                         </Text>
                         <Text size="sm" c="dimmed">
                           &bull;
                         </Text>
                         <Text component={Link} to={`/forms/${form._id}`} size="sm">
-                          Settings
-                        </Text>
-                        <Text size="sm" c="dimmed">
-                          &bull;
-                        </Text>
-                        <Text component={Link} to={`/forms/${form._id}`} size="sm">
-                          Analytics
-                        </Text>
-                        <Text size="sm" c="dimmed">
-                          &bull;
-                        </Text>
-                        <Text component={Link} to={`/forms/${form._id}`} size="sm">
-                          Audit
+                          Share
                         </Text>
                       </Group>
                     ) : (
@@ -121,7 +116,7 @@ export function FormListPage() {
                   <Group gap="xs" wrap="nowrap">
                     <Button
                       component={Link}
-                      to={`/forms/${form._id}`}
+                      to={`/forms/${form._id}/edit`}
                       variant="default"
                       radius="xl"
                       size="xs"
@@ -131,7 +126,7 @@ export function FormListPage() {
                     </Button>
                     <Button
                       component={Link}
-                      to={`/forms/${form._id}`}
+                      to={`/forms/${form._id}/entries`}
                       variant="default"
                       radius="xl"
                       size="xs"
@@ -142,7 +137,14 @@ export function FormListPage() {
                     <ActionIcon variant="subtle" color="gray" radius="xl" size="lg">
                       <IconMail size={16} />
                     </ActionIcon>
-                    <ActionIcon variant="subtle" color="gray" radius="xl" size="lg">
+                    <ActionIcon
+                      component={Link}
+                      to={`/forms/${form._id}`}
+                      variant="subtle"
+                      color="gray"
+                      radius="xl"
+                      size="lg"
+                    >
                       <IconShare2 size={16} />
                     </ActionIcon>
                     <Menu shadow="md" position="bottom-end">
@@ -159,6 +161,8 @@ export function FormListPage() {
           );
         })}
       </Stack>
+
+      <NewFormModal opened={newFormOpen} onClose={() => setNewFormOpen(false)} />
     </Box>
   );
 }

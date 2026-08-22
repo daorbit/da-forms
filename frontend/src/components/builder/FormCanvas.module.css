@@ -1,46 +1,57 @@
 .canvasArea {
-  padding: 32px;
+  /* extra right padding clears the fixed icon rail */
+  padding: 32px 84px 32px 32px;
   background-color: var(--mantine-color-gray-1);
   min-height: 100%;
+}
+
+.canvasScroll {
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mantine-color-gray-4) transparent;
+}
+
+.canvasScroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.canvasScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.canvasScroll::-webkit-scrollbar-thumb {
+  background-color: var(--mantine-color-gray-4);
+  border-radius: 4px;
 }
 
 .formCard {
   max-width: 800px;
   margin: 0 auto;
   background-color: var(--mantine-color-white);
-  overflow: hidden;
+  /* hover toolbar overflows the right edge */
+  overflow: visible;
 }
 
 .header {
   padding: 32px 24px 24px;
-  border-bottom: 1px solid var(--mantine-color-gray-2);
 }
 
 .fieldRow {
+  position: relative;
   padding: 20px 24px;
+  border: 1px dashed transparent;
   border-bottom: 1px solid var(--mantine-color-gray-2);
   cursor: pointer;
 }
 
 .fieldRow:hover {
-  background-color: var(--mantine-color-gray-0);
+  border: 1px dashed var(--mantine-color-teal-5);
+  background-color: var(--mantine-color-teal-0);
 }
 
 .fieldRowSelected {
-  background-color: var(--mantine-color-teal-0);
-  box-shadow: inset 3px 0 0 var(--mantine-color-teal-6);
-}
-
-.gripIcon {
-  color: var(--mantine-color-gray-4);
-  margin-top: 8px;
-  opacity: 0;
-  transition: opacity 100ms ease;
-}
-
-.fieldRow:hover .gripIcon,
-.fieldRowSelected .gripIcon {
-  opacity: 1;
+  border: 1px dashed var(--mantine-color-teal-4);
 }
 
 .fieldLabel {
@@ -54,12 +65,18 @@
   min-width: 0;
 }
 
-.rowActions {
+.hoverToolbar {
+  position: absolute;
+  top: 0;
+  left: 100%;
   opacity: 0;
+  pointer-events: none;
+  border-radius: 0 var(--mantine-radius-sm) var(--mantine-radius-sm) 0;
+  overflow: hidden;
   transition: opacity 100ms ease;
 }
 
-.fieldRow:hover .rowActions,
-.fieldRowSelected .rowActions {
+.fieldRow:hover .hoverToolbar {
   opacity: 1;
+  pointer-events: auto;
 }

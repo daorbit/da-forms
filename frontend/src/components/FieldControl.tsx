@@ -9,10 +9,15 @@ import {
   Rating,
   NumberInput,
   FileInput,
+  Slider,
+  Divider,
   Text,
+  Title,
+  Box,
+  Chip,
 } from '@mantine/core';
 import { IconMail, IconPhone, IconWorld, IconCurrencyDollar } from '@tabler/icons-react';
-import type { FormField } from '@/types';
+import type { FormField, FieldSize } from '@/types';
 
 interface Props {
   field: FormField;
@@ -20,9 +25,15 @@ interface Props {
   onChange: (value: string) => void;
 }
 
+const sizeWidth: Record<FieldSize, string> = {
+  small: '35%',
+  medium: '60%',
+  large: '100%',
+};
+
 /** Live, respondent-facing control for one field. */
 export function FieldControl({ field, value, onChange }: Props) {
-  const label = (
+  const label = field.hideLabel ? undefined : (
     <>
       {field.label}
       {field.required && (
@@ -36,13 +47,32 @@ export function FieldControl({ field, value, onChange }: Props) {
 
   const base = {
     label,
-    description: field.helpText,
+    description: field.instructions,
     required: field.required,
     placeholder: field.placeholder,
+    title: field.hoverText,
+    style: { maxWidth: sizeWidth[field.size ?? 'large'] },
   };
 
   const text = (extra?: Record<string, unknown>) => (
-    <TextInput {...base} {...extra} value={value} onChange={(e) => onChange(e.target.value)} />
+    <TextInput
+      {...base}
+      {...extra}
+      maxLength={field.maxLength}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+
+  const number = (extra?: Record<string, unknown>) => (
+    <NumberInput
+      {...base}
+      {...extra}
+      min={field.min}
+      max={field.max}
+      value={value}
+      onChange={(v) => onChange(String(v))}
+    />
   );
 
   switch (field.type) {
@@ -50,10 +80,12 @@ export function FieldControl({ field, value, onChange }: Props) {
       const [first = '', last = ''] = value.split(' ');
       return (
         <div>
-          <Text size="sm" fw={500} mb={4}>
-            {label}
-          </Text>
-          <Group grow>
+          {label && (
+            <Text size="sm" fw={500} mb={4}>
+              {label}
+            </Text>
+          )}
+          <Group grow style={base.style}>
             <TextInput
               placeholder="First"
               value={first}
@@ -78,40 +110,26 @@ export function FieldControl({ field, value, onChange }: Props) {
     case 'website':
       return text({ type: 'url', leftSection: <IconWorld size={16} /> });
     case 'textarea':
-      return <Textarea {...base} value={value} onChange={(e) => onChange(e.target.value)} autosize minRows={3} />;
+      return (
+        <Textarea
+          {...base}
+          maxLength={field.maxLength}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autosize
+          minRows={3}
+        />
+      );
     case 'regex':
       return text({ pattern: field.pattern });
     case 'number':
-      return (
-        <NumberInput {...base} min={field.min} max={field.max} value={value} onChange={(v) => onChange(String(v))} />
-      );
+      return number();
     case 'decimal':
-      return (
-        <NumberInput
-          {...base}
-          decimalScale={2}
-          min={field.min}
-          max={field.max}
-          value={value}
-          onChange={(v) => onChange(String(v))}
-        />
-      );
+      return number({ decimalScale: 2 });
     case 'currency':
-      return (
-        <NumberInput
-          {...base}
-          leftSection={<IconCurrencyDollar size={16} />}
-          decimalScale={2}
-          min={field.min}
-          max={field.max}
-          value={value}
-          onChange={(v) => onChange(String(v))}
-        />
-      );
+      return number({ decimalScale: 2, leftSection: <IconCurrencyDollar size={16} /> });
     case 'select':
-      return (
-        <Select {...base} data={field.options ?? []} value={value} onChange={(v) => onChange(v ?? '')} />
-      );
+      return <Select {...base} data={field.options ?? []} value={value} onChange={(v) => onChange(v ?? '')} />;
     case 'radio':
       return (
         <Radio.Group {...base} value={value} onChange={onChange}>
@@ -134,21 +152,136 @@ export function FieldControl({ field, value, onChange }: Props) {
         </Checkbox.Group>
       );
     }
+    case 'multipleChoice': {
+      const selected = value ? value.split(', ') : [];
+      return (
+        <div>
+          {label && (
+            <Text size="sm" fw={500} mb={4}>
+              {label}
+            </Text>
+          )}
+          <Chip.Group multiple value={selected} onChange={(v) => onChange(v.join(', '))}>
+            <Group gap="xs">
+              {(field.options ?? []).map((opt) => (
+                <Chip key={opt} value={opt}>
+                  {opt}
+                </Chip>
+              ))}
+            </Group>
+          </Chip.Group>
+        </div>
+      );
+    }
     case 'date':
       return text({ type: 'date' });
     case 'time':
       return text({ type: 'time' });
+    case 'datetime':
+      return text({ type: 'datetime-local' });
+    case 'monthYear':
+      return text({ type: 'month' });
+    case 'file':
+    case 'imageUpload':
+    case 'mediaUpload':
+      return (
+        <FileInput
+          {...base}
+          accept={
+            field.type === 'imageUpload'
+              ? 'image/*'
+              : field.type === 'mediaUpload'
+                ? 'audio/*,video/*'
+                : undefined
+          }
+          onChange={(file) => onChange(file?.name ?? '')}
+        />
+      );
     case 'rating':
       return (
         <div>
-          <Text size="sm" fw={500} mb={4}>
-            {label}
-          </Text>
+          {label && (
+            <Text size="sm" fw={500} mb={4}>
+              {label}
+            </Text>
+          )}
           <Rating count={field.maxRating ?? 5} value={Number(value) || 0} onChange={(v) => onChange(String(v))} />
         </div>
       );
-    case 'file':
-      return <FileInput {...base} onChange={(file) => onChange(file?.name ?? '')} />;
+    case 'slider':
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={4}>
+              {label}
+            </Text>
+          )}
+          <Slider
+            min={field.min ?? 0}
+            max={field.max ?? 100}
+            step={field.step ?? 1}
+            value={Number(value) || field.min || 0}
+            onChange={(v) => onChange(String(v))}
+          />
+        </div>
+      );
+    case 'terms':
+      return (
+        <Stack gap="xs">
+          <Box
+            p="xs"
+            style={{
+              border: '1px solid var(--mantine-color-gray-3)',
+              borderRadius: 'var(--mantine-radius-sm)',
+              maxHeight: 140,
+              overflow: 'auto',
+            }}
+          >
+            <Text size="xs" c="dimmed">
+              {field.content}
+            </Text>
+          </Box>
+          <Checkbox
+            label={field.label || 'I accept the terms and conditions'}
+            required={field.required}
+            checked={value === 'true'}
+            onChange={(e) => onChange(String(e.target.checked))}
+          />
+        </Stack>
+      );
+    case 'decisionBox':
+      return (
+        <Checkbox
+          label={field.content || field.label}
+          required={field.required}
+          checked={value === 'true'}
+          onChange={(e) => onChange(String(e.target.checked))}
+        />
+      );
+    case 'yesNo':
+      return (
+        <Radio.Group {...base} value={value} onChange={onChange}>
+          <Group gap="lg" mt="xs">
+            <Radio value="yes" label="Yes" />
+            <Radio value="no" label="No" />
+          </Group>
+        </Radio.Group>
+      );
+    case 'uniqueId':
+    case 'randomId':
+      return <TextInput {...base} readOnly value={value} />;
+    case 'heading':
+      return <Title order={4}>{field.content || field.label}</Title>;
+    case 'description':
+      return (
+        <Text size="sm" c="dimmed">
+          {field.content || field.label}
+        </Text>
+      );
+    case 'divider':
+      return <Divider my="xs" />;
+    case 'spacer':
+      return <Box h={32} />;
     default:
       return text();
   }

@@ -11,13 +11,28 @@ import {
   IconNumber123,
   IconDecimal,
   IconCurrencyDollar,
-  IconChevronDown,
+  IconSelector,
   IconCircleDot,
   IconCheckbox,
+  IconListCheck,
   IconCalendar,
   IconClock,
+  IconCalendarTime,
+  IconCalendarMonth,
+  IconFileUpload,
+  IconPhotoUp,
+  IconVideo,
   IconStar,
-  IconPaperclip,
+  IconAdjustmentsHorizontal,
+  IconFileCertificate,
+  IconSquareCheck,
+  IconCheckbox as IconYesNo,
+  IconHash,
+  IconDice,
+  IconHeading,
+  IconTypography,
+  IconMinus,
+  IconArrowAutofitHeight,
   type Icon,
 } from '@tabler/icons-react';
 
@@ -63,9 +78,10 @@ export const fieldPalette: PaletteGroup[] = [
   {
     group: 'Choices',
     items: [
-      { type: 'select', label: 'Dropdown', icon: IconChevronDown, color: 'indigo' },
-      { type: 'radio', label: 'Radio', icon: IconCircleDot, color: 'indigo' },
-      { type: 'checkbox', label: 'Checkbox', icon: IconCheckbox, color: 'indigo' },
+      { type: 'select', label: 'Dropdown', icon: IconSelector, color: 'cyan' },
+      { type: 'radio', label: 'Radio', icon: IconCircleDot, color: 'cyan' },
+      { type: 'checkbox', label: 'Checkbox', icon: IconCheckbox, color: 'cyan' },
+      { type: 'multipleChoice', label: 'Multi Choice', icon: IconListCheck, color: 'cyan' },
     ],
   },
   {
@@ -73,13 +89,47 @@ export const fieldPalette: PaletteGroup[] = [
     items: [
       { type: 'date', label: 'Date', icon: IconCalendar, color: 'orange' },
       { type: 'time', label: 'Time', icon: IconClock, color: 'orange' },
+      { type: 'datetime', label: 'Date-Time', icon: IconCalendarTime, color: 'orange' },
+      { type: 'monthYear', label: 'Month-Year', icon: IconCalendarMonth, color: 'orange' },
     ],
   },
   {
-    group: 'Other',
+    group: 'Uploads',
     items: [
-      { type: 'rating', label: 'Rating', icon: IconStar, color: 'yellow' },
-      { type: 'file', label: 'File Upload', icon: IconPaperclip, color: 'gray' },
+      { type: 'file', label: 'File', icon: IconFileUpload, color: 'green' },
+      { type: 'imageUpload', label: 'Image', icon: IconPhotoUp, color: 'green' },
+      { type: 'mediaUpload', label: 'Audio/Video', icon: IconVideo, color: 'green' },
+    ],
+  },
+  {
+    group: 'Rating Scales',
+    items: [
+      { type: 'rating', label: 'Rating', icon: IconStar, color: 'pink' },
+      { type: 'slider', label: 'Slider', icon: IconAdjustmentsHorizontal, color: 'pink' },
+    ],
+  },
+  {
+    group: 'Legal & Consent',
+    items: [
+      { type: 'terms', label: 'Terms', icon: IconFileCertificate, color: 'grape' },
+      { type: 'decisionBox', label: 'Decision', icon: IconSquareCheck, color: 'grape' },
+      { type: 'yesNo', label: 'Yes/No', icon: IconYesNo, color: 'grape' },
+    ],
+  },
+  {
+    group: 'Identifier',
+    items: [
+      { type: 'uniqueId', label: 'Unique ID', icon: IconHash, color: 'red' },
+      { type: 'randomId', label: 'Random ID', icon: IconDice, color: 'red' },
+    ],
+  },
+  {
+    group: 'Page Elements',
+    items: [
+      { type: 'heading', label: 'Heading', icon: IconHeading, color: 'indigo' },
+      { type: 'description', label: 'Description', icon: IconTypography, color: 'indigo' },
+      { type: 'divider', label: 'Divider', icon: IconMinus, color: 'indigo' },
+      { type: 'spacer', label: 'Spacer', icon: IconArrowAutofitHeight, color: 'indigo' },
     ],
   },
 ];
@@ -88,7 +138,23 @@ export const paletteByType = Object.fromEntries(
   fieldPalette.flatMap((g) => g.items).map((item) => [item.type, item])
 ) as Record<FieldType, PaletteItem>;
 
-const withOptions: FieldType[] = ['select', 'radio', 'checkbox'];
+/** Layout-only elements: no label column, no value collected. */
+export const staticTypes: FieldType[] = ['heading', 'description', 'divider', 'spacer'];
+
+export const optionTypes: FieldType[] = ['select', 'radio', 'checkbox', 'multipleChoice'];
+
+export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slider'];
+
+export const textTypes: FieldType[] = [
+  'name',
+  'address',
+  'phone',
+  'email',
+  'website',
+  'text',
+  'textarea',
+  'regex',
+];
 
 export function makeField(type: FieldType): FormField {
   const field: FormField = {
@@ -96,8 +162,17 @@ export function makeField(type: FieldType): FormField {
     type,
     label: paletteByType[type].label,
     required: false,
+    size: 'large',
   };
-  if (withOptions.includes(type)) field.options = ['Option 1', 'Option 2'];
+  if (optionTypes.includes(type)) field.options = ['Option 1', 'Option 2'];
   if (type === 'rating') field.maxRating = 5;
+  if (type === 'slider') {
+    field.min = 0;
+    field.max = 100;
+    field.step = 1;
+  }
+  if (type === 'heading') field.content = 'Heading';
+  if (type === 'description') field.content = 'Description text';
+  if (textTypes.includes(type)) field.maxLength = 255;
   return field;
 }

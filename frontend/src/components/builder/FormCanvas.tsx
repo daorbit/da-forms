@@ -1,6 +1,7 @@
 import { Box, Stack, Text, Paper, Title, ActionIcon, Group } from '@mantine/core';
-import { IconTrash, IconGripVertical, IconCopy } from '@tabler/icons-react';
+import { IconTrash, IconSettings, IconCopyPlus } from '@tabler/icons-react';
 import type { FormField } from '@/types';
+import { staticTypes } from '@/lib/fieldPalette';
 import { FieldPreview } from './FieldPreview';
 import classes from './FormCanvas.module.css';
 
@@ -12,6 +13,8 @@ interface Props {
   onSelect: (id: string) => void;
   onRemove: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onOpenProperties: (id: string) => void;
+  onOpenFormSettings: () => void;
 }
 
 export function FormCanvas({
@@ -22,11 +25,13 @@ export function FormCanvas({
   onSelect,
   onRemove,
   onDuplicate,
+  onOpenProperties,
+  onOpenFormSettings,
 }: Props) {
   return (
-    <Box className={classes.canvasArea}>
+    <Box className={`${classes.canvasScroll} ${classes.canvasArea}`}>
       <Paper className={classes.formCard} radius="md" withBorder>
-        <Box className={classes.header}>
+        <Box className={`${classes.fieldRow} ${classes.header}`}>
           <Title order={3} ta="center">
             {title || 'Untitled form'}
           </Title>
@@ -35,6 +40,12 @@ export function FormCanvas({
               {description}
             </Text>
           )}
+
+          <Stack gap={0} className={classes.hoverToolbar}>
+            <ActionIcon variant="filled" color="dark" radius={0} size="lg" onClick={onOpenFormSettings}>
+              <IconSettings size={16} />
+            </ActionIcon>
+          </Stack>
         </Box>
 
         <Stack gap={0}>
@@ -44,62 +55,85 @@ export function FormCanvas({
             </Text>
           )}
 
-          {fields.map((field) => (
-            <Group
-              key={field.id}
-              align="flex-start"
-              className={`${classes.fieldRow} ${selectedId === field.id ? classes.fieldRowSelected : ''}`}
-              onClick={() => onSelect(field.id)}
-              wrap="nowrap"
-              gap="sm"
-            >
-              <IconGripVertical size={16} className={classes.gripIcon} />
+          {fields.map((field) => {
+            const isStatic = staticTypes.includes(field.type);
 
-              <Box className={classes.fieldLabel}>
-                <Text size="sm" fw={500}>
-                  {field.label || 'Untitled field'}
-                  {field.required && (
-                    <Text span c="red">
-                      {' '}
-                      *
-                    </Text>
-                  )}
-                </Text>
-                {field.helpText && (
-                  <Text size="xs" c="dimmed" mt={2}>
-                    {field.helpText}
-                  </Text>
+            return (
+              <Box
+                key={field.id}
+                className={`${classes.fieldRow} ${selectedId === field.id ? classes.fieldRowSelected : ''}`}
+                onClick={() => onSelect(field.id)}
+              >
+                {isStatic ? (
+                  <FieldPreview field={field} />
+                ) : (
+                  <Group align="flex-start" wrap="nowrap" gap="sm">
+                    <Box className={classes.fieldLabel}>
+                      {!field.hideLabel && (
+                        <Text size="sm" fw={500}>
+                          {field.label || 'Untitled field'}
+                          {field.required && (
+                            <Text span c="red">
+                              {' '}
+                              *
+                            </Text>
+                          )}
+                        </Text>
+                      )}
+                      {field.instructions && (
+                        <Text size="xs" c="dimmed" mt={2}>
+                          {field.instructions}
+                        </Text>
+                      )}
+                    </Box>
+
+                    <Box className={classes.fieldInput}>
+                      <FieldPreview field={field} />
+                    </Box>
+                  </Group>
                 )}
-              </Box>
 
-              <Box className={classes.fieldInput}>
-                <FieldPreview field={field} />
+                <Stack gap={0} className={classes.hoverToolbar}>
+                  <ActionIcon
+                    variant="filled"
+                    color="dark"
+                    radius={0}
+                    size="lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenProperties(field.id);
+                    }}
+                  >
+                    <IconSettings size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="filled"
+                    color="dark"
+                    radius={0}
+                    size="lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDuplicate(field.id);
+                    }}
+                  >
+                    <IconCopyPlus size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="filled"
+                    color="red"
+                    radius={0}
+                    size="lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(field.id);
+                    }}
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Stack>
               </Box>
-
-              <Group gap={4} className={classes.rowActions} wrap="nowrap">
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDuplicate(field.id);
-                  }}
-                >
-                  <IconCopy size={16} />
-                </ActionIcon>
-                <ActionIcon
-                  variant="subtle"
-                  color="red"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove(field.id);
-                  }}
-                >
-                  <IconTrash size={16} />
-                </ActionIcon>
-              </Group>
-            </Group>
-          ))}
+            );
+          })}
         </Stack>
       </Paper>
     </Box>

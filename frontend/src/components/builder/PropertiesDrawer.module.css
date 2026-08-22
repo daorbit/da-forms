@@ -1,0 +1,60 @@
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: #1a2027;
+  padding: 16px 24px;
+  min-height: 56px;
+}
+
+.title {
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.close {
+  color: #fff;
+}
+
+.close:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* body fills remaining height so the footer can pin to the bottom */
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+}
+
+.scrollArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: #ced4da transparent;
+}
+
+.scrollArea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollArea::-webkit-scrollbar-thumb {
+  background-color: #ced4da;
+  border-radius: 4px;
+}
+
+.footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+}

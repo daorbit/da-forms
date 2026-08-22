@@ -1,0 +1,53 @@
+.topbar {
+  border-bottom: 1px solid #e9ecef;
+  background-color: #fff;
+}
+
+.formLink {
+  color: #1a1b1e;
+  text-decoration: none;
+}
+
+.formLink:hover {
+  color: #12b886;
+}
+
+.filterbar {
+  border-bottom: 1px solid #e9ecef;
+  background-color: #fff;
+}
+
+.filterItem {
+  cursor: pointer;
+}
+
+.tableWrap {
+  padding: 16px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #adb5bd transparent;
+}
+
+.tableWrap::-webkit-scrollbar {
+  height: 10px;
+}
+
+.tableWrap::-webkit-scrollbar-thumb {
+  background-color: #adb5bd;
+  border-radius: 5px;
+}
+
+.table {
+  background-color: #fff;
+  min-width: 100%;
+  width: max-content;
+}
+
+.thead {
+  background-color: #f8f9fa;
+}
+
+.th {
+  white-space: nowrap;
+  min-width: 180px;
+}

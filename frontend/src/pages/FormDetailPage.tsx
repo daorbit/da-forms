@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   Container,
   Title,
@@ -71,7 +71,16 @@ export function FormDetailPage() {
             {form.status}
           </Badge>
         </div>
-        {form.status === 'draft' && <Button onClick={publish}>Publish</Button>}
+        <Group gap="xs">
+          <Button component={Link} to={`/forms/${id}/edit`} variant="default" radius="md">
+            Edit
+          </Button>
+          {form.status === 'draft' && (
+            <Button color="teal" radius="md" onClick={publish}>
+              Publish
+            </Button>
+          )}
+        </Group>
       </Group>
 
       <Stack gap="md">

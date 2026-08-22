@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Stack, Text, UnstyledButton, SimpleGrid, TextInput, Box } from '@mantine/core';
+import { TextInput, Text } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
 import { fieldPalette } from '@/lib/fieldPalette';
 import type { FieldType } from '@/types';
@@ -22,40 +22,43 @@ export function FieldPalette({ onAdd }: Props) {
     .filter((group) => group.items.length > 0);
 
   return (
-    <Box>
-      <Box p="md" className={classes.searchWrap}>
+    <div className={classes.wrapper}>
+      <div className={classes.searchWrap}>
         <TextInput
           placeholder="Search"
           radius="md"
-          leftSection={<IconSearch size={16} />}
+          leftSection={<IconSearch size={15} />}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-      </Box>
+      </div>
 
-      <Stack gap="lg" p="md" pt={0}>
+      <div className={classes.scroll}>
         {groups.map((group) => (
-          <div key={group.group}>
-            <Text size="xs" fw={600} c="dimmed" mb="xs">
-              {group.group}
-            </Text>
-            <SimpleGrid cols={3} spacing="xs">
+          <div key={group.group} className={classes.group}>
+            <p className={classes.groupLabel}>{group.group}</p>
+            <div className={classes.grid}>
               {group.items.map((item) => (
-                <UnstyledButton
+                <button
                   key={item.type}
+                  type="button"
                   className={classes.paletteItem}
                   onClick={() => onAdd(item.type)}
                 >
-                  <item.icon size={20} stroke={1.5} color={`var(--mantine-color-${item.color}-6)`} />
-                  <Text size="xs" mt={6} c="dark.5">
-                    {item.label}
-                  </Text>
-                </UnstyledButton>
+                  <item.icon size={20} stroke={1.6} color={`var(--mantine-color-${item.color}-6)`} />
+                  <span className={classes.itemLabel}>{item.label}</span>
+                </button>
               ))}
-            </SimpleGrid>
+            </div>
           </div>
         ))}
-      </Stack>
-    </Box>
+
+        {groups.length === 0 && (
+          <Text size="sm" c="dimmed" ta="center" py="xl">
+            No fields match "{query}"
+          </Text>
+        )}
+      </div>
+    </div>
   );
 }

@@ -16,6 +16,7 @@ export function createForm(input: {
   projectKey: string;
   fields: FormField[];
   redirectUrl?: string;
+  thankYouMessage?: string;
 }) {
   return FormModel.create(input);
 }
@@ -28,6 +29,7 @@ export function updateForm(
     fields: FormField[];
     status: 'draft' | 'published';
     redirectUrl: string;
+    thankYouMessage: string;
   }>
 ) {
   return FormModel.findByIdAndUpdate(id, input, { new: true });

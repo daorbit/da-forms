@@ -120,11 +120,11 @@ export function FormCanvas({
                   </Group>
                 )}
 
-                <Stack gap={0} className={classes.hoverToolbar}>
+                <Stack gap={6} className={classes.hoverToolbar}>
                   <ActionIcon
                     variant="filled"
                     color="dark"
-                    radius={0}
+                    radius="md"
                     size="lg"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -136,7 +136,7 @@ export function FormCanvas({
                   <ActionIcon
                     variant="filled"
                     color="dark"
-                    radius={0}
+                    radius="md"
                     size="lg"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -148,7 +148,7 @@ export function FormCanvas({
                   <ActionIcon
                     variant="filled"
                     color="red"
-                    radius={0}
+                    radius="md"
                     size="lg"
                     onClick={(e) => {
                       e.stopPropagation();

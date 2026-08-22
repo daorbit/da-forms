@@ -9,9 +9,9 @@ interface Props {
   onSelect: (panel: RailPanel) => void;
 }
 
-const items: { id: RailPanel; label: string; icon: typeof IconCode }[] = [
-  { id: 'thankYou', label: 'Thank You Page & Redirection', icon: IconCircleCheck },
-  { id: 'embed', label: 'Share & Embed', icon: IconCode },
+const items: { id: RailPanel; label: string; icon: typeof IconCode; color: string }[] = [
+  { id: 'thankYou', label: 'Thank You Page & Redirection', icon: IconCircleCheck, color: 'emerald' },
+  { id: 'embed', label: 'Share & Embed', icon: IconCode, color: 'grape' },
 ];
 
 export function IconRail({ active, onSelect }: Props) {
@@ -25,7 +25,7 @@ export function IconRail({ active, onSelect }: Props) {
             onClick={() => onSelect(item.id)}
             aria-label={item.label}
           >
-            <item.icon size={19} stroke={1.6} />
+            <item.icon size={20} stroke={1.6} color={`var(--mantine-color-${item.color}-6)`} />
           </button>
         </Tooltip>
       ))}

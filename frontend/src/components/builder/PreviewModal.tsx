@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Group, Text, ActionIcon, Box, Badge } from '@mantine/core';
 import { IconX, IconDeviceDesktop, IconDeviceTablet, IconDeviceMobile } from '@tabler/icons-react';
-import type { FormField, LabelPlacement, SubmitButtonSize } from '@/types';
+import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonColor, SubmitButtonWidth } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import classes from './PreviewModal.module.css';
 
@@ -23,6 +23,8 @@ interface Props {
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
+  submitButtonColor?: SubmitButtonColor;
+  submitButtonWidth?: SubmitButtonWidth;
 }
 
 /**
@@ -39,6 +41,8 @@ export function PreviewModal({
   labelPlacement,
   submitLabel,
   submitButtonSize,
+  submitButtonColor,
+  submitButtonWidth,
 }: Props) {
   const [device, setDevice] = useState<Device>('desktop');
   const active = DEVICES.find((d) => d.id === device) ?? DEVICES[0];
@@ -101,6 +105,8 @@ export function PreviewModal({
             labelPlacement={labelPlacement}
             submitLabel={submitLabel}
             submitButtonSize={submitButtonSize}
+            submitButtonColor={submitButtonColor}
+            submitButtonWidth={submitButtonWidth}
           />
           <Text size="xs" c="dimmed" ta="center" mt="md">
             Submissions are not recorded in preview.

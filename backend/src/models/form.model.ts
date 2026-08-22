@@ -42,6 +42,12 @@ export type LabelPlacement = 'top' | 'left' | 'right';
 
 export type SubmitButtonSize = 'small' | 'medium' | 'large';
 
+export const SUBMIT_BUTTON_COLORS = ['emerald', 'blue', 'violet', 'red', 'orange', 'gray', 'dark'] as const;
+
+export type SubmitButtonColor = (typeof SUBMIT_BUTTON_COLORS)[number];
+
+export type SubmitButtonWidth = 25 | 50 | 75 | 100;
+
 export interface FormField {
   id: string;
   type: FieldType;
@@ -78,6 +84,8 @@ export interface FormDocument {
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
+  submitButtonColor?: SubmitButtonColor;
+  submitButtonWidth?: SubmitButtonWidth;
   collectIp?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -128,6 +136,8 @@ const formSchema = new Schema<FormDocument>(
     labelPlacement: { type: String, enum: ['top', 'left', 'right'] },
     submitLabel: { type: String },
     submitButtonSize: { type: String, enum: ['small', 'medium', 'large'] },
+    submitButtonColor: { type: String, enum: SUBMIT_BUTTON_COLORS },
+    submitButtonWidth: { type: Number, enum: [25, 50, 75, 100] },
     collectIp: { type: Boolean },
   },
   { timestamps: true }

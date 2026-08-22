@@ -308,15 +308,17 @@ export function FormListPage() {
         ))}
       </Stack>
 
-      <Group justify="flex-end" px="xl" py="md">
-        <Pagination
-          total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
-          value={page}
-          onChange={setPage}
-          color="emerald"
-          disabled={total <= PAGE_SIZE}
-        />
-      </Group>
+      {total > 0 && (
+        <Group justify="flex-end" px="xl" py="md">
+          <Pagination
+            total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+            value={page}
+            onChange={setPage}
+            color="emerald"
+            disabled={total <= PAGE_SIZE}
+          />
+        </Group>
+      )}
 
       <NewFormModal opened={newFormOpen} onClose={() => setNewFormOpen(false)} />
 

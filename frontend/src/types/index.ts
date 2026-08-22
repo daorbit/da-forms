@@ -61,6 +61,12 @@ export type LabelPlacement = 'top' | 'left' | 'right';
 
 export type SubmitButtonSize = 'small' | 'medium' | 'large';
 
+export type SubmitButtonWidth = 25 | 50 | 75 | 100;
+
+export const SUBMIT_BUTTON_COLORS = ['emerald', 'blue', 'violet', 'red', 'orange', 'gray', 'dark'] as const;
+
+export type SubmitButtonColor = (typeof SUBMIT_BUTTON_COLORS)[number];
+
 export interface FormField {
   id: string;
   type: FieldType;
@@ -105,6 +111,8 @@ export interface Form {
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
+  submitButtonColor?: SubmitButtonColor;
+  submitButtonWidth?: SubmitButtonWidth;
   /** Records the respondent's IP with each submission. Off by default. */
   collectIp?: boolean;
   createdAt: string;

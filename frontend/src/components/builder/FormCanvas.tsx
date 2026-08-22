@@ -101,42 +101,45 @@ export function FormCanvas({
           </>
         )}
 
-        <Stack gap={0} className={classes.hoverToolbar}>
+        <Stack gap={2} p={4} className={classes.hoverToolbar}>
           {!isGrid && (
             <ActionIcon
-              variant="filled"
-              color="dark"
-              radius={0}
+              variant="subtle"
+              color="gray"
+              radius="md"
               size="lg"
               onClick={(e) => {
                 e.stopPropagation();
                 onOpenProperties(field.id);
               }}
+              aria-label="Field settings"
             >
               <IconSettings size={16} />
             </ActionIcon>
           )}
           <ActionIcon
-            variant="filled"
-            color="dark"
-            radius={0}
+            variant="subtle"
+            color="gray"
+            radius="md"
             size="lg"
             onClick={(e) => {
               e.stopPropagation();
               onDuplicate(field.id);
             }}
+            aria-label="Duplicate field"
           >
             <IconCopyPlus size={16} />
           </ActionIcon>
           <ActionIcon
-            variant="filled"
+            variant="subtle"
             color="red"
-            radius={0}
+            radius="md"
             size="lg"
             onClick={(e) => {
               e.stopPropagation();
               onRemove(field.id);
             }}
+            aria-label="Delete field"
           >
             <IconTrash size={16} />
           </ActionIcon>

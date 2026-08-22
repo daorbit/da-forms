@@ -6,7 +6,7 @@ import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
-import type { Form, FormField, FieldType, LabelPlacement, SubmitButtonSize } from '@/types';
+import type { Form, FormField, FieldType, LabelPlacement, SubmitButtonSize, SubmitButtonColor, SubmitButtonWidth } from '@/types';
 import { ShareModal } from '@/components/share/ShareModal';
 import {
   DndContext,
@@ -59,6 +59,8 @@ export function FormBuilderPage() {
   const [labelPlacement, setLabelPlacement] = useState<LabelPlacement>('top');
   const [submitLabel, setSubmitLabel] = useState('');
   const [submitButtonSize, setSubmitButtonSize] = useState<SubmitButtonSize>('medium');
+  const [submitButtonColor, setSubmitButtonColor] = useState<SubmitButtonColor>('emerald');
+  const [submitButtonWidth, setSubmitButtonWidth] = useState<SubmitButtonWidth>(100);
   const [collectIp, setCollectIp] = useState(false);
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
@@ -83,6 +85,8 @@ export function FormBuilderPage() {
       setLabelPlacement(form.labelPlacement ?? 'top');
       setSubmitLabel(form.submitLabel ?? '');
       setSubmitButtonSize(form.submitButtonSize ?? 'medium');
+      setSubmitButtonColor(form.submitButtonColor ?? 'emerald');
+      setSubmitButtonWidth(form.submitButtonWidth ?? 100);
       setCollectIp(form.collectIp ?? false);
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
     });
@@ -192,6 +196,8 @@ export function FormBuilderPage() {
       labelPlacement,
       submitLabel,
       submitButtonSize,
+      submitButtonColor,
+      submitButtonWidth,
       collectIp,
     };
     const form = savedFormId
@@ -320,12 +326,22 @@ export function FormBuilderPage() {
       <QuickSettingsDrawer
         opened={railPanel === 'quickSettings'}
         onClose={() => setRailPanel(null)}
-        settings={{ hideHeader, labelPlacement, submitLabel, submitButtonSize, collectIp }}
+        settings={{
+          hideHeader,
+          labelPlacement,
+          submitLabel,
+          submitButtonSize,
+          submitButtonColor,
+          submitButtonWidth,
+          collectIp,
+        }}
         onChange={(patch) => {
           if (patch.hideHeader !== undefined) setHideHeader(patch.hideHeader);
           if (patch.labelPlacement) setLabelPlacement(patch.labelPlacement);
           if (patch.submitLabel !== undefined) setSubmitLabel(patch.submitLabel);
           if (patch.submitButtonSize) setSubmitButtonSize(patch.submitButtonSize);
+          if (patch.submitButtonColor) setSubmitButtonColor(patch.submitButtonColor);
+          if (patch.submitButtonWidth) setSubmitButtonWidth(patch.submitButtonWidth);
           if (patch.collectIp !== undefined) setCollectIp(patch.collectIp);
         }}
       />
@@ -349,6 +365,8 @@ export function FormBuilderPage() {
         labelPlacement={labelPlacement}
         submitLabel={submitLabel}
         submitButtonSize={submitButtonSize}
+        submitButtonColor={submitButtonColor}
+        submitButtonWidth={submitButtonWidth}
       />
 
       {savedForm && (

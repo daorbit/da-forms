@@ -157,17 +157,34 @@
   opacity: 0.4;
 }
 
-/* Butted against the row's right edge, so it reads as attached to the field
-   rather than floating beside the card. */
+/* Floats just clear of the row's right edge as its own rounded pill. The gap
+   is small enough to stay inside the canvas's own right padding (no
+   overflow), and an invisible bridge fills that gap so the pointer never
+   leaves the hoverable area on its way from the field to the toolbar. */
 .hoverToolbar {
   position: absolute;
   top: 0;
-  left: 100%;
+  left: calc(100% + 4px);
   opacity: 0;
   pointer-events: none;
-  border-radius: 0 6px 6px 0;
+  border-radius: 10px;
   overflow: hidden;
+  background: var(--mantine-color-body);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--mantine-color-default-border);
   transition: opacity 120ms ease;
+  z-index: 1;
+}
+
+/* Extends the row's own hoverable box rightward to cover the gap before the
+   toolbar, so the pointer never leaves hover territory crossing it. */
+.fieldRow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 100%;
+  width: 4px;
+  height: 100%;
 }
 
 .fieldRow:hover .hoverToolbar {

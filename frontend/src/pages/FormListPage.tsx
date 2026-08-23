@@ -21,13 +21,14 @@ import {
   IconWorldUpload,
   IconX,
 } from '@tabler/icons-react';
-import { listForms, deleteForm, updateForm, publicFormPath, publicFormUrl, type WorkspaceStats } from '@/lib/api';
+import { listForms, deleteForm, updateForm, createForm, publicFormPath, publicFormUrl, type WorkspaceStats } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { WorkspaceStatsBar } from '@/components/builder/WorkspaceStatsBar';
+import { cloneWithNewIds } from '@/lib/fieldTree';
 import classes from './FormListPage.module.css';
 
 function formatDate(iso: string) {
@@ -61,6 +62,7 @@ export function FormListPage() {
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState<Form | null>(null);
   const [stats, setStats] = useState<WorkspaceStats | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -94,6 +96,37 @@ export function FormListPage() {
       message: status === 'published' ? 'Form published' : 'Form moved back to draft',
       color: status === 'published' ? 'emerald' : 'gray',
     });
+  }
+
+  async function duplicateForm(form: Form) {
+    setDuplicatingId(form._id);
+    try {
+      // Fresh ids throughout — same reason the field-level duplicate needs
+      // them: two fields (here, two forms) sharing an id would be addressed
+      // together by every future edit.
+      const fields = form.fields.map(cloneWithNewIds);
+      await createForm(
+        {
+          title: `${form.title} (copy)`,
+          description: form.description,
+          fields,
+          redirectUrl: form.redirectUrl,
+          thankYouMessage: form.thankYouMessage,
+          hideHeader: form.hideHeader,
+          labelPlacement: form.labelPlacement,
+          submitLabel: form.submitLabel,
+          submitButtonSize: form.submitButtonSize,
+          submitButtonWidth: form.submitButtonWidth,
+          theme: form.theme,
+          collectIp: form.collectIp,
+        },
+        workspaceId
+      );
+      notifications.show({ message: 'Form duplicated', color: 'emerald' });
+      load();
+    } finally {
+      setDuplicatingId(null);
+    }
   }
 
   async function confirmDelete() {
@@ -292,6 +325,14 @@ export function FormListPage() {
                       }}
                     >
                       Copy link
+                    </Menu.Item>
+                    <Menu.Divider />
+                    <Menu.Item
+                      leftSection={<IconCopy size={15} />}
+                      disabled={duplicatingId === form._id}
+                      onClick={() => duplicateForm(form)}
+                    >
+                      Duplicate
                     </Menu.Item>
                     <Menu.Divider />
                     <Menu.Item

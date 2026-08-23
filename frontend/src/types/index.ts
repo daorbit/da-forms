@@ -117,6 +117,10 @@ export interface FormField {
    */
   columns?: FormField[][];
   showIf?: ShowIfRule;
+  /** Pixel width, overriding the size preset outright. */
+  customWidth?: number;
+  /** Extra class name applied to the field's own input, for power-user styling. */
+  cssClass?: string;
 }
 
 export type ShowIfOperator = 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';

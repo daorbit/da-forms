@@ -204,6 +204,7 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
                     fullWidth
                     value={field.size ?? 'large'}
                     onChange={(value) => set({ size: value as FieldSize })}
+                    disabled={!!field.customWidth}
                     data={[
                       { value: 'small', label: 'Small' },
                       { value: 'medium', label: 'Medium' },
@@ -211,6 +212,22 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
                     ]}
                   />
                 </div>
+
+                <NumberInput
+                  label="Custom width"
+                  description="Pixel width, overriding the size preset above. Leave blank to use it."
+                  suffix="px"
+                  min={40}
+                  value={field.customWidth ?? ''}
+                  onChange={(value) => set({ customWidth: value === '' ? undefined : Number(value) })}
+                />
+
+                <TextInput
+                  label="CSS class"
+                  description="Extra class name for custom styling, applied to this field's input."
+                  value={field.cssClass ?? ''}
+                  onChange={(e) => set({ cssClass: e.target.value || undefined })}
+                />
 
                 <TextInput
                   label="Placeholder"

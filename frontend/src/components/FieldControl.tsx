@@ -129,7 +129,10 @@ export function FieldControl({
     placeholder: field.placeholder,
     title: field.hoverText,
     readOnly,
-    style: { maxWidth: sizeWidth[field.size ?? 'large'] },
+    // A pixel override replaces the preset percentage outright; otherwise
+    // the field falls back to its size preset as before.
+    style: { maxWidth: field.customWidth ? `${field.customWidth}px` : sizeWidth[field.size ?? 'large'] },
+    className: field.cssClass || undefined,
     styles:
       labelColor || inputStyle
         ? { label: labelColor ? { color: labelColor } : undefined, input: inputStyle }

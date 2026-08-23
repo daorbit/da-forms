@@ -70,6 +70,10 @@ export interface FormField {
   /** A grid's columns, each holding its own fields. */
   columns?: FormField[][];
   showIf?: ShowIfRule;
+  /** Pixel width, overriding the size preset outright. */
+  customWidth?: number;
+  /** Extra class name applied to the field's own input, for power-user styling. */
+  cssClass?: string;
 }
 
 export type ShowIfOperator = 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
@@ -144,6 +148,8 @@ const fieldSchema = new Schema<FormField>(
      */
     columns: { type: Schema.Types.Mixed },
     showIf: { type: Schema.Types.Mixed },
+    customWidth: { type: Number },
+    cssClass: { type: String },
   },
   { _id: false }
 );

@@ -36,6 +36,8 @@ import {
   IconFileTypePdf,
   IconMailOpened,
   IconRefresh,
+  IconDownload,
+  IconExternalLink,
 } from '@tabler/icons-react';
 import {
   getForm,
@@ -63,6 +65,10 @@ function formatDateTime(iso: string) {
     hour: 'numeric',
     minute: '2-digit',
   });
+}
+
+function isImageUrl(url: string) {
+  return /\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#]|$)/i.test(url);
 }
 
 type StatusFilter = 'all' | 'unread' | 'read';
@@ -108,6 +114,7 @@ export function EntriesPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [viewing, setViewing] = useState<Submission | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Submission | null>(null);
+  const [attachment, setAttachment] = useState<{ url: string; name: string; image: boolean } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const loadSubmissions = useCallback(() => {
@@ -414,13 +421,24 @@ export function EntriesPage() {
                         // filename from before uploads were wired to Cloudinary — link only
                         // what's actually a URL.
                         const isFileLink = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
-                        const isImage = field.type === 'imageUpload' && isFileLink;
-                        const fileName = raw.split('/').pop();
+                        const isImage = isFileLink && (field.type === 'imageUpload' || isImageUrl(raw));
+                        const fileName = raw.split('/').pop() || 'Attachment';
                         return (
                           <Table.Td key={field.id}>
                             {isImage ? (
                               <Anchor href={raw} target="_blank" rel="noopener noreferrer">
-                                <Image src={raw} alt={fileName} h={40} w={40} fit="cover" radius="sm" />
+                                  <Image
+                                    src={raw}
+                                    alt={fileName}
+                                    h={40}
+                                    w={40}
+                                    fit="cover"
+                                    radius="sm"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setAttachment({ url: raw, name: fileName, image: true });
+                                    }}
+                                  />
                               </Anchor>
                             ) : isFileLink ? (
                               <Anchor
@@ -429,6 +447,10 @@ export function EntriesPage() {
                                 rel="noopener noreferrer"
                                 underline="never"
                                 c="inherit"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setAttachment({ url: raw, name: fileName, image: false });
+                                }}
                               >
                                 <Group gap={6} wrap="nowrap">
                                   <ThemeIcon variant="light" color="gray" size={28} radius="sm">
@@ -540,19 +562,37 @@ export function EntriesPage() {
               {columns.map((field) => {
                 const raw = viewing.data[field.id] ?? '';
                 const isFileLink = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
-                const isImage = field.type === 'imageUpload' && isFileLink;
-                const fileName = raw.split('/').pop();
+                const isImage = isFileLink && (field.type === 'imageUpload' || isImageUrl(raw));
+                const fileName = raw.split('/').pop() || 'Attachment';
                 return (
                   <div key={field.id} className={`${classes.responseField} ${isImage ? classes.mediaField : ''}`}>
                     <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
                       {field.label}
                     </Text>
                     {isImage ? (
-                      <Anchor href={raw} target="_blank" rel="noopener noreferrer">
+                      <Anchor
+                        href={raw}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setAttachment({ url: raw, name: fileName, image: true });
+                        }}
+                      >
                         <Image src={raw} alt={fileName} mah={220} w="auto" fit="contain" radius="sm" />
                       </Anchor>
                     ) : isFileLink ? (
-                      <Anchor href={raw} target="_blank" rel="noopener noreferrer" underline="never" c="inherit">
+                      <Anchor
+                        href={raw}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        underline="never"
+                        c="inherit"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setAttachment({ url: raw, name: fileName, image: false });
+                        }}
+                      >
                         <Group gap={6} wrap="nowrap">
                           <ThemeIcon variant="light" color="gray" size={28} radius="sm">
                             {field.type === 'mediaUpload' ? <IconVideo size={15} /> : <IconFileText size={15} />}
@@ -599,6 +639,58 @@ export function EntriesPage() {
             Delete
           </Button>
         </Group>
+      </Modal>
+
+      <Modal
+        opened={!!attachment}
+        onClose={() => setAttachment(null)}
+        title={attachment?.name ?? 'Attachment'}
+        size="xl"
+        centered
+        classNames={{ content: classes.attachmentModal, body: classes.attachmentBody }}
+      >
+        {attachment && (
+          <Stack gap="md">
+            <Box className={classes.attachmentPreview}>
+              {attachment.image ? (
+                <Image
+                  src={attachment.url}
+                  alt={attachment.name}
+                  fit="contain"
+                  mah="65vh"
+                  maw="100%"
+                />
+              ) : (
+                <iframe
+                  src={attachment.url}
+                  title={attachment.name}
+                  className={classes.attachmentFrame}
+                />
+              )}
+            </Box>
+            <Group justify="flex-end" gap="sm">
+              <Button
+                component="a"
+                href={attachment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="default"
+                leftSection={<IconExternalLink size={16} />}
+              >
+                Open in new tab
+              </Button>
+              <Button
+                component="a"
+                href={attachment.url}
+                download={attachment.name}
+                color="emerald"
+                leftSection={<IconDownload size={16} />}
+              >
+                Download
+              </Button>
+            </Group>
+          </Stack>
+        )}
       </Modal>
     </Box>
   );

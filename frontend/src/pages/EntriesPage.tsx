@@ -324,7 +324,7 @@ export function EntriesPage() {
         <EntriesKanban submissions={submissions} columns={columns} onMove={moveSubmission} />
       ) : (
         <>
-          <Box className={classes.tableWrap}>
+          <Table.ScrollContainer minWidth={0} className={classes.tableWrap}>
             <Table withTableBorder highlightOnHover className={classes.table}>
               <Table.Thead className={classes.thead}>
                 <Table.Tr>
@@ -415,7 +415,7 @@ export function EntriesPage() {
                 )}
               </Table.Tbody>
             </Table>
-          </Box>
+          </Table.ScrollContainer>
 
           <Group justify="flex-end" px="md" py="md">
             <Pagination

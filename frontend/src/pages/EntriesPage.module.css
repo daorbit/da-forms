@@ -23,13 +23,13 @@
 
 .tableWrap {
   padding: 16px;
-  overflow-x: auto;
 }
 
 .table {
   background-color: var(--mantine-color-body);
-  min-width: 100%;
   width: max-content;
+  min-width: 100%;
+  table-layout: fixed;
 }
 
 .thead {
@@ -38,5 +38,5 @@
 
 .th {
   white-space: nowrap;
-  min-width: 180px;
+  width: 180px;
 }

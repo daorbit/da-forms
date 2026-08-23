@@ -132,6 +132,33 @@ export function submissionCount(formId: string) {
   return SubmissionModel.countDocuments({ formId });
 }
 
+export interface SourceBreakdownEntry {
+  /** The referring page's hostname, or 'direct' when no referrer was sent. */
+  source: string;
+  count: number;
+}
+
+/** Submissions grouped by referrer hostname, most common first. */
+export async function sourceBreakdown(formId: string): Promise<SourceBreakdownEntry[]> {
+  const submissions = await SubmissionModel.find({ formId }, { sourceUrl: 1 });
+  const counts = new Map<string, number>();
+  for (const submission of submissions) {
+    let source = 'Direct';
+    if (submission.sourceUrl) {
+      try {
+        source = new URL(submission.sourceUrl).hostname;
+      } catch {
+        // Malformed referrer header — count it rather than drop the submission from the breakdown.
+        source = 'Other';
+      }
+    }
+    counts.set(source, (counts.get(source) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([source, count]) => ({ source, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
 export async function listSubmissions(
   formId: string,
   options: {

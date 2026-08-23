@@ -110,10 +110,13 @@ export const getAnalytics: RequestHandler = async (req, res) => {
   if (!form || form.workspaceId !== workspaceIdOf(req)) {
     return res.status(404).json({ error: 'not_found', message: 'Form not found' });
   }
-  const submissionCount = await formService.submissionCount(req.params.id);
+  const [submissionCount, sources] = await Promise.all([
+    formService.submissionCount(req.params.id),
+    formService.sourceBreakdown(req.params.id),
+  ]);
   const viewCount = form.viewCount ?? 0;
   const completionRate = viewCount > 0 ? submissionCount / viewCount : 0;
-  res.json({ viewCount, submissionCount, completionRate });
+  res.json({ viewCount, submissionCount, completionRate, sources });
 };
 
 /* ---- Public routes: no workspace in the path ---- */

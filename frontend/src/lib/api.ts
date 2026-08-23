@@ -144,10 +144,16 @@ export function updateSubmission(
   });
 }
 
+export interface SourceBreakdownEntry {
+  source: string;
+  count: number;
+}
+
 export interface Analytics {
   viewCount: number;
   submissionCount: number;
   completionRate: number;
+  sources: SourceBreakdownEntry[];
 }
 
 export function getAnalytics(id: string, workspaceId = DEFAULT_WORKSPACE) {

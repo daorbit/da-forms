@@ -8,7 +8,7 @@ import {
   IconChevronRight,
   IconChevronLeft,
 } from '@tabler/icons-react';
-import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, FormTheme } from '@/types';
+import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { THEME_PRESETS } from '@/lib/themePresets';
 import { PresetCard } from './PresetCard';
@@ -34,6 +34,7 @@ interface Props {
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
   submitButtonWidth?: SubmitButtonWidth;
+  submitButtonAlign?: SubmitButtonAlign;
   theme?: FormTheme;
   /** Applies a preset's colors straight to the builder's theme state. */
   onApplyTheme?: (patch: Partial<FormTheme>) => void;
@@ -54,6 +55,7 @@ export function PreviewModal({
   submitLabel,
   submitButtonSize,
   submitButtonWidth,
+  submitButtonAlign,
   theme,
   onApplyTheme,
 }: Props) {
@@ -159,6 +161,7 @@ export function PreviewModal({
               submitLabel={submitLabel}
               submitButtonSize={submitButtonSize}
               submitButtonWidth={submitButtonWidth}
+              submitButtonAlign={submitButtonAlign}
               theme={shownTheme}
             />
             <Text size="xs" c="dimmed" ta="center" mt="md">

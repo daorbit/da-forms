@@ -62,6 +62,8 @@ export type LabelPlacement = 'top' | 'left' | 'right';
 
 export type SubmitButtonSize = 'small' | 'medium' | 'large';
 
+export type SubmitButtonAlign = 'left' | 'center' | 'right';
+
 export type SubmitButtonWidth = 25 | 50 | 75 | 100;
 
 export interface FormTheme {
@@ -149,6 +151,7 @@ export interface Form {
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
   submitButtonWidth?: SubmitButtonWidth;
+  submitButtonAlign?: SubmitButtonAlign;
   theme?: FormTheme;
   /** Records the respondent's IP with each submission. Off by default. */
   collectIp?: boolean;

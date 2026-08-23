@@ -9,6 +9,7 @@
 .header {
   border-bottom: 1px solid var(--mantine-color-gray-3);
   min-height: 56px;
+  padding: 14px 20px !important;
 }
 
 .title {
@@ -20,8 +21,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-top: 18px;
-  padding-bottom: 40px;
+  padding: 20px 28px 44px !important;
 }
 
 .body > * {

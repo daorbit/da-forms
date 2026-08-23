@@ -39,6 +39,7 @@ export const createForm: RequestHandler = async (req, res) => {
     submitLabel,
     submitButtonSize,
     submitButtonWidth,
+    submitButtonAlign,
     theme,
     collectIp,
   } = req.body;
@@ -53,6 +54,7 @@ export const createForm: RequestHandler = async (req, res) => {
     submitLabel,
     submitButtonSize,
     submitButtonWidth,
+    submitButtonAlign,
     theme,
     collectIp,
     workspaceId: workspaceIdOf(req),

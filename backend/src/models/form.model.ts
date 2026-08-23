@@ -43,6 +43,8 @@ export type LabelPlacement = 'top' | 'left' | 'right';
 
 export type SubmitButtonSize = 'small' | 'medium' | 'large';
 
+export type SubmitButtonAlign = 'left' | 'center' | 'right';
+
 export type SubmitButtonWidth = 25 | 50 | 75 | 100;
 
 export interface FormField {
@@ -112,6 +114,7 @@ export interface FormDocument {
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
   submitButtonWidth?: SubmitButtonWidth;
+  submitButtonAlign?: SubmitButtonAlign;
   theme?: FormTheme;
   collectIp?: boolean;
   /** Total public-page loads — the denominator for completion rate. */
@@ -171,6 +174,7 @@ const formSchema = new Schema<FormDocument>(
     submitLabel: { type: String },
     submitButtonSize: { type: String, enum: ['small', 'medium', 'large'] },
     submitButtonWidth: { type: Number, enum: [25, 50, 75, 100] },
+    submitButtonAlign: { type: String, enum: ['left', 'center', 'right'] },
     theme: {
       type: new Schema<FormTheme>(
         {

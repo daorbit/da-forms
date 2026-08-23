@@ -6,7 +6,7 @@ import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
-import type { Form, FormField, FieldType, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, FormTheme } from '@/types';
+import type { Form, FormField, FieldType, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '@/types';
 import { ShareModal } from '@/components/share/ShareModal';
 import {
   DndContext,
@@ -50,6 +50,7 @@ interface EditableState {
   submitLabel: string;
   submitButtonSize: SubmitButtonSize;
   submitButtonWidth: SubmitButtonWidth;
+  submitButtonAlign: SubmitButtonAlign;
   theme: FormTheme;
   collectIp: boolean;
 }
@@ -90,6 +91,7 @@ export function FormBuilderPage() {
   const [submitLabel, setSubmitLabel] = useState(locationState?.templateSubmitLabel ?? '');
   const [submitButtonSize, setSubmitButtonSize] = useState<SubmitButtonSize>('medium');
   const [submitButtonWidth, setSubmitButtonWidth] = useState<SubmitButtonWidth>(100);
+  const [submitButtonAlign, setSubmitButtonAlign] = useState<SubmitButtonAlign>('center');
   const [theme, setTheme] = useState<FormTheme>(
     locationState?.templateTheme ?? { scope: locationState?.themeScope ?? 'page' }
   );
@@ -123,6 +125,7 @@ export function FormBuilderPage() {
         submitLabel,
         submitButtonSize,
         submitButtonWidth,
+        submitButtonAlign,
         theme,
         collectIp,
       }),
@@ -138,6 +141,7 @@ export function FormBuilderPage() {
       theme,
       submitButtonSize,
       submitButtonWidth,
+      submitButtonAlign,
       collectIp,
     ]
   );
@@ -155,6 +159,7 @@ export function FormBuilderPage() {
       submitLabel,
       submitButtonSize,
       submitButtonWidth,
+      submitButtonAlign,
       theme,
       collectIp,
     }),
@@ -169,6 +174,7 @@ export function FormBuilderPage() {
       submitLabel,
       submitButtonSize,
       submitButtonWidth,
+      submitButtonAlign,
       theme,
       collectIp,
     ]
@@ -185,6 +191,7 @@ export function FormBuilderPage() {
     setSubmitLabel(state.submitLabel);
     setSubmitButtonSize(state.submitButtonSize);
     setSubmitButtonWidth(state.submitButtonWidth);
+    setSubmitButtonAlign(state.submitButtonAlign);
     setTheme(state.theme);
     setCollectIp(state.collectIp);
     // The selected/editing field may not exist in this snapshot's tree.
@@ -248,6 +255,7 @@ export function FormBuilderPage() {
       setSubmitLabel(form.submitLabel ?? '');
       setSubmitButtonSize(form.submitButtonSize ?? 'medium');
       setSubmitButtonWidth(form.submitButtonWidth ?? 100);
+      setSubmitButtonAlign(form.submitButtonAlign ?? 'center');
       setTheme(form.theme ?? { scope: 'page' });
       setCollectIp(form.collectIp ?? false);
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
@@ -263,6 +271,7 @@ export function FormBuilderPage() {
           submitLabel: form.submitLabel ?? '',
           submitButtonSize: form.submitButtonSize ?? 'medium',
           submitButtonWidth: form.submitButtonWidth ?? 100,
+          submitButtonAlign: form.submitButtonAlign ?? 'center',
           theme: form.theme ?? { scope: 'page' },
           collectIp: form.collectIp ?? false,
         })
@@ -387,6 +396,7 @@ export function FormBuilderPage() {
       submitLabel,
       submitButtonSize,
       submitButtonWidth,
+      submitButtonAlign,
       theme,
       collectIp,
     };
@@ -570,6 +580,7 @@ export function FormBuilderPage() {
           submitLabel,
           submitButtonSize,
           submitButtonWidth,
+          submitButtonAlign,
           collectIp,
         }}
         onChange={(patch) => {
@@ -578,6 +589,7 @@ export function FormBuilderPage() {
           if (patch.submitLabel !== undefined) setSubmitLabel(patch.submitLabel);
           if (patch.submitButtonSize) setSubmitButtonSize(patch.submitButtonSize);
           if (patch.submitButtonWidth) setSubmitButtonWidth(patch.submitButtonWidth);
+          if (patch.submitButtonAlign) setSubmitButtonAlign(patch.submitButtonAlign);
           if (patch.collectIp !== undefined) setCollectIp(patch.collectIp);
         }}
       />
@@ -609,6 +621,7 @@ export function FormBuilderPage() {
         submitLabel={submitLabel}
         submitButtonSize={submitButtonSize}
         submitButtonWidth={submitButtonWidth}
+        submitButtonAlign={submitButtonAlign}
         theme={theme}
         onApplyTheme={(patch) => setTheme((prev) => ({ ...prev, ...patch }))}
       />

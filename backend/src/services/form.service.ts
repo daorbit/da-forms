@@ -1,6 +1,6 @@
 import { FormModel } from '../models/form.model.js';
 import { SubmissionModel } from '../models/submission.model.js';
-import type { FormField, SubmitButtonWidth, FormTheme } from '../models/form.model.js';
+import type { FormField, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '../models/form.model.js';
 
 export interface Paginated<T> {
   items: T[];
@@ -88,6 +88,7 @@ export function createForm(input: {
   submitLabel?: string;
   submitButtonSize?: 'small' | 'medium' | 'large';
   submitButtonWidth?: SubmitButtonWidth;
+  submitButtonAlign?: SubmitButtonAlign;
   theme?: FormTheme;
   collectIp?: boolean;
 }) {
@@ -109,6 +110,7 @@ export function updateForm(
     submitLabel: string;
     submitButtonSize: 'small' | 'medium' | 'large';
     submitButtonWidth: SubmitButtonWidth;
+    submitButtonAlign: SubmitButtonAlign;
     theme: FormTheme;
     collectIp: boolean;
   }>

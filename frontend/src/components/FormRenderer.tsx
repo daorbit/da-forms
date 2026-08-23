@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Paper, Title, Text, Button, Stack, SimpleGrid, Group, Progress } from '@mantine/core';
-import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, FormTheme } from '@/types';
+import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '@/types';
 import { FieldControl } from '@/components/FieldControl';
 import { valueFields } from '@/lib/fieldTree';
 import { resolveTextColor } from '@/lib/formTheme';
@@ -19,6 +19,7 @@ interface Props {
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
   submitButtonWidth?: SubmitButtonWidth;
+  submitButtonAlign?: SubmitButtonAlign;
   theme?: FormTheme;
   submitting?: boolean;
   /** Omitted in preview, where nothing is recorded and there is no spam to guard against. */
@@ -84,6 +85,7 @@ export function FormRenderer({
   submitLabel,
   submitButtonSize,
   submitButtonWidth,
+  submitButtonAlign,
   theme,
   submitting,
   onSubmit,
@@ -235,7 +237,15 @@ export function FormRenderer({
                 style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
               />
 
-              <Group gap="sm" mt="sm" style={{ alignSelf: 'center', width: `${submitButtonWidth ?? 100}%` }}>
+              <Group
+                gap="sm"
+                mt="sm"
+                style={{
+                  alignSelf:
+                    submitButtonAlign === 'left' ? 'flex-start' : submitButtonAlign === 'right' ? 'flex-end' : 'center',
+                  width: `${submitButtonWidth ?? 100}%`,
+                }}
+              >
                 {isMultiPage && pageIndex > 0 && (
                   <Button
                     type="button"

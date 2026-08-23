@@ -1,5 +1,5 @@
-import { Drawer, Stack, TextInput, Radio, Group, Text, Divider, SegmentedControl, Slider } from '@mantine/core';
-import type { LabelPlacement, SubmitButtonSize, SubmitButtonWidth } from '@/types';
+import { Drawer, Stack, TextInput, Radio, Group, Text, Divider, SegmentedControl, Slider, Box } from '@mantine/core';
+import type { LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign } from '@/types';
 import classes from './drawer.module.css';
 
 export interface QuickSettings {
@@ -8,6 +8,7 @@ export interface QuickSettings {
   submitLabel: string;
   submitButtonSize: SubmitButtonSize;
   submitButtonWidth: SubmitButtonWidth;
+  submitButtonAlign: SubmitButtonAlign;
   collectIp: boolean;
 }
 
@@ -42,8 +43,16 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange }: Pro
       position="right"
       size={480}
       title="Quick Settings"
-      padding="lg"
-      classNames={classes}
+      // Mantine writes this onto the content element, which then drives the
+      // header and body insets — set to 0 and controlled entirely by our own
+      // .header/.body classes below instead, so the two never fight.
+      padding={0}
+      classNames={{
+        header: classes.header,
+        title: classes.title,
+        body: classes.body,
+        content: classes.content,
+      }}
     >
       <Stack gap="xl">
         <Section label="Display">
@@ -101,7 +110,7 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange }: Pro
             />
           </div>
 
-          <div>
+          <div style={{ paddingBottom: 8 }}>
             <Group justify="space-between" mb={8}>
               <Text size="sm" fw={500}>
                 Submit button width
@@ -110,19 +119,43 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange }: Pro
                 {settings.submitButtonWidth}%
               </Text>
             </Group>
-            <Slider
-              value={settings.submitButtonWidth}
-              onChange={(value) => onChange({ submitButtonWidth: value as SubmitButtonWidth })}
-              min={25}
-              max={100}
-              step={25}
-              marks={[
-                { value: 25, label: '25%' },
-                { value: 50, label: '50%' },
-                { value: 75, label: '75%' },
-                { value: 100, label: '100%' },
+            {/*
+             * Mantine positions each mark label centered on its point, so the
+             * end marks' text overflows the track — inset the slider itself so
+             * that overflow lands inside the drawer's own padding instead of
+             * triggering a horizontal scrollbar on the panel.
+             */}
+            <Box px={6}>
+              <Slider
+                value={settings.submitButtonWidth}
+                onChange={(value) => onChange({ submitButtonWidth: value as SubmitButtonWidth })}
+                min={25}
+                max={100}
+                step={25}
+                marks={[
+                  { value: 25, label: '25%' },
+                  { value: 50, label: '50%' },
+                  { value: 75, label: '75%' },
+                  { value: 100, label: '100%' },
+                ]}
+                color="emerald"
+              />
+            </Box>
+          </div>
+
+          <div>
+            <Text size="sm" fw={500} mb={8} mt={10}>
+              Submit button position
+            </Text>
+            <SegmentedControl
+              fullWidth
+              value={settings.submitButtonAlign}
+              onChange={(value) => onChange({ submitButtonAlign: value as SubmitButtonAlign })}
+              data={[
+                { value: 'left', label: 'Left' },
+                { value: 'center', label: 'Center' },
+                { value: 'right', label: 'Right' },
               ]}
-              color="emerald"
             />
           </div>
         </Section>

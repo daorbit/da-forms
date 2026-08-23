@@ -16,6 +16,7 @@ import {
   Box,
   Chip,
 } from '@mantine/core';
+import { DateInput, TimeInput, DateTimePicker, MonthPickerInput } from '@mantine/dates';
 import {
   IconMail,
   IconPhone,
@@ -376,29 +377,44 @@ export function FieldControl({
       );
     }
     case 'date':
-      return text({
-        type: readOnly ? 'text' : 'date',
-        leftSection: readOnly ? <IconCalendar size={16} /> : undefined,
-        placeholder: readOnly ? 'dd/mm/yyyy' : undefined,
-      });
+      return (
+        <DateInput
+          {...base}
+          leftSection={<IconCalendar size={16} />}
+          valueFormat="DD/MM/YYYY"
+          value={value || null}
+          onChange={(v) => !readOnly && onChange(v ?? '')}
+        />
+      );
     case 'time':
-      return text({
-        type: readOnly ? 'text' : 'time',
-        leftSection: readOnly ? <IconClock size={16} /> : undefined,
-        placeholder: readOnly ? 'hh:mm' : undefined,
-      });
+      return (
+        <TimeInput
+          {...base}
+          leftSection={<IconClock size={16} />}
+          value={value}
+          onChange={(e) => !readOnly && onChange(e.currentTarget.value)}
+        />
+      );
     case 'datetime':
-      return text({
-        type: readOnly ? 'text' : 'datetime-local',
-        leftSection: readOnly ? <IconCalendar size={16} /> : undefined,
-        placeholder: readOnly ? 'dd/mm/yyyy hh:mm' : undefined,
-      });
+      return (
+        <DateTimePicker
+          {...base}
+          leftSection={<IconCalendar size={16} />}
+          valueFormat="DD/MM/YYYY HH:mm"
+          value={value || null}
+          onChange={(v) => !readOnly && onChange(v ?? '')}
+        />
+      );
     case 'monthYear':
-      return text({
-        type: readOnly ? 'text' : 'month',
-        leftSection: readOnly ? <IconCalendar size={16} /> : undefined,
-        placeholder: readOnly ? 'mm/yyyy' : undefined,
-      });
+      return (
+        <MonthPickerInput
+          {...base}
+          leftSection={<IconCalendar size={16} />}
+          valueFormat="MM/YYYY"
+          value={value || null}
+          onChange={(v) => !readOnly && onChange(v ?? '')}
+        />
+      );
     case 'file':
     case 'imageUpload':
     case 'mediaUpload': {

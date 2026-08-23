@@ -149,7 +149,10 @@ export function PublicFormPage() {
   const pageThemed = form.theme?.scope !== 'card' && form.theme?.pageBg;
   // "Embedded on a site" means only the card is meant to have a look at all —
   // centering it in a page-sized container adds a margin no host page asked
-  // for, whether this is genuinely inside an iframe or opened directly.
+  // for, whether this is genuinely inside an iframe or opened directly. The
+  // wrapper still needs *a* background past the card's own height though —
+  // there is no host page behind it here, so it borrows the card's color
+  // rather than leaving a mismatched default showing beneath a short form.
   const cardScope = form.theme?.scope === 'card';
 
   return (
@@ -158,7 +161,11 @@ export function PublicFormPage() {
       data-mantine-color-scheme="light"
       style={{
         minHeight: '100vh',
-        ...(pageThemed ? { backgroundColor: form.theme?.pageBg } : undefined),
+        ...(pageThemed
+          ? { backgroundColor: form.theme?.pageBg }
+          : cardScope
+            ? { backgroundColor: form.theme?.cardBg }
+            : undefined),
       }}
     >
       <Container size={cardScope ? '100%' : 'sm'} py={cardScope ? 0 : 'xl'} px={cardScope ? 0 : undefined}>

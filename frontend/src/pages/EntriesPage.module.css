@@ -56,3 +56,50 @@
   background-color: var(--mantine-color-default);
   z-index: 1;
 }
+
+.responseModal {
+  overflow: hidden;
+}
+
+.responseBody {
+  padding: 0 24px 24px;
+}
+
+.responseMeta {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  padding: 14px 0;
+}
+
+.responseGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+}
+
+.responseField {
+  min-width: 0;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  padding: 14px 0;
+}
+
+.mediaField {
+  grid-column: 1 / -1;
+}
+
+.responseFooter {
+  padding-top: 2px;
+}
+
+@media (max-width: 600px) {
+  .responseBody {
+    padding: 0 16px 16px;
+  }
+
+  .responseGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mediaField {
+    grid-column: auto;
+  }
+}

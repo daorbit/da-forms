@@ -33,6 +33,8 @@ import {
   IconEye,
   IconTrash,
   IconFileTypePdf,
+  IconMailOpened,
+  IconRefresh,
 } from '@tabler/icons-react';
 import {
   getForm,
@@ -148,6 +150,7 @@ export function EntriesPage() {
     if (!id || submission.read) return;
     const updated = await updateSubmission(id, submission._id, { read: true }, workspaceId);
     setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
+    setViewing((current) => (current?._id === updated._id ? updated : current));
   }
 
   async function confirmDeleteSubmission() {
@@ -303,6 +306,17 @@ export function EntriesPage() {
           <Tooltip label="Copy share link" withArrow>
             <ActionIcon variant="subtle" color="gray" onClick={copyShareLink}>
               <IconShare2 size={17} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Refresh responses" withArrow>
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              onClick={loadSubmissions}
+              loading={loading}
+              aria-label="Refresh responses"
+            >
+              <IconRefresh size={17} />
             </ActionIcon>
           </Tooltip>
           <Menu shadow="md" width={160}>
@@ -482,47 +496,90 @@ export function EntriesPage() {
         </>
       )}
 
-      <Modal opened={!!viewing} onClose={() => setViewing(null)} title="Response" size="lg" centered>
+      <Modal
+        opened={!!viewing}
+        onClose={() => setViewing(null)}
+        title="Response"
+        size="lg"
+        centered
+        classNames={{ content: classes.responseModal, body: classes.responseBody }}
+      >
         {viewing && (
           <Stack gap="md">
-            {columns.map((field) => {
-              const raw = viewing.data[field.id] ?? '';
-              const isFileLink = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
-              const isImage = field.type === 'imageUpload' && isFileLink;
-              const fileName = raw.split('/').pop();
-              return (
-                <div key={field.id}>
-                  <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: 0.4 }} mb={4}>
-                    {field.label}
-                  </Text>
-                  {isImage ? (
-                    <Anchor href={raw} target="_blank" rel="noopener noreferrer">
-                      <Image src={raw} alt={fileName} mah={220} w="auto" fit="contain" radius="sm" />
-                    </Anchor>
-                  ) : isFileLink ? (
-                    <Anchor href={raw} target="_blank" rel="noopener noreferrer" underline="never" c="inherit">
-                      <Group gap={6} wrap="nowrap">
-                        <ThemeIcon variant="light" color="gray" size={28} radius="sm">
-                          {field.type === 'mediaUpload' ? <IconVideo size={15} /> : <IconFileText size={15} />}
-                        </ThemeIcon>
-                        <Text size="sm" td="underline">
-                          {fileName}
-                        </Text>
-                      </Group>
-                    </Anchor>
-                  ) : (
-                    <Text size="sm">{raw || '—'}</Text>
-                  )}
-                </div>
-              );
-            })}
-            <div>
-              <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: 0.4 }}>
-                Added Time
+            <Group justify="space-between" className={classes.responseMeta}>
+              <Text size="sm" c="dimmed">
+                {viewing.read ? 'Read response' : 'Unread response'}
               </Text>
-              <Text size="sm">{formatDateTime(viewing.createdAt)}</Text>
+              <Group gap="xs">
+                {!viewing.read && (
+                  <Tooltip label="Mark as read" withArrow>
+                    <ActionIcon
+                      variant="light"
+                      color="emerald"
+                      aria-label="Mark response as read"
+                      onClick={() => markRead(viewing)}
+                    >
+                      <IconMailOpened size={17} />
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+                <Tooltip label="Delete response" withArrow>
+                  <ActionIcon
+                    variant="light"
+                    color="red"
+                    aria-label="Delete response"
+                    onClick={() => {
+                      setPendingDelete(viewing);
+                      setViewing(null);
+                    }}
+                  >
+                    <IconTrash size={17} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
+            </Group>
+
+            <div className={classes.responseGrid}>
+              {columns.map((field) => {
+                const raw = viewing.data[field.id] ?? '';
+                const isFileLink = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
+                const isImage = field.type === 'imageUpload' && isFileLink;
+                const fileName = raw.split('/').pop();
+                return (
+                  <div key={field.id} className={`${classes.responseField} ${isImage ? classes.mediaField : ''}`}>
+                    <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
+                      {field.label}
+                    </Text>
+                    {isImage ? (
+                      <Anchor href={raw} target="_blank" rel="noopener noreferrer">
+                        <Image src={raw} alt={fileName} mah={220} w="auto" fit="contain" radius="sm" />
+                      </Anchor>
+                    ) : isFileLink ? (
+                      <Anchor href={raw} target="_blank" rel="noopener noreferrer" underline="never" c="inherit">
+                        <Group gap={6} wrap="nowrap">
+                          <ThemeIcon variant="light" color="gray" size={28} radius="sm">
+                            {field.type === 'mediaUpload' ? <IconVideo size={15} /> : <IconFileText size={15} />}
+                          </ThemeIcon>
+                          <Text size="sm" td="underline">
+                            {fileName}
+                          </Text>
+                        </Group>
+                      </Anchor>
+                    ) : (
+                      <Text size="sm">{raw || '—'}</Text>
+                    )}
+                  </div>
+                );
+              })}
+              <div className={classes.responseField}>
+                <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
+                  Added Time
+                </Text>
+                <Text size="sm">{formatDateTime(viewing.createdAt)}</Text>
+              </div>
             </div>
-            <Group justify="flex-end">
+
+            <Group justify="flex-end" className={classes.responseFooter}>
               <Button
                 variant="default"
                 leftSection={<IconFileTypePdf size={16} />}

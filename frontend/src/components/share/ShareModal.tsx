@@ -235,10 +235,10 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
 
             {tab === 'embed' && (
               <Stack gap="sm">
-                <Paper withBorder radius="md" p="sm" bg="var(--mantine-color-blue-0)">
+                <Paper withBorder radius="md" p="sm" className={classes.infoBox}>
                   <Group gap="xs" wrap="nowrap" align="flex-start">
-                    <IconInfoCircle size={16} color="var(--mantine-color-blue-6)" style={{ marginTop: 2, flexShrink: 0 }} />
-                    <Text size="xs">
+                    <IconInfoCircle size={16} className={classes.infoIcon} />
+                    <Text size="xs" className={classes.infoText}>
                       The snippet below auto-resizes the iframe to fit the form — no need to tune a
                       fixed height, and it keeps working as fields, pages, or conditional logic
                       change how tall the form is. The height below is only the size shown for a

@@ -54,8 +54,46 @@
   padding: 12px;
   border: 1px solid var(--mantine-color-default-border);
   border-radius: var(--mantine-radius-md);
-  background-color: var(--mantine-color-gray-0);
+  background-color: var(--mantine-color-default);
+  color: var(--mantine-color-text);
   word-break: break-all;
+}
+
+.shell :global(.mantine-Input-input),
+.shell :global(.mantine-Textarea-input),
+.shell :global(.mantine-NumberInput-input) {
+  background-color: var(--mantine-color-default) !important;
+  color: var(--mantine-color-text) !important;
+  border-color: var(--mantine-color-default-border) !important;
+}
+
+.shell :global(.mantine-Input-input)::placeholder,
+.shell :global(.mantine-Textarea-input)::placeholder {
+  color: var(--mantine-color-dimmed) !important;
+}
+
+.infoBox {
+  background-color: color-mix(in srgb, var(--mantine-color-emerald-6) 16%, var(--mantine-color-body)) !important;
+  border-color: color-mix(in srgb, var(--mantine-color-emerald-6) 36%, var(--mantine-color-default-border)) !important;
+}
+
+.infoIcon {
+  margin-top: 2px;
+  flex-shrink: 0;
+  color: var(--mantine-color-emerald-4);
+}
+
+.infoText {
+  color: var(--mantine-color-text);
+}
+
+:global(html[data-mantine-color-scheme='light']) .infoBox {
+  background-color: #e7f5ff !important;
+  border-color: #a5d8ff !important;
+}
+
+:global(html[data-mantine-color-scheme='light']) .infoIcon {
+  color: #1971c2;
 }
 
 .mono {
@@ -84,11 +122,11 @@
   display: flex;
   flex-direction: column;
   padding: 24px 32px;
-  background-color: var(--mantine-color-gray-1);
+  background-color: var(--mantine-color-body);
 }
 
 .deviceToggle {
-  background-color: var(--mantine-color-gray-2);
+  background-color: var(--mantine-color-default);
   border-radius: var(--mantine-radius-md);
 }
 
@@ -126,7 +164,7 @@
   gap: 6px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--mantine-color-default-border);
-  background-color: var(--mantine-color-gray-0);
+  background-color: var(--mantine-color-default);
   flex-shrink: 0;
 }
 
@@ -162,4 +200,12 @@
   flex-direction: column;
   align-items: center;
   background-color: var(--mantine-color-body);
+}
+
+:global(html[data-mantine-color-scheme='light']) .preview {
+  background-color: #f1f3f5;
+}
+
+:global(html[data-mantine-color-scheme='light']) .deviceToggle {
+  background-color: #e9ecef;
 }

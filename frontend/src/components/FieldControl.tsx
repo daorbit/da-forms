@@ -125,6 +125,12 @@ export function FieldControl({
         : undefined,
   };
 
+  // Sub-field captions ("First", "City") sit inside the themed card, so they
+  // follow the label color instead of Mantine's fixed dimmed grey.
+  const captionProps = labelColor
+    ? { style: { color: labelColor, opacity: 0.65 } }
+    : { c: 'dimmed' as const };
+
   const control = (node: React.ReactNode) => {
     if (!sideLabel) return node;
     return (
@@ -185,6 +191,7 @@ export function FieldControl({
           <Group grow gap="sm">
             <div>
               <TextInput
+                styles={base.styles}
                 placeholder={field.placeholder || 'First'}
                 value={first}
                 readOnly={readOnly}
@@ -192,18 +199,19 @@ export function FieldControl({
                 onChange={(e) => !readOnly && onChange(`${e.target.value} ${last}`.trim())}
                 required={field.required}
               />
-              <Text size="xs" c="dimmed" mt={4}>
+              <Text size="xs" mt={4} {...captionProps}>
                 First
               </Text>
             </div>
             <div>
               <TextInput
+                styles={base.styles}
                 placeholder="Last"
                 value={last}
                 readOnly={readOnly}
                 onChange={(e) => !readOnly && onChange(`${first} ${e.target.value}`.trim())}
               />
-              <Text size="xs" c="dimmed" mt={4}>
+              <Text size="xs" mt={4} {...captionProps}>
                 Last
               </Text>
             </div>
@@ -225,36 +233,39 @@ export function FieldControl({
           <Stack gap="sm">
             <div>
               <TextInput
+                styles={base.styles}
                 placeholder={field.placeholder || 'Street address'}
                 value={street}
                 readOnly={readOnly}
                 onChange={(e) => !readOnly && onChange(join(e.target.value, city, postal))}
                 required={field.required}
               />
-              <Text size="xs" c="dimmed" mt={4}>
+              <Text size="xs" mt={4} {...captionProps}>
                 Street address
               </Text>
             </div>
             <Group grow gap="sm">
               <div>
                 <TextInput
+                  styles={base.styles}
                   placeholder="City"
                   value={city}
                   readOnly={readOnly}
                   onChange={(e) => !readOnly && onChange(join(street, e.target.value, postal))}
                 />
-                <Text size="xs" c="dimmed" mt={4}>
+                <Text size="xs" mt={4} {...captionProps}>
                   City
                 </Text>
               </div>
               <div>
                 <TextInput
+                  styles={base.styles}
                   placeholder="Postal code"
                   value={postal}
                   readOnly={readOnly}
                   onChange={(e) => !readOnly && onChange(join(street, city, e.target.value))}
                 />
-                <Text size="xs" c="dimmed" mt={4}>
+                <Text size="xs" mt={4} {...captionProps}>
                   Postal code
                 </Text>
               </div>

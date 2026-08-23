@@ -595,6 +595,7 @@ export function FormBuilderPage() {
         submitButtonSize={submitButtonSize}
         submitButtonWidth={submitButtonWidth}
         theme={theme}
+        onApplyTheme={(patch) => setTheme((prev) => ({ ...prev, ...patch }))}
       />
 
       {savedForm && (

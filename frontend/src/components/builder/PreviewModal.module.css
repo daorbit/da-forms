@@ -37,17 +37,68 @@
   box-shadow: var(--mantine-shadow-xs);
 }
 
-.stage {
+.body {
   flex: 1;
   min-height: 0;
+  display: flex;
+  position: relative;
+}
+
+.stage {
+  flex: 1;
+  min-width: 0;
   overflow-y: auto;
   display: flex;
   justify-content: center;
-  padding: 40px 24px 64px;
+  padding: 28px 20px 40px;
   background-color: #eef0f3;
 }
 
 .viewport {
   align-self: flex-start;
   transition: width 200ms ease;
+}
+
+.panelToggle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 44px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 1px solid var(--mantine-color-gray-3);
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  background-color: var(--mantine-color-body);
+  color: var(--mantine-color-dimmed);
+  cursor: pointer;
+  transition: right 160ms ease;
+}
+
+.panelToggle[data-open='true'] {
+  right: 232px;
+}
+
+.panelToggle:hover {
+  color: var(--mantine-color-text);
+}
+
+.panel {
+  width: 232px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 14px 12px;
+  background-color: var(--mantine-color-body);
+  border-left: 1px solid var(--mantine-color-gray-3);
+}
+
+.presetGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }

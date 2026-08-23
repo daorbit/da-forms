@@ -164,28 +164,11 @@ export function recordView(id: string) {
   return request<void>(`/public/forms/${id}/view`, { method: 'POST' });
 }
 
-export interface CaptchaChallenge {
-  question: string;
-  token: string;
-}
-
-export function getCaptcha(id: string) {
-  return request<CaptchaChallenge>(`/public/forms/${id}/captcha`);
-}
-
-export function submitForm(
-  id: string,
-  data: Record<string, string>,
-  captcha: { token: string; answer: string }
-) {
+export function submitForm(id: string, data: Record<string, string>) {
   return request<Submission>(`/public/forms/${id}/submissions`, {
     method: 'POST',
-    body: JSON.stringify({
-      // `_hp` rides along in `data` when the honeypot got filled (a bot did
-      // it — never a real respondent); otherwise it is simply absent.
-      ...data,
-      _captchaToken: captcha.token,
-      _captchaAnswer: captcha.answer,
-    }),
+    // `_hp` rides along in `data` when the honeypot got filled (a bot did
+    // it — never a real respondent); otherwise it is simply absent.
+    body: JSON.stringify(data),
   });
 }

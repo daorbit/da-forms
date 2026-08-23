@@ -38,6 +38,5 @@ workspaceFormRouter.get('/:id/analytics', formController.getAnalytics);
 export const publicFormRouter = Router();
 
 publicFormRouter.get('/:id', formController.getPublicForm);
-publicFormRouter.get('/:id/captcha', formController.getCaptcha);
 publicFormRouter.post('/:id/submissions', submitLimiter, formController.submitForm);
 publicFormRouter.post('/:id/view', formController.recordView);

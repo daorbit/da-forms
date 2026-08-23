@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Container, Text, Center, Loader, Stack, Button, ThemeIcon } from '@mantine/core';
 import { IconCheck, IconClockPause } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { getPublicForm, submitForm, getCaptcha, recordView, ApiError, type CaptchaChallenge } from '@/lib/api';
+import { getPublicForm, submitForm, recordView, ApiError } from '@/lib/api';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 
@@ -15,8 +15,6 @@ export function PublicFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [captcha, setCaptcha] = useState<CaptchaChallenge | null>(null);
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -32,26 +30,13 @@ export function PublicFormPage() {
     recordView(id).catch(() => {});
   }, [id, isPreview]);
 
-  useEffect(() => {
-    if (!id) return;
-    getCaptcha(id)
-      .then(setCaptcha)
-      .catch(() => {});
-  }, [id]);
-
   async function handleSubmit(values: Record<string, string>) {
-    if (!id || !captcha) return;
+    if (!id) return;
     setSubmitting(true);
     try {
-      await submitForm(id, values, { token: captcha.token, answer: captchaAnswer });
+      await submitForm(id, values);
     } catch (e) {
       setSubmitting(false);
-      if (e instanceof ApiError && e.code === 'captcha_failed') {
-        notifications.show({ message: 'That answer was wrong — try the new one.', color: 'red' });
-        setCaptchaAnswer('');
-        getCaptcha(id).then(setCaptcha);
-        return;
-      }
       if (e instanceof ApiError && e.code === 'rate_limited') {
         notifications.show({ message: e.message, color: 'red' });
         return;
@@ -152,9 +137,6 @@ export function PublicFormPage() {
           theme={form.theme}
           submitting={submitting}
           onSubmit={handleSubmit}
-          captchaQuestion={captcha?.question}
-          captchaAnswer={captchaAnswer}
-          onCaptchaAnswerChange={setCaptchaAnswer}
         />
       </Container>
     </div>

@@ -5,8 +5,7 @@ timeline — this is a backlog, ranked roughly by value vs effort.
 
 ## Shipped this round (for context, not a todo)
 
-- Spam protection: honeypot field + per-IP rate limiting + math CAPTCHA on
-  public submissions.
+- Spam protection: honeypot field + per-IP rate limiting on public submissions.
 - Analytics: per-form view/submission/completion-rate (Entries page), plus
   workspace-level stats (total forms, live/draft counts, total submissions)
   on the forms list.

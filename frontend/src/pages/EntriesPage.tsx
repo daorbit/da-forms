@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useLocation, useParams, Link } from 'react-router-dom';
 import {
   Group,
   Text,
@@ -92,6 +92,7 @@ const PAGE_SIZE = 10;
 
 export function EntriesPage() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const workspaceId = useWorkspaceId();
   const [form, setForm] = useState<Form | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -130,7 +131,7 @@ export function EntriesPage() {
 
   useEffect(() => {
     loadSubmissions();
-  }, [loadSubmissions]);
+  }, [location.key, loadSubmissions]);
 
   // Filters reset paging so a narrower result set never lands on a page past its end.
   useEffect(() => {

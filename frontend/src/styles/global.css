@@ -31,6 +31,40 @@
   background-color: var(--mantine-color-gray-5);
 }
 
+/* Management surfaces mirror the host analytics app exactly. The light
+   surface below intentionally overrides these tokens for public forms and
+   builder previews. */
+[data-mantine-color-scheme='dark'] {
+  --mantine-color-body: #0b0c0e;
+  --mantine-color-text: #f2f4f6;
+  --mantine-color-default: #16181b;
+  --mantine-color-default-hover: #1c1f23;
+  --mantine-color-default-color: #f2f4f6;
+  --mantine-color-default-border: #26292e;
+  --mantine-color-dimmed: #a9afba;
+  --mantine-color-placeholder: #6d737e;
+  --mantine-color-gray-0: #f2f4f6;
+  --mantine-color-gray-1: #a9afba;
+  --mantine-color-gray-2: #6d737e;
+  --mantine-color-gray-3: #34383e;
+  --mantine-color-gray-4: #26292e;
+  --mantine-color-gray-5: #1c1f23;
+  --mantine-color-gray-6: #16181b;
+  --mantine-color-gray-7: #111316;
+  --mantine-color-gray-8: #0e0f12;
+}
+
+[data-mantine-color-scheme='light'] {
+  --mantine-color-body: #f4f5f7;
+  --mantine-color-text: #111418;
+  --mantine-color-default: #ffffff;
+  --mantine-color-default-hover: #f1f3f5;
+  --mantine-color-default-color: #111418;
+  --mantine-color-default-border: #e5e7eb;
+  --mantine-color-dimmed: #4b5563;
+  --mantine-color-placeholder: #9ca3af;
+}
+
 /*
  * Surfaces that always render in the respondent's own colours — the builder
  * canvas, the preview, and the live form — whatever theme a host app passes.
@@ -55,6 +89,11 @@
   --mantine-color-placeholder: #adb5bd;
   --mantine-color-error: #e03131;
   --mantine-color-anchor: #047857;
+  --mantine-color-dark-4: #ced4da;
+  --mantine-color-dark-5: #adb5bd;
+  --mantine-color-dark-6: #495057;
+  --mantine-color-dark-7: #343a40;
+  --mantine-color-dark-8: #212529;
 
   --mantine-color-gray-0: #f8f9fa;
   --mantine-color-gray-1: #f1f3f5;
@@ -72,20 +111,35 @@
 /* Inputs read their surface from these, which the block above has already
    flipped — restating them on the controls themselves covers the variants
    Mantine resolves at the component level. */
-.da-forms-light-surface :is(input, textarea, select) {
+.da-forms-light-surface :is(input, textarea, select, .mantine-Input-input) {
   background-color: #ffffff;
   color: #1a1b1e;
   border-color: #dee2e6;
 }
 
-.da-forms-light-surface :is(input, textarea)::placeholder {
+.da-forms-light-surface :is(input, textarea, .mantine-Input-input)::placeholder {
   color: #adb5bd;
+}
+
+.da-forms-light-surface .mantine-FileInput-input {
+  background-color: #ffffff;
+  color: #1a1b1e;
+  border-color: #dee2e6;
+}
+
+.da-forms-light-surface .mantine-Rating-symbol {
+  color: #adb5bd;
+}
+
+.da-forms-light-surface .mantine-Rating-symbol[data-filled] {
+  color: var(--mantine-color-emerald-6);
 }
 
 html,
 body,
 #root {
   height: 100%;
+  background-color: var(--mantine-color-body);
 }
 
 /* The document never scrolls — #root does, so drawers can leave it unlocked. */
@@ -125,6 +179,8 @@ body.da-forms-transparent-page #root {
 body {
   margin: 0;
   padding: 0;
+  background-color: var(--mantine-color-body);
+  color: var(--mantine-color-text);
 }
 
 /*

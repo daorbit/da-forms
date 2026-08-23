@@ -185,6 +185,24 @@
   z-index: 1;
 }
 
+.hoverToolbar :global(.mantine-ActionIcon-root) {
+  color: #495057 !important;
+}
+
+.hoverToolbar :global(.mantine-ActionIcon-root:hover) {
+  background-color: #f1f3f5 !important;
+  color: #1a1b1e !important;
+}
+
+.hoverToolbar .deleteAction {
+  color: #e03131 !important;
+}
+
+.hoverToolbar .deleteAction:hover {
+  background-color: #fff5f5 !important;
+  color: #c92a2a !important;
+}
+
 /* Extends the row's own hoverable box rightward to cover the gap before the
    toolbar, so the pointer never leaves hover territory crossing it. */
 .fieldRow::after {

@@ -168,6 +168,7 @@ export function FormCanvas({
           <ActionIcon
             variant="subtle"
             color="red"
+            className={classes.deleteAction}
             radius="md"
             size="lg"
             onClick={(e) => {

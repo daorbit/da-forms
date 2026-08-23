@@ -44,6 +44,17 @@ interface Props {
   onStatusChange?: (status: Form['status']) => void;
 }
 
+type EmbedLang = 'html' | 'react' | 'vue';
+
+const EMBED_LANG_LABEL: Record<EmbedLang, string> = { html: 'HTML', react: 'React', vue: 'Vue' };
+
+/** A form's title, made into a valid PascalCase component name for the React snippet. */
+function componentNameFor(title: string): string {
+  const words = (title || 'Embedded Form').match(/[a-zA-Z0-9]+/g) ?? ['Embedded', 'Form'];
+  const name = words.map((w) => w[0].toUpperCase() + w.slice(1)).join('');
+  return /^[0-9]/.test(name) ? `Form${name}` : name;
+}
+
 export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
   const [tab, setTab] = useState<TabId>('link');
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
@@ -56,11 +67,31 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
   // twice on one page, each iframe still resizes independently.
   const frameId = useMemo(() => `da-form-${form._id}`, [form._id]);
 
-  const embedCode = useMemo(
+  const htmlEmbedCode = useMemo(
     () =>
       `<iframe\n  id="${frameId}"\n  src="${shareUrl}"\n  width="100%"\n  height="${height}"\n  frameborder="0"\n  style="border:0;max-width:100%"\n></iframe>\n<script>\n  window.addEventListener('message', function (e) {\n    if (e.data && e.data.type === 'da-forms:height') {\n      var frame = document.getElementById('${frameId}');\n      if (frame) frame.style.height = e.data.height + 'px';\n    }\n  });\n</script>`,
     [shareUrl, height, frameId]
   );
+
+  const reactEmbedCode = useMemo(
+    () =>
+      `import { useEffect, useRef } from 'react';\n\nfunction ${componentNameFor(form.title)}() {\n  const ref = useRef(null);\n\n  useEffect(() => {\n    function onMessage(e) {\n      if (e.data?.type !== 'da-forms:height') return;\n      if (ref.current) ref.current.style.height = e.data.height + 'px';\n    }\n    window.addEventListener('message', onMessage);\n    return () => window.removeEventListener('message', onMessage);\n  }, []);\n\n  return (\n    <iframe\n      ref={ref}\n      src="${shareUrl}"\n      title="${(form.title || 'Form').replace(/"/g, '\\"')}"\n      style={{ width: '100%', height: ${typeof height === 'number' ? height : 600}, border: 0 }}\n    />\n  );\n}`,
+    [shareUrl, height, form.title]
+  );
+
+  const vueEmbedCode = useMemo(
+    () =>
+      `<template>\n  <iframe\n    ref="frame"\n    src="${shareUrl}"\n    :style="{ width: '100%', height: height + 'px', border: 0 }"\n  />\n</template>\n\n<script setup>\nimport { ref, onMounted, onUnmounted } from 'vue';\n\nconst height = ref(${typeof height === 'number' ? height : 600});\nfunction onMessage(e) {\n  if (e.data?.type === 'da-forms:height') height.value = e.data.height;\n}\nonMounted(() => window.addEventListener('message', onMessage));\nonUnmounted(() => window.removeEventListener('message', onMessage));\n</script>`,
+    [shareUrl, height]
+  );
+
+  const embedSnippets: { id: EmbedLang; label: string; code: string }[] = [
+    { id: 'html', label: 'HTML', code: htmlEmbedCode },
+    { id: 'react', label: 'React', code: reactEmbedCode },
+    { id: 'vue', label: 'Vue', code: vueEmbedCode },
+  ];
+  const [embedLang, setEmbedLang] = useState<EmbedLang>('html');
+  const embedCode = embedSnippets.find((s) => s.id === embedLang)?.code ?? htmlEmbedCode;
 
   // Reset when it closes, so reopening starts on the tab people expect.
   const wasOpen = useRef(false);
@@ -228,6 +259,27 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                     onChange={(value) => setHeight(value === '' ? 600 : value)}
                   />
                 </Group>
+
+                <Group gap={4} className={classes.langTabs}>
+                  {embedSnippets.map((snippet) => (
+                    <Box
+                      key={snippet.id}
+                      component="button"
+                      type="button"
+                      onClick={() => setEmbedLang(snippet.id)}
+                      className={classes.langTab}
+                      aria-current={embedLang === snippet.id}
+                      style={{
+                        fontWeight: embedLang === snippet.id ? 600 : 500,
+                        color: embedLang === snippet.id ? 'var(--mantine-color-emerald-7)' : 'var(--mantine-color-dimmed)',
+                        borderColor: embedLang === snippet.id ? 'var(--mantine-color-emerald-6)' : 'transparent',
+                      }}
+                    >
+                      {EMBED_LANG_LABEL[snippet.id]}
+                    </Box>
+                  ))}
+                </Group>
+
                 <Textarea
                   readOnly
                   value={embedCode}
@@ -249,8 +301,13 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                   )}
                 </CopyButton>
                 <Text size="xs" c="dimmed">
-                  Paste this into any page of your site. The iframe scales to its container width and
-                  its height auto-fits the form.
+                  {embedLang === 'html' &&
+                    'Paste this into any page of your site — the HTML and the resize script go together.'}
+                  {embedLang === 'react' &&
+                    'Drop this component into your app and render it wherever the form should appear.'}
+                  {embedLang === 'vue' &&
+                    'Drop this single-file component into your app and use it as a regular component.'}
+                  {' '}The iframe scales to its container width and its height auto-fits the form.
                 </Text>
               </Stack>
             )}

@@ -31,6 +31,22 @@ interface Props {
   onChange: (id: string, patch: Partial<FormField>) => void;
 }
 
+// Sentinels resolved to an actual date/time at render — never stored as a
+// literal, or a form saved today would keep prefilling today's date forever.
+const dateDefaultTypes: FormField['type'][] = ['date', 'time', 'datetime', 'monthYear'];
+const dateDefaultSentinel: Record<string, string> = {
+  date: '__today__',
+  time: '__now__',
+  datetime: '__now__',
+  monthYear: '__today__',
+};
+const dateDefaultLabel: Record<string, string> = {
+  date: "Today's date",
+  time: 'Current time',
+  datetime: 'Current date & time',
+  monthYear: 'Current month',
+};
+
 const showIfOperators: { value: ShowIfOperator; label: string }[] = [
   { value: 'equals', label: 'is' },
   { value: 'notEquals', label: 'is not' },
@@ -233,12 +249,43 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
               )}
 
               <Section label="Validation & defaults">
-                <TextInput
-                  label="Initial value"
-                  description="Prefilled when the form opens."
-                  value={field.initialValue ?? ''}
-                  onChange={(e) => set({ initialValue: e.target.value })}
-                />
+                {dateDefaultTypes.includes(field.type) ? (
+                  <Select
+                    label="Default value"
+                    description="Prefilled when the form opens."
+                    placeholder="None"
+                    clearable
+                    data={[{ value: dateDefaultSentinel[field.type], label: dateDefaultLabel[field.type] }]}
+                    value={field.initialValue ?? null}
+                    onChange={(v) => set({ initialValue: v ?? undefined })}
+                  />
+                ) : field.type === 'yesNo' ? (
+                  <Select
+                    label="Default answer"
+                    description="Prefilled when the form opens."
+                    placeholder="None"
+                    clearable
+                    data={[
+                      { value: 'yes', label: 'Yes' },
+                      { value: 'no', label: 'No' },
+                    ]}
+                    value={field.initialValue ?? null}
+                    onChange={(v) => set({ initialValue: v ?? undefined })}
+                  />
+                ) : field.type === 'terms' || field.type === 'decisionBox' ? (
+                  <Switch
+                    label="Checked by default"
+                    checked={field.initialValue === 'true'}
+                    onChange={(e) => set({ initialValue: e.target.checked ? 'true' : undefined })}
+                  />
+                ) : (
+                  <TextInput
+                    label="Initial value"
+                    description="Prefilled when the form opens."
+                    value={field.initialValue ?? ''}
+                    onChange={(e) => set({ initialValue: e.target.value })}
+                  />
+                )}
 
                 {textTypes.includes(field.type) && (
                   <NumberInput

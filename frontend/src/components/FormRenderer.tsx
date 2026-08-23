@@ -44,11 +44,27 @@ function splitIntoPages(fields: FormField[]): FormField[][] {
   return pages;
 }
 
+// Resolved fresh on every mount rather than stored literally, or a form
+// saved today would keep prefilling today's date on every future visit.
+function resolveDateSentinel(sentinel: string, type: FormField['type']): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  if (sentinel === '__today__') return type === 'monthYear' ? date.slice(0, 7) : date;
+  if (sentinel === '__now__') return type === 'time' ? time : `${date}T${time}`;
+  return sentinel;
+}
+
 function initialValues(fields: FormField[]) {
   const values: Record<string, string> = {};
   // Walks into grids: a prefilled field inside a column is still prefilled.
   for (const field of valueFields(fields)) {
-    if (field.initialValue) values[field.id] = field.initialValue;
+    if (!field.initialValue) continue;
+    values[field.id] =
+      field.initialValue === '__today__' || field.initialValue === '__now__'
+        ? resolveDateSentinel(field.initialValue, field.type)
+        : field.initialValue;
   }
   return values;
 }

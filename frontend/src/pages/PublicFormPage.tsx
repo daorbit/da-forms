@@ -147,14 +147,21 @@ export function PublicFormPage() {
     );
 
   const pageThemed = form.theme?.scope !== 'card' && form.theme?.pageBg;
+  // "Embedded on a site" means only the card is meant to have a look at all —
+  // centering it in a page-sized container adds a margin no host page asked
+  // for, whether this is genuinely inside an iframe or opened directly.
+  const cardScope = form.theme?.scope === 'card';
 
   return (
     <div
       className="da-forms-light-surface"
       data-mantine-color-scheme="light"
-      style={pageThemed ? { minHeight: '100vh', backgroundColor: form.theme?.pageBg } : undefined}
+      style={{
+        minHeight: '100vh',
+        ...(pageThemed ? { backgroundColor: form.theme?.pageBg } : undefined),
+      }}
     >
-      <Container size="sm" py="xl">
+      <Container size={cardScope ? '100%' : 'sm'} py={cardScope ? 0 : 'xl'} px={cardScope ? 0 : undefined}>
         <FormRenderer
           formId={id}
           title={form.title}

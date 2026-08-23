@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination, Skeleton,
@@ -15,6 +15,7 @@ import {
   IconDots,
   IconTrash,
   IconCopy,
+  IconCopyPlus,
   IconExternalLink,
   IconRefresh,
   IconEyeOff,
@@ -54,6 +55,8 @@ export function FormListPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [debouncedSearch] = useDebouncedValue(search, 300);
   const [sort, setSort] = useState<SortOption>('date');
   const [loading, setLoading] = useState(true);
@@ -87,6 +90,19 @@ export function FormListPage() {
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, sort]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [searchOpen]);
 
   async function toggleStatus(form: Form) {
     const status = form.status === 'published' ? 'draft' : 'published';
@@ -146,22 +162,40 @@ export function FormListPage() {
           DA Forms
         </Text>
         <Group gap="xs">
-          <TextInput
-            placeholder="Search forms"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            leftSection={<IconSearch size={16} />}
-            rightSection={
-              search ? (
-                <ActionIcon variant="subtle" color="gray" onClick={() => setSearch('')} aria-label="Clear search">
-                  <IconX size={14} />
+          <div ref={searchRef}>
+            {searchOpen ? (
+              <TextInput
+                placeholder="Search forms"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                leftSection={<IconSearch size={16} />}
+                rightSection={
+                  search ? (
+                    <ActionIcon variant="subtle" color="gray" onClick={() => setSearch('')} aria-label="Clear search">
+                      <IconX size={14} />
+                    </ActionIcon>
+                  ) : undefined
+                }
+                radius="xl"
+                size="sm"
+                w={220}
+                autoFocus
+              />
+            ) : (
+              <Tooltip label="Search forms" withArrow>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  radius="xl"
+                  size="lg"
+                  onClick={() => setSearchOpen(true)}
+                  aria-label="Search forms"
+                >
+                  <IconSearch size={18} />
                 </ActionIcon>
-              ) : undefined
-            }
-            radius="xl"
-            size="sm"
-            w={220}
-          />
+              </Tooltip>
+            )}
+          </div>
           <Menu shadow="md" width={180}>
             <Menu.Target>
               <Tooltip label="Sort" withArrow>
@@ -350,7 +384,7 @@ export function FormListPage() {
                     </Menu.Item>
                     <Menu.Divider />
                     <Menu.Item
-                      leftSection={<IconCopy size={15} />}
+                      leftSection={<IconCopyPlus size={15} />}
                       disabled={duplicatingId === form._id}
                       onClick={() => duplicateForm(form)}
                     >

@@ -42,15 +42,15 @@
 /* Management surfaces mirror the host analytics app exactly. The light
    surface below intentionally overrides these tokens for public forms and
    builder previews. */
-[data-mantine-color-scheme='dark'] {
-  --mantine-color-body: #0b0c0e;
-  --mantine-color-text: #f2f4f6;
-  --mantine-color-default: #16181b;
-  --mantine-color-default-hover: #1c1f23;
-  --mantine-color-default-color: #f2f4f6;
-  --mantine-color-default-border: #26292e;
-  --mantine-color-dimmed: #a9afba;
-  --mantine-color-placeholder: #6d737e;
+html[data-mantine-color-scheme='dark'] {
+  --mantine-color-body: #0b0c0e !important;
+  --mantine-color-text: #f2f4f6 !important;
+  --mantine-color-default: #16181b !important;
+  --mantine-color-default-hover: #1c1f23 !important;
+  --mantine-color-default-color: #f2f4f6 !important;
+  --mantine-color-default-border: #26292e !important;
+  --mantine-color-dimmed: #a9afba !important;
+  --mantine-color-placeholder: #6d737e !important;
   --mantine-color-gray-0: #f2f4f6;
   --mantine-color-gray-1: #a9afba;
   --mantine-color-gray-2: #6d737e;
@@ -62,15 +62,15 @@
   --mantine-color-gray-8: #0e0f12;
 }
 
-[data-mantine-color-scheme='light'] {
-  --mantine-color-body: #f4f5f7;
-  --mantine-color-text: #111418;
-  --mantine-color-default: #ffffff;
-  --mantine-color-default-hover: #f1f3f5;
-  --mantine-color-default-color: #111418;
-  --mantine-color-default-border: #e5e7eb;
-  --mantine-color-dimmed: #4b5563;
-  --mantine-color-placeholder: #9ca3af;
+html[data-mantine-color-scheme='light'] {
+  --mantine-color-body: #f4f5f7 !important;
+  --mantine-color-text: #111418 !important;
+  --mantine-color-default: #ffffff !important;
+  --mantine-color-default-hover: #f1f3f5 !important;
+  --mantine-color-default-color: #111418 !important;
+  --mantine-color-default-border: #e5e7eb !important;
+  --mantine-color-dimmed: #4b5563 !important;
+  --mantine-color-placeholder: #9ca3af !important;
 }
 
 /*
@@ -147,7 +147,7 @@ html,
 body,
 #root {
   height: 100%;
-  background-color: var(--mantine-color-body);
+  background-color: var(--mantine-color-body) !important;
 }
 
 /* The document never scrolls — #root does, so drawers can leave it unlocked. */
@@ -187,7 +187,7 @@ body.da-forms-transparent-page #root {
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--mantine-color-body);
+  background-color: var(--mantine-color-body) !important;
   color: var(--mantine-color-text);
 }
 

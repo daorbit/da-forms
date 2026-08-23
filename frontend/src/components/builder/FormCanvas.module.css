@@ -8,7 +8,7 @@
 .canvasScroll {
   height: 100%;
   overflow-y: auto;
-  background-color: #eef0f3;
+  background-color: #eef0f3 !important;
   scrollbar-gutter: stable;
 }
 

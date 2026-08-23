@@ -180,6 +180,29 @@ export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slid
 
 export const fileTypes: FieldType[] = ['file', 'imageUpload', 'mediaUpload'];
 
+// The generic "file" field is for documents — pdf/doc/xls/etc — not images or
+// video, which have their own dedicated field types. Kept as actual MIME types
+// (not extensions) so the same list also drives server-side validation.
+const fileMimeTypes = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv',
+];
+export const fileAccept = fileMimeTypes.join(',');
+
+export function acceptFor(type: FieldType): string | undefined {
+  if (type === 'imageUpload') return 'image/*';
+  if (type === 'mediaUpload') return 'audio/*,video/*';
+  if (type === 'file') return fileAccept;
+  return undefined;
+}
+
 export const textTypes: FieldType[] = [
   'name',
   'address',

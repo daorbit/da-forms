@@ -5,6 +5,8 @@ import { FieldControl } from '@/components/FieldControl';
 import { valueFields } from '@/lib/fieldTree';
 import { resolveTextColor } from '@/lib/formTheme';
 import { isFieldVisible } from '@/utils/conditionalLogic';
+import { uploadFormFile } from '@/lib/api';
+import { fileTypes, acceptFor } from '@/lib/fieldPalette';
 
 interface Props {
   /** The form's id — present only on the respondent-facing render, enabling real file uploads. */
@@ -71,10 +73,10 @@ export function FormRenderer({
   onSubmit,
 }: Props) {
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(fields));
+  const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [honeypot, setHoneypot] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
-  const [uploadingIds, setUploadingIds] = useState<Set<string>>(new Set());
-  const isUploading = uploadingIds.size > 0;
+  const [isUploading, setIsUploading] = useState(false);
   const textColor = resolveTextColor(theme);
   const accent = theme?.accentColor;
 
@@ -83,18 +85,39 @@ export function FormRenderer({
   const isLastPage = pageIndex === pages.length - 1;
   const currentPageFields = pages[pageIndex] ?? [];
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isMultiPage && !isLastPage) {
       setPageIndex((i) => i + 1);
       return;
     }
     // Drop answers behind a hidden condition so a since-hidden value can't submit.
-    const visibleIds = new Set(valueFields(fields).filter((f) => isFieldVisible(f, values)).map((f) => f.id));
+    const visibleFields = valueFields(fields).filter((f) => isFieldVisible(f, values));
+    const visibleIds = new Set(visibleFields.map((f) => f.id));
     const submitValues: Record<string, string> = {};
     for (const [id, v] of Object.entries(values)) {
       if (visibleIds.has(id)) submitValues[id] = v;
     }
+
+    // Files are only picked up to now — uploaded here, all at once, so a
+    // respondent who abandons the form never leaves an orphaned asset behind.
+    if (formId) {
+      const toUpload = visibleFields.filter((f) => fileTypes.includes(f.type) && pendingFiles[f.id]);
+      if (toUpload.length > 0) {
+        setIsUploading(true);
+        try {
+          const uploaded = await Promise.all(
+            toUpload.map((f) => uploadFormFile(formId, pendingFiles[f.id], acceptFor(f.type)))
+          );
+          toUpload.forEach((f, i) => {
+            submitValues[f.id] = uploaded[i].url;
+          });
+        } finally {
+          setIsUploading(false);
+        }
+      }
+    }
+
     onSubmit?.(honeypot ? { ...submitValues, _hp: honeypot } : submitValues);
   }
 
@@ -120,12 +143,11 @@ export function FormRenderer({
         field={field}
         value={values[field.id] ?? ''}
         onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
-        formId={formId}
-        onUploadingChange={(uploading) =>
-          setUploadingIds((prev) => {
-            const next = new Set(prev);
-            if (uploading) next.add(field.id);
-            else next.delete(field.id);
+        onFileSelect={(file) =>
+          setPendingFiles((prev) => {
+            const next = { ...prev };
+            if (file) next[field.id] = file;
+            else delete next[field.id];
             return next;
           })
         }

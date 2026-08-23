@@ -27,22 +27,13 @@ import {
   IconVideo,
   IconBook2,
 } from '@tabler/icons-react';
-import { useState } from 'react';
 import type { FormField, FieldSize, LabelPlacement } from '@/types';
-import { uploadFormFile } from '@/lib/api';
+import { acceptFor } from '@/lib/fieldPalette';
 
 interface Props {
   field: FormField;
   value: string;
   onChange: (value: string) => void;
-  /**
-   * The form's id, present only on the respondent-facing render.
-   *
-   * A `file`/`imageUpload`/`mediaUpload` field uploads to Cloudinary through
-   * this form's public upload route and stores the returned URL — without it
-   * (builder canvas, preview) the control stays inert and just shows a name.
-   */
-  formId?: string;
   /**
    * Renders the control without accepting input, for the builder canvas.
    *
@@ -53,8 +44,12 @@ interface Props {
   readOnly?: boolean;
   /** Suppresses the label, for a canvas that draws its own above the control. */
   hideLabel?: boolean;
-  /** Reports whether this field's own file upload is in flight, so the form can hold off submitting. */
-  onUploadingChange?: (uploading: boolean) => void;
+  /**
+   * A `file`/`imageUpload`/`mediaUpload` field reports its picked file here
+   * instead of uploading immediately — the form uploads it at submit time, so
+   * a respondent who abandons the form never leaves an orphaned Cloudinary asset.
+   */
+  onFileSelect?: (file: File | null) => void;
   /** Where the label sits relative to the input. Defaults to 'top'. */
   labelPlacement?: LabelPlacement;
   /** Overrides the label's text color — set from the form's theme. */
@@ -67,21 +62,6 @@ interface Props {
   inputTextColor?: string;
 }
 
-// The generic "file" field is for documents — pdf/doc/xls/etc — not images or
-// video, which have their own dedicated field types. Kept as actual MIME types
-// (not extensions) so the same list also drives server-side validation.
-const fileMimeTypes = [
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'text/plain',
-  'text/csv',
-];
-const fileAccept = fileMimeTypes.join(',');
 
 const sizeWidth: Record<FieldSize, string> = {
   small: '35%',
@@ -93,18 +73,15 @@ export function FieldControl({
   field,
   value,
   onChange,
-  formId,
   readOnly,
   hideLabel,
-  onUploadingChange,
+  onFileSelect,
   labelPlacement = 'top',
   labelColor,
   inputBg,
   inputBorder,
   inputTextColor,
 }: Props) {
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const showLabel = !hideLabel && !field.hideLabel;
   const sideLabel = showLabel && labelPlacement !== 'top';
 
@@ -438,15 +415,8 @@ export function FieldControl({
           : field.type === 'mediaUpload'
             ? 'Choose audio or video'
             : 'Choose file');
-      const description = uploadError
-        ? uploadError
-        : uploading
-          ? 'Uploading…'
-          : value
-            ? value.split('/').pop()
-            : base.description;
-      const accept =
-        field.type === 'imageUpload' ? 'image/*' : field.type === 'mediaUpload' ? 'audio/*,video/*' : fileAccept;
+      const description = value ? value.split('/').pop() : base.description;
+      const accept = acceptFor(field.type);
       return (
         <FileInput
           label={base.label}
@@ -456,28 +426,15 @@ export function FieldControl({
           style={base.style}
           styles={base.styles}
           readOnly={readOnly}
-          disabled={uploading}
           leftSection={leftSection}
           placeholder={placeholder}
           accept={accept}
-          onChange={async (file) => {
+          onChange={(file) => {
             if (readOnly) return;
-            if (!file) return onChange('');
-            // No `formId`: builder canvas/preview, nothing to upload to — just
-            // reflect the filename so the field looks filled in while editing.
-            if (!formId) return onChange(file.name);
-            setUploadError(null);
-            setUploading(true);
-            onUploadingChange?.(true);
-            try {
-              const { url } = await uploadFormFile(formId, file, accept);
-              onChange(url);
-            } catch {
-              setUploadError('Upload failed — try again.');
-            } finally {
-              setUploading(false);
-              onUploadingChange?.(false);
-            }
+            // Uploaded at submit time, not here — just track the pick and show its
+            // name so the field looks filled in while the respondent keeps going.
+            onFileSelect?.(file);
+            onChange(file?.name ?? '');
           }}
         />
       );

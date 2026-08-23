@@ -509,18 +509,17 @@ export function EntriesPage() {
                 {viewing.read ? 'Read response' : 'Unread response'}
               </Text>
               <Group gap="xs">
-                {!viewing.read && (
-                  <Tooltip label="Mark as read" withArrow>
-                    <ActionIcon
-                      variant="light"
-                      color="emerald"
-                      aria-label="Mark response as read"
-                      onClick={() => markRead(viewing)}
-                    >
-                      <IconMailOpened size={17} />
-                    </ActionIcon>
-                  </Tooltip>
-                )}
+                <Tooltip label={viewing.read ? 'Already read' : 'Mark as read'} withArrow>
+                  <ActionIcon
+                    variant="light"
+                    color="emerald"
+                    disabled={viewing.read}
+                    aria-label={viewing.read ? 'Response already read' : 'Mark response as read'}
+                    onClick={() => markRead(viewing)}
+                  >
+                    <IconMailOpened size={17} />
+                  </ActionIcon>
+                </Tooltip>
                 <Tooltip label="Delete response" withArrow>
                   <ActionIcon
                     variant="light"

@@ -131,11 +131,16 @@ export function FieldControl({
     readOnly,
     // A pixel override replaces the preset percentage outright; otherwise
     // the field falls back to its size preset as before.
-    style: { maxWidth: field.customWidth ? `${field.customWidth}px` : sizeWidth[field.size ?? 'large'] },
+    style: {
+      maxWidth: field.customWidth ? `${field.customWidth}px` : sizeWidth[field.size ?? 'large'],
+    },
     className: field.cssClass || undefined,
     styles:
-      labelColor || inputStyle
-        ? { label: labelColor ? { color: labelColor } : undefined, input: inputStyle }
+      field.customHeight || labelColor || inputStyle
+        ? {
+            label: labelColor ? { color: labelColor } : undefined,
+            input: { ...inputStyle, ...(field.customHeight ? { height: `${field.customHeight}px` } : undefined) },
+          }
         : undefined,
   };
 

@@ -213,14 +213,24 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
                   />
                 </div>
 
-                <NumberInput
-                  label="Custom width"
-                  description="Pixel width, overriding the size preset above. Leave blank to use it."
-                  suffix="px"
-                  min={40}
-                  value={field.customWidth ?? ''}
-                  onChange={(value) => set({ customWidth: value === '' ? undefined : Number(value) })}
-                />
+                <Group grow>
+                  <NumberInput
+                    label="Custom width"
+                    description="Pixel width, overriding the size preset above. Leave blank to use it."
+                    suffix="px"
+                    min={40}
+                    value={field.customWidth ?? ''}
+                    onChange={(value) => set({ customWidth: value === '' ? undefined : Number(value) })}
+                  />
+                  <NumberInput
+                    label="Custom height"
+                    description="Pixel height for this field's input, e.g. a taller text area."
+                    suffix="px"
+                    min={24}
+                    value={field.customHeight ?? ''}
+                    onChange={(value) => set({ customHeight: value === '' ? undefined : Number(value) })}
+                  />
+                </Group>
 
                 <TextInput
                   label="CSS class"

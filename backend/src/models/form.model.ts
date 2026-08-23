@@ -72,6 +72,8 @@ export interface FormField {
   showIf?: ShowIfRule;
   /** Pixel width, overriding the size preset outright. */
   customWidth?: number;
+  /** Pixel height for this field's input, e.g. a taller text area. */
+  customHeight?: number;
   /** Extra class name applied to the field's own input, for power-user styling. */
   cssClass?: string;
 }
@@ -149,6 +151,7 @@ const fieldSchema = new Schema<FormField>(
     columns: { type: Schema.Types.Mixed },
     showIf: { type: Schema.Types.Mixed },
     customWidth: { type: Number },
+    customHeight: { type: Number },
     cssClass: { type: String },
   },
   { _id: false }

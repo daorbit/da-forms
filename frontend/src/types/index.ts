@@ -119,6 +119,8 @@ export interface FormField {
   showIf?: ShowIfRule;
   /** Pixel width, overriding the size preset outright. */
   customWidth?: number;
+  /** Pixel height for this field's input, e.g. a taller text area. */
+  customHeight?: number;
   /** Extra class name applied to the field's own input, for power-user styling. */
   cssClass?: string;
 }

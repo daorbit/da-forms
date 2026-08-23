@@ -172,3 +172,16 @@ export function submitForm(id: string, data: Record<string, string>) {
     body: JSON.stringify(data),
   });
 }
+
+/** Uploads a respondent's file ahead of submission; the returned URL is what gets stored on the field. */
+export async function uploadFormFile(formId: string, file: File): Promise<{ url: string; name: string }> {
+  const body = new FormData();
+  body.append('file', file);
+  // Not `request()`: that helper always sends JSON, but this is multipart.
+  const res = await fetch(`${BASE_URL}/public/forms/${formId}/upload`, { method: 'POST', body });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw new ApiError(res.status, errBody?.error, errBody?.message ?? `${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}

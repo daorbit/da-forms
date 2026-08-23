@@ -27,12 +27,22 @@ import {
   IconVideo,
   IconBook2,
 } from '@tabler/icons-react';
+import { useState } from 'react';
 import type { FormField, FieldSize, LabelPlacement } from '@/types';
+import { uploadFormFile } from '@/lib/api';
 
 interface Props {
   field: FormField;
   value: string;
   onChange: (value: string) => void;
+  /**
+   * The form's id, present only on the respondent-facing render.
+   *
+   * A `file`/`imageUpload`/`mediaUpload` field uploads to Cloudinary through
+   * this form's public upload route and stores the returned URL — without it
+   * (builder canvas, preview) the control stays inert and just shows a name.
+   */
+  formId?: string;
   /**
    * Renders the control without accepting input, for the builder canvas.
    *
@@ -43,6 +53,8 @@ interface Props {
   readOnly?: boolean;
   /** Suppresses the label, for a canvas that draws its own above the control. */
   hideLabel?: boolean;
+  /** Reports whether this field's own file upload is in flight, so the form can hold off submitting. */
+  onUploadingChange?: (uploading: boolean) => void;
   /** Where the label sits relative to the input. Defaults to 'top'. */
   labelPlacement?: LabelPlacement;
   /** Overrides the label's text color — set from the form's theme. */
@@ -65,14 +77,18 @@ export function FieldControl({
   field,
   value,
   onChange,
+  formId,
   readOnly,
   hideLabel,
+  onUploadingChange,
   labelPlacement = 'top',
   labelColor,
   inputBg,
   inputBorder,
   inputTextColor,
 }: Props) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const showLabel = !hideLabel && !field.hideLabel;
   const sideLabel = showLabel && labelPlacement !== 'top';
 
@@ -406,15 +422,23 @@ export function FieldControl({
           : field.type === 'mediaUpload'
             ? 'Choose audio or video'
             : 'Choose file');
+      const description = uploadError
+        ? uploadError
+        : uploading
+          ? 'Uploading…'
+          : value
+            ? value.split('/').pop()
+            : base.description;
       return (
         <FileInput
           label={base.label}
-          description={base.description}
+          description={description}
           required={base.required}
           title={base.title}
           style={base.style}
           styles={base.styles}
           readOnly={readOnly}
+          disabled={uploading}
           leftSection={leftSection}
           placeholder={placeholder}
           accept={
@@ -424,7 +448,25 @@ export function FieldControl({
                 ? 'audio/*,video/*'
                 : undefined
           }
-          onChange={(file) => !readOnly && onChange(file?.name ?? '')}
+          onChange={async (file) => {
+            if (readOnly) return;
+            if (!file) return onChange('');
+            // No `formId`: builder canvas/preview, nothing to upload to — just
+            // reflect the filename so the field looks filled in while editing.
+            if (!formId) return onChange(file.name);
+            setUploadError(null);
+            setUploading(true);
+            onUploadingChange?.(true);
+            try {
+              const { url } = await uploadFormFile(formId, file);
+              onChange(url);
+            } catch {
+              setUploadError('Upload failed — try again.');
+            } finally {
+              setUploading(false);
+              onUploadingChange?.(false);
+            }
+          }}
         />
       );
     }

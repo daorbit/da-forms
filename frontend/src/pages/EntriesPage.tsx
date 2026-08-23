@@ -13,6 +13,7 @@ import {
   Tooltip,
   Skeleton,
   Stack,
+  Anchor,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -30,7 +31,7 @@ import {
 import { getForm, listSubmissions, updateSubmission, publicFormUrl, getAnalytics, type Analytics } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
-import { paletteByType, staticTypes } from '@/lib/fieldPalette';
+import { paletteByType, staticTypes, fileTypes } from '@/lib/fieldPalette';
 import { valueFields } from '@/lib/fieldTree';
 import { EntriesKanban } from '@/components/builder/EntriesKanban';
 import { AnalyticsBar } from '@/components/builder/AnalyticsBar';
@@ -365,11 +366,24 @@ export function EntriesPage() {
                       onClick={() => markRead(submission)}
                       style={{ fontWeight: submission.read ? 400 : 700 }}
                     >
-                      {columns.map((field) => (
-                        <Table.Td key={field.id}>
-                          <Text size="sm">{submission.data[field.id] ?? ''}</Text>
-                        </Table.Td>
-                      ))}
+                      {columns.map((field) => {
+                        const raw = submission.data[field.id] ?? '';
+                        // Older submissions (or builder-preview edits) may only hold a bare
+                        // filename from before uploads were wired to Cloudinary — link only
+                        // what's actually a URL.
+                        const isFileLink = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
+                        return (
+                          <Table.Td key={field.id}>
+                            {isFileLink ? (
+                              <Anchor size="sm" href={raw} target="_blank" rel="noopener noreferrer">
+                                {raw.split('/').pop()}
+                              </Anchor>
+                            ) : (
+                              <Text size="sm">{raw}</Text>
+                            )}
+                          </Table.Td>
+                        );
+                      })}
                       <Table.Td>
                         <Text size="sm" c="dimmed">
                           {formatDateTime(submission.createdAt)}

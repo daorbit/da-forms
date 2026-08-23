@@ -7,6 +7,8 @@ import { resolveTextColor } from '@/lib/formTheme';
 import { isFieldVisible } from '@/utils/conditionalLogic';
 
 interface Props {
+  /** The form's id — present only on the respondent-facing render, enabling real file uploads. */
+  formId?: string;
   title: string;
   description?: string;
   fields: FormField[];
@@ -55,6 +57,7 @@ function initialValues(fields: FormField[]) {
  * preview so the two can never drift apart.
  */
 export function FormRenderer({
+  formId,
   title,
   description,
   fields,
@@ -70,6 +73,8 @@ export function FormRenderer({
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(fields));
   const [honeypot, setHoneypot] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
+  const [uploadingIds, setUploadingIds] = useState<Set<string>>(new Set());
+  const isUploading = uploadingIds.size > 0;
   const textColor = resolveTextColor(theme);
   const accent = theme?.accentColor;
 
@@ -115,6 +120,15 @@ export function FormRenderer({
         field={field}
         value={values[field.id] ?? ''}
         onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
+        formId={formId}
+        onUploadingChange={(uploading) =>
+          setUploadingIds((prev) => {
+            const next = new Set(prev);
+            if (uploading) next.add(field.id);
+            else next.delete(field.id);
+            return next;
+          })
+        }
         labelPlacement={labelPlacement}
         labelColor={theme?.labelColor ?? textColor}
         inputBg={theme?.inputBg}
@@ -198,11 +212,12 @@ export function FormRenderer({
                 <Button
                   type="submit"
                   loading={submitting}
+                  disabled={isUploading}
                   size={buttonSize[submitButtonSize ?? 'medium']}
                   color={accent ? undefined : 'emerald'}
                   style={{ flex: 1, backgroundColor: accent }}
                 >
-                  {isMultiPage && !isLastPage ? 'Next' : submitLabel || 'Submit'}
+                  {isUploading ? 'Uploading…' : isMultiPage && !isLastPage ? 'Next' : submitLabel || 'Submit'}
                 </Button>
               </Group>
             </>

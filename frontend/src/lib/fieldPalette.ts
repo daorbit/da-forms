@@ -178,6 +178,8 @@ export const optionTypes: FieldType[] = ['select', 'radio', 'checkbox', 'multipl
 
 export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slider'];
 
+export const fileTypes: FieldType[] = ['file', 'imageUpload', 'mediaUpload'];
+
 export const textTypes: FieldType[] = [
   'name',
   'address',

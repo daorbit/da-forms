@@ -126,6 +126,7 @@ export function PublicFormPage() {
     >
       <Container size="sm" py="xl">
         <FormRenderer
+          formId={id}
           title={form.title}
           description={form.description}
           fields={form.fields}

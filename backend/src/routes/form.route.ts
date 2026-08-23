@@ -1,6 +1,23 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import multer from 'multer';
 import * as formController from '../controllers/form.controller.js';
+import { uploadFormFile } from '../controllers/upload.controller.js';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 },
+});
+
+// Same shape as submitLimiter below — a respondent uploads at most a
+// handful of files filling out one form, never a sustained stream.
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited', message: 'Too many uploads — try again in a minute.' },
+});
 
 // One submission every 12s per IP sustained, bursting up to 5 — generous for
 // a genuine respondent (nobody submits the same form twice that fast) but
@@ -39,4 +56,5 @@ export const publicFormRouter = Router();
 
 publicFormRouter.get('/:id', formController.getPublicForm);
 publicFormRouter.post('/:id/submissions', submitLimiter, formController.submitForm);
+publicFormRouter.post('/:id/upload', uploadLimiter, upload.single('file'), uploadFormFile);
 publicFormRouter.post('/:id/view', formController.recordView);

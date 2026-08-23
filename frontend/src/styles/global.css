@@ -1,6 +1,14 @@
 :root {
   font-family: system-ui, sans-serif;
   line-height: 1.5;
+  --mantine-color-body: #0b0c0e;
+  --mantine-color-text: #f2f4f6;
+  --mantine-color-default: #16181b;
+  --mantine-color-default-hover: #1c1f23;
+  --mantine-color-default-color: #f2f4f6;
+  --mantine-color-default-border: #26292e;
+  --mantine-color-dimmed: #a9afba;
+  --mantine-color-placeholder: #6d737e;
 }
 
 * {

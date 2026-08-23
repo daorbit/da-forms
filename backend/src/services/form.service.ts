@@ -229,3 +229,7 @@ export function updateSubmission(
 ) {
   return SubmissionModel.findOneAndUpdate({ _id: id, formId }, patch, { new: true });
 }
+
+export function deleteSubmission(id: string, formId: string) {
+  return SubmissionModel.findOneAndDelete({ _id: id, formId });
+}

@@ -105,6 +105,16 @@ export const updateSubmission: RequestHandler = async (req, res) => {
   res.json(submission);
 };
 
+export const deleteSubmission: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form || form.workspaceId !== workspaceIdOf(req)) {
+    return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  }
+  const submission = await formService.deleteSubmission(req.params.subId, req.params.id);
+  if (!submission) return res.status(404).json({ error: 'not_found', message: 'Submission not found' });
+  res.status(204).send();
+};
+
 export const getAnalytics: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form || form.workspaceId !== workspaceIdOf(req)) {

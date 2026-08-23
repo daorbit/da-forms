@@ -46,6 +46,7 @@ workspaceFormRouter.patch('/:id', formController.updateForm);
 workspaceFormRouter.delete('/:id', formController.deleteForm);
 workspaceFormRouter.get('/:id/submissions', formController.listSubmissions);
 workspaceFormRouter.patch('/:id/submissions/:subId', formController.updateSubmission);
+workspaceFormRouter.delete('/:id/submissions/:subId', formController.deleteSubmission);
 workspaceFormRouter.get('/:id/analytics', formController.getAnalytics);
 
 /**

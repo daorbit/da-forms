@@ -15,6 +15,7 @@ import {
   Stack,
   Anchor,
   Image,
+  Modal,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -29,8 +30,18 @@ import {
   IconLayoutList,
   IconLayoutKanban,
   IconCheck,
+  IconEye,
+  IconTrash,
 } from '@tabler/icons-react';
-import { getForm, listSubmissions, updateSubmission, publicFormUrl, getAnalytics, type Analytics } from '@/lib/api';
+import {
+  getForm,
+  listSubmissions,
+  updateSubmission,
+  deleteSubmission,
+  publicFormUrl,
+  getAnalytics,
+  type Analytics,
+} from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
 import { paletteByType, staticTypes, fileTypes } from '@/lib/fieldPalette';
@@ -89,6 +100,9 @@ export function EntriesPage() {
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [loading, setLoading] = useState(false);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [viewing, setViewing] = useState<Submission | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Submission | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadSubmissions = useCallback(() => {
     if (!id) return;
@@ -131,6 +145,20 @@ export function EntriesPage() {
     if (!id || submission.read) return;
     const updated = await updateSubmission(id, submission._id, { read: true }, workspaceId);
     setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
+  }
+
+  async function confirmDeleteSubmission() {
+    if (!id || !pendingDelete) return;
+    setDeleting(true);
+    try {
+      await deleteSubmission(id, pendingDelete._id, workspaceId);
+      setSubmissions((prev) => prev.filter((s) => s._id !== pendingDelete._id));
+      setTotal((prev) => prev - 1);
+      notifications.show({ message: 'Response deleted', color: 'emerald' });
+      setPendingDelete(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   function copyShareLink() {
@@ -327,6 +355,11 @@ export function EntriesPage() {
                       </Text>
                     </Group>
                   </Table.Th>
+                  <Table.Th className={`${classes.th} ${classes.actionsCol}`}>
+                    <Text size="sm" fw={600}>
+                      Actions
+                    </Text>
+                  </Table.Th>
                 </Table.Tr>
               </Table.Thead>
 
@@ -342,11 +375,14 @@ export function EntriesPage() {
                       <Table.Td>
                         <Skeleton height={14} width="70%" />
                       </Table.Td>
+                      <Table.Td className={classes.actionsCol}>
+                        <Skeleton height={14} width="70%" />
+                      </Table.Td>
                     </Table.Tr>
                   ))
                 ) : submissions.length === 0 ? (
                   <Table.Tr>
-                    <Table.Td colSpan={columns.length + 1}>
+                    <Table.Td colSpan={columns.length + 2}>
                       <Text ta="center" py="xl" c="dimmed">
                         No entries
                       </Text>
@@ -401,6 +437,20 @@ export function EntriesPage() {
                           {formatDateTime(submission.createdAt)}
                         </Text>
                       </Table.Td>
+                      <Table.Td className={classes.actionsCol} onClick={(e) => e.stopPropagation()}>
+                        <Group gap={4} wrap="nowrap">
+                          <Tooltip label="View response" withArrow>
+                            <ActionIcon variant="subtle" color="gray" onClick={() => setViewing(submission)}>
+                              <IconEye size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                          <Tooltip label="Delete response" withArrow>
+                            <ActionIcon variant="subtle" color="red" onClick={() => setPendingDelete(submission)}>
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        </Group>
+                      </Table.Td>
                     </Table.Tr>
                   ))
                 )}
@@ -419,6 +469,62 @@ export function EntriesPage() {
           </Group>
         </>
       )}
+
+      <Modal opened={!!viewing} onClose={() => setViewing(null)} title="Response" size="lg" centered>
+        {viewing && (
+          <Stack gap="md">
+            {columns.map((field) => {
+              const raw = viewing.data[field.id] ?? '';
+              const isFileLink = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
+              const isImage = field.type === 'imageUpload' && isFileLink;
+              const fileName = raw.split('/').pop();
+              return (
+                <div key={field.id}>
+                  <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: 0.4 }} mb={4}>
+                    {field.label}
+                  </Text>
+                  {isImage ? (
+                    <Anchor href={raw} target="_blank" rel="noopener noreferrer">
+                      <Image src={raw} alt={fileName} mah={220} w="auto" fit="contain" radius="sm" />
+                    </Anchor>
+                  ) : isFileLink ? (
+                    <Anchor href={raw} target="_blank" rel="noopener noreferrer" underline="never" c="inherit">
+                      <Group gap={6} wrap="nowrap">
+                        <ThemeIcon variant="light" color="gray" size={28} radius="sm">
+                          {field.type === 'mediaUpload' ? <IconVideo size={15} /> : <IconFileText size={15} />}
+                        </ThemeIcon>
+                        <Text size="sm" td="underline">
+                          {fileName}
+                        </Text>
+                      </Group>
+                    </Anchor>
+                  ) : (
+                    <Text size="sm">{raw || '—'}</Text>
+                  )}
+                </div>
+              );
+            })}
+            <div>
+              <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: 0.4 }}>
+                Added Time
+              </Text>
+              <Text size="sm">{formatDateTime(viewing.createdAt)}</Text>
+            </div>
+          </Stack>
+        )}
+      </Modal>
+
+      <Modal opened={!!pendingDelete} onClose={() => setPendingDelete(null)} title="Delete response" centered>
+        <Text size="sm">This response will be permanently removed. This can't be undone.</Text>
+        <Group justify="flex-end" mt="lg">
+          <Button variant="default" onClick={() => setPendingDelete(null)}>
+            Cancel
+          </Button>
+          <Button color="red" loading={deleting} onClick={confirmDeleteSubmission}>
+            Delete
+          </Button>
+        </Group>
+      </Modal>
     </Box>
   );
 }

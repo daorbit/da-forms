@@ -144,6 +144,10 @@ export function updateSubmission(
   });
 }
 
+export function deleteSubmission(formId: string, submissionId: string, workspaceId = DEFAULT_WORKSPACE) {
+  return request<void>(`${ws(workspaceId)}/${formId}/submissions/${submissionId}`, { method: 'DELETE' });
+}
+
 export interface SourceBreakdownEntry {
   source: string;
   count: number;

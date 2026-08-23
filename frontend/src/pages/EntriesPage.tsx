@@ -156,70 +156,48 @@ export function EntriesPage() {
     URL.revokeObjectURL(url);
   }
 
-  if (!form)
-    return (
-      <Box>
-        <Group justify="space-between" px="md" py="sm" className={classes.topbar} wrap="nowrap">
-          <Group gap="xs" wrap="nowrap">
-            <Skeleton height={28} width={28} radius="sm" />
-            <Skeleton height={20} width={160} radius="sm" />
-          </Group>
-          <Group gap="xs">
-            <Skeleton height={32} width={80} radius="md" />
-            <Skeleton height={32} width={110} radius="md" />
-          </Group>
-        </Group>
-
-        <Group justify="space-between" px="md" py="xs" className={classes.filterbar} wrap="nowrap">
-          <Group gap="lg">
-            <Skeleton height={18} width={90} />
-            <Skeleton height={18} width={90} />
-          </Group>
-          <Group gap="xs">
-            <Skeleton height={28} width={28} radius="xl" circle />
-            <Skeleton height={28} width={28} radius="xl" circle />
-            <Skeleton height={28} width={28} radius="xl" circle />
-            <Skeleton height={28} width={28} radius="xl" circle />
-          </Group>
-        </Group>
-
-        <Box className={classes.tableWrap} px="md" py="md">
-          <Stack gap="sm">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} height={40} radius="sm" />
-            ))}
-          </Stack>
-        </Box>
-      </Box>
-    );
-
   // layout-only elements never collect a value, so they get no column
-  const columns = valueFields(form.fields).filter(
-    (field) => !staticTypes.includes(field.type)
-  );
+  const columns = form
+    ? valueFields(form.fields).filter((field) => !staticTypes.includes(field.type))
+    : [];
 
   return (
     <Box>
       <Group justify="space-between" px="md" py="sm" className={classes.topbar} wrap="nowrap">
-        <Group gap="xs" wrap="nowrap">
-          <ActionIcon component={Link} to={`/${workspaceId}/forms`} variant="subtle" color="gray" size="lg" aria-label="Back to all forms">
-            <IconArrowLeft size={19} />
-          </ActionIcon>
-          <ThemeIcon variant="light" color="gray" radius="sm">
-            <IconFileText size={18} />
-          </ThemeIcon>
-          <Text fw={600} component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.formLink}>
-            {form.title}
-          </Text>
-        </Group>
-        <Group gap="xs">
-          <Button variant="default" radius="md" color="emerald" onClick={copyShareLink}>
-            Share
-          </Button>
-          <Button color="emerald" radius="md">
-            New Report
-          </Button>
-        </Group>
+        {form ? (
+          <>
+            <Group gap="xs" wrap="nowrap">
+              <ActionIcon component={Link} to={`/${workspaceId}/forms`} variant="subtle" color="gray" size="lg" aria-label="Back to all forms">
+                <IconArrowLeft size={19} />
+              </ActionIcon>
+              <ThemeIcon variant="light" color="gray" radius="sm">
+                <IconFileText size={18} />
+              </ThemeIcon>
+              <Text fw={600} component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.formLink}>
+                {form.title}
+              </Text>
+            </Group>
+            <Group gap="xs">
+              <Button variant="default" radius="md" color="emerald" onClick={copyShareLink}>
+                Share
+              </Button>
+              <Button color="emerald" radius="md">
+                New Report
+              </Button>
+            </Group>
+          </>
+        ) : (
+          <>
+            <Group gap="xs" wrap="nowrap">
+              <Skeleton height={28} width={28} radius="sm" />
+              <Skeleton height={20} width={160} radius="sm" />
+            </Group>
+            <Group gap="xs">
+              <Skeleton height={32} width={80} radius="md" />
+              <Skeleton height={32} width={110} radius="md" />
+            </Group>
+          </>
+        )}
       </Group>
 
       <AnalyticsBar analytics={analytics} />

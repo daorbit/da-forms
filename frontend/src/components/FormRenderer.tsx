@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Paper, Title, Text, Button, Stack, SimpleGrid } from '@mantine/core';
+import { useMemo, useState } from 'react';
+import { Paper, Title, Text, Button, Stack, SimpleGrid, Group, Progress } from '@mantine/core';
 import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, FormTheme } from '@/types';
 import { FieldControl } from '@/components/FieldControl';
 import { valueFields } from '@/lib/fieldTree';
@@ -26,6 +26,19 @@ const buttonSize: Record<SubmitButtonSize, string> = {
   medium: 'sm',
   large: 'md',
 };
+
+/** Top-level `pageBreak` fields split the form; a break never nests inside a grid. */
+function splitIntoPages(fields: FormField[]): FormField[][] {
+  const pages: FormField[][] = [[]];
+  for (const field of fields) {
+    if (field.type === 'pageBreak') {
+      pages.push([]);
+    } else {
+      pages[pages.length - 1].push(field);
+    }
+  }
+  return pages;
+}
 
 function initialValues(fields: FormField[]) {
   const values: Record<string, string> = {};
@@ -56,11 +69,21 @@ export function FormRenderer({
 }: Props) {
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(fields));
   const [honeypot, setHoneypot] = useState('');
+  const [pageIndex, setPageIndex] = useState(0);
   const textColor = resolveTextColor(theme);
   const accent = theme?.accentColor;
 
+  const pages = useMemo(() => splitIntoPages(fields), [fields]);
+  const isMultiPage = pages.length > 1;
+  const isLastPage = pageIndex === pages.length - 1;
+  const currentPageFields = pages[pageIndex] ?? [];
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isMultiPage && !isLastPage) {
+      setPageIndex((i) => i + 1);
+      return;
+    }
     // Drop answers behind a hidden condition so a since-hidden value can't submit.
     const visibleIds = new Set(valueFields(fields).filter((f) => isFieldVisible(f, values)).map((f) => f.id));
     const submitValues: Record<string, string> = {};
@@ -129,6 +152,15 @@ export function FormRenderer({
           </>
         )}
 
+        {isMultiPage && (
+          <Stack gap={4} mt="md" mb="xs">
+            <Text size="xs" c={textColor ? undefined : 'dimmed'} style={textColor ? { color: textColor, opacity: 0.75 } : undefined}>
+              Page {pageIndex + 1} of {pages.length}
+            </Text>
+            <Progress value={((pageIndex + 1) / pages.length) * 100} size="sm" color={accent ? undefined : 'emerald'} />
+          </Stack>
+        )}
+
         <Stack gap="md" mt="lg">
           {fields.length === 0 ? (
             <Text c="dimmed" size="sm" ta="center" py="xl">
@@ -136,7 +168,7 @@ export function FormRenderer({
             </Text>
           ) : (
             <>
-              {fields.map(renderField)}
+              {currentPageFields.map(renderField)}
 
               {/* Invisible to a real respondent (off-screen, no tab stop) —
                   a bot's form-filler script still finds and fills it. */}
@@ -151,20 +183,28 @@ export function FormRenderer({
                 style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
               />
 
-              <Button
-                type="submit"
-                loading={submitting}
-                mt="sm"
-                size={buttonSize[submitButtonSize ?? 'medium']}
-                color={accent ? undefined : 'emerald'}
-                style={{
-                  width: `${submitButtonWidth ?? 100}%`,
-                  alignSelf: 'center',
-                  backgroundColor: accent,
-                }}
-              >
-                {submitLabel || 'Submit'}
-              </Button>
+              <Group gap="sm" mt="sm" style={{ alignSelf: 'center', width: `${submitButtonWidth ?? 100}%` }}>
+                {isMultiPage && pageIndex > 0 && (
+                  <Button
+                    type="button"
+                    variant="default"
+                    size={buttonSize[submitButtonSize ?? 'medium']}
+                    onClick={() => setPageIndex((i) => i - 1)}
+                    style={{ flex: 1 }}
+                  >
+                    Back
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  loading={submitting}
+                  size={buttonSize[submitButtonSize ?? 'medium']}
+                  color={accent ? undefined : 'emerald'}
+                  style={{ flex: 1, backgroundColor: accent }}
+                >
+                  {isMultiPage && !isLastPage ? 'Next' : submitLabel || 'Submit'}
+                </Button>
+              </Group>
             </>
           )}
         </Stack>

@@ -25,6 +25,7 @@ import {
   IconClock,
   IconPhotoUp,
   IconVideo,
+  IconBook2,
 } from '@tabler/icons-react';
 import type { FormField, FieldSize, LabelPlacement } from '@/types';
 
@@ -174,7 +175,7 @@ export function FieldControl({
     />
   );
 
-  const noLabelTypes: FormField['type'][] = ['heading', 'description', 'divider', 'spacer'];
+  const noLabelTypes: FormField['type'][] = ['heading', 'description', 'divider', 'spacer', 'pageBreak'];
   return noLabelTypes.includes(field.type) ? renderControl() : control(renderControl());
 
   function renderControl(): React.ReactNode {
@@ -519,6 +520,17 @@ export function FieldControl({
       return <Divider my="xs" />;
     case 'spacer':
       return <Box h={32} />;
+    case 'pageBreak':
+      return (
+        <Group gap="xs" my="xs" c="dimmed">
+          <Divider style={{ flex: 1 }} labelPosition="center" label={
+            <Group gap={6}>
+              <IconBook2 size={14} />
+              <Text size="xs">{field.label || 'Page break'}</Text>
+            </Group>
+          } />
+        </Group>
+      );
     default:
       return text();
   }

@@ -36,6 +36,7 @@ import {
   IconColumns1,
   IconColumns2,
   IconColumns3,
+  IconBook2,
   type Icon,
 } from '@tabler/icons-react';
 
@@ -143,6 +144,7 @@ export const fieldPalette: PaletteGroup[] = [
       { type: 'description', label: 'Description', icon: IconTypography, color: 'indigo' },
       { type: 'divider', label: 'Divider', icon: IconMinus, color: 'indigo' },
       { type: 'spacer', label: 'Spacer', icon: IconArrowAutofitHeight, color: 'indigo' },
+      { type: 'pageBreak', label: 'Page Break', icon: IconBook2, color: 'indigo' },
     ],
   },
 ];
@@ -170,7 +172,7 @@ export const paletteByType = Object.fromEntries(
 ) as Record<FieldType, PaletteItem>;
 
 /** Layout-only elements: no label column, no value collected. */
-export const staticTypes: FieldType[] = ['heading', 'description', 'divider', 'spacer'];
+export const staticTypes: FieldType[] = ['heading', 'description', 'divider', 'spacer', 'pageBreak'];
 
 export const optionTypes: FieldType[] = ['select', 'radio', 'checkbox', 'multipleChoice'];
 

@@ -52,6 +52,7 @@ export type FieldType =
   | 'description'
   | 'divider'
   | 'spacer'
+  | 'pageBreak'
   // Layout — these hold other fields rather than collecting a value
   | 'grid';
 

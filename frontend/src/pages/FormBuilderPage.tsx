@@ -333,8 +333,9 @@ export function FormBuilderPage() {
 
     // A grid cannot be dropped into a column: one level of nesting is what the
     // layout is for, and deeper would render columns too narrow to use.
+    // A page break is refused too — pages split the whole form, not a column.
     const overColumn = parseColumnDroppableId(String(over.id));
-    if (field.type === 'grid' && overColumn) return;
+    if ((field.type === 'grid' || field.type === 'pageBreak') && overColumn) return;
 
     setFields((prev) => {
       // Moving: lift it out first so the insert index counts the same list the

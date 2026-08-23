@@ -34,6 +34,7 @@ export type FieldType =
   | 'description'
   | 'divider'
   | 'spacer'
+  | 'pageBreak'
   | 'grid';
 
 export type FieldSize = 'small' | 'medium' | 'large';

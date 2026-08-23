@@ -21,23 +21,19 @@ import {
   IconExternalLink,
   IconLink,
   IconCode,
-  IconQrcode,
   IconDeviceDesktop,
   IconDeviceMobile,
-  IconDownload,
 } from '@tabler/icons-react';
-import QRCode from 'qrcode';
 import { notifications } from '@mantine/notifications';
 import { updateForm, publicFormUrl } from '@/lib/api';
 import type { Form } from '@/types';
 import classes from './ShareModal.module.css';
 
-type TabId = 'link' | 'embed' | 'qr';
+type TabId = 'link' | 'embed';
 
 const TABS: { id: TabId; label: string; icon: typeof IconLink; color: string }[] = [
   { id: 'link', label: 'Public link', icon: IconLink, color: '#0ca678' },
   { id: 'embed', label: 'Embed', icon: IconCode, color: '#7048e8' },
-  { id: 'qr', label: 'QR code', icon: IconQrcode, color: '#1971c2' },
 ];
 
 interface Props {
@@ -52,7 +48,6 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [published, setPublished] = useState(form.status === 'published');
   const [height, setHeight] = useState<number | string>(600);
-  const [qr, setQr] = useState('');
 
   const shareUrl = publicFormUrl(form._id);
 
@@ -61,11 +56,6 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
       `<iframe\n  src="${shareUrl}"\n  width="100%"\n  height="${height}"\n  frameborder="0"\n  style="border:0;max-width:100%"\n></iframe>`,
     [shareUrl, height]
   );
-
-  useEffect(() => {
-    if (!opened) return;
-    QRCode.toDataURL(shareUrl, { width: 320, margin: 1 }).then(setQr);
-  }, [opened, shareUrl]);
 
   // Reset when it closes, so reopening starts on the tab people expect.
   const wasOpen = useRef(false);
@@ -247,31 +237,6 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
               </Stack>
             )}
 
-            {tab === 'qr' && (
-              <Stack gap="sm">
-                <Text size="sm" fw={600}>
-                  QR code
-                </Text>
-                <Text size="xs" c="dimmed">
-                  Print it or show it on screen — scanning opens the form directly.
-                </Text>
-                {qr && (
-                  <Paper withBorder radius="md" p="md" w={200}>
-                    <img src={qr} alt="Form QR code" width={168} height={168} />
-                  </Paper>
-                )}
-                <Button
-                  component="a"
-                  href={qr}
-                  download={`${form.title}-qr.png`}
-                  variant="default"
-                  w={200}
-                  leftSection={<IconDownload size={15} />}
-                >
-                  Download PNG
-                </Button>
-              </Stack>
-            )}
           </Box>
 
           <Group justify="space-between" px={20} py="md" wrap="nowrap" className={classes.actionBar}>
@@ -323,30 +288,21 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
           </Group>
 
           <Box className={classes.previewStage}>
-            {tab === 'qr' && qr ? (
-              <Paper withBorder radius="md" p="xl" className={classes.qrStage}>
-                <img src={qr} alt="Form QR code" width={280} height={280} />
-                <Text size="sm" c="dimmed" mt="md" ta="center">
+            <Paper
+              withBorder
+              radius="md"
+              className={device === 'mobile' ? classes.frameMobile : classes.frameDesktop}
+            >
+              <Box className={classes.browserBar}>
+                <span className={classes.dot} />
+                <span className={classes.dot} />
+                <span className={classes.dot} />
+                <Text size="xs" c="dimmed" className={classes.browserUrl}>
                   {shareUrl}
                 </Text>
-              </Paper>
-            ) : (
-              <Paper
-                withBorder
-                radius="md"
-                className={device === 'mobile' ? classes.frameMobile : classes.frameDesktop}
-              >
-                <Box className={classes.browserBar}>
-                  <span className={classes.dot} />
-                  <span className={classes.dot} />
-                  <span className={classes.dot} />
-                  <Text size="xs" c="dimmed" className={classes.browserUrl}>
-                    {shareUrl}
-                  </Text>
-                </Box>
-                <iframe src={`${shareUrl}?preview=1`} title="Form preview" className={classes.frame} />
-              </Paper>
-            )}
+              </Box>
+              <iframe src={`${shareUrl}?preview=1`} title="Form preview" className={classes.frame} />
+            </Paper>
           </Box>
 
           <Text size="xs" c="dimmed" ta="center" mt="md">

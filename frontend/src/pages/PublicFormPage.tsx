@@ -23,6 +23,32 @@ export function PublicFormPage() {
       .catch((e: Error) => setError(e.message));
   }, [id]);
 
+  // Reports this page's height to whatever embedded it, so an iframe with no
+  // fixed height (the copy-paste embed snippet) can resize to fit the form
+  // instead of clipping it or leaving dead space below a short one.
+  //
+  // `#root` is measured, not `documentElement` — the app's own CSS locks
+  // `html`/`body` to 100% of the (currently wrong, pre-resize) viewport height
+  // and makes `#root` the actual scrolling container, so `#root`'s scrollHeight
+  // is the only element whose size reflects the real content. The
+  // `da-forms-bare-embed` class drops that 100% lock in return, so the page's
+  // own content — not the iframe's starting viewport — decides the height.
+  useEffect(() => {
+    if (window.self === window.top) return; // not embedded — no parent to tell
+    document.body.classList.add('da-forms-bare-embed');
+    const root = document.getElementById('root');
+    if (!root) return;
+    const post = () =>
+      window.parent.postMessage({ type: 'da-forms:height', formId: id, height: root.scrollHeight }, '*');
+    const observer = new ResizeObserver(post);
+    observer.observe(root);
+    post();
+    return () => {
+      observer.disconnect();
+      document.body.classList.remove('da-forms-bare-embed');
+    };
+  }, [id, form, submitted, error]);
+
   // Not tracked in preview: an editor opening the share-link preview is not
   // a respondent, and shouldn't inflate the view count analytics reads from.
   useEffect(() => {

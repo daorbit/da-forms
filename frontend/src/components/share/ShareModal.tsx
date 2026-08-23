@@ -51,10 +51,14 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
 
   const shareUrl = publicFormUrl(form._id);
 
+  // A unique id per copy of the snippet — if someone embeds the same form
+  // twice on one page, each iframe still resizes independently.
+  const frameId = useMemo(() => `da-form-${form._id}`, [form._id]);
+
   const embedCode = useMemo(
     () =>
-      `<iframe\n  src="${shareUrl}"\n  width="100%"\n  height="${height}"\n  frameborder="0"\n  style="border:0;max-width:100%"\n></iframe>`,
-    [shareUrl, height]
+      `<iframe\n  id="${frameId}"\n  src="${shareUrl}"\n  width="100%"\n  height="${height}"\n  frameborder="0"\n  style="border:0;max-width:100%"\n></iframe>\n<script>\n  window.addEventListener('message', function (e) {\n    if (e.data && e.data.type === 'da-forms:height') {\n      var frame = document.getElementById('${frameId}');\n      if (frame) frame.style.height = e.data.height + 'px';\n    }\n  });\n</script>`,
+    [shareUrl, height, frameId]
   );
 
   // Reset when it closes, so reopening starts on the tab people expect.

@@ -159,7 +159,7 @@ export function FormListPage() {
     <Box>
       <Group justify="space-between" px="xl" py="md" className={classes.topbar}>
         <Text fw={600} size="lg">
-          DA Forms
+          Leads Capture
         </Text>
         <Group gap="xs">
           <div ref={searchRef}>

@@ -111,6 +111,17 @@ body.da-forms-bare-embed #root {
   overflow: visible;
 }
 
+/*
+ * A card-scope theme means only the card itself is meant to carry a
+ * background — the page around it is the host site's, which an iframe can
+ * only honor by staying transparent itself (a browser paints a framed
+ * document white by default otherwise, regardless of any div's own styles).
+ */
+body.da-forms-transparent-page,
+body.da-forms-transparent-page #root {
+  background: transparent;
+}
+
 body {
   margin: 0;
   padding: 0;

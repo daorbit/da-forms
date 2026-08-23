@@ -36,6 +36,10 @@ export function PublicFormPage() {
   useEffect(() => {
     if (window.self === window.top) return; // not embedded — no parent to tell
     document.body.classList.add('da-forms-bare-embed');
+    // Card-scope theme: only the card is meant to carry a background, so the
+    // page stays transparent and the host site's own background shows.
+    const transparent = form?.theme?.scope === 'card';
+    document.body.classList.toggle('da-forms-transparent-page', transparent);
     const root = document.getElementById('root');
     if (!root) return;
     const post = () =>
@@ -45,7 +49,7 @@ export function PublicFormPage() {
     post();
     return () => {
       observer.disconnect();
-      document.body.classList.remove('da-forms-bare-embed');
+      document.body.classList.remove('da-forms-bare-embed', 'da-forms-transparent-page');
     };
   }, [id, form, submitted, error]);
 

@@ -174,9 +174,16 @@ export function submitForm(id: string, data: Record<string, string>) {
 }
 
 /** Uploads a respondent's file ahead of submission; the returned URL is what gets stored on the field. */
-export async function uploadFormFile(formId: string, file: File): Promise<{ url: string; name: string }> {
+export async function uploadFormFile(
+  formId: string,
+  file: File,
+  accept?: string
+): Promise<{ url: string; name: string }> {
   const body = new FormData();
   body.append('file', file);
+  // Server-side mirror of the field's own `accept` restriction — a respondent
+  // editing the request by hand shouldn't bypass what the field type promises.
+  if (accept) body.append('accept', accept);
   // Not `request()`: that helper always sends JSON, but this is multipart.
   const res = await fetch(`${BASE_URL}/public/forms/${formId}/upload`, { method: 'POST', body });
   if (!res.ok) {

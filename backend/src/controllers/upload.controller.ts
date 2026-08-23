@@ -1,10 +1,31 @@
 import type { RequestHandler } from 'express';
 import { cloudinary } from '../config/cloudinary.js';
 
+/**
+ * The client sends `accept` (image/*, audio/*,video/*, etc, taken from the
+ * `FileInput`'s own `accept` prop) so this can enforce the same restriction —
+ * a respondent editing the request by hand shouldn't bypass what the field type
+ * promises.
+ */
+function isAllowed(mimeType: string, accept: string | undefined): boolean {
+  if (!accept) return true;
+  return accept.split(',').some((pattern) => {
+    const [type, subtype] = pattern.trim().split('/');
+    const [actualType, actualSubtype] = mimeType.split('/');
+    if (type !== actualType) return false;
+    return subtype === '*' || subtype === actualSubtype;
+  });
+}
+
 /** Uploads a respondent's file (from a `file`/`imageUpload`/`mediaUpload` field) to Cloudinary and returns its URL. */
 export const uploadFormFile: RequestHandler = async (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).json({ error: 'no_file', message: 'No file provided' });
+
+  const accept = typeof req.body.accept === 'string' ? req.body.accept : undefined;
+  if (!isAllowed(file.mimetype, accept)) {
+    return res.status(400).json({ error: 'invalid_type', message: `File type ${file.mimetype} is not accepted here` });
+  }
 
   const result = await new Promise<{ secure_url: string } | null>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(

@@ -14,10 +14,12 @@ import {
   Skeleton,
   Stack,
   Anchor,
+  Image,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconFileText,
+  IconVideo,
   IconChevronDown,
   IconShare2,
   IconFilter,
@@ -372,11 +374,30 @@ export function EntriesPage() {
                         // filename from before uploads were wired to Cloudinary — link only
                         // what's actually a URL.
                         const isFileLink = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
+                        const isImage = field.type === 'imageUpload' && isFileLink;
+                        const fileName = raw.split('/').pop();
                         return (
                           <Table.Td key={field.id}>
-                            {isFileLink ? (
-                              <Anchor size="sm" href={raw} target="_blank" rel="noopener noreferrer">
-                                {raw.split('/').pop()}
+                            {isImage ? (
+                              <Anchor href={raw} target="_blank" rel="noopener noreferrer">
+                                <Image src={raw} alt={fileName} h={40} w={40} fit="cover" radius="sm" />
+                              </Anchor>
+                            ) : isFileLink ? (
+                              <Anchor
+                                href={raw}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                underline="never"
+                                c="inherit"
+                              >
+                                <Group gap={6} wrap="nowrap">
+                                  <ThemeIcon variant="light" color="gray" size={28} radius="sm">
+                                    {field.type === 'mediaUpload' ? <IconVideo size={15} /> : <IconFileText size={15} />}
+                                  </ThemeIcon>
+                                  <Text size="sm" td="underline" truncate maw={160}>
+                                    {fileName}
+                                  </Text>
+                                </Group>
                               </Anchor>
                             ) : (
                               <Text size="sm">{raw}</Text>

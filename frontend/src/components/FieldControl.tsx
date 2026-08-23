@@ -67,6 +67,22 @@ interface Props {
   inputTextColor?: string;
 }
 
+// The generic "file" field is for documents — pdf/doc/xls/etc — not images or
+// video, which have their own dedicated field types. Kept as actual MIME types
+// (not extensions) so the same list also drives server-side validation.
+const fileMimeTypes = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv',
+];
+const fileAccept = fileMimeTypes.join(',');
+
 const sizeWidth: Record<FieldSize, string> = {
   small: '35%',
   medium: '60%',
@@ -429,6 +445,8 @@ export function FieldControl({
           : value
             ? value.split('/').pop()
             : base.description;
+      const accept =
+        field.type === 'imageUpload' ? 'image/*' : field.type === 'mediaUpload' ? 'audio/*,video/*' : fileAccept;
       return (
         <FileInput
           label={base.label}
@@ -441,13 +459,7 @@ export function FieldControl({
           disabled={uploading}
           leftSection={leftSection}
           placeholder={placeholder}
-          accept={
-            field.type === 'imageUpload'
-              ? 'image/*'
-              : field.type === 'mediaUpload'
-                ? 'audio/*,video/*'
-                : undefined
-          }
+          accept={accept}
           onChange={async (file) => {
             if (readOnly) return;
             if (!file) return onChange('');
@@ -458,7 +470,7 @@ export function FieldControl({
             setUploading(true);
             onUploadingChange?.(true);
             try {
-              const { url } = await uploadFormFile(formId, file);
+              const { url } = await uploadFormFile(formId, file, accept);
               onChange(url);
             } catch {
               setUploadError('Upload failed — try again.');

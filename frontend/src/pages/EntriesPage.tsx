@@ -32,6 +32,7 @@ import {
   IconCheck,
   IconEye,
   IconTrash,
+  IconFileTypePdf,
 } from '@tabler/icons-react';
 import {
   getForm,
@@ -48,6 +49,7 @@ import { paletteByType, staticTypes, fileTypes } from '@/lib/fieldPalette';
 import { valueFields } from '@/lib/fieldTree';
 import { EntriesKanban } from '@/components/builder/EntriesKanban';
 import { AnalyticsBar } from '@/components/builder/AnalyticsBar';
+import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import classes from './EntriesPage.module.css';
 
 function formatDateTime(iso: string) {
@@ -444,6 +446,15 @@ export function EntriesPage() {
                               <IconEye size={16} />
                             </ActionIcon>
                           </Tooltip>
+                          <Tooltip label="Download PDF" withArrow>
+                            <ActionIcon
+                              variant="subtle"
+                              color="gray"
+                              onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, submission)}
+                            >
+                              <IconFileTypePdf size={16} />
+                            </ActionIcon>
+                          </Tooltip>
                           <Tooltip label="Delete response" withArrow>
                             <ActionIcon variant="subtle" color="red" onClick={() => setPendingDelete(submission)}>
                               <IconTrash size={16} />
@@ -510,6 +521,15 @@ export function EntriesPage() {
               </Text>
               <Text size="sm">{formatDateTime(viewing.createdAt)}</Text>
             </div>
+            <Group justify="flex-end">
+              <Button
+                variant="default"
+                leftSection={<IconFileTypePdf size={16} />}
+                onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, viewing)}
+              >
+                Download PDF
+              </Button>
+            </Group>
           </Stack>
         )}
       </Modal>

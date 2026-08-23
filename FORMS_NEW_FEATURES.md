@@ -25,9 +25,7 @@ timeline — this is a backlog, ranked roughly by value vs effort.
 - **File upload storage** — `imageUpload`/`file` field types exist but check
   whether uploads persist anywhere (S3/local disk) vs just capturing a
   filename string. If the latter, this is a correctness gap, not a feature.
-- **Webhooks / Zapier-style integration** — POST a payload to a configured
-  URL on every new submission. High value for real usage, moderate backend
-  effort (retry policy, signing).
+
 - **Response export formats** — CSV export already exists on the Entries
   page; add per-submission detail view and PDF export.
 

@@ -115,6 +115,8 @@ export interface FormDocument {
   submitButtonSize?: SubmitButtonSize;
   submitButtonWidth?: SubmitButtonWidth;
   submitButtonAlign?: SubmitButtonAlign;
+  /** Text alignment for the title/description block. */
+  headerAlign?: SubmitButtonAlign;
   theme?: FormTheme;
   collectIp?: boolean;
   /** Total public-page loads — the denominator for completion rate. */
@@ -170,6 +172,7 @@ const formSchema = new Schema<FormDocument>(
     redirectUrl: { type: String },
     thankYouMessage: { type: String },
     hideHeader: { type: Boolean },
+    headerAlign: { type: String, enum: ['left', 'center', 'right'] },
     labelPlacement: { type: String, enum: ['top', 'left', 'right'] },
     submitLabel: { type: String },
     submitButtonSize: { type: String, enum: ['small', 'medium', 'large'] },

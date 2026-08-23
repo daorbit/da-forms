@@ -46,6 +46,7 @@ interface EditableState {
   redirectUrl: string;
   thankYouMessage: string;
   hideHeader: boolean;
+  headerAlign: SubmitButtonAlign;
   labelPlacement: LabelPlacement;
   submitLabel: string;
   submitButtonSize: SubmitButtonSize;
@@ -87,11 +88,12 @@ export function FormBuilderPage() {
   );
   const [redirectUrl, setRedirectUrl] = useState('');
   const [hideHeader, setHideHeader] = useState(locationState?.templateHideHeader ?? false);
+  const [headerAlign, setHeaderAlign] = useState<SubmitButtonAlign>('left');
   const [labelPlacement, setLabelPlacement] = useState<LabelPlacement>('top');
   const [submitLabel, setSubmitLabel] = useState(locationState?.templateSubmitLabel ?? '');
   const [submitButtonSize, setSubmitButtonSize] = useState<SubmitButtonSize>('medium');
   const [submitButtonWidth, setSubmitButtonWidth] = useState<SubmitButtonWidth>(100);
-  const [submitButtonAlign, setSubmitButtonAlign] = useState<SubmitButtonAlign>('center');
+  const [submitButtonAlign, setSubmitButtonAlign] = useState<SubmitButtonAlign>('left');
   const [theme, setTheme] = useState<FormTheme>(
     locationState?.templateTheme ?? { scope: locationState?.themeScope ?? 'page' }
   );
@@ -121,6 +123,7 @@ export function FormBuilderPage() {
         redirectUrl,
         thankYouMessage,
         hideHeader,
+        headerAlign,
         labelPlacement,
         submitLabel,
         submitButtonSize,
@@ -136,6 +139,7 @@ export function FormBuilderPage() {
       redirectUrl,
       thankYouMessage,
       hideHeader,
+      headerAlign,
       labelPlacement,
       submitLabel,
       theme,
@@ -155,6 +159,7 @@ export function FormBuilderPage() {
       redirectUrl,
       thankYouMessage,
       hideHeader,
+      headerAlign,
       labelPlacement,
       submitLabel,
       submitButtonSize,
@@ -170,6 +175,7 @@ export function FormBuilderPage() {
       redirectUrl,
       thankYouMessage,
       hideHeader,
+      headerAlign,
       labelPlacement,
       submitLabel,
       submitButtonSize,
@@ -187,6 +193,7 @@ export function FormBuilderPage() {
     setRedirectUrl(state.redirectUrl);
     setThankYouMessage(state.thankYouMessage);
     setHideHeader(state.hideHeader);
+    setHeaderAlign(state.headerAlign);
     setLabelPlacement(state.labelPlacement);
     setSubmitLabel(state.submitLabel);
     setSubmitButtonSize(state.submitButtonSize);
@@ -251,6 +258,7 @@ export function FormBuilderPage() {
       setFields(form.fields);
       setRedirectUrl(form.redirectUrl ?? '');
       setHideHeader(form.hideHeader ?? false);
+      setHeaderAlign(form.headerAlign ?? 'center');
       setLabelPlacement(form.labelPlacement ?? 'top');
       setSubmitLabel(form.submitLabel ?? '');
       setSubmitButtonSize(form.submitButtonSize ?? 'medium');
@@ -267,6 +275,7 @@ export function FormBuilderPage() {
           redirectUrl: form.redirectUrl ?? '',
           thankYouMessage: form.thankYouMessage || 'Thanks! Your response has been recorded.',
           hideHeader: form.hideHeader ?? false,
+          headerAlign: form.headerAlign ?? 'center',
           labelPlacement: form.labelPlacement ?? 'top',
           submitLabel: form.submitLabel ?? '',
           submitButtonSize: form.submitButtonSize ?? 'medium',
@@ -392,6 +401,7 @@ export function FormBuilderPage() {
       redirectUrl,
       thankYouMessage,
       hideHeader,
+      headerAlign,
       labelPlacement,
       submitLabel,
       submitButtonSize,
@@ -547,6 +557,7 @@ export function FormBuilderPage() {
             onOpenProperties={setEditingId}
             onOpenFormSettings={() => setFormSettingsOpen(true)}
             hideHeader={hideHeader}
+            headerAlign={headerAlign}
             onHideHeader={() => setHideHeader(true)}
             offsetRight={!!editingId}
             theme={theme}
@@ -562,9 +573,11 @@ export function FormBuilderPage() {
         title={title}
         description={description}
         hideHeader={hideHeader}
+        headerAlign={headerAlign}
         onTitleChange={setTitle}
         onDescriptionChange={setDescription}
         onHideHeaderChange={setHideHeader}
+        onHeaderAlignChange={setHeaderAlign}
       />
 
       <AppShell.Aside>
@@ -617,6 +630,7 @@ export function FormBuilderPage() {
         description={description}
         fields={fields}
         hideHeader={hideHeader}
+        headerAlign={headerAlign}
         labelPlacement={labelPlacement}
         submitLabel={submitLabel}
         submitButtonSize={submitButtonSize}

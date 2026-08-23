@@ -146,6 +146,8 @@ export interface Form {
   thankYouMessage?: string;
   /** Hides the title/description block on the rendered form. */
   hideHeader?: boolean;
+  /** Text alignment for the title/description block. */
+  headerAlign?: SubmitButtonAlign;
   /** Where each field's label sits relative to its input. */
   labelPlacement?: LabelPlacement;
   submitLabel?: string;

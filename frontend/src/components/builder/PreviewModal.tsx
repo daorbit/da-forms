@@ -30,6 +30,7 @@ interface Props {
   description?: string;
   fields: FormField[];
   hideHeader?: boolean;
+  headerAlign?: SubmitButtonAlign;
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
@@ -51,6 +52,7 @@ export function PreviewModal({
   description,
   fields,
   hideHeader,
+  headerAlign,
   labelPlacement,
   submitLabel,
   submitButtonSize,
@@ -157,6 +159,7 @@ export function PreviewModal({
               description={description}
               fields={fields}
               hideHeader={hideHeader}
+              headerAlign={headerAlign}
               labelPlacement={labelPlacement}
               submitLabel={submitLabel}
               submitButtonSize={submitButtonSize}

@@ -15,6 +15,7 @@ interface Props {
   description?: string;
   fields: FormField[];
   hideHeader?: boolean;
+  headerAlign?: SubmitButtonAlign;
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
   submitButtonSize?: SubmitButtonSize;
@@ -81,6 +82,7 @@ export function FormRenderer({
   description,
   fields,
   hideHeader,
+  headerAlign,
   labelPlacement,
   submitLabel,
   submitButtonSize,
@@ -195,11 +197,17 @@ export function FormRenderer({
       <form onSubmit={handleSubmit}>
         {!hideHeader && (
           <>
-            <Title order={3} ta="center" mb={4} c={textColor}>
+            <Title order={3} ta={headerAlign ?? 'center'} mb={4} c={textColor}>
               {title || 'Untitled form'}
             </Title>
             {description && (
-              <Text size="sm" ta="center" mb="lg" c={textColor ? undefined : 'dimmed'} style={textColor ? { color: textColor, opacity: 0.75 } : undefined}>
+              <Text
+                size="sm"
+                ta={headerAlign ?? 'center'}
+                mb="lg"
+                c={textColor ? undefined : 'dimmed'}
+                style={textColor ? { color: textColor, opacity: 0.75 } : undefined}
+              >
                 {description}
               </Text>
             )}

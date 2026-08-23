@@ -84,6 +84,7 @@ export function createForm(input: {
   redirectUrl?: string;
   thankYouMessage?: string;
   hideHeader?: boolean;
+  headerAlign?: SubmitButtonAlign;
   labelPlacement?: 'top' | 'left' | 'right';
   submitLabel?: string;
   submitButtonSize?: 'small' | 'medium' | 'large';
@@ -106,6 +107,7 @@ export function updateForm(
     redirectUrl: string;
     thankYouMessage: string;
     hideHeader: boolean;
+    headerAlign: SubmitButtonAlign;
     labelPlacement: 'top' | 'left' | 'right';
     submitLabel: string;
     submitButtonSize: 'small' | 'medium' | 'large';

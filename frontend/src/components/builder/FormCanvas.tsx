@@ -4,7 +4,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { IconTrash, IconSettings, IconCopyPlus, IconEyeOff, IconPlus } from '@tabler/icons-react';
-import type { FormField, FormTheme } from '@/types';
+import type { FormField, FormTheme, SubmitButtonAlign } from '@/types';
 import { staticTypes } from '@/lib/fieldPalette';
 import { FieldControl } from '@/components/FieldControl';
 import { resolveTextColor } from '@/lib/formTheme';
@@ -25,6 +25,7 @@ interface Props {
   onOpenProperties: (id: string) => void;
   onOpenFormSettings: () => void;
   hideHeader?: boolean;
+  headerAlign?: SubmitButtonAlign;
   onHideHeader: () => void;
   /** Shifts the card clear of the properties drawer while it is open. */
   offsetRight?: boolean;
@@ -43,6 +44,7 @@ export function FormCanvas({
   onOpenProperties,
   onOpenFormSettings,
   hideHeader = false,
+  headerAlign,
   onHideHeader,
   offsetRight = false,
   theme,
@@ -214,14 +216,14 @@ export function FormCanvas({
               }}
             >
               {!hideHeader && (
-                <Box className={`${classes.fieldRow} ${classes.header}`}>
-                  <Title order={3} ta="center" c={textColor}>
+                <Box className={`${classes.fieldRow} ${classes.header} ${isDarkCard ? classes.fieldRowDark : ''}`}>
+                  <Title order={3} ta={headerAlign ?? 'center'} c={textColor}>
                     {title || 'Untitled form'}
                   </Title>
                   {description && (
                     <Text
                       size="sm"
-                      ta="center"
+                      ta={headerAlign ?? 'center'}
                       mt={4}
                       c={textColor ? undefined : 'dimmed'}
                       style={textColor ? { color: textColor, opacity: 0.75 } : undefined}

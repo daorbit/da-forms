@@ -4,6 +4,7 @@ import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, Fo
 import { FieldControl } from '@/components/FieldControl';
 import { valueFields } from '@/lib/fieldTree';
 import { resolveTextColor } from '@/lib/formTheme';
+import { isFieldVisible } from '@/utils/conditionalLogic';
 
 interface Props {
   title: string;
@@ -60,11 +61,19 @@ export function FormRenderer({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSubmit?.(honeypot ? { ...values, _hp: honeypot } : values);
+    // Drop answers behind a hidden condition so a since-hidden value can't submit.
+    const visibleIds = new Set(valueFields(fields).filter((f) => isFieldVisible(f, values)).map((f) => f.id));
+    const submitValues: Record<string, string> = {};
+    for (const [id, v] of Object.entries(values)) {
+      if (visibleIds.has(id)) submitValues[id] = v;
+    }
+    onSubmit?.(honeypot ? { ...submitValues, _hp: honeypot } : submitValues);
   }
 
   /** Grids lay their columns out; everything else is a control. */
   function renderField(field: FormField): React.ReactNode {
+    if (!isFieldVisible(field, values)) return null;
+
     if (field.type === 'grid') {
       return (
         <SimpleGrid key={field.id} cols={{ base: 1, sm: field.columns?.length ?? 1 }} spacing="md">

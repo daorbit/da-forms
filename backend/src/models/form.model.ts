@@ -66,6 +66,15 @@ export interface FormField {
   content?: string;
   /** A grid's columns, each holding its own fields. */
   columns?: FormField[][];
+  showIf?: ShowIfRule;
+}
+
+export type ShowIfOperator = 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
+
+export interface ShowIfRule {
+  fieldId: string;
+  operator: ShowIfOperator;
+  value?: string;
 }
 
 export interface FormTheme {
@@ -130,6 +139,7 @@ const fieldSchema = new Schema<FormField>(
      * nesting into every query that reads a form.
      */
     columns: { type: Schema.Types.Mixed },
+    showIf: { type: Schema.Types.Mixed },
   },
   { _id: false }
 );

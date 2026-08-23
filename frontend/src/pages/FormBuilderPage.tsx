@@ -529,7 +529,7 @@ export function FormBuilderPage() {
         />
       </AppShell.Main>
 
-      <PropertiesDrawer field={editingField} onClose={() => setEditingId(null)} onChange={updateField} />
+      <PropertiesDrawer field={editingField} allFields={fields} onClose={() => setEditingId(null)} onChange={updateField} />
 
       <FormSettings
         opened={formSettingsOpen}

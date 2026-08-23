@@ -9,8 +9,9 @@ import {
   Group,
   Text,
   Switch,
+  Select,
 } from '@mantine/core';
-import type { FormField, FieldSize } from '@/types';
+import type { FormField, FieldSize, ShowIfOperator } from '@/types';
 import {
   optionTypes,
   numericTypes,
@@ -18,14 +19,25 @@ import {
   staticTypes,
   paletteByType,
 } from '@/lib/fieldPalette';
+import { flattenFields } from '@/lib/fieldTree';
 import classes from './PropertiesDrawer.module.css';
 
 interface Props {
   field: FormField | null;
+  /** The full tree, so "show if" can offer every other field as its target. */
+  allFields: FormField[];
   onClose: () => void;
   /** Applied immediately — the canvas reflects every keystroke. */
   onChange: (id: string, patch: Partial<FormField>) => void;
 }
+
+const showIfOperators: { value: ShowIfOperator; label: string }[] = [
+  { value: 'equals', label: 'is' },
+  { value: 'notEquals', label: 'is not' },
+  { value: 'contains', label: 'contains' },
+  { value: 'isEmpty', label: 'is empty' },
+  { value: 'isNotEmpty', label: 'is not empty' },
+];
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -36,9 +48,18 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-export function PropertiesDrawer({ field, onClose, onChange }: Props) {
+export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props) {
   const meta = field ? paletteByType[field.type] : null;
   const set = (patch: Partial<FormField>) => field && onChange(field.id, patch);
+
+  // Any other value-bearing field, so a grid can't target itself or a static block.
+  const showIfCandidates = field
+    ? flattenFields(allFields).filter(
+        (candidate) => candidate.id !== field.id && candidate.type !== 'grid' && !staticTypes.includes(candidate.type)
+      )
+    : [];
+  const showIfRule = field?.showIf;
+  const showIfValueless = showIfRule && (showIfRule.operator === 'isEmpty' || showIfRule.operator === 'isNotEmpty');
 
   return (
     <Drawer
@@ -113,6 +134,42 @@ export function PropertiesDrawer({ field, onClose, onChange }: Props) {
                   checked={field.required}
                   onChange={(e) => set({ required: e.target.checked })}
                 />
+              </Section>
+
+              <Section label="Conditional logic">
+                <Select
+                  label="Show this field only if"
+                  placeholder="Always shown"
+                  clearable
+                  data={showIfCandidates.map((candidate) => ({ value: candidate.id, label: candidate.label || '(untitled field)' }))}
+                  value={showIfRule?.fieldId ?? null}
+                  onChange={(fieldId) =>
+                    set({
+                      showIf: fieldId ? { fieldId, operator: showIfRule?.operator ?? 'equals', value: showIfRule?.value } : undefined,
+                    })
+                  }
+                />
+
+                {showIfRule && (
+                  <Group grow align="flex-end">
+                    <Select
+                      label="Condition"
+                      data={showIfOperators}
+                      value={showIfRule.operator}
+                      allowDeselect={false}
+                      onChange={(operator) =>
+                        operator && set({ showIf: { ...showIfRule, operator: operator as ShowIfOperator } })
+                      }
+                    />
+                    {!showIfValueless && (
+                      <TextInput
+                        label="Value"
+                        value={showIfRule.value ?? ''}
+                        onChange={(e) => set({ showIf: { ...showIfRule, value: e.target.value } })}
+                      />
+                    )}
+                  </Group>
+                )}
               </Section>
 
               <Section label="Appearance">

@@ -113,6 +113,15 @@ export interface FormField {
    * the drop site rather than by the type, which keeps the shape simple.
    */
   columns?: FormField[][];
+  showIf?: ShowIfRule;
+}
+
+export type ShowIfOperator = 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
+
+export interface ShowIfRule {
+  fieldId: string;
+  operator: ShowIfOperator;
+  value?: string;
 }
 
 export interface Form {

@@ -23,6 +23,7 @@ import {
   IconCode,
   IconDeviceDesktop,
   IconDeviceMobile,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { updateForm, publicFormUrl } from '@/lib/api';
@@ -203,14 +204,26 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
 
             {tab === 'embed' && (
               <Stack gap="sm">
+                <Paper withBorder radius="md" p="sm" bg="var(--mantine-color-blue-0)">
+                  <Group gap="xs" wrap="nowrap" align="flex-start">
+                    <IconInfoCircle size={16} color="var(--mantine-color-blue-6)" style={{ marginTop: 2, flexShrink: 0 }} />
+                    <Text size="xs">
+                      The snippet below auto-resizes the iframe to fit the form — no need to tune a
+                      fixed height, and it keeps working as fields, pages, or conditional logic
+                      change how tall the form is. The height below is only the size shown for a
+                      moment before the first resize message arrives.
+                    </Text>
+                  </Group>
+                </Paper>
+
                 <Group justify="space-between" align="flex-end">
                   <Text size="sm" fw={600}>
                     Embed code
                   </Text>
                   <NumberInput
-                    label="Height (px)"
+                    label="Starting height (px)"
                     size="xs"
-                    w={120}
+                    w={140}
                     value={height}
                     onChange={(value) => setHeight(value === '' ? 600 : value)}
                   />
@@ -236,7 +249,8 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                   )}
                 </CopyButton>
                 <Text size="xs" c="dimmed">
-                  Paste this into any page of your site. The iframe scales to its container width.
+                  Paste this into any page of your site. The iframe scales to its container width and
+                  its height auto-fits the form.
                 </Text>
               </Stack>
             )}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SimpleGrid, Paper, Text, Group, ThemeIcon, Stack, Progress, Modal, UnstyledButton } from '@mantine/core';
+import { SimpleGrid, Paper, Text, Group, ThemeIcon, Stack, Progress, Modal, UnstyledButton, Skeleton } from '@mantine/core';
 import { IconEye, IconInbox, IconTrendingUp, IconWorld, IconChevronRight } from '@tabler/icons-react';
 import type { Analytics } from '@/lib/api';
 
@@ -60,9 +60,32 @@ function SourceBreakdown({ sources }: { sources: Analytics['sources'] }) {
   );
 }
 
+function StatSkeleton() {
+  return (
+    <Paper withBorder radius="lg" p="lg">
+      <Group justify="space-between" align="flex-start" wrap="nowrap">
+        <Stack gap={8}>
+          <Skeleton height={10} width={70} />
+          <Skeleton height={22} width={50} />
+        </Stack>
+        <Skeleton height={40} width={40} radius="md" />
+      </Group>
+    </Paper>
+  );
+}
+
 export function AnalyticsBar({ analytics }: { analytics: Analytics | null }) {
   const [sourcesOpen, setSourcesOpen] = useState(false);
-  if (!analytics) return null;
+
+  if (!analytics) {
+    return (
+      <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="md" px="md" py="md">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <StatSkeleton key={i} />
+        ))}
+      </SimpleGrid>
+    );
+  }
 
   return (
     <>

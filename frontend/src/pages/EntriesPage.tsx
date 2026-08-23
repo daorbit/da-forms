@@ -353,11 +353,24 @@ export function EntriesPage() {
               </Table.Thead>
 
               <Table.Tbody>
-                {submissions.length === 0 ? (
+                {loading && submissions.length === 0 ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <Table.Tr key={i}>
+                      {columns.map((field) => (
+                        <Table.Td key={field.id}>
+                          <Skeleton height={14} width="70%" />
+                        </Table.Td>
+                      ))}
+                      <Table.Td>
+                        <Skeleton height={14} width="70%" />
+                      </Table.Td>
+                    </Table.Tr>
+                  ))
+                ) : submissions.length === 0 ? (
                   <Table.Tr>
                     <Table.Td colSpan={columns.length + 1}>
-                      <Text ta="center" py="xl" c="emerald">
-                        {loading ? 'Loading…' : 'No entries'}
+                      <Text ta="center" py="xl" c="dimmed">
+                        No entries
                       </Text>
                     </Table.Td>
                   </Table.Tr>

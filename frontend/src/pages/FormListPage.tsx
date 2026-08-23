@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination,
+  Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination, Skeleton,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -206,6 +206,28 @@ export function FormListPage() {
       <WorkspaceStatsBar stats={stats} />
 
       <Stack gap="xs" px="xl" py="md">
+        {loading && forms.length === 0 ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <Box key={i} className={classes.row}>
+              <Group justify="space-between" wrap="nowrap">
+                <Group gap="sm" wrap="nowrap" style={{ flex: 1 }}>
+                  <Skeleton height={38} width={38} radius="md" />
+                  <Stack gap={6} style={{ flex: 1, maxWidth: 320 }}>
+                    <Skeleton height={14} width="60%" />
+                    <Skeleton height={10} width="35%" />
+                  </Stack>
+                </Group>
+                <Group gap="xs" wrap="nowrap">
+                  <Skeleton height={28} width={70} radius="sm" />
+                  <Skeleton height={28} width={90} radius="sm" />
+                  <Skeleton height={28} width={28} radius="xl" />
+                  <Skeleton height={28} width={28} radius="xl" />
+                </Group>
+              </Group>
+            </Box>
+          ))
+        ) : null}
+
         {forms.length === 0 && !loading && (
           <Stack align="center" justify="center" gap={0} className={classes.emptyState}>
             <div className={classes.emptyIcon} aria-hidden>

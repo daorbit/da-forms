@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text } from '@mantine/core';
+import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text, Stack, Skeleton } from '@mantine/core';
 import { IconFileText, IconEye, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
@@ -93,6 +93,7 @@ export function FormBuilderPage() {
   );
   const [collectIp, setCollectIp] = useState(false);
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
+  const [loadingForm, setLoadingForm] = useState(!!routeFormId);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -264,6 +265,7 @@ export function FormBuilderPage() {
           collectIp: form.collectIp ?? false,
         })
       );
+      setLoadingForm(false);
     });
   }, [routeFormId, workspaceId]);
 
@@ -512,22 +514,32 @@ export function FormBuilderPage() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <FormCanvas
-          title={title}
-          description={description}
-          fields={fields}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onDeselect={() => setSelectedId(null)}
-          onRemove={removeField}
-          onDuplicate={duplicateField}
-          onOpenProperties={setEditingId}
-          onOpenFormSettings={() => setFormSettingsOpen(true)}
-          hideHeader={hideHeader}
-          onHideHeader={() => setHideHeader(true)}
-          offsetRight={!!editingId}
-          theme={theme}
-        />
+        {loadingForm ? (
+          <Stack gap="md" maw={640} mx="auto" py="xl" px="md">
+            <Skeleton height={32} width="50%" />
+            <Skeleton height={16} width="70%" />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} height={70} radius="md" />
+            ))}
+          </Stack>
+        ) : (
+          <FormCanvas
+            title={title}
+            description={description}
+            fields={fields}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onDeselect={() => setSelectedId(null)}
+            onRemove={removeField}
+            onDuplicate={duplicateField}
+            onOpenProperties={setEditingId}
+            onOpenFormSettings={() => setFormSettingsOpen(true)}
+            hideHeader={hideHeader}
+            onHideHeader={() => setHideHeader(true)}
+            offsetRight={!!editingId}
+            theme={theme}
+          />
+        )}
       </AppShell.Main>
 
       <PropertiesDrawer field={editingField} allFields={fields} onClose={() => setEditingId(null)} onChange={updateField} />

@@ -124,7 +124,34 @@ export function recordView(id: string) {
   return FormModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
 }
 
-export function submitForm(formId: string, data: Record<string, string>, sourceUrl?: string) {
+/** Every field in document order, grids included — mirrors the frontend's `flattenFields`. */
+function flattenFields(fields: FormField[]): FormField[] {
+  return fields.flatMap((field) =>
+    field.type === 'grid'
+      ? [field, ...(field.columns ?? []).flatMap(flattenFields)]
+      : [field]
+  );
+}
+
+export class DuplicateValueError extends Error {
+  constructor(public field: FormField) {
+    super(`${field.label || 'This field'} must be unique`);
+  }
+}
+
+export async function submitForm(
+  formId: string,
+  fields: FormField[],
+  data: Record<string, string>,
+  sourceUrl?: string
+) {
+  const uniqueFields = flattenFields(fields).filter((field) => field.unique);
+  for (const field of uniqueFields) {
+    const value = data[field.id];
+    if (!value) continue;
+    const existing = await SubmissionModel.exists({ formId, [`data.${field.id}`]: value });
+    if (existing) throw new DuplicateValueError(field);
+  }
   return SubmissionModel.create({ formId, data, sourceUrl });
 }
 

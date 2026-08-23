@@ -134,6 +134,13 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
                   checked={field.required}
                   onChange={(e) => set({ required: e.target.checked })}
                 />
+
+                <Switch
+                  label="Must be unique"
+                  description="Rejects a submission whose answer matches an earlier one."
+                  checked={field.unique ?? false}
+                  onChange={(e) => set({ unique: e.target.checked })}
+                />
               </Section>
 
               <Section label="Conditional logic">

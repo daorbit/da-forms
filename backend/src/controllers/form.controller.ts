@@ -151,6 +151,17 @@ export const submitForm: RequestHandler = async (req, res) => {
   }
 
   const sourceUrl = req.get('referer');
-  const submission = await formService.submitForm(req.params.id, data, sourceUrl);
-  res.status(201).json(submission);
+  try {
+    const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl);
+    res.status(201).json(submission);
+  } catch (err) {
+    if (err instanceof formService.DuplicateValueError) {
+      return res.status(409).json({
+        error: 'duplicate_value',
+        message: err.message,
+        fieldId: err.field.id,
+      });
+    }
+    throw err;
+  }
 };

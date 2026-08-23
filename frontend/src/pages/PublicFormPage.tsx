@@ -37,7 +37,7 @@ export function PublicFormPage() {
       await submitForm(id, values);
     } catch (e) {
       setSubmitting(false);
-      if (e instanceof ApiError && e.code === 'rate_limited') {
+      if (e instanceof ApiError && (e.code === 'rate_limited' || e.code === 'duplicate_value')) {
         notifications.show({ message: e.message, color: 'red' });
         return;
       }

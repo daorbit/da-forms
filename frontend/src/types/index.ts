@@ -92,6 +92,8 @@ export interface FormField {
   type: FieldType;
   label: string;
   required: boolean;
+  /** Rejects a submission whose answer for this field matches an existing one for the same form. */
+  unique?: boolean;
   hideLabel?: boolean;
   instructions?: string;
   size?: FieldSize;

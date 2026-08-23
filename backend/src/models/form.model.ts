@@ -50,6 +50,8 @@ export interface FormField {
   type: FieldType;
   label: string;
   required: boolean;
+  /** Rejects a submission whose answer for this field matches an existing one for the same form. */
+  unique?: boolean;
   hideLabel?: boolean;
   instructions?: string;
   size?: FieldSize;
@@ -118,6 +120,7 @@ const fieldSchema = new Schema<FormField>(
     type: { type: String, required: true },
     label: { type: String, default: '' },
     required: { type: Boolean, default: false },
+    unique: { type: Boolean },
     hideLabel: { type: Boolean },
     instructions: { type: String },
     size: { type: String, enum: ['small', 'medium', 'large'] },

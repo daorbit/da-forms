@@ -212,9 +212,7 @@ export function EntriesPage() {
               <ActionIcon component={Link} to={`/${workspaceId}/forms`} variant="subtle" color="gray" size="lg" aria-label="Back to all forms">
                 <IconArrowLeft size={19} />
               </ActionIcon>
-              <ThemeIcon variant="light" color="gray" radius="sm">
-                <IconFileText size={18} />
-              </ThemeIcon>
+             
               <Text fw={600} component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.formLink}>
                 {form.title}
               </Text>

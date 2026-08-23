@@ -51,6 +51,8 @@ export function NewFormModal({ opened, onClose }: Props) {
         templateFields: activeTemplate.fields,
         templateDescription: activeTemplate.formDescription,
         templateTheme: activeTemplate.theme,
+        templateSubmitLabel: activeTemplate.submitLabel,
+        templateHideHeader: activeTemplate.hideHeader,
       },
     });
     reset();
@@ -155,6 +157,8 @@ export function NewFormModal({ opened, onClose }: Props) {
                     description={activeTemplate.formDescription}
                     fields={activeTemplate.fields}
                     theme={activeTemplate.theme}
+                    submitLabel={activeTemplate.submitLabel}
+                    hideHeader={activeTemplate.hideHeader}
                   />
                 </Box>
               </Box>

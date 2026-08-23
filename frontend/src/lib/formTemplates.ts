@@ -9,6 +9,8 @@ export interface FormTemplate {
   formDescription?: string;
   fields: FormField[];
   theme?: FormTheme;
+  submitLabel?: string;
+  hideHeader?: boolean;
 }
 
 function field(type: Parameters<typeof makeField>[0], overrides: Partial<FormField>): FormField {
@@ -139,6 +141,23 @@ export const formTemplates: FormTemplate[] = [
       cardBg: '#16161d',
       cardBorder: '#26262f',
       accentColor: '#7c5cff',
+      textMode: 'light',
+    },
+  },
+  {
+    id: 'newsletter',
+    name: 'Newsletter signup',
+    description: 'One email field and a subscribe button — nothing to slow someone down.',
+    title: 'Subscribe',
+    formDescription: 'We use your address for the newsletter and nothing else.',
+    submitLabel: 'Subscribe',
+    hideHeader: true,
+    fields: [field('email', { label: 'Email', required: true, hideLabel: true, placeholder: 'you@company.com' })],
+    theme: {
+      scope: 'card',
+      cardBg: '#111318',
+      cardBorder: '#2d313a',
+      accentColor: '#12b5a6',
       textMode: 'light',
     },
   },

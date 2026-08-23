@@ -67,6 +67,8 @@ export function FormBuilderPage() {
         templateFields?: FormField[];
         templateDescription?: string;
         templateTheme?: FormTheme;
+        templateSubmitLabel?: string;
+        templateHideHeader?: boolean;
       }
     | null;
   const initialTitle = locationState?.title ?? 'Untitled form';
@@ -83,9 +85,9 @@ export function FormBuilderPage() {
     'Thanks! Your response has been recorded.'
   );
   const [redirectUrl, setRedirectUrl] = useState('');
-  const [hideHeader, setHideHeader] = useState(false);
+  const [hideHeader, setHideHeader] = useState(locationState?.templateHideHeader ?? false);
   const [labelPlacement, setLabelPlacement] = useState<LabelPlacement>('top');
-  const [submitLabel, setSubmitLabel] = useState('');
+  const [submitLabel, setSubmitLabel] = useState(locationState?.templateSubmitLabel ?? '');
   const [submitButtonSize, setSubmitButtonSize] = useState<SubmitButtonSize>('medium');
   const [submitButtonWidth, setSubmitButtonWidth] = useState<SubmitButtonWidth>(100);
   const [theme, setTheme] = useState<FormTheme>(

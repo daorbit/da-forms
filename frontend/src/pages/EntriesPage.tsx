@@ -16,6 +16,7 @@ import {
   Anchor,
   Image,
   Modal,
+  Loader,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -348,7 +349,12 @@ export function EntriesPage() {
       ) : (
         <>
           <Table.ScrollContainer minWidth={0} className={classes.tableWrap}>
-            <Table withTableBorder highlightOnHover className={classes.table}>
+            <Table
+              withTableBorder
+              highlightOnHover
+              className={`${classes.table} ${loading && submissions.length > 0 ? classes.tableLoading : ''}`}
+              aria-busy={loading}
+            >
               <Table.Thead className={classes.thead}>
                 <Table.Tr>
                   {columns.map((field) => {
@@ -382,21 +388,11 @@ export function EntriesPage() {
 
               <Table.Tbody>
                 {loading && submissions.length === 0 ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <Table.Tr key={i}>
-                      {columns.map((field) => (
-                        <Table.Td key={field.id}>
-                          <Skeleton height={14} width="70%" />
-                        </Table.Td>
-                      ))}
-                      <Table.Td>
-                        <Skeleton height={14} width="70%" />
-                      </Table.Td>
-                      <Table.Td className={classes.actionsCol}>
-                        <Skeleton height={14} width="70%" />
-                      </Table.Td>
-                    </Table.Tr>
-                  ))
+                  <Table.Tr>
+                    <Table.Td colSpan={columns.length + 2} className={classes.loadingCell}>
+                      <Loader size="sm" color="emerald" />
+                    </Table.Td>
+                  </Table.Tr>
                 ) : submissions.length === 0 ? (
                   <Table.Tr>
                     <Table.Td colSpan={columns.length + 2}>
@@ -444,7 +440,9 @@ export function EntriesPage() {
                                 </Group>
                               </Anchor>
                             ) : (
-                              <Text size="sm">{raw}</Text>
+                              <Text size="sm" className={classes.cellText} title={raw}>
+                                {raw}
+                              </Text>
                             )}
                           </Table.Td>
                         );

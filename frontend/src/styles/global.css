@@ -73,6 +73,56 @@ html[data-mantine-color-scheme='light'] {
   --mantine-color-placeholder: #9ca3af !important;
 }
 
+/* Dialogs render in Mantine's portal, outside page-level wrappers. Give the
+   management chrome its own raised surface so it remains distinct from the
+   Quantalog page ground; light preview stages inside dialogs keep their local
+   light-surface variables below. */
+html[data-mantine-color-scheme='dark'] .mantine-Modal-content,
+html[data-mantine-color-scheme='dark'] .mantine-Drawer-content {
+  background-color: #16181b !important;
+  color: #f2f4f6 !important;
+  border: 1px solid #34383e !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55) !important;
+}
+
+html[data-mantine-color-scheme='dark'] .mantine-Modal-header,
+html[data-mantine-color-scheme='dark'] .mantine-Drawer-header {
+  background-color: #16181b !important;
+  color: #f2f4f6 !important;
+  border-bottom-color: #26292e !important;
+}
+
+html[data-mantine-color-scheme='dark'] .mantine-Modal-title,
+html[data-mantine-color-scheme='dark'] .mantine-Drawer-title {
+  color: #f2f4f6 !important;
+}
+
+html[data-mantine-color-scheme='dark'] .mantine-Modal-body,
+html[data-mantine-color-scheme='dark'] .mantine-Drawer-body {
+  color: #f2f4f6 !important;
+}
+
+html[data-mantine-color-scheme='dark'] .mantine-Modal-close,
+html[data-mantine-color-scheme='dark'] .mantine-Drawer-close {
+  color: #a9afba !important;
+}
+
+html[data-mantine-color-scheme='dark'] .mantine-Modal-close:hover,
+html[data-mantine-color-scheme='dark'] .mantine-Drawer-close:hover {
+  background-color: #1c1f23 !important;
+  color: #f2f4f6 !important;
+}
+
+.analytics-source-arrow {
+  color: var(--mantine-color-dimmed);
+  transition: color 120ms ease, transform 120ms ease;
+}
+
+.mantine-UnstyledButton:hover .analytics-source-arrow {
+  color: var(--mantine-color-text);
+  transform: translateX(2px);
+}
+
 /*
  * Surfaces that always render in the respondent's own colours — the builder
  * canvas, the preview, and the live form — whatever theme a host app passes.

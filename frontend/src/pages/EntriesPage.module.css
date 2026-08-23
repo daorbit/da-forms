@@ -35,6 +35,25 @@
   table-layout: fixed;
 }
 
+.tableLoading {
+  opacity: 0.58;
+  transition: opacity 120ms ease;
+}
+
+.loadingCell {
+  height: 72px;
+  text-align: center;
+}
+
+.cellText {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
 .thead {
   background-color: var(--mantine-color-default);
 }

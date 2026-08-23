@@ -114,7 +114,7 @@ export function AnalyticsBar({ analytics }: { analytics: Analytics | null }) {
                   Traffic sources
                 </Text>
               </Group>
-              <IconChevronRight size={16} color="var(--mantine-color-gray-6)" />
+              <IconChevronRight size={18} className="analytics-source-arrow" />
             </Group>
           </Paper>
         </UnstyledButton>

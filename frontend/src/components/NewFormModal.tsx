@@ -64,7 +64,7 @@ export function NewFormModal({ opened, onClose }: Props) {
       );
       reset();
       onClose();
-      navigate(`/${workspaceId}/forms/${form._id}`);
+      navigate(`/${workspaceId}/forms/${form._id}/edit`);
     } catch {
       setCreating(false);
       notifications.show({ message: 'Could not create form', color: 'red' });

@@ -260,7 +260,7 @@ export function FormBuilderPage() {
     if (!routeFormId) return;
     getForm(routeFormId, workspaceId).then((form) => {
       setSavedForm(form);
-      setName(form.name);
+      setName(form.name || form.title);
       setTitle(form.title);
       setDescription(form.description ?? '');
       setFields(form.fields);

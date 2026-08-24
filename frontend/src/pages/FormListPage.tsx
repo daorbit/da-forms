@@ -297,7 +297,7 @@ export function FormListPage() {
                 </ThemeIcon>
                 <div>
                   <Link to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.title}>
-                    {form.name}
+                    {form.name || form.title}
                   </Link>
                   <Group gap={6}>
                     <Text size="sm" c="dimmed">
@@ -439,7 +439,7 @@ export function FormListPage() {
         centered
       >
         <Text size="sm">
-          Delete <strong>{pendingDelete?.name}</strong>? Its submissions stay in the database but the
+          Delete <strong>{pendingDelete?.name || pendingDelete?.title}</strong>? Its submissions stay in the database but the
           form and its public link stop working.
         </Text>
         <Group justify="flex-end" mt="lg">

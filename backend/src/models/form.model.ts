@@ -166,7 +166,7 @@ const fieldSchema = new Schema<FormField>(
 
 const formSchema = new Schema<FormDocument>(
   {
-    name: { type: String, required: true },
+    name: { type: String },
     title: { type: String, required: true },
     description: { type: String },
     workspaceId: { type: String, required: true, index: true },

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, ScrollArea, UnstyledButton } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconPlus } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
 import { formTemplates } from '@/lib/formTemplates';
 import { FormRenderer } from '@/components/FormRenderer';
+import { createForm } from '@/lib/api';
 import classes from './NewFormModal.module.css';
 
 interface Props {
@@ -21,6 +23,7 @@ export function NewFormModal({ opened, onClose }: Props) {
   const [scope, setScope] = useState<NonNullable<FormTheme['scope']>>('page');
   const defaultTemplateId = formTemplates.find((t) => t.id !== 'blank')?.id ?? formTemplates[0].id;
   const [templateId, setTemplateId] = useState(defaultTemplateId);
+  const [creating, setCreating] = useState(false);
 
   const activeTemplate = formTemplates.find((t) => t.id === templateId) ?? formTemplates[0];
 
@@ -29,6 +32,7 @@ export function NewFormModal({ opened, onClose }: Props) {
     setName('');
     setScope('page');
     setTemplateId(defaultTemplateId);
+    setCreating(false);
   }
 
   function handleClose() {
@@ -42,21 +46,29 @@ export function NewFormModal({ opened, onClose }: Props) {
     setStep(2);
   }
 
-  function handleCreate() {
+  async function handleCreate() {
     const title = name.trim();
     if (!title) return;
-    navigate(`/${workspaceId}/forms/new`, {
-      state: {
-        title,
-        themeScope: activeTemplate.theme?.scope ?? scope,
-        templateFields: activeTemplate.fields,
-        templateDescription: activeTemplate.formDescription,
-        templateTheme: activeTemplate.theme,
-        templateSubmitLabel: activeTemplate.submitLabel,
-        templateHideHeader: activeTemplate.hideHeader,
-      },
-    });
-    reset();
+    setCreating(true);
+    try {
+      const form = await createForm(
+        {
+          title,
+          description: activeTemplate.formDescription,
+          fields: activeTemplate.fields,
+          hideHeader: activeTemplate.hideHeader,
+          submitLabel: activeTemplate.submitLabel,
+          theme: activeTemplate.theme ?? { scope },
+        },
+        workspaceId
+      );
+      reset();
+      onClose();
+      navigate(`/${workspaceId}/forms/${form._id}`);
+    } catch {
+      setCreating(false);
+      notifications.show({ message: 'Could not create form', color: 'red' });
+    }
   }
 
   return (
@@ -171,10 +183,10 @@ export function NewFormModal({ opened, onClose }: Props) {
               Back
             </Button>
             <Group>
-              <Button variant="default" onClick={handleClose}>
+              <Button variant="default" onClick={handleClose} disabled={creating}>
                 Cancel
               </Button>
-              <Button color="emerald" onClick={handleCreate}>
+              <Button color="emerald" onClick={handleCreate} loading={creating}>
                 Create form
               </Button>
             </Group>

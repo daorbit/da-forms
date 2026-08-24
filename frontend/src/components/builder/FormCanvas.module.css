@@ -194,11 +194,11 @@
   color: #1a1b1e !important;
 }
 
-.hoverToolbar .deleteAction {
+.hoverToolbar :global(.mantine-ActionIcon-root.deleteAction) {
   color: #e03131 !important;
 }
 
-.hoverToolbar .deleteAction:hover {
+.hoverToolbar :global(.mantine-ActionIcon-root.deleteAction:hover) {
   background-color: #fff5f5 !important;
   color: #c92a2a !important;
 }

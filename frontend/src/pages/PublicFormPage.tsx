@@ -57,6 +57,12 @@ export function PublicFormPage() {
   // a respondent, and shouldn't inflate the view count analytics reads from.
   useEffect(() => {
     if (!id || isPreview) return;
+    // Guards against React StrictMode's double-invoke in dev, and a tab
+    // reload re-running this effect — the server also dedupes by visitor
+    // fingerprint, this just skips the redundant request client-side.
+    const key = `da-forms-viewed-${id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
     recordView(id).catch(() => {});
   }, [id, isPreview]);
 

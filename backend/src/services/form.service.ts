@@ -1,5 +1,6 @@
 import { FormModel } from '../models/form.model.js';
 import { SubmissionModel } from '../models/submission.model.js';
+import { FormViewModel } from '../models/formView.model.js';
 import type { FormField, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '../models/form.model.js';
 
 export interface Paginated<T> {
@@ -126,8 +127,20 @@ export function deleteForm(id: string, workspaceId: string) {
   return FormModel.findOneAndDelete({ _id: id, workspaceId });
 }
 
-export function recordView(id: string) {
-  return FormModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
+/**
+ * Counts a view once per (form, fingerprint) per dedup window — a page
+ * reload or the same visitor reopening the link minutes later shouldn't
+ * inflate the count. The unique index on FormView is what enforces this:
+ * a duplicate insert fails instead of racing a read-then-write check.
+ */
+export async function recordView(id: string, fingerprint: string) {
+  try {
+    await FormViewModel.create({ formId: id, fingerprint });
+  } catch (err) {
+    if ((err as { code?: number }).code === 11000) return; // already counted this window
+    throw err;
+  }
+  await FormModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
 }
 
 /** Every field in document order, grids included — mirrors the frontend's `flattenFields`. */

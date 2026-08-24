@@ -1,5 +1,16 @@
-import type { RequestHandler } from 'express';
+import type { RequestHandler, Request } from 'express';
+import { createHash } from 'node:crypto';
 import * as formService from '../services/form.service.js';
+
+/**
+ * IP + user-agent, hashed. Not identity-grade — just enough to tell "same
+ * browser reopening the link" from "a different visitor," for view dedup.
+ */
+function fingerprintOf(req: Request) {
+  const ip = req.ip ?? '';
+  const ua = req.get('user-agent') ?? '';
+  return createHash('sha256').update(`${ip}:${ua}`).digest('hex');
+}
 
 /** Every workspace-scoped route carries the id in the path. */
 function workspaceIdOf(req: { params: Record<string, string> }) {
@@ -147,7 +158,7 @@ export const getPublicForm: RequestHandler = async (req, res) => {
 export const recordView: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
-  await formService.recordView(req.params.id);
+  await formService.recordView(req.params.id, fingerprintOf(req));
   res.status(204).send();
 };
 

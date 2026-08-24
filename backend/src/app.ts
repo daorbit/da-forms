@@ -9,6 +9,10 @@ import { notFound } from './middleware/not-found.js';
 export function createApp() {
   const app = express();
 
+  // Behind a proxy (serverless/load balancer) — without this, req.ip is
+  // always the proxy's address, breaking both the rate limiter and view dedup.
+  app.set('trust proxy', true);
+
   // Open to every origin: the forms are embedded on sites we do not know in
   // advance, and the management API is called by whichever product embeds the
   // builder. Nothing here is authorised by origin.

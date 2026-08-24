@@ -429,6 +429,24 @@ export function FormBuilderPage() {
     setSavedSnapshot(currentSnapshot);
     notifications.show({ message: 'Form saved', color: 'emerald' });
     if (!savedFormId) setShareOpen(true);
+    return form;
+  }
+
+  async function handleTogglePublish() {
+    setSaving(true);
+    try {
+      const base = isDirty || !savedFormId ? await handleSave() : savedForm;
+      if (!base) return;
+      const nextStatus = base.status === 'published' ? 'draft' : 'published';
+      const updated = await updateForm(base._id, { status: nextStatus }, workspaceId);
+      setSavedForm(updated);
+      notifications.show({
+        message: nextStatus === 'published' ? 'Form published' : 'Form moved back to draft',
+        color: nextStatus === 'published' ? 'emerald' : 'gray',
+      });
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleRailSelect(panel: RailPanel) {
@@ -529,13 +547,22 @@ export function FormBuilderPage() {
               Preview
             </Button>
             <Button
+              variant="default"
+              radius="md"
+              color={savedForm?.status === 'published' ? 'gray' : 'emerald'}
+              onClick={handleTogglePublish}
+              loading={saving}
+            >
+              {savedForm?.status === 'published' ? 'Unpublish' : 'Publish'}
+            </Button>
+            <Button
               color="emerald"
               radius="md"
               onClick={handleSave}
               loading={saving}
               disabled={!isDirty}
             >
-              {savedFormId ? 'Save' : 'Publish Form'}
+              Save
             </Button>
           </Group>
         </Group>

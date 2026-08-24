@@ -17,6 +17,7 @@ import {
   Image,
   Modal,
   Loader,
+  TextInput,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -38,12 +39,15 @@ import {
   IconRefresh,
   IconDownload,
   IconExternalLink,
+  IconPencil,
+  IconX,
 } from '@tabler/icons-react';
 import {
   getForm,
   listSubmissions,
   updateSubmission,
   deleteSubmission,
+  updateForm,
   publicFormUrl,
   getAnalytics,
   type Analytics,
@@ -116,6 +120,9 @@ export function EntriesPage() {
   const [pendingDelete, setPendingDelete] = useState<Submission | null>(null);
   const [attachment, setAttachment] = useState<{ url: string; name: string; image: boolean } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   const loadSubmissions = useCallback(() => {
     if (!id) return;
@@ -175,6 +182,31 @@ export function EntriesPage() {
     }
   }
 
+  function startEditingName() {
+    if (!form) return;
+    setNameDraft(form.name || form.title);
+    setEditingName(true);
+  }
+
+  async function saveName() {
+    if (!id || !form) return;
+    const name = nameDraft.trim();
+    if (!name || name === (form.name || form.title)) {
+      setEditingName(false);
+      return;
+    }
+    setSavingName(true);
+    try {
+      const updated = await updateForm(id, { name }, workspaceId);
+      setForm(updated);
+      setEditingName(false);
+    } catch {
+      notifications.show({ message: 'Could not rename form', color: 'red' });
+    } finally {
+      setSavingName(false);
+    }
+  }
+
   function copyShareLink() {
     if (!id) return;
     navigator.clipboard.writeText(publicFormUrl(id));
@@ -213,9 +245,38 @@ export function EntriesPage() {
                 <IconArrowLeft size={19} />
               </ActionIcon>
              
-              <Text fw={600} component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.formLink}>
-                {form.title}
-              </Text>
+              {editingName ? (
+                <Group gap={4} wrap="nowrap">
+                  <TextInput
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveName();
+                      if (e.key === 'Escape') setEditingName(false);
+                    }}
+                    size="sm"
+                    autoFocus
+                    disabled={savingName}
+                  />
+                  <ActionIcon variant="subtle" color="emerald" size="lg" aria-label="Save name" onClick={saveName} loading={savingName}>
+                    <IconCheck size={16} />
+                  </ActionIcon>
+                  <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Cancel" onClick={() => setEditingName(false)} disabled={savingName}>
+                    <IconX size={16} />
+                  </ActionIcon>
+                </Group>
+              ) : (
+                <Group gap={4} wrap="nowrap">
+                  <Text fw={600} component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.formLink}>
+                    {form.name || form.title}
+                  </Text>
+                  <Tooltip label="Rename form" withArrow>
+                    <ActionIcon variant="subtle" color="gray" size="sm" aria-label="Rename form" onClick={startEditingName}>
+                      <IconPencil size={14} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Group>
+              )}
             </Group>
             <Group gap="xs">
               <Button variant="default" radius="md" color="emerald" onClick={copyShareLink}>

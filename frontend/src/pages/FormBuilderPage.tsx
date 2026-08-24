@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text, Stack, Skeleton } from '@mantine/core';
-import { IconFileText, IconEye, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
+import { IconFileText, IconEye, IconEyeOff, IconWorld, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
@@ -106,6 +106,7 @@ export function FormBuilderPage() {
   const [shareOpen, setShareOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [dragging, setDragging] = useState<DragData | null>(null);
   const [savedSnapshot, setSavedSnapshot] = useState('');
   const [pendingLeave, setPendingLeave] = useState(false);
@@ -295,8 +296,12 @@ export function FormBuilderPage() {
         })
       );
       setLoadingForm(false);
+    }).catch(() => {
+      setLoadingForm(false);
+      notifications.show({ message: 'Could not load this form', color: 'red' });
+      navigate(`/${workspaceId}/forms`);
     });
-  }, [routeFormId, workspaceId]);
+  }, [routeFormId, workspaceId, navigate]);
 
   // A brand-new, never-saved form: its own starting state is "clean" — the
   // save button should stay disabled until something actually changes.
@@ -401,8 +406,7 @@ export function FormBuilderPage() {
     setSelectedId(field.id);
   }
 
-  async function handleSave() {
-    setSaving(true);
+  async function saveForm() {
     const payload = {
       name,
       title,
@@ -423,19 +427,31 @@ export function FormBuilderPage() {
     const form = savedFormId
       ? await updateForm(savedFormId, payload, workspaceId)
       : await createForm(payload, workspaceId);
-    setSaving(false);
     setSavedFormId(form._id);
     setSavedForm(form);
     setSavedSnapshot(currentSnapshot);
-    notifications.show({ message: 'Form saved', color: 'emerald' });
-    if (!savedFormId) setShareOpen(true);
     return form;
   }
 
-  async function handleTogglePublish() {
+  async function handleSave() {
     setSaving(true);
     try {
-      const base = isDirty || !savedFormId ? await handleSave() : savedForm;
+      const form = await saveForm();
+      notifications.show({ message: 'Form saved', color: 'emerald' });
+      if (!savedFormId) setShareOpen(true);
+      return form;
+    } catch {
+      notifications.show({ message: 'Could not save form', color: 'red' });
+      return undefined;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleTogglePublish() {
+    setPublishing(true);
+    try {
+      const base = isDirty || !savedFormId ? await saveForm() : savedForm;
       if (!base) return;
       const nextStatus = base.status === 'published' ? 'draft' : 'published';
       const updated = await updateForm(base._id, { status: nextStatus }, workspaceId);
@@ -444,8 +460,10 @@ export function FormBuilderPage() {
         message: nextStatus === 'published' ? 'Form published' : 'Form moved back to draft',
         color: nextStatus === 'published' ? 'emerald' : 'gray',
       });
+    } catch {
+      notifications.show({ message: 'Could not update publish status', color: 'red' });
     } finally {
-      setSaving(false);
+      setPublishing(false);
     }
   }
 
@@ -549,20 +567,28 @@ export function FormBuilderPage() {
             <Button
               variant="default"
               radius="md"
-              color={savedForm?.status === 'published' ? 'gray' : 'emerald'}
-              onClick={handleTogglePublish}
-              loading={saving}
-            >
-              {savedForm?.status === 'published' ? 'Unpublish' : 'Publish'}
-            </Button>
-            <Button
-              color="emerald"
-              radius="md"
               onClick={handleSave}
               loading={saving}
-              disabled={!isDirty}
+              disabled={!isDirty || publishing}
             >
               Save
+            </Button>
+            <Button
+              variant="filled"
+              color={savedForm?.status === 'published' ? 'gray' : 'emerald'}
+              radius="md"
+              leftSection={
+                savedForm?.status === 'published' ? (
+                  <IconEyeOff size={16} />
+                ) : (
+                  <IconWorld size={16} />
+                )
+              }
+              onClick={handleTogglePublish}
+              loading={publishing}
+              disabled={saving}
+            >
+              {savedForm?.status === 'published' ? 'Unpublish' : 'Publish'}
             </Button>
           </Group>
         </Group>

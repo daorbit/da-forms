@@ -100,9 +100,6 @@ export function PreviewModal({
           <Text fw={600} size="sm" truncate>
             {title || 'Untitled form'}
           </Text>
-          <Badge variant="light" color="gray" size="sm">
-            Preview
-          </Badge>
           {picked && (
             <Badge variant="light" color="violet" size="sm">
               {picked.name}

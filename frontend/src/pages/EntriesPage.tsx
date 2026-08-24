@@ -142,8 +142,12 @@ export function EntriesPage() {
 
   useEffect(() => {
     if (!id) return;
-    getForm(id, workspaceId).then(setForm);
-    getAnalytics(id, workspaceId).then(setAnalytics);
+    getForm(id, workspaceId)
+      .then(setForm)
+      .catch(() => notifications.show({ message: 'Could not load this form', color: 'red' }));
+    getAnalytics(id, workspaceId)
+      .then(setAnalytics)
+      .catch(() => notifications.show({ message: 'Could not load analytics', color: 'red' }));
   }, [id, workspaceId]);
 
   useEffect(() => {

@@ -169,8 +169,8 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
 
           <Box className={classes.panelBody}>
             {!published && (
-              <Paper withBorder radius="md" p="sm" mb="lg" bg="var(--mantine-color-yellow-0)">
-                <Text size="sm">
+              <Paper withBorder radius="md" p="sm" mb="lg" bg="var(--mantine-color-yellow-light)">
+                <Text size="sm" c="var(--mantine-color-yellow-light-color)">
                   This form is a draft. Turn on <strong>Share publicly</strong> below before sending
                   the link out.
                 </Text>

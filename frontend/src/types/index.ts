@@ -137,6 +137,8 @@ export interface ShowIfRule {
 
 export interface Form {
   _id: string;
+  /** Set once at creation; shown in the forms list. Independent of the canvas header text below. */
+  name: string;
   title: string;
   description?: string;
   workspaceId: string;

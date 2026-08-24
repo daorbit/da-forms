@@ -123,7 +123,8 @@ export function FormListPage() {
       const fields = form.fields.map(cloneWithNewIds);
       await createForm(
         {
-          title: `${form.title} (copy)`,
+          name: `${form.name} (copy)`,
+          title: form.title,
           description: form.description,
           fields,
           redirectUrl: form.redirectUrl,
@@ -296,7 +297,7 @@ export function FormListPage() {
                 </ThemeIcon>
                 <div>
                   <Link to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.title}>
-                    {form.title}
+                    {form.name}
                   </Link>
                   <Group gap={6}>
                     <Text size="sm" c="dimmed">
@@ -438,7 +439,7 @@ export function FormListPage() {
         centered
       >
         <Text size="sm">
-          Delete <strong>{pendingDelete?.title}</strong>? Its submissions stay in the database but the
+          Delete <strong>{pendingDelete?.name}</strong>? Its submissions stay in the database but the
           form and its public link stop working.
         </Text>
         <Group justify="flex-end" mt="lg">

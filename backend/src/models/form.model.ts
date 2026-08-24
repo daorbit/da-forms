@@ -102,6 +102,8 @@ export interface FormTheme {
 }
 
 export interface FormDocument {
+  /** Set once at creation; shown in the forms list. Independent of the canvas header text below. */
+  name: string;
   title: string;
   description?: string;
   workspaceId: string;
@@ -164,6 +166,7 @@ const fieldSchema = new Schema<FormField>(
 
 const formSchema = new Schema<FormDocument>(
   {
+    name: { type: String, required: true },
     title: { type: String, required: true },
     description: { type: String },
     workspaceId: { type: String, required: true, index: true },

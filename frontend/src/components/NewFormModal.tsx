@@ -53,6 +53,7 @@ export function NewFormModal({ opened, onClose }: Props) {
     try {
       const form = await createForm(
         {
+          name: title,
           title,
           description: template.formDescription,
           fields: template.fields,

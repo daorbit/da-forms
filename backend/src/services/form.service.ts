@@ -10,8 +10,8 @@ export interface Paginated<T> {
 }
 
 const sortMap = {
-  name: { title: 1 as const },
-  nameDesc: { title: -1 as const },
+  name: { name: 1 as const },
+  nameDesc: { name: -1 as const },
   date: { createdAt: -1 as const },
   dateAsc: { createdAt: 1 as const },
   status: { status: 1 as const },
@@ -37,7 +37,7 @@ export async function listForms(
   const page = Math.max(1, options.page ?? 1);
   const limit = Math.max(1, options.limit ?? 10);
   const filter: Record<string, unknown> = { workspaceId };
-  if (options.q) filter.title = { $regex: options.q, $options: 'i' };
+  if (options.q) filter.name = { $regex: options.q, $options: 'i' };
   const sort = sortMap[options.sort ?? 'date'];
 
   const [items, total, allForms] = await Promise.all([
@@ -77,6 +77,7 @@ export function getForm(id: string) {
 }
 
 export function createForm(input: {
+  name: string;
   title: string;
   description?: string;
   workspaceId: string;
@@ -100,6 +101,7 @@ export function updateForm(
   id: string,
   workspaceId: string,
   input: Partial<{
+    name: string;
     title: string;
     description: string;
     fields: FormField[];

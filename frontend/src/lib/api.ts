@@ -82,6 +82,7 @@ export function getForm(id: string, workspaceId = DEFAULT_WORKSPACE) {
 
 export function createForm(
   input: {
+    name: string;
     title: string;
     description?: string;
     fields: FormField[];

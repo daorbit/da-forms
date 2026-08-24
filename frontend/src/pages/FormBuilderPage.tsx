@@ -40,6 +40,7 @@ import { useUndoHistory } from '@/hooks/useUndoHistory';
 import classes from './FormBuilderPage.module.css';
 
 interface EditableState {
+  name: string;
   title: string;
   description: string;
   fields: FormField[];
@@ -74,6 +75,7 @@ export function FormBuilderPage() {
       }
     | null;
   const initialTitle = locationState?.title ?? 'Untitled form';
+  const [name, setName] = useState(initialTitle);
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(locationState?.templateDescription ?? '');
   const [fields, setFields] = useState<FormField[]>(
@@ -117,6 +119,7 @@ export function FormBuilderPage() {
   const currentSnapshot = useMemo(
     () =>
       JSON.stringify({
+        name,
         title,
         description,
         fields,
@@ -133,6 +136,7 @@ export function FormBuilderPage() {
         collectIp,
       }),
     [
+      name,
       title,
       description,
       fields,
@@ -153,6 +157,7 @@ export function FormBuilderPage() {
 
   const editableState: EditableState = useMemo(
     () => ({
+      name,
       title,
       description,
       fields,
@@ -169,6 +174,7 @@ export function FormBuilderPage() {
       collectIp,
     }),
     [
+      name,
       title,
       description,
       fields,
@@ -187,6 +193,7 @@ export function FormBuilderPage() {
   );
 
   const applyEditableState = useCallback((state: EditableState) => {
+    setName(state.name);
     setTitle(state.title);
     setDescription(state.description);
     setFields(state.fields);
@@ -253,6 +260,7 @@ export function FormBuilderPage() {
     if (!routeFormId) return;
     getForm(routeFormId, workspaceId).then((form) => {
       setSavedForm(form);
+      setName(form.name);
       setTitle(form.title);
       setDescription(form.description ?? '');
       setFields(form.fields);
@@ -269,6 +277,7 @@ export function FormBuilderPage() {
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
       setSavedSnapshot(
         JSON.stringify({
+          name: form.name,
           title: form.title,
           description: form.description ?? '',
           fields: form.fields,
@@ -395,6 +404,7 @@ export function FormBuilderPage() {
   async function handleSave() {
     setSaving(true);
     const payload = {
+      name,
       title,
       description,
       fields,
@@ -478,8 +488,8 @@ export function FormBuilderPage() {
             )}
             <TextInput
               variant="unstyled"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               fw={600}
               size="md"
               style={{ flex: 1, maxWidth: 400 }}

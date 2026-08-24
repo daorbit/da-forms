@@ -29,6 +29,7 @@ export const getForm: RequestHandler = async (req, res) => {
 
 export const createForm: RequestHandler = async (req, res) => {
   const {
+    name,
     title,
     description,
     fields,
@@ -45,6 +46,7 @@ export const createForm: RequestHandler = async (req, res) => {
     collectIp,
   } = req.body;
   const form = await formService.createForm({
+    name: name ?? title,
     title,
     description,
     fields: fields ?? [],

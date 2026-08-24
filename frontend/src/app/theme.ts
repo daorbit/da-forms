@@ -54,6 +54,9 @@ export const theme = createTheme({
     lg: '0 16px 40px -12px rgba(0,0,0,0.55)',
   },
   components: {
+    Tooltip: {
+      defaultProps: { color: 'dark.8' },
+    },
     Loader: { defaultProps: { type: 'oval' } },
     Card: { defaultProps: { radius: 'md' } },
     Button: { defaultProps: { radius: 'md' } },

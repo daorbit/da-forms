@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text, Stack, Skeleton } from '@mantine/core';
+import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text, Stack, Skeleton, Burger } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { IconFileText, IconEye, IconEyeOff, IconWorld, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
@@ -107,6 +108,7 @@ export function FormBuilderPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [navOpened, { toggle: toggleNav, close: closeNav }] = useDisclosure(false);
   const [dragging, setDragging] = useState<DragData | null>(null);
   const [savedSnapshot, setSavedSnapshot] = useState('');
   const [pendingLeave, setPendingLeave] = useState(false);
@@ -491,7 +493,7 @@ export function FormBuilderPage() {
     >
     <AppShell
       header={{ height: 60 }}
-      navbar={{ width: 300, breakpoint: 'sm' }}
+      navbar={{ width: 300, breakpoint: 'sm', collapsed: { mobile: !navOpened } }}
       aside={{ width: 52, breakpoint: 'sm' }}
       padding={0}
       classNames={{ main: classes.main }}
@@ -499,6 +501,7 @@ export function FormBuilderPage() {
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="xs" wrap="nowrap" style={{ flex: 1 }}>
+            <Burger opened={navOpened} onClick={toggleNav} hiddenFrom="sm" size="sm" />
             <Tooltip label="Back to all forms" position="bottom" withArrow>
               <ActionIcon
                 variant="subtle"
@@ -595,7 +598,12 @@ export function FormBuilderPage() {
       </AppShell.Header>
 
       <AppShell.Navbar>
-        <FieldPalette onAdd={addField} />
+        <FieldPalette
+          onAdd={(type, columns) => {
+            addField(type, columns);
+            closeNav();
+          }}
+        />
       </AppShell.Navbar>
 
       <AppShell.Main>

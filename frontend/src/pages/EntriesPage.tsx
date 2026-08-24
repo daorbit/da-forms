@@ -458,17 +458,39 @@ export function EntriesPage() {
 
               <Table.Tbody>
                 {loading && submissions.length === 0 ? (
-                  <Table.Tr>
-                    <Table.Td colSpan={columns.length + 2} className={classes.loadingCell}>
-                      <Loader size="sm" color="emerald" />
-                    </Table.Td>
-                  </Table.Tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <Table.Tr key={i}>
+                      {Array.from({ length: columns.length + 2 }).map((__, j) => (
+                        <Table.Td key={j}>
+                          <Skeleton height={16} width={j === 0 ? '70%' : '50%'} radius="sm" />
+                        </Table.Td>
+                      ))}
+                    </Table.Tr>
+                  ))
                 ) : submissions.length === 0 ? (
                   <Table.Tr>
                     <Table.Td colSpan={columns.length + 2}>
-                      <Text ta="center" py="xl" c="dimmed">
-                        No entries
-                      </Text>
+                      <Stack align="center" gap={4} py="xl">
+                        <ThemeIcon variant="light" color="gray" size={44} radius="xl">
+                          <IconMailOpened size={22} />
+                        </ThemeIcon>
+                        <Text fw={600} size="sm">
+                          No responses yet
+                        </Text>
+                        <Text size="xs" c="dimmed" ta="center" maw={320}>
+                          Share your form's link to start collecting responses.
+                        </Text>
+                        <Button
+                          variant="light"
+                          color="emerald"
+                          size="xs"
+                          mt="xs"
+                          leftSection={<IconShare2 size={14} />}
+                          onClick={copyShareLink}
+                        >
+                          Copy share link
+                        </Button>
+                      </Stack>
                     </Table.Td>
                   </Table.Tr>
                 ) : (

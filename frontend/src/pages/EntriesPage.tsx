@@ -286,8 +286,14 @@ export function EntriesPage() {
               <Button variant="default" radius="md" color="emerald" onClick={copyShareLink}>
                 Share
               </Button>
-              <Button color="emerald" radius="md" onClick={exportCsv}>
-                New Report
+              <Button
+                component={Link}
+                to={`/${workspaceId}/forms/${form._id}/edit`}
+                color="emerald"
+                radius="md"
+                leftSection={<IconPencil size={16} />}
+              >
+                Edit
               </Button>
             </Group>
           </>

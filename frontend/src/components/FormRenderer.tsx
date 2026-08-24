@@ -97,6 +97,7 @@ export function FormRenderer({
   const [honeypot, setHoneypot] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [pageError, setPageError] = useState(false);
   const textColor = resolveTextColor(theme);
   const accent = theme?.accentColor;
 
@@ -105,9 +106,22 @@ export function FormRenderer({
   const isLastPage = pageIndex === pages.length - 1;
   const currentPageFields = pages[pageIndex] ?? [];
 
+  /** A required field on this page that's hidden by showIf is excluded — the
+   *  same rule submission uses to drop hidden answers. */
+  function pageHasMissingRequired(pageFields: FormField[]): boolean {
+    return valueFields(pageFields).some(
+      (f) => f.required && isFieldVisible(f, values) && !(values[f.id] ?? '').trim()
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isMultiPage && !isLastPage) {
+      if (pageHasMissingRequired(currentPageFields)) {
+        setPageError(true);
+        return;
+      }
+      setPageError(false);
       setPageIndex((i) => i + 1);
       return;
     }
@@ -223,6 +237,12 @@ export function FormRenderer({
           </Stack>
         )}
 
+        {pageError && (
+          <Text size="sm" c="red" mt="xs">
+            Fill in the required fields on this page before continuing.
+          </Text>
+        )}
+
         <Stack gap="md" mt="lg">
           {fields.length === 0 ? (
             <Text c="dimmed" size="sm" ta="center" py="xl">
@@ -259,7 +279,10 @@ export function FormRenderer({
                     type="button"
                     variant="default"
                     size={buttonSize[submitButtonSize ?? 'medium']}
-                    onClick={() => setPageIndex((i) => i - 1)}
+                    onClick={() => {
+                      setPageError(false);
+                      setPageIndex((i) => i - 1);
+                    }}
                     style={{ flex: 1 }}
                   >
                     Back

@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import * as formController from '../controllers/form.controller.js';
 import { uploadFormFile } from '../controllers/upload.controller.js';
+import { asyncHandler } from '../middleware/async-handler.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -39,15 +40,15 @@ const submitLimiter = rateLimit({
  */
 export const workspaceFormRouter = Router({ mergeParams: true });
 
-workspaceFormRouter.get('/', formController.listForms);
-workspaceFormRouter.post('/', formController.createForm);
-workspaceFormRouter.get('/:id', formController.getForm);
-workspaceFormRouter.patch('/:id', formController.updateForm);
-workspaceFormRouter.delete('/:id', formController.deleteForm);
-workspaceFormRouter.get('/:id/submissions', formController.listSubmissions);
-workspaceFormRouter.patch('/:id/submissions/:subId', formController.updateSubmission);
-workspaceFormRouter.delete('/:id/submissions/:subId', formController.deleteSubmission);
-workspaceFormRouter.get('/:id/analytics', formController.getAnalytics);
+workspaceFormRouter.get('/', asyncHandler(formController.listForms));
+workspaceFormRouter.post('/', asyncHandler(formController.createForm));
+workspaceFormRouter.get('/:id', asyncHandler(formController.getForm));
+workspaceFormRouter.patch('/:id', asyncHandler(formController.updateForm));
+workspaceFormRouter.delete('/:id', asyncHandler(formController.deleteForm));
+workspaceFormRouter.get('/:id/submissions', asyncHandler(formController.listSubmissions));
+workspaceFormRouter.patch('/:id/submissions/:subId', asyncHandler(formController.updateSubmission));
+workspaceFormRouter.delete('/:id/submissions/:subId', asyncHandler(formController.deleteSubmission));
+workspaceFormRouter.get('/:id/analytics', asyncHandler(formController.getAnalytics));
 
 /**
  * The respondent-facing routes: reachable by form id alone, because that id is
@@ -55,7 +56,7 @@ workspaceFormRouter.get('/:id/analytics', formController.getAnalytics);
  */
 export const publicFormRouter = Router();
 
-publicFormRouter.get('/:id', formController.getPublicForm);
-publicFormRouter.post('/:id/submissions', submitLimiter, formController.submitForm);
-publicFormRouter.post('/:id/upload', uploadLimiter, upload.single('file'), uploadFormFile);
-publicFormRouter.post('/:id/view', formController.recordView);
+publicFormRouter.get('/:id', asyncHandler(formController.getPublicForm));
+publicFormRouter.post('/:id/submissions', submitLimiter, asyncHandler(formController.submitForm));
+publicFormRouter.post('/:id/upload', uploadLimiter, upload.single('file'), asyncHandler(uploadFormFile));
+publicFormRouter.post('/:id/view', asyncHandler(formController.recordView));

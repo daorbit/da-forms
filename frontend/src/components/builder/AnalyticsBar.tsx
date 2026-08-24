@@ -1,35 +1,30 @@
 import { useState } from 'react';
-import { SimpleGrid, Paper, Text, Group, ThemeIcon, Stack, Progress, Modal, UnstyledButton, Skeleton } from '@mantine/core';
+import { SimpleGrid, Box, Text, Group, Stack, Progress, Modal, UnstyledButton, Skeleton } from '@mantine/core';
 import { IconEye, IconInbox, IconTrendingUp, IconWorld, IconChevronRight } from '@tabler/icons-react';
 import type { Analytics } from '@/lib/api';
+import classes from './AnalyticsBar.module.css';
 
 function Stat({
   icon: Icon,
   label,
   value,
-  color,
 }: {
   icon: typeof IconEye;
   label: string;
   value: string;
-  color: string;
 }) {
   return (
-    <Paper withBorder radius="lg" p="lg">
-      <Group justify="space-between" align="flex-start" wrap="nowrap">
-        <div>
-          <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: 0.4 }}>
-            {label}
-          </Text>
-          <Text size="28px" fw={800} mt={4} style={{ lineHeight: 1 }}>
-            {value}
-          </Text>
-        </div>
-        <ThemeIcon variant="light" color={color} size={40} radius="md">
-          <Icon size={20} stroke={1.8} />
-        </ThemeIcon>
+    <Box className={classes.card} p="lg">
+      {/* Label first: the icon just marks what kind of number this is,
+          it doesn't need its own tinted badge to be legible. */}
+      <Group gap={6} wrap="nowrap" mb="sm">
+        <Icon size={14} style={{ color: 'var(--mantine-color-dimmed)', flexShrink: 0 }} />
+        <Text size="xs" c="dimmed" fw={500} truncate style={{ letterSpacing: '0.01em' }}>
+          {label}
+        </Text>
       </Group>
-    </Paper>
+      <Text className={classes.value}>{value}</Text>
+    </Box>
   );
 }
 
@@ -53,7 +48,12 @@ function SourceBreakdown({ sources }: { sources: Analytics['sources'] }) {
               {count.toLocaleString()} ({Math.round((count / total) * 100)}%)
             </Text>
           </Group>
-          <Progress value={(count / total) * 100} size="sm" color="cyan" />
+          <Progress
+            value={(count / total) * 100}
+            size="sm"
+            color="cyan"
+            styles={{ root: { backgroundColor: 'var(--mantine-color-default-hover)' } }}
+          />
         </div>
       ))}
     </Stack>
@@ -62,15 +62,12 @@ function SourceBreakdown({ sources }: { sources: Analytics['sources'] }) {
 
 function StatSkeleton() {
   return (
-    <Paper withBorder radius="lg" p="lg">
-      <Group justify="space-between" align="flex-start" wrap="nowrap">
-        <Stack gap={8}>
-          <Skeleton height={10} width={70} />
-          <Skeleton height={22} width={50} />
-        </Stack>
-        <Skeleton height={40} width={40} radius="md" />
-      </Group>
-    </Paper>
+    <Box className={classes.card} p="lg">
+      <Stack gap={8}>
+        <Skeleton height={10} width={70} />
+        <Skeleton height={26} width={60} />
+      </Stack>
+    </Box>
   );
 }
 
@@ -90,37 +87,36 @@ export function AnalyticsBar({ analytics }: { analytics: Analytics | null }) {
   return (
     <>
       <SimpleGrid cols={{ base: 1, sm: 4 }} spacing="md" px="md" py="md">
-        <Stat icon={IconEye} label="Views" value={analytics.viewCount.toLocaleString()} color="blue" />
-        <Stat
-          icon={IconInbox}
-          label="Submissions"
-          value={analytics.submissionCount.toLocaleString()}
-          color="emerald"
-        />
-        <Stat
-          icon={IconTrendingUp}
-          label="Completion rate"
-          value={`${Math.round(analytics.completionRate * 100)}%`}
-          color="grape"
-        />
-        <UnstyledButton onClick={() => setSourcesOpen(true)}>
-          <Paper withBorder radius="lg" p="lg">
-            <Group justify="space-between" align="center" wrap="nowrap">
-              <Group gap="sm" wrap="nowrap">
-                <ThemeIcon variant="light" color="cyan" size={40} radius="md">
-                  <IconWorld size={20} stroke={1.8} />
-                </ThemeIcon>
-                <Text size="sm" fw={600}>
-                  Traffic sources
+        <Stat icon={IconEye} label="Views" value={analytics.viewCount.toLocaleString()} />
+        <Stat icon={IconInbox} label="Submissions" value={analytics.submissionCount.toLocaleString()} />
+        <Stat icon={IconTrendingUp} label="Completion rate" value={`${Math.round(analytics.completionRate * 100)}%`} />
+        <UnstyledButton className={classes.cardButton} onClick={() => setSourcesOpen(true)}>
+          <Box className={classes.card} p="lg">
+            <Group justify="space-between" align="flex-start" wrap="nowrap">
+              <div style={{ minWidth: 0 }}>
+                <Group gap={6} wrap="nowrap" mb="sm">
+                  <IconWorld size={14} style={{ color: 'var(--mantine-color-dimmed)', flexShrink: 0 }} />
+                  <Text size="xs" c="dimmed" fw={500} truncate style={{ letterSpacing: '0.01em' }}>
+                    Traffic sources
+                  </Text>
+                </Group>
+                <Text className={classes.value} truncate>
+                  {analytics.sources[0]?.source ?? '—'}
                 </Text>
-              </Group>
-              <IconChevronRight size={18} className="analytics-source-arrow" />
+              </div>
+              <IconChevronRight size={16} style={{ color: 'var(--mantine-color-dimmed)', flexShrink: 0, marginTop: 6 }} />
             </Group>
-          </Paper>
+          </Box>
         </UnstyledButton>
       </SimpleGrid>
 
-      <Modal opened={sourcesOpen} onClose={() => setSourcesOpen(false)} title="Traffic sources" centered>
+      <Modal
+        opened={sourcesOpen}
+        onClose={() => setSourcesOpen(false)}
+        title="Traffic sources"
+        centered
+        overlayProps={{ backgroundOpacity: 0.65, blur: 2 }}
+      >
         <SourceBreakdown sources={analytics.sources} />
       </Modal>
     </>

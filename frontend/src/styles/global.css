@@ -130,6 +130,13 @@ html[data-mantine-color-scheme='dark'] .mantine-Drawer-close:hover {
   color: #f2f4f6 !important;
 }
 
+/* Mantine's red Menu.Item hover is calibrated for a light background —
+   in dark mode it reads as a solid saturated block instead of a subtle tint. */
+html[data-mantine-color-scheme='dark'] .mantine-Menu-item[data-color='red']:hover {
+  background-color: rgba(224, 49, 49, 0.18) !important;
+  color: #ff8787 !important;
+}
+
 .analytics-source-arrow {
   color: var(--mantine-color-dimmed);
   transition: color 120ms ease, transform 120ms ease;

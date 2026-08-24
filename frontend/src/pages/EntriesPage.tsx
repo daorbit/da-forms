@@ -140,15 +140,20 @@ export function EntriesPage() {
       .finally(() => setLoading(false));
   }, [id, workspaceId, page, status, day, view]);
 
+  const loadAnalytics = useCallback(() => {
+    if (!id) return;
+    getAnalytics(id, workspaceId)
+      .then(setAnalytics)
+      .catch(() => notifications.show({ message: 'Could not load analytics', color: 'red' }));
+  }, [id, workspaceId]);
+
   useEffect(() => {
     if (!id) return;
     getForm(id, workspaceId)
       .then(setForm)
       .catch(() => notifications.show({ message: 'Could not load this form', color: 'red' }));
-    getAnalytics(id, workspaceId)
-      .then(setAnalytics)
-      .catch(() => notifications.show({ message: 'Could not load analytics', color: 'red' }));
-  }, [id, workspaceId]);
+    loadAnalytics();
+  }, [id, workspaceId, loadAnalytics]);
 
   useEffect(() => {
     loadSubmissions();
@@ -179,6 +184,7 @@ export function EntriesPage() {
       await deleteSubmission(id, pendingDelete._id, workspaceId);
       setSubmissions((prev) => prev.filter((s) => s._id !== pendingDelete._id));
       setTotal((prev) => prev - 1);
+      loadAnalytics();
       notifications.show({ message: 'Response deleted', color: 'emerald' });
       setPendingDelete(null);
     } finally {
@@ -389,7 +395,10 @@ export function EntriesPage() {
             <ActionIcon
               variant="subtle"
               color="gray"
-              onClick={loadSubmissions}
+              onClick={() => {
+                loadSubmissions();
+                loadAnalytics();
+              }}
               loading={loading}
               aria-label="Refresh responses"
             >
@@ -464,15 +473,11 @@ export function EntriesPage() {
 
               <Table.Tbody>
                 {loading && submissions.length === 0 ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <Table.Tr key={i}>
-                      {Array.from({ length: columns.length + 2 }).map((__, j) => (
-                        <Table.Td key={j}>
-                          <Skeleton height={16} width={j === 0 ? '70%' : '50%'} radius="sm" />
-                        </Table.Td>
-                      ))}
-                    </Table.Tr>
-                  ))
+                  <Table.Tr>
+                    <Table.Td colSpan={columns.length + 2} className={classes.loadingCell}>
+                      <Loader size="sm" color="emerald" />
+                    </Table.Td>
+                  </Table.Tr>
                 ) : submissions.length === 0 ? (
                   <Table.Tr>
                     <Table.Td colSpan={columns.length + 2}>

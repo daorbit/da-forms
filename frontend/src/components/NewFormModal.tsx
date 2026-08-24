@@ -165,25 +165,27 @@ export function NewFormModal({ opened, onClose }: Props) {
               )}
             </div>
 
-            <ScrollArea className={classes.previewPane} type="auto">
-              <Box
-                className={`da-forms-light-surface ${classes.previewInner}`}
-                data-mantine-color-scheme="light"
-                style={{ backgroundColor: activeTemplate.theme?.pageBg ?? 'var(--mantine-color-gray-1)' }}
-              >
-                <Box className={classes.previewCard}>
-                  <FormRenderer
-                    key={activeTemplate.id}
-                    title={activeTemplate.title}
-                    description={activeTemplate.formDescription}
-                    fields={activeTemplate.fields}
-                    theme={activeTemplate.theme}
-                    submitLabel={activeTemplate.submitLabel}
-                    hideHeader={activeTemplate.hideHeader}
-                  />
+            {activeTemplate.id !== 'blank' && (
+              <ScrollArea className={classes.previewPane} type="auto">
+                <Box
+                  className={`da-forms-light-surface ${classes.previewInner}`}
+                  data-mantine-color-scheme="light"
+                  style={{ backgroundColor: activeTemplate.theme?.pageBg ?? 'var(--mantine-color-gray-1)' }}
+                >
+                  <Box className={classes.previewCard}>
+                    <FormRenderer
+                      key={activeTemplate.id}
+                      title={activeTemplate.title}
+                      description={activeTemplate.formDescription}
+                      fields={activeTemplate.fields}
+                      theme={activeTemplate.theme}
+                      submitLabel={activeTemplate.submitLabel}
+                      hideHeader={activeTemplate.hideHeader}
+                    />
+                  </Box>
                 </Box>
-              </Box>
-            </ScrollArea>
+              </ScrollArea>
+            )}
           </Box>
 
           <Group justify="space-between">

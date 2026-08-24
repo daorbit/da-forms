@@ -19,7 +19,8 @@ export function NewFormModal({ opened, onClose }: Props) {
   const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState('');
   const [scope, setScope] = useState<NonNullable<FormTheme['scope']>>('page');
-  const [templateId, setTemplateId] = useState(formTemplates[0].id);
+  const defaultTemplateId = formTemplates.find((t) => t.id !== 'blank')?.id ?? formTemplates[0].id;
+  const [templateId, setTemplateId] = useState(defaultTemplateId);
 
   const activeTemplate = formTemplates.find((t) => t.id === templateId) ?? formTemplates[0];
 
@@ -27,7 +28,7 @@ export function NewFormModal({ opened, onClose }: Props) {
     setStep(1);
     setName('');
     setScope('page');
-    setTemplateId(formTemplates[0].id);
+    setTemplateId(defaultTemplateId);
   }
 
   function handleClose() {

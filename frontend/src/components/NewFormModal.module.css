@@ -38,7 +38,7 @@
 .templateItemActive,
 .templateItemActive:hover {
   border-color: var(--mantine-color-emerald-6) !important;
-  background-color: var(--mantine-color-emerald-0);
+  background-color: light-dark(var(--mantine-color-emerald-0), var(--mantine-color-emerald-9));
 }
 
 .blankItem {

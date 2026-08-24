@@ -185,11 +185,11 @@
   z-index: 1;
 }
 
-.hoverToolbar :global(.mantine-ActionIcon-root) {
+.hoverToolbar :global(.mantine-ActionIcon-root[data-variant='subtle']) {
   color: #495057 !important;
 }
 
-.hoverToolbar :global(.mantine-ActionIcon-root:hover) {
+.hoverToolbar :global(.mantine-ActionIcon-root[data-variant='subtle']:hover) {
   background-color: #f1f3f5 !important;
   color: #1a1b1e !important;
 }

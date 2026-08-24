@@ -294,7 +294,7 @@ export function FormBuilderPage() {
   // Skipped when a template pre-filled it: that's already a change worth
   // saving, not a blank slate.
   useEffect(() => {
-    if (routeFormId || locationState?.templateFields?.length) return;
+    if (routeFormId || locationState) return;
     setSavedSnapshot(currentSnapshot);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeFormId]);

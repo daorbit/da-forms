@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, ScrollArea, UnstyledButton } from '@mantine/core';
+import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, ScrollArea, UnstyledButton, Loader } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconPlus } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
@@ -46,7 +46,7 @@ export function NewFormModal({ opened, onClose }: Props) {
     setStep(2);
   }
 
-  async function handleCreate() {
+  async function handleCreate(template: (typeof formTemplates)[number] = activeTemplate) {
     const title = name.trim();
     if (!title) return;
     setCreating(true);
@@ -54,11 +54,11 @@ export function NewFormModal({ opened, onClose }: Props) {
       const form = await createForm(
         {
           title,
-          description: activeTemplate.formDescription,
-          fields: activeTemplate.fields,
-          hideHeader: activeTemplate.hideHeader,
-          submitLabel: activeTemplate.submitLabel,
-          theme: activeTemplate.theme ?? { scope },
+          description: template.formDescription,
+          fields: template.fields,
+          hideHeader: template.hideHeader,
+          submitLabel: template.submitLabel,
+          theme: template.theme ?? { scope },
         },
         workspaceId
       );
@@ -130,11 +130,19 @@ export function NewFormModal({ opened, onClose }: Props) {
                 tpl.id === 'blank' ? (
                   <UnstyledButton
                     key={tpl.id}
-                    onClick={() => setTemplateId(tpl.id)}
+                    onClick={() => {
+                      setTemplateId(tpl.id);
+                      handleCreate(tpl);
+                    }}
+                    disabled={creating}
                     className={`${classes.templateItem} ${classes.blankItem} ${tpl.id === templateId ? classes.templateItemActive : ''}`}
                     style={{ width: '100%', boxSizing: 'border-box' }}
                   >
-                    <IconPlus size={20} color="var(--mantine-color-emerald-6)" />
+                    {creating && templateId === tpl.id ? (
+                      <Loader size="sm" color="emerald" />
+                    ) : (
+                      <IconPlus size={20} color="var(--mantine-color-emerald-6)" />
+                    )}
                     <Text size="sm" fw={600}>
                       {tpl.name}
                     </Text>
@@ -186,7 +194,7 @@ export function NewFormModal({ opened, onClose }: Props) {
               <Button variant="default" onClick={handleClose} disabled={creating}>
                 Cancel
               </Button>
-              <Button color="emerald" onClick={handleCreate} loading={creating}>
+              <Button color="emerald" onClick={() => handleCreate()} loading={creating}>
                 Create form
               </Button>
             </Group>

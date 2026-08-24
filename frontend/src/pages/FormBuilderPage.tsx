@@ -525,7 +525,7 @@ export function FormBuilderPage() {
               loading={saving}
               disabled={!isDirty}
             >
-              {savedFormId ? 'Save' : 'Access Form'}
+              {savedFormId ? 'Save' : 'Publish Form'}
             </Button>
           </Group>
         </Group>

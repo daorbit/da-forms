@@ -221,7 +221,7 @@ export function EntriesPage() {
               <Button variant="default" radius="md" color="emerald" onClick={copyShareLink}>
                 Share
               </Button>
-              <Button color="emerald" radius="md">
+              <Button color="emerald" radius="md" onClick={exportCsv}>
                 New Report
               </Button>
             </Group>

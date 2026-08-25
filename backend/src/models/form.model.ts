@@ -88,9 +88,49 @@ export interface ShowIfRule {
   value?: string;
 }
 
+export type BackgroundSize = 'cover' | 'contain' | 'repeat';
+
+export type BackgroundPosition =
+  | 'center'
+  | 'top'
+  | 'bottom'
+  | 'left'
+  | 'right'
+  | 'top left'
+  | 'top right'
+  | 'bottom left'
+  | 'bottom right';
+
+export interface BackgroundLayer {
+  image?: string;
+  gradient?: string;
+  size?: BackgroundSize;
+  position?: BackgroundPosition;
+  overlay?: string;
+  overlayOpacity?: number;
+  fixed?: boolean;
+}
+
+export type FontFamilyId = 'system' | 'inter' | 'serif' | 'mono' | 'rounded';
+
+/** How a multi-step form shows the respondent where they are. */
+export type StepIndicator = 'progress' | 'stepper' | 'dots' | 'counter' | 'none';
+
+export interface FormStep {
+  title?: string;
+  description?: string;
+}
+
 export interface FormTheme {
   scope?: 'page' | 'card';
   pageBg?: string;
+  pageBackground?: BackgroundLayer;
+  cardBackground?: BackgroundLayer;
+  cardRadius?: number;
+  cardShadow?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  cardOpacity?: number;
+  cardBlur?: number;
+  fontFamily?: FontFamilyId;
   cardBg?: string;
   cardBorder?: string;
   accentColor?: string;
@@ -120,6 +160,10 @@ export interface FormDocument {
   /** Text alignment for the title/description block. */
   headerAlign?: SubmitButtonAlign;
   theme?: FormTheme;
+  /** Per-page names for a multi-step form, indexed by page. */
+  steps?: FormStep[];
+  stepIndicator?: StepIndicator;
+  showStepHeadings?: boolean;
   collectIp?: boolean;
   /** Total public-page loads — the denominator for completion rate. */
   viewCount: number;
@@ -164,6 +208,27 @@ const fieldSchema = new Schema<FormField>(
   { _id: false }
 );
 
+const backgroundLayerSchema = new Schema<BackgroundLayer>(
+  {
+    image: { type: String },
+    gradient: { type: String },
+    size: { type: String, enum: ['cover', 'contain', 'repeat'] },
+    position: { type: String },
+    overlay: { type: String },
+    overlayOpacity: { type: Number, min: 0, max: 100 },
+    fixed: { type: Boolean },
+  },
+  { _id: false }
+);
+
+const stepSchema = new Schema<FormStep>(
+  {
+    title: { type: String },
+    description: { type: String },
+  },
+  { _id: false }
+);
+
 const formSchema = new Schema<FormDocument>(
   {
     name: { type: String },
@@ -186,6 +251,13 @@ const formSchema = new Schema<FormDocument>(
         {
           scope: { type: String, enum: ['page', 'card'] },
           pageBg: { type: String },
+          pageBackground: { type: backgroundLayerSchema },
+          cardBackground: { type: backgroundLayerSchema },
+          cardRadius: { type: Number, min: 0, max: 48 },
+          cardShadow: { type: String, enum: ['none', 'sm', 'md', 'lg', 'xl'] },
+          cardOpacity: { type: Number, min: 0, max: 100 },
+          cardBlur: { type: Number, min: 0, max: 40 },
+          fontFamily: { type: String, enum: ['system', 'inter', 'serif', 'mono', 'rounded'] },
           cardBg: { type: String },
           cardBorder: { type: String },
           accentColor: { type: String },
@@ -198,6 +270,9 @@ const formSchema = new Schema<FormDocument>(
         { _id: false }
       ),
     },
+    steps: { type: [stepSchema], default: undefined },
+    stepIndicator: { type: String, enum: ['progress', 'stepper', 'dots', 'counter', 'none'] },
+    showStepHeadings: { type: Boolean },
     collectIp: { type: Boolean },
     viewCount: { type: Number, default: 0 },
   },

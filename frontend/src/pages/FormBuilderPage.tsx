@@ -7,7 +7,7 @@ import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
-import type { Form, FormField, FieldType, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '@/types';
+import type { Form, FormField, FieldType, FormStep, StepIndicator, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '@/types';
 import { ShareModal } from '@/components/share/ShareModal';
 import {
   DndContext,
@@ -36,6 +36,7 @@ import { IconRail, type RailPanel } from '@/components/builder/IconRail';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
 import { QuickSettingsDrawer } from '@/components/builder/QuickSettingsDrawer';
 import { ThemeDrawer } from '@/components/builder/ThemeDrawer';
+import { StepsDrawer } from '@/components/builder/StepsDrawer';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { useUndoHistory } from '@/hooks/useUndoHistory';
 import classes from './FormBuilderPage.module.css';
@@ -55,6 +56,9 @@ interface EditableState {
   submitButtonWidth: SubmitButtonWidth;
   submitButtonAlign: SubmitButtonAlign;
   theme: FormTheme;
+  steps: FormStep[];
+  stepIndicator: StepIndicator;
+  showStepHeadings: boolean;
   collectIp: boolean;
 }
 
@@ -100,6 +104,9 @@ export function FormBuilderPage() {
   const [theme, setTheme] = useState<FormTheme>(
     locationState?.templateTheme ?? { scope: locationState?.themeScope ?? 'page' }
   );
+  const [steps, setSteps] = useState<FormStep[]>([]);
+  const [stepIndicator, setStepIndicator] = useState<StepIndicator>('progress');
+  const [showStepHeadings, setShowStepHeadings] = useState(false);
   const [collectIp, setCollectIp] = useState(false);
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [loadingForm, setLoadingForm] = useState(!!routeFormId);
@@ -136,6 +143,9 @@ export function FormBuilderPage() {
         submitButtonWidth,
         submitButtonAlign,
         theme,
+        steps,
+        stepIndicator,
+        showStepHeadings,
         collectIp,
       }),
     [
@@ -153,6 +163,9 @@ export function FormBuilderPage() {
       submitButtonSize,
       submitButtonWidth,
       submitButtonAlign,
+      steps,
+      stepIndicator,
+      showStepHeadings,
       collectIp,
     ]
   );
@@ -174,6 +187,9 @@ export function FormBuilderPage() {
       submitButtonWidth,
       submitButtonAlign,
       theme,
+      steps,
+      stepIndicator,
+      showStepHeadings,
       collectIp,
     }),
     [
@@ -191,6 +207,9 @@ export function FormBuilderPage() {
       submitButtonWidth,
       submitButtonAlign,
       theme,
+      steps,
+      stepIndicator,
+      showStepHeadings,
       collectIp,
     ]
   );
@@ -210,6 +229,9 @@ export function FormBuilderPage() {
     setSubmitButtonWidth(state.submitButtonWidth);
     setSubmitButtonAlign(state.submitButtonAlign);
     setTheme(state.theme);
+    setSteps(state.steps);
+    setStepIndicator(state.stepIndicator);
+    setShowStepHeadings(state.showStepHeadings);
     setCollectIp(state.collectIp);
     // The selected/editing field may not exist in this snapshot's tree.
     setSelectedId((id) => (id && findField(state.fields, id) ? id : null));
@@ -276,6 +298,9 @@ export function FormBuilderPage() {
       setSubmitButtonWidth(form.submitButtonWidth ?? 100);
       setSubmitButtonAlign(form.submitButtonAlign ?? 'center');
       setTheme(form.theme ?? { scope: 'page' });
+      setSteps(form.steps ?? []);
+      setStepIndicator(form.stepIndicator ?? 'progress');
+      setShowStepHeadings(form.showStepHeadings ?? false);
       setCollectIp(form.collectIp ?? false);
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
       setSavedSnapshot(
@@ -294,6 +319,9 @@ export function FormBuilderPage() {
           submitButtonWidth: form.submitButtonWidth ?? 100,
           submitButtonAlign: form.submitButtonAlign ?? 'center',
           theme: form.theme ?? { scope: 'page' },
+          steps: form.steps ?? [],
+          stepIndicator: form.stepIndicator ?? 'progress',
+          showStepHeadings: form.showStepHeadings ?? false,
           collectIp: form.collectIp ?? false,
         })
       );
@@ -424,6 +452,9 @@ export function FormBuilderPage() {
       submitButtonWidth,
       submitButtonAlign,
       theme,
+      steps,
+      stepIndicator,
+      showStepHeadings,
       collectIp,
     };
     const form = savedFormId
@@ -685,6 +716,19 @@ export function FormBuilderPage() {
         onChange={(patch) => setTheme((prev) => ({ ...prev, ...patch }))}
       />
 
+      <StepsDrawer
+        opened={railPanel === 'steps'}
+        onClose={() => setRailPanel(null)}
+        fields={fields}
+        settings={{ steps, stepIndicator, showStepHeadings }}
+        accent={theme.accentColor}
+        onChange={(patch) => {
+          if (patch.steps) setSteps(patch.steps);
+          if (patch.stepIndicator) setStepIndicator(patch.stepIndicator);
+          if (patch.showStepHeadings !== undefined) setShowStepHeadings(patch.showStepHeadings);
+        }}
+      />
+
       <ThankYouDrawer
         opened={railPanel === 'thankYou'}
         onClose={() => setRailPanel(null)}
@@ -708,6 +752,9 @@ export function FormBuilderPage() {
         submitButtonWidth={submitButtonWidth}
         submitButtonAlign={submitButtonAlign}
         theme={theme}
+        steps={steps}
+        stepIndicator={stepIndicator}
+        showStepHeadings={showStepHeadings}
         onApplyTheme={(patch) => setTheme((prev) => ({ ...prev, ...patch }))}
       />
 

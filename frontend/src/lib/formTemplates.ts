@@ -1,4 +1,4 @@
-import type { FormField, FormTheme } from '@/types';
+import type { FormField, FormStep, FormTheme, StepIndicator } from '@/types';
 import { makeField } from './fieldPalette';
 
 export interface FormTemplate {
@@ -11,10 +11,30 @@ export interface FormTemplate {
   theme?: FormTheme;
   submitLabel?: string;
   hideHeader?: boolean;
+  /** Names for each page, when the template ships with page breaks. */
+  steps?: FormStep[];
+  stepIndicator?: StepIndicator;
+  showStepHeadings?: boolean;
 }
 
-function field(type: Parameters<typeof makeField>[0], overrides: Partial<FormField>): FormField {
+function field(type: Parameters<typeof makeField>[0], overrides: Partial<FormField> = {}): FormField {
   return { ...makeField(type), ...overrides };
+}
+
+/** A two-column row — the layout most professional templates are built from. */
+function row(...columns: FormField[][]): FormField {
+  return {
+    id: crypto.randomUUID(),
+    type: 'grid',
+    label: '',
+    required: false,
+    columns,
+  };
+}
+
+/** Splits the fields before it from the fields after it into separate steps. */
+function pageBreak(): FormField {
+  return field('pageBreak');
 }
 
 export const formTemplates: FormTemplate[] = [

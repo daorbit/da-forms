@@ -6,6 +6,7 @@ import { notifications } from '@mantine/notifications';
 import { getPublicForm, submitForm, recordView, ApiError } from '@/lib/api';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
+import { pageSurfaceStyle, hasBackgroundLayer, cardSurfaceStyle } from '@/lib/formBackground';
 
 export function PublicFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -155,7 +156,8 @@ export function PublicFormPage() {
       </Center>
     );
 
-  const pageThemed = form.theme?.scope !== 'card' && form.theme?.pageBg;
+  const pageThemed =
+    form.theme?.scope !== 'card' && (form.theme?.pageBg || hasBackgroundLayer(form.theme?.pageBackground));
   // "Embedded on a site" means only the card is meant to have a look at all —
   // centering it in a page-sized container adds a margin no host page asked
   // for, whether this is genuinely inside an iframe or opened directly. The
@@ -171,9 +173,12 @@ export function PublicFormPage() {
       style={{
         minHeight: '100vh',
         ...(pageThemed
-          ? { backgroundColor: form.theme?.pageBg }
+          ? pageSurfaceStyle(form.theme)
           : cardScope
-            ? { backgroundColor: form.theme?.cardBg }
+            ? // No host page behind a card-scope form opened directly — the
+              // wrapper borrows the card's own surface so nothing mismatched
+              // shows beneath a short form.
+              { backgroundColor: cardSurfaceStyle(form.theme).backgroundColor }
             : undefined),
       }}
     >
@@ -191,6 +196,9 @@ export function PublicFormPage() {
           submitButtonWidth={form.submitButtonWidth}
           submitButtonAlign={form.submitButtonAlign}
           theme={form.theme}
+          steps={form.steps}
+          stepIndicator={form.stepIndicator}
+          showStepHeadings={form.showStepHeadings}
           submitting={submitting}
           onSubmit={handleSubmit}
         />

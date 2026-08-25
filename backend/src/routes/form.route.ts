@@ -2,7 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import * as formController from '../controllers/form.controller.js';
-import { uploadFormFile } from '../controllers/upload.controller.js';
+import { uploadFormFile, uploadBackgroundImage } from '../controllers/upload.controller.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 
 const upload = multer({
@@ -49,6 +49,13 @@ workspaceFormRouter.get('/:id/submissions', asyncHandler(formController.listSubm
 workspaceFormRouter.patch('/:id/submissions/:subId', asyncHandler(formController.updateSubmission));
 workspaceFormRouter.delete('/:id/submissions/:subId', asyncHandler(formController.deleteSubmission));
 workspaceFormRouter.get('/:id/analytics', asyncHandler(formController.getAnalytics));
+// Editor-facing: theme background images. Same 15MB multer cap as respondent uploads.
+workspaceFormRouter.post(
+  '/backgrounds',
+  uploadLimiter,
+  upload.single('file'),
+  asyncHandler(uploadBackgroundImage)
+);
 
 /**
  * The respondent-facing routes: reachable by form id alone, because that id is

@@ -11,6 +11,8 @@ import {
 import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { THEME_PRESETS } from '@/lib/themePresets';
+import { pageSurfaceStyle } from '@/lib/formBackground';
+import type { FormStep, StepIndicator } from '@/types';
 import { PresetCard } from './PresetCard';
 import classes from './PreviewModal.module.css';
 
@@ -37,6 +39,9 @@ interface Props {
   submitButtonWidth?: SubmitButtonWidth;
   submitButtonAlign?: SubmitButtonAlign;
   theme?: FormTheme;
+  steps?: FormStep[];
+  stepIndicator?: StepIndicator;
+  showStepHeadings?: boolean;
   /** Applies a preset's colors straight to the builder's theme state. */
   onApplyTheme?: (patch: Partial<FormTheme>) => void;
 }
@@ -59,6 +64,9 @@ export function PreviewModal({
   submitButtonWidth,
   submitButtonAlign,
   theme,
+  steps,
+  stepIndicator,
+  showStepHeadings,
   onApplyTheme,
 }: Props) {
   const [device, setDevice] = useState<Device>('desktop');
@@ -146,7 +154,7 @@ export function PreviewModal({
         <Box
           className={`${classes.stage} da-forms-light-surface`}
           data-mantine-color-scheme="light"
-          style={shownTheme?.scope !== 'card' ? { backgroundColor: shownTheme?.pageBg } : undefined}
+          style={shownTheme?.scope !== 'card' ? pageSurfaceStyle(shownTheme) : undefined}
         >
           <Box className={classes.viewport} style={{ width: active.width, maxWidth: '100%' }}>
             {/* Remount per open so each preview starts from the initial values. */}
@@ -163,6 +171,9 @@ export function PreviewModal({
               submitButtonWidth={submitButtonWidth}
               submitButtonAlign={submitButtonAlign}
               theme={shownTheme}
+              steps={steps}
+              stepIndicator={stepIndicator}
+              showStepHeadings={showStepHeadings}
             />
             <Text size="xs" c="dimmed" ta="center" mt="md">
               Submissions are not recorded in preview.

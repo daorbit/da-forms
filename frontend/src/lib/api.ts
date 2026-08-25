@@ -203,3 +203,19 @@ export async function uploadFormFile(
   }
   return res.json();
 }
+
+/** Uploads a theme background image for the editor. Workspace-scoped, unlike respondent uploads. */
+export async function uploadBackgroundImage(
+  file: File,
+  workspaceId = DEFAULT_WORKSPACE
+): Promise<{ url: string; name: string }> {
+  const body = new FormData();
+  body.append('file', file);
+  // Not `request()`: that helper always sends JSON, but this is multipart.
+  const res = await fetch(`${BASE_URL}${ws(workspaceId)}/backgrounds`, { method: 'POST', body });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw new ApiError(res.status, errBody?.error, errBody?.message ?? `${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}

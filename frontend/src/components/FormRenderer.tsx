@@ -1,9 +1,21 @@
 import { useMemo, useState } from 'react';
-import { Paper, Title, Text, Button, Stack, SimpleGrid, Group, Progress } from '@mantine/core';
-import type { FormField, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '@/types';
+import { Paper, Title, Text, Button, Stack, SimpleGrid, Group } from '@mantine/core';
+import type {
+  FormField,
+  FormStep,
+  LabelPlacement,
+  StepIndicator,
+  SubmitButtonSize,
+  SubmitButtonWidth,
+  SubmitButtonAlign,
+  FormTheme,
+} from '@/types';
 import { FieldControl } from '@/components/FieldControl';
+import { StepIndicatorBar } from '@/components/StepIndicatorBar';
 import { valueFields } from '@/lib/fieldTree';
 import { resolveTextColor } from '@/lib/formTheme';
+import { cardSurfaceStyle } from '@/lib/formBackground';
+import { resolveSteps, splitIntoPages } from '@/lib/formSteps';
 import { isFieldVisible } from '@/utils/conditionalLogic';
 import { uploadFormFile } from '@/lib/api';
 import { fileTypes, acceptFor } from '@/lib/fieldPalette';
@@ -22,6 +34,12 @@ interface Props {
   submitButtonWidth?: SubmitButtonWidth;
   submitButtonAlign?: SubmitButtonAlign;
   theme?: FormTheme;
+  /** Per-page names, indexed by page. */
+  steps?: FormStep[];
+  /** Which progress indicator a multi-step form shows. Defaults to 'progress'. */
+  stepIndicator?: StepIndicator;
+  /** Renders each step's title/description above its fields. */
+  showStepHeadings?: boolean;
   submitting?: boolean;
   /** Omitted in preview, where nothing is recorded and there is no spam to guard against. */
   onSubmit?: (values: Record<string, string>) => void;
@@ -32,19 +50,6 @@ const buttonSize: Record<SubmitButtonSize, string> = {
   medium: 'sm',
   large: 'md',
 };
-
-/** Top-level `pageBreak` fields split the form; a break never nests inside a grid. */
-function splitIntoPages(fields: FormField[]): FormField[][] {
-  const pages: FormField[][] = [[]];
-  for (const field of fields) {
-    if (field.type === 'pageBreak') {
-      pages.push([]);
-    } else {
-      pages[pages.length - 1].push(field);
-    }
-  }
-  return pages;
-}
 
 // Resolved fresh on every mount rather than stored literally, or a form
 // saved today would keep prefilling today's date on every future visit.
@@ -89,6 +94,9 @@ export function FormRenderer({
   submitButtonWidth,
   submitButtonAlign,
   theme,
+  steps,
+  stepIndicator,
+  showStepHeadings,
   submitting,
   onSubmit,
 }: Props) {
@@ -102,6 +110,7 @@ export function FormRenderer({
   const accent = theme?.accentColor;
 
   const pages = useMemo(() => splitIntoPages(fields), [fields]);
+  const resolvedSteps = useMemo(() => resolveSteps(fields, steps), [fields, steps]);
   const isMultiPage = pages.length > 1;
   const isLastPage = pageIndex === pages.length - 1;
   const currentPageFields = pages[pageIndex] ?? [];
@@ -200,8 +209,7 @@ export function FormRenderer({
       radius="md"
       p="xl"
       style={{
-        backgroundColor: theme?.cardBg,
-        borderColor: theme?.cardBorder,
+        ...cardSurfaceStyle(theme),
         color: textColor,
         // Lets field labels/links pick up the accent without threading a prop
         // through every FieldControl case.
@@ -229,11 +237,29 @@ export function FormRenderer({
         )}
 
         {isMultiPage && (
-          <Stack gap={4} mt="md" mb="xs">
-            <Text size="xs" c={textColor ? undefined : 'dimmed'} style={textColor ? { color: textColor, opacity: 0.75 } : undefined}>
-              Page {pageIndex + 1} of {pages.length}
+          <StepIndicatorBar
+            variant={stepIndicator ?? 'progress'}
+            steps={resolvedSteps}
+            current={pageIndex}
+            accent={accent}
+            textColor={textColor}
+          />
+        )}
+
+        {isMultiPage && showStepHeadings && (
+          <Stack gap={2} mt="md">
+            <Text fw={600} size="md" c={textColor}>
+              {resolvedSteps[pageIndex]?.title}
             </Text>
-            <Progress value={((pageIndex + 1) / pages.length) * 100} size="sm" color={accent ? undefined : 'emerald'} />
+            {resolvedSteps[pageIndex]?.description && (
+              <Text
+                size="sm"
+                c={textColor ? undefined : 'dimmed'}
+                style={textColor ? { color: textColor, opacity: 0.75 } : undefined}
+              >
+                {resolvedSteps[pageIndex].description}
+              </Text>
+            )}
           </Stack>
         )}
 

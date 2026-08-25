@@ -1,7 +1,14 @@
 import { FormModel } from '../models/form.model.js';
 import { SubmissionModel } from '../models/submission.model.js';
 import { FormViewModel } from '../models/formView.model.js';
-import type { FormField, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '../models/form.model.js';
+import type {
+  FormField,
+  SubmitButtonWidth,
+  SubmitButtonAlign,
+  FormTheme,
+  FormStep,
+  StepIndicator,
+} from '../models/form.model.js';
 
 export interface Paginated<T> {
   items: T[];
@@ -93,6 +100,9 @@ export function createForm(input: {
   submitButtonWidth?: SubmitButtonWidth;
   submitButtonAlign?: SubmitButtonAlign;
   theme?: FormTheme;
+  steps?: FormStep[];
+  stepIndicator?: StepIndicator;
+  showStepHeadings?: boolean;
   collectIp?: boolean;
 }) {
   return FormModel.create(input);
@@ -117,6 +127,9 @@ export function updateForm(
     submitButtonWidth: SubmitButtonWidth;
     submitButtonAlign: SubmitButtonAlign;
     theme: FormTheme;
+    steps: FormStep[];
+    stepIndicator: StepIndicator;
+    showStepHeadings: boolean;
     collectIp: boolean;
   }>
 ) {

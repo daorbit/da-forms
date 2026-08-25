@@ -14,7 +14,7 @@ import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
 import { THEME_PRESETS } from '@/lib/themePresets';
 import { useFitScale } from '@/hooks/useFitScale';
-import { DeviceFrame, DEVICE_SPECS, FRAME_HEIGHTS, type DeviceId } from './DeviceFrame';
+import { DeviceFrame, frameSize, type DeviceId } from './DeviceFrame';
 import { PreviewTopbar } from './PreviewTopbar';
 import { PreviewThemePanel } from './PreviewThemePanel';
 import classes from './PreviewModal.module.css';
@@ -78,11 +78,12 @@ export function PreviewModal({
     if (!opened) setPickedId(null);
   }, [opened]);
 
+  const size = frameSize(device);
   const scale = useFitScale(stageRef, {
     enabled: opened,
-    contentWidth: DEVICE_SPECS[device].width + 40,
-    contentHeight: FRAME_HEIGHTS[device],
-    padding: { x: 48, y: 72 },
+    contentWidth: size.width,
+    contentHeight: size.height,
+    padding: { x: 64, y: 64 },
   });
 
   // A preset is "current" when the theme still matches every color it sets.
@@ -112,7 +113,6 @@ export function PreviewModal({
         title={title}
         device={device}
         onDeviceChange={setDevice}
-        scale={scale}
         pickedName={picked?.name}
         onApply={
           picked && onApplyTheme

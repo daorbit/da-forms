@@ -29,9 +29,9 @@
 .deviceButton {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  width: 40px;
   height: 30px;
-  padding: 0 12px;
   border: none;
   border-radius: 6px;
   background: transparent;
@@ -61,15 +61,18 @@
 
 /* The workbench the hardware sits on — deliberately dark so the form's own
    colours, whatever they are, read as the form's and not the chrome's. */
+/* The workbench the hardware sits on. The frame is always scaled to fit, so
+   this never scrolls — a scrollbar here would mean the fit calculation is
+   wrong rather than that there is more to see. */
 .stage {
   flex: 1;
   min-width: 0;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 36px 24px 56px;
-  background:
-    radial-gradient(circle at 50% 0%, #1c2029 0%, #0f1115 60%);
+  padding: 32px;
+  background: radial-gradient(circle at 50% 0%, #1c2029 0%, #0f1115 60%);
 }
 
 .panel {

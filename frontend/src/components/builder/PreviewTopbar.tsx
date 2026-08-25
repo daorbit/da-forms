@@ -13,8 +13,6 @@ interface Props {
   title: string;
   device: DeviceId;
   onDeviceChange: (device: DeviceId) => void;
-  /** Current fit ratio, shown next to the device's true width. */
-  scale: number;
   /** Name of the preset being tried out, if any. */
   pickedName?: string;
   onApply?: () => void;
@@ -26,7 +24,6 @@ export function PreviewTopbar({
   title,
   device,
   onDeviceChange,
-  scale,
   pickedName,
   onApply,
   onClose,
@@ -48,23 +45,24 @@ export function PreviewTopbar({
         {DEVICE_ORDER.map((id) => {
           const Icon = DEVICE_ICONS[id];
           return (
-            <button
-              key={id}
-              type="button"
-              className={`${classes.deviceButton} ${device === id ? classes.deviceButtonActive : ''}`}
-              onClick={() => onDeviceChange(id)}
-              aria-pressed={device === id}
-            >
-              <Icon size={17} stroke={1.6} />
-              {DEVICE_SPECS[id].label}
-            </button>
+            <Tooltip key={id} label={DEVICE_SPECS[id].label} withArrow>
+              <button
+                type="button"
+                className={`${classes.deviceButton} ${device === id ? classes.deviceButtonActive : ''}`}
+                onClick={() => onDeviceChange(id)}
+                aria-label={DEVICE_SPECS[id].label}
+                aria-pressed={device === id}
+              >
+                <Icon size={18} stroke={1.6} />
+              </button>
+            </Tooltip>
           );
         })}
       </Group>
 
       <Group justify="flex-end" gap="xs" style={{ flex: 1 }} wrap="nowrap">
         <Text size="xs" className={classes.topbarMeta} visibleFrom="md">
-          {DEVICE_SPECS[device].width}px · {Math.round(scale * 100)}%
+          {DEVICE_SPECS[device].width} × {DEVICE_SPECS[device].height}
         </Text>
         {pickedName && onApply && (
           <Button size="xs" color="emerald" onClick={onApply}>

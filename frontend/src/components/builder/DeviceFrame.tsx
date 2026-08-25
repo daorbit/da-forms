@@ -5,28 +5,37 @@ export type DeviceId = 'macbook' | 'ipad' | 'iphone';
 export interface DeviceSpec {
   id: DeviceId;
   label: string;
-  /** The device's real CSS viewport width — what the page inside actually reflows against. */
+  /** The device's real CSS viewport — what the page inside actually reflows against. */
   width: number;
+  height: number;
+  /** Chassis thickness around the screen, and any extra below it (a laptop's base). */
+  bezel: number;
+  chromeBelow: number;
 }
 
 export const DEVICE_SPECS: Record<DeviceId, DeviceSpec> = {
-  macbook: { id: 'macbook', label: 'MacBook Air', width: 1280 },
-  ipad: { id: 'ipad', label: 'iPad Pro 11"', width: 834 },
-  iphone: { id: 'iphone', label: 'iPhone 17', width: 402 },
+  // A MacBook Air's 1280×800 logical viewport, minus the browser's own chrome.
+  macbook: { id: 'macbook', label: 'MacBook Air', width: 1280, height: 720, bezel: 12, chromeBelow: 14 },
+  ipad: { id: 'ipad', label: 'iPad Pro 11"', width: 834, height: 1120, bezel: 16, chromeBelow: 0 },
+  iphone: { id: 'iphone', label: 'iPhone 17', width: 402, height: 874, bezel: 11, chromeBelow: 0 },
 };
 
 export const DEVICE_ORDER: DeviceId[] = ['macbook', 'ipad', 'iphone'];
 
-/** Each frame's rendered height including its chassis — what a fit-to-stage scale is measured against. */
-export const FRAME_HEIGHTS: Record<DeviceId, number> = {
-  macbook: 590,
-  ipad: 750,
-  iphone: 812,
-};
+/** Outer size of the whole mock, chassis included — what a fit-to-stage scale measures against. */
+export function frameSize(device: DeviceId): { width: number; height: number } {
+  const spec = DEVICE_SPECS[device];
+  // The lid also holds a camera dot above the screen; iPad has one too.
+  const cameraStrip = device === 'iphone' ? 0 : 14;
+  return {
+    width: spec.width + spec.bezel * 2,
+    height: spec.height + spec.bezel * 2 + spec.chromeBelow + cameraStrip,
+  };
+}
 
 interface Props {
   device: DeviceId;
-  /** Shrinks the whole frame to fit the available space; the page inside still renders at full width. */
+  /** Shrinks the whole frame to fit the available space; the page inside still renders at full size. */
   scale: number;
   children: React.ReactNode;
 }
@@ -34,59 +43,63 @@ interface Props {
 /**
  * A hardware mock around the previewed page.
  *
- * The screen renders at the device's true CSS width and is then scaled down
+ * The screen renders at the device's true CSS viewport and is then scaled down
  * to fit — scaling the frame rather than narrowing it is what keeps the
  * preview honest: a 402px-wide phone layout stays a phone layout, whatever
  * room the modal has.
  */
 export function DeviceFrame({ device, scale, children }: Props) {
   const spec = DEVICE_SPECS[device];
-  const wrapperStyle = { transform: `scale(${scale})`, transformOrigin: 'top center' };
+  const size = frameSize(device);
+  const screenStyle = { width: spec.width, height: spec.height };
 
-  if (device === 'macbook') {
-    return (
-      <div className={classes.frame} style={{ ...wrapperStyle, width: spec.width + 24 }}>
-        <div className={classes.macbook}>
-          <div className={classes.macbookLid}>
-            <div className={classes.macbookCamera} />
-            <div
-              className={`${classes.screen} ${classes.macbookScreen}`}
-              style={{ width: spec.width }}
-            >
+  // Scaling shrinks paint but not layout, so the untransformed size would keep
+  // reserving space in the stage. The wrapper is set to the *scaled* size and
+  // the frame is pinned inside it, which keeps the mock centered with no dead
+  // margin around it.
+  return (
+    <div
+      className={classes.frame}
+      style={{ width: size.width * scale, height: size.height * scale }}
+    >
+      <div
+        className={classes.inner}
+        style={{ width: size.width, height: size.height, transform: `scale(${scale})` }}
+      >
+        {device === 'macbook' && (
+          <div className={classes.macbook}>
+            <div className={classes.macbookLid}>
+              <div className={classes.macbookCamera} />
+              <div className={`${classes.screen} ${classes.macbookScreen}`} style={screenStyle}>
+                {children}
+              </div>
+            </div>
+            <div className={classes.macbookBase} />
+          </div>
+        )}
+
+        {device === 'ipad' && (
+          <div className={classes.ipad}>
+            <div className={classes.ipadCamera} />
+            <div className={`${classes.screen} ${classes.ipadScreen}`} style={screenStyle}>
               {children}
             </div>
           </div>
-          <div className={classes.macbookBase} />
-        </div>
-      </div>
-    );
-  }
+        )}
 
-  if (device === 'ipad') {
-    return (
-      <div className={classes.frame} style={{ ...wrapperStyle, width: spec.width + 32 }}>
-        <div className={classes.ipad}>
-          <div className={classes.ipadCamera} />
-          <div className={`${classes.screen} ${classes.ipadScreen}`} style={{ width: spec.width }}>
-            {children}
+        {device === 'iphone' && (
+          <div className={classes.iphone}>
+            <span className={`${classes.buttonLeft} ${classes.silenceSwitch}`} />
+            <span className={`${classes.buttonLeft} ${classes.volumeUp}`} />
+            <span className={`${classes.buttonLeft} ${classes.volumeDown}`} />
+            <span className={classes.buttonRight} />
+            <div className={classes.island} />
+            <div className={`${classes.screen} ${classes.iphoneScreen}`} style={screenStyle}>
+              {children}
+            </div>
+            <div className={classes.homeIndicator} />
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={classes.frame} style={{ ...wrapperStyle, width: spec.width + 22 }}>
-      <div className={classes.iphone}>
-        <span className={`${classes.buttonLeft} ${classes.silenceSwitch}`} />
-        <span className={`${classes.buttonLeft} ${classes.volumeUp}`} />
-        <span className={`${classes.buttonLeft} ${classes.volumeDown}`} />
-        <span className={classes.buttonRight} />
-        <div className={classes.island} />
-        <div className={`${classes.screen} ${classes.iphoneScreen}`} style={{ width: spec.width }}>
-          {children}
-        </div>
-        <div className={classes.homeIndicator} />
+        )}
       </div>
     </div>
   );

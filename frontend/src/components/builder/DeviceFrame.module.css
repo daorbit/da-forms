@@ -1,13 +1,22 @@
 /*
- * Hardware frames drawn in CSS. Each one wraps a scrollable screen whose
- * inner width matches the real device's CSS viewport, so the form inside
- * reflows exactly as it would on that hardware.
+ * Hardware frames drawn in CSS. Each wraps a scrollable screen sized to the
+ * real device's CSS viewport, so the form inside reflows exactly as it would
+ * on that hardware.
  */
 
 .frame {
   position: relative;
   flex-shrink: 0;
-  transition: transform 200ms ease;
+}
+
+/* Scaled by the stage; pinned to the wrapper's top-left so the wrapper's own
+   (already scaled) box is the only thing taking up room. */
+.inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  transition: transform 180ms ease;
 }
 
 .screen {
@@ -15,16 +24,14 @@
   overflow-y: auto;
   overflow-x: hidden;
   background-color: #ffffff;
-  -webkit-overflow-scrolling: touch;
+  /* The mock stands in for hardware — a desktop scrollbar drawn down its
+     screen edge reads as chrome, not as part of the previewed page. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .screen::-webkit-scrollbar {
-  width: 6px;
-}
-
-.screen::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background-color: rgba(0, 0, 0, 0.2);
+  display: none;
 }
 
 /* ---- Desktop: a MacBook lid, hinge, and base ---- */
@@ -36,9 +43,9 @@
 }
 
 .macbookLid {
-  width: 100%;
-  padding: 12px 12px 12px;
-  border-radius: 18px 18px 6px 6px;
+  padding: 12px;
+  padding-top: 0;
+  border-radius: 16px 16px 4px 4px;
   background: linear-gradient(180deg, #33363c 0%, #222429 100%);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.08) inset,
@@ -48,25 +55,26 @@
 .macbookCamera {
   width: 6px;
   height: 6px;
-  margin: 0 auto 8px;
+  margin: 0 auto;
+  /* Sits in the 14px strip above the screen that frameSize() accounts for. */
+  transform: translateY(4px);
   border-radius: 999px;
   background-color: #0d0f12;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .macbookScreen {
-  border-radius: 4px;
-  height: 520px;
+  margin-top: 14px;
+  border-radius: 3px;
 }
 
 .macbookBase {
   position: relative;
-  width: 116%;
-  max-width: 100vw;
+  width: 112%;
   height: 14px;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 14px 14px;
   background: linear-gradient(180deg, #2c2f34 0%, #16181b 100%);
-  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.4);
 }
 
 /* The notch cut into the base's front edge, where a thumb opens the lid. */
@@ -75,7 +83,7 @@
   position: absolute;
   left: 50%;
   bottom: 0;
-  width: 92px;
+  width: 96px;
   height: 5px;
   transform: translateX(-50%);
   border-radius: 0 0 6px 6px;
@@ -86,6 +94,7 @@
 
 .ipad {
   padding: 16px;
+  padding-top: 2px;
   border-radius: 28px;
   background: linear-gradient(160deg, #3a3d43 0%, #202226 100%);
   box-shadow:
@@ -93,20 +102,20 @@
     0 24px 60px rgba(0, 0, 0, 0.35);
 }
 
-.ipadScreen {
-  border-radius: 14px;
-  height: 700px;
-}
-
 .ipadCamera {
   width: 6px;
   height: 6px;
-  margin: 0 auto 8px;
+  margin: 0 auto;
+  transform: translateY(4px);
   border-radius: 999px;
   background-color: #0d0f12;
 }
 
-/* ---- Phone: an iPhone, Dynamic Island and home indicator ---- */
+.ipadScreen {
+  margin-top: 14px;
+  border-radius: 14px;
+}
+
 
 .iphone {
   position: relative;
@@ -120,7 +129,6 @@
 
 .iphoneScreen {
   border-radius: 44px;
-  height: 780px;
 }
 
 /* Dynamic Island — floats over the page content, like the real one. */

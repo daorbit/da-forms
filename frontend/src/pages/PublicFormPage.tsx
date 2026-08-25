@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Container,
   Text,
@@ -8,13 +8,13 @@ import {
   Stack,
   Button,
   ThemeIcon,
-} from "@mantine/core";
-import { IconCheck, IconClockPause } from "@tabler/icons-react";
-import { notifications } from "@mantine/notifications";
-import { getPublicForm, submitForm, recordView, ApiError } from "@/lib/api";
-import type { Form } from "@/types";
-import { FormRenderer } from "@/components/FormRenderer";
-import { FormPage } from "@/components/FormPage";
+} from '@mantine/core';
+import { IconCheck, IconClockPause } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
+import { getPublicForm, submitForm, recordView, ApiError } from '@/lib/api';
+import type { Form } from '@/types';
+import { FormRenderer } from '@/components/FormRenderer';
+import { FormPage } from '@/components/FormPage';
 
 export function PublicFormPage() {
   const { id } = useParams<{ id: string }>();

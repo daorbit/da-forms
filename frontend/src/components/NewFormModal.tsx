@@ -60,6 +60,9 @@ export function NewFormModal({ opened, onClose }: Props) {
           hideHeader: template.hideHeader,
           submitLabel: template.submitLabel,
           theme: template.theme ?? { scope },
+          steps: template.steps,
+          stepIndicator: template.stepIndicator,
+          showStepHeadings: template.showStepHeadings,
         },
         workspaceId
       );

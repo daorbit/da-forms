@@ -94,6 +94,9 @@ export function createForm(
     submitButtonSize?: Form['submitButtonSize'];
     submitButtonWidth?: Form['submitButtonWidth'];
     theme?: Form['theme'];
+    steps?: Form['steps'];
+    stepIndicator?: Form['stepIndicator'];
+    showStepHeadings?: Form['showStepHeadings'];
     collectIp?: boolean;
   },
   workspaceId = DEFAULT_WORKSPACE

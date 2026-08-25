@@ -82,7 +82,7 @@ export function DeviceFrame({ device, scale, children }: Props) {
         style={{ width: size.width, height: size.height, transform: `scale(${scale})` }}
       >
         {device === 'macbook' && (
-          <div className={classes.macbook}>
+          <div key="macbook" className={`${classes.macbook} ${classes.chassis}`}>
             <div className={classes.macbookLid}>
               <div className={classes.macbookCamera} />
               <div className={`${classes.screen} ${classes.macbookScreen}`} style={screenStyle}>
@@ -94,7 +94,7 @@ export function DeviceFrame({ device, scale, children }: Props) {
         )}
 
         {device === 'ipad' && (
-          <div className={classes.ipad}>
+          <div key="ipad" className={`${classes.ipad} ${classes.chassis}`}>
             <div className={classes.ipadCamera} />
             <div className={`${classes.screen} ${classes.ipadScreen}`} style={screenStyle}>
               {children}
@@ -103,7 +103,7 @@ export function DeviceFrame({ device, scale, children }: Props) {
         )}
 
         {device === 'iphone' && (
-          <div className={classes.iphone}>
+          <div key="iphone" className={`${classes.iphone} ${classes.chassis}`}>
             <span className={`${classes.buttonLeft} ${classes.silenceSwitch}`} />
             <span className={`${classes.buttonLeft} ${classes.volumeUp}`} />
             <span className={`${classes.buttonLeft} ${classes.volumeDown}`} />

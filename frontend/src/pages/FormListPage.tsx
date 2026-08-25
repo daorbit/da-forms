@@ -18,6 +18,7 @@ import {
   IconCopyPlus,
   IconExternalLink,
   IconRefresh,
+  IconEye,
   IconEyeOff,
   IconWorldUpload,
   IconX,
@@ -25,10 +26,11 @@ import {
 import { listForms, deleteForm, updateForm, createForm, publicFormPath, publicFormUrl, type WorkspaceStats } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useDebouncedValue } from '@mantine/hooks';
-import type { Form } from '@/types';
+import type { Form, FormTheme } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { WorkspaceStatsBar } from '@/components/builder/WorkspaceStatsBar';
+import { PreviewModal } from '@/components/builder/PreviewModal';
 import { cloneWithNewIds } from '@/lib/fieldTree';
 import classes from './FormListPage.module.css';
 
@@ -66,6 +68,7 @@ export function FormListPage() {
   const [sharing, setSharing] = useState<Form | null>(null);
   const [stats, setStats] = useState<WorkspaceStats | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState<Form | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -144,6 +147,16 @@ export function FormListPage() {
     } finally {
       setDuplicatingId(null);
     }
+  }
+
+  // Applying a preset from the list has no builder state to land in, so it is
+  // saved straight away — the preview then keeps showing the saved theme.
+  async function applyTheme(form: Form, patch: Partial<FormTheme>) {
+    const theme = { ...form.theme, ...patch, scope: form.theme?.scope ?? 'page' } as FormTheme;
+    const updated = await updateForm(form._id, { theme }, workspaceId);
+    setForms((prev) => prev.map((f) => (f._id === form._id ? updated : f)));
+    setPreviewing(updated);
+    notifications.show({ message: 'Theme applied', color: 'emerald' });
   }
 
   async function confirmDelete() {
@@ -334,6 +347,14 @@ export function FormListPage() {
                 >
                   All Entries
                 </Button>
+                <Button
+                  variant="default"
+                  size="xs"
+                  leftSection={<IconEye size={14} />}
+                  onClick={() => setPreviewing(form)}
+                >
+                  Preview
+                </Button>
                 <ActionIcon
                   variant="subtle"
                   radius="xl"
@@ -420,6 +441,28 @@ export function FormListPage() {
       )}
 
       <NewFormModal opened={newFormOpen} onClose={() => setNewFormOpen(false)} />
+
+      {previewing && (
+        <PreviewModal
+          opened
+          onClose={() => setPreviewing(null)}
+          title={previewing.title}
+          description={previewing.description}
+          fields={previewing.fields}
+          hideHeader={previewing.hideHeader}
+          headerAlign={previewing.headerAlign}
+          labelPlacement={previewing.labelPlacement}
+          submitLabel={previewing.submitLabel}
+          submitButtonSize={previewing.submitButtonSize}
+          submitButtonWidth={previewing.submitButtonWidth}
+          submitButtonAlign={previewing.submitButtonAlign}
+          theme={previewing.theme}
+          steps={previewing.steps}
+          stepIndicator={previewing.stepIndicator}
+          showStepHeadings={previewing.showStepHeadings}
+          onApplyTheme={(patch) => applyTheme(previewing, patch)}
+        />
+      )}
 
       {sharing && (
         <ShareModal

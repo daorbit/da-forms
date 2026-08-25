@@ -1,6 +1,6 @@
 import { Text } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
-import type { ThemePreset } from '@/lib/themePresets';
+import type { ThemePreset } from '@/lib/themes';
 import classes from './PresetCard.module.css';
 
 interface Props {
@@ -21,11 +21,16 @@ export function PresetCard({ preset, selected, onSelect }: Props) {
       aria-pressed={selected}
       data-selected={selected}
     >
-      <span className={classes.swatch} style={{ backgroundColor: t.pageBg }}>
-        <span
-          className={classes.card2}
-          style={{ backgroundColor: t.cardBg, borderColor: t.cardBorder }}
-        >
+      <span
+        className={classes.swatch}
+        style={{ background: t.pageBackground?.gradient ?? t.pageBg }}
+      >
+        <span className={classes.miniCard} style={{ backgroundColor: t.cardBg, borderColor: t.cardBorder }}>
+          <span className={classes.line} style={{ backgroundColor: t.labelColor }} />
+          <span
+            className={classes.input}
+            style={{ backgroundColor: t.inputBg, borderColor: t.inputBorder }}
+          />
           <span className={classes.accent} style={{ backgroundColor: t.accentColor }} />
         </span>
         {selected && (
@@ -34,7 +39,7 @@ export function PresetCard({ preset, selected, onSelect }: Props) {
           </span>
         )}
       </span>
-      <Text size="xs" fw={selected ? 600 : 400} mt={6} lineClamp={1}>
+      <Text size="xs" fw={selected ? 600 : 500} mt={7} lineClamp={1} className={classes.label}>
         {preset.name}
       </Text>
     </button>

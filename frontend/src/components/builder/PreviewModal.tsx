@@ -12,7 +12,7 @@ import type {
 } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
-import { THEME_PRESETS } from '@/lib/themePresets';
+import { THEME_PRESETS } from '@/lib/themes';
 import { useFitScale } from '@/hooks/useFitScale';
 import { DeviceFrame, frameSize, type DeviceId } from './DeviceFrame';
 import { PreviewTopbar } from './PreviewTopbar';

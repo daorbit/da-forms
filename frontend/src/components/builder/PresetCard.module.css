@@ -8,58 +8,88 @@
   text-align: left;
 }
 
+/* The page background, with a miniature form card sitting on it — the same
+   two surfaces the preset actually sets, so the tile can never drift from
+   what applying it does. */
 .swatch {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 4 / 3;
   width: 100%;
-  border-radius: 8px;
+  padding-top: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
-  transition: box-shadow 120ms ease;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  transition:
+    box-shadow 120ms ease,
+    transform 120ms ease;
 }
 
 .card:hover .swatch {
+  transform: translateY(-1px);
   box-shadow:
-    inset 0 0 0 1px rgb(0 0 0 / 10%),
-    0 0 0 2px var(--mantine-color-gray-4);
+    inset 0 0 0 1px rgb(255 255 255 / 8%),
+    0 0 0 2px #4a505c;
 }
 
 .card[data-selected='true'] .swatch {
   box-shadow:
-    inset 0 0 0 1px rgb(0 0 0 / 10%),
-    0 0 0 2px var(--mantine-color-dark-6);
+    inset 0 0 0 1px rgb(255 255 255 / 8%),
+    0 0 0 2px var(--mantine-color-emerald-5);
 }
 
-.card2 {
+.miniCard {
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  width: 62%;
-  height: 58%;
-  padding-bottom: 7px;
+  flex-direction: column;
+  gap: 4px;
+  width: 74%;
+  height: 78%;
+  padding: 8px 8px 0;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 6px 6px 0 0;
+}
+
+/* Stand-ins for a label and its input, so the tile reads as a form. */
+.line {
+  width: 52%;
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0.75;
+}
+
+.input {
+  height: 9px;
+  border: 1px solid transparent;
+  border-radius: 3px;
 }
 
 .accent {
-  width: 46%;
-  height: 6px;
+  width: 58%;
+  height: 7px;
+  margin-top: 2px;
   border-radius: 3px;
 }
 
 .check {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 6px;
+  right: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background-color: var(--mantine-color-dark-6);
+  background-color: var(--mantine-color-emerald-6);
   color: #ffffff;
+}
+
+.label {
+  color: #adb5bd;
+}
+
+.card[data-selected='true'] .label {
+  color: #f1f3f5;
 }

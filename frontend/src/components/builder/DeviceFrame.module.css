@@ -43,8 +43,8 @@
 }
 
 .macbookLid {
+  position: relative;
   padding: 12px;
-  padding-top: 0;
   border-radius: 16px 16px 4px 4px;
   background: linear-gradient(180deg, #33363c 0%, #222429 100%);
   box-shadow:
@@ -52,12 +52,14 @@
     0 24px 60px rgba(0, 0, 0, 0.35);
 }
 
+/* Sits in the 14px strip above the screen that frameSize() accounts for. */
 .macbookCamera {
+  position: absolute;
+  top: 16px;
+  left: 50%;
   width: 6px;
   height: 6px;
-  margin: 0 auto;
-  /* Sits in the 14px strip above the screen that frameSize() accounts for. */
-  transform: translateY(4px);
+  transform: translateX(-50%);
   border-radius: 999px;
   background-color: #0d0f12;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
@@ -68,9 +70,12 @@
   border-radius: 3px;
 }
 
+/* Sticks out past the lid on both sides — the overhang is mirrored by
+   MACBOOK_BASE_OVERHANG so the measured frame width includes it. */
 .macbookBase {
   position: relative;
-  width: 112%;
+  align-self: stretch;
+  margin: 0 -26px;
   height: 14px;
   border-radius: 0 0 14px 14px;
   background: linear-gradient(180deg, #2c2f34 0%, #16181b 100%);
@@ -93,8 +98,8 @@
 /* ---- Tablet: an iPad, thin uniform bezel ---- */
 
 .ipad {
+  position: relative;
   padding: 16px;
-  padding-top: 2px;
   border-radius: 28px;
   background: linear-gradient(160deg, #3a3d43 0%, #202226 100%);
   box-shadow:
@@ -103,10 +108,12 @@
 }
 
 .ipadCamera {
+  position: absolute;
+  top: 20px;
+  left: 50%;
   width: 6px;
   height: 6px;
-  margin: 0 auto;
-  transform: translateY(4px);
+  transform: translateX(-50%);
   border-radius: 999px;
   background-color: #0d0f12;
 }

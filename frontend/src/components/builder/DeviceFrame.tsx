@@ -14,24 +14,39 @@ export interface DeviceSpec {
 }
 
 export const DEVICE_SPECS: Record<DeviceId, DeviceSpec> = {
-  // A MacBook Air's 1280×800 logical viewport, minus the browser's own chrome.
-  macbook: { id: 'macbook', label: 'MacBook Air', width: 1280, height: 720, bezel: 12, chromeBelow: 14 },
+  // Narrower than a real Air's 1280 so the mock does not dominate the stage;
+  // still wide enough that a desktop layout renders as a desktop layout.
+  macbook: { id: 'macbook', label: 'MacBook Air', width: 1152, height: 720, bezel: 12, chromeBelow: 14 },
   ipad: { id: 'ipad', label: 'iPad Pro 11"', width: 834, height: 1120, bezel: 16, chromeBelow: 0 },
   iphone: { id: 'iphone', label: 'iPhone 17', width: 402, height: 874, bezel: 11, chromeBelow: 0 },
 };
 
 export const DEVICE_ORDER: DeviceId[] = ['macbook', 'ipad', 'iphone'];
 
-/** Outer size of the whole mock, chassis included — what a fit-to-stage scale measures against. */
+/**
+ * Outer size of the whole mock, chassis included — what a fit-to-stage scale
+ * measures against.
+ *
+ * These have to match the CSS exactly: any height the stylesheet adds and this
+ * does not becomes dead space above or below the frame once it is centered.
+ * The laptop's base is wider than its lid, so the width accounts for that too.
+ */
 export function frameSize(device: DeviceId): { width: number; height: number } {
   const spec = DEVICE_SPECS[device];
-  // The lid also holds a camera dot above the screen; iPad has one too.
-  const cameraStrip = device === 'iphone' ? 0 : 14;
+  // The camera strip above the screen on the lid and the iPad's bezel.
+  const cameraStrip = device === 'iphone' ? 0 : CAMERA_STRIP;
+  const baseOverhang = device === 'macbook' ? MACBOOK_BASE_OVERHANG * 2 : 0;
   return {
-    width: spec.width + spec.bezel * 2,
+    width: spec.width + spec.bezel * 2 + baseOverhang,
     height: spec.height + spec.bezel * 2 + spec.chromeBelow + cameraStrip,
   };
 }
+
+/** Height of the strip holding the camera dot, above the screen. Mirrors `.macbookScreen`/`.ipadScreen` margin-top. */
+const CAMERA_STRIP = 14;
+
+/** How far the laptop's base sticks out past its lid on each side. Mirrors `.macbookBase` width. */
+const MACBOOK_BASE_OVERHANG = 26;
 
 interface Props {
   device: DeviceId;

@@ -1,6 +1,6 @@
 import { Box, Text } from '@mantine/core';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { THEME_PRESETS } from '@/lib/themePresets';
+import { THEME_PRESETS } from '@/lib/themes';
 import { PresetCard } from './PresetCard';
 import classes from './PreviewModal.module.css';
 
@@ -28,18 +28,22 @@ export function PreviewThemePanel({ open, onToggle, selectedId, onSelect }: Prop
 
       {open && (
         <Box className={classes.panel}>
-          <Text size="xs" fw={600} tt="uppercase" mb={10} className={classes.panelHeading}>
-            Themes
-          </Text>
-          <Box className={classes.presetGrid}>
-            {THEME_PRESETS.map((item) => (
-              <PresetCard
-                key={item.id}
-                preset={item}
-                selected={item.id === selectedId}
-                onSelect={() => onSelect(item.id)}
-              />
-            ))}
+          <Box className={classes.panelHeader}>
+            <Text size="xs" fw={600} tt="uppercase" className={classes.panelHeading}>
+              Themes
+            </Text>
+          </Box>
+          <Box className={classes.panelScroll}>
+            <Box className={classes.presetGrid}>
+              {THEME_PRESETS.map((item) => (
+                <PresetCard
+                  key={item.id}
+                  preset={item}
+                  selected={item.id === selectedId}
+                  onSelect={() => onSelect(item.id)}
+                />
+              ))}
+            </Box>
           </Box>
         </Box>
       )}

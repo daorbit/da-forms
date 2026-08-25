@@ -5,7 +5,7 @@ import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconPlus } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
-import { formTemplates } from '@/lib/formTemplates';
+import { formTemplates } from '@/lib/templates';
 import { FormRenderer } from '@/components/FormRenderer';
 import { createForm } from '@/lib/api';
 import classes from './NewFormModal.module.css';

@@ -1,26 +1,42 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  background-color: #0f1115;
+}
+
 .topbar {
   height: 56px;
   flex-shrink: 0;
-  background-color: var(--mantine-color-body);
-  border-bottom: 1px solid var(--mantine-color-gray-3);
+  padding: 0 16px;
+  background-color: #16181d;
+  border-bottom: 1px solid #24272e;
+}
+
+.topbarTitle {
+  color: #f1f3f5;
+}
+
+.topbarMeta {
+  color: #868e96;
 }
 
 .deviceGroup {
   padding: 3px;
   border-radius: var(--mantine-radius-md);
-  background-color: var(--mantine-color-default);
+  background-color: #22252c;
 }
 
 .deviceButton {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
+  gap: 6px;
   height: 30px;
+  padding: 0 12px;
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--mantine-color-dimmed);
+  color: #868e96;
+  font-size: 13px;
   cursor: pointer;
   transition:
     background-color 120ms ease,
@@ -28,13 +44,12 @@
 }
 
 .deviceButton:hover {
-  color: var(--mantine-color-text);
+  color: #e9ecef;
 }
 
 .deviceButtonActive {
-  background-color: var(--mantine-color-body);
-  color: var(--mantine-color-text);
-  box-shadow: var(--mantine-shadow-xs);
+  background-color: #31353d;
+  color: #ffffff;
 }
 
 .body {
@@ -44,19 +59,30 @@
   position: relative;
 }
 
+/* The workbench the hardware sits on — deliberately dark so the form's own
+   colours, whatever they are, read as the form's and not the chrome's. */
 .stage {
   flex: 1;
   min-width: 0;
-  overflow-y: auto;
+  overflow: auto;
   display: flex;
   justify-content: center;
-  padding: 28px 20px 40px;
-  background-color: #eef0f3;
+  padding: 36px 24px 56px;
+  background:
+    radial-gradient(circle at 50% 0%, #1c2029 0%, #0f1115 60%);
 }
 
-.viewport {
-  align-self: flex-start;
-  transition: width 200ms ease;
+.panel {
+  width: 248px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 16px 14px;
+  background-color: #16181d;
+  border-left: 1px solid #24272e;
+}
+
+.panelHeading {
+  color: #ced4da;
 }
 
 .panelToggle {
@@ -68,33 +94,24 @@
   align-items: center;
   justify-content: center;
   width: 20px;
-  height: 44px;
+  height: 48px;
   padding: 0;
   transform: translateY(-50%);
-  border: 1px solid var(--mantine-color-gray-3);
+  border: 1px solid #24272e;
   border-right: none;
   border-radius: 6px 0 0 6px;
-  background-color: var(--mantine-color-body);
-  color: var(--mantine-color-dimmed);
+  background-color: #16181d;
+  color: #868e96;
   cursor: pointer;
   transition: right 160ms ease;
 }
 
 .panelToggle[data-open='true'] {
-  right: 232px;
+  right: 248px;
 }
 
 .panelToggle:hover {
-  color: var(--mantine-color-text);
-}
-
-.panel {
-  width: 232px;
-  flex-shrink: 0;
-  overflow-y: auto;
-  padding: 14px 12px;
-  background-color: var(--mantine-color-body);
-  border-left: 1px solid var(--mantine-color-gray-3);
+  color: #f1f3f5;
 }
 
 .presetGrid {

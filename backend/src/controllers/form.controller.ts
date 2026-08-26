@@ -18,12 +18,15 @@ function workspaceIdOf(req: { params: Record<string, string> }) {
 }
 
 export const listForms: RequestHandler = async (req, res) => {
-  const { page, limit, q, sort } = req.query as Record<string, string | undefined>;
+  const { page, limit, q, sort, status } = req.query as Record<string, string | undefined>;
   const result = await formService.listForms(workspaceIdOf(req), {
     page: page ? Number(page) : undefined,
     limit: limit ? Number(limit) : undefined,
     q,
     sort: sort as never,
+    // Anything other than the two real states is ignored rather than passed
+    // through to the query.
+    status: status === 'published' || status === 'draft' ? status : undefined,
   });
   res.json(result);
 };

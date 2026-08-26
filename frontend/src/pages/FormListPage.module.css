@@ -3,6 +3,23 @@
   background-color: var(--mantine-color-body);
 }
 
+/* Filled rather than transparent: at the page colour the field was an outline
+   floating next to a SegmentedControl that has a real surface, and the two read
+   as different kinds of control. */
+.searchInput {
+  background-color: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-default-border);
+}
+
+.searchInput:focus {
+  background-color: var(--mantine-color-dark-5);
+  border-color: var(--mantine-color-emerald-7);
+}
+
+:global(html[data-mantine-color-scheme='light']) .searchInput {
+  background-color: #ffffff;
+}
+
 .row {
   border: 1px solid var(--mantine-color-default-border);
   border-radius: 8px;

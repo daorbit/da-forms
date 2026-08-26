@@ -74,23 +74,25 @@ export function AnalyticsBar({ analytics }: { analytics: Analytics | null }) {
           accent="#c084fc"
           spark={decorativeSpark(Math.round(analytics.completionRate * 100))}
         />
-        <UnstyledButton className={classes.cardButton} onClick={() => setSourcesOpen(true)} h="100%">
-          <Box className={classes.card} h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
+        <UnstyledButton className={classes.cardButton} onClick={() => setSourcesOpen(true)}>
+          <Box className={classes.card}>
             <Box px="md" pt="md">
               <Group justify="space-between" align="flex-start" wrap="nowrap" mb={6}>
                 <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                  <IconWorld size={14} style={{ color: 'var(--mantine-color-dimmed)', flexShrink: 0 }} />
-                  <Text size="xs" c="dimmed" fw={500} truncate style={{ letterSpacing: '0.01em' }}>
+                  <IconWorld size={14} className={classes.icon} />
+                  <Text size="xs" c="dimmed" fw={500} truncate className={classes.label}>
                     Traffic sources
                   </Text>
                 </Group>
-                <IconChevronRight size={16} style={{ color: 'var(--mantine-color-dimmed)', flexShrink: 0 }} />
+                <IconChevronRight size={16} className={classes.icon} />
               </Group>
               <Text className={classes.value} truncate>
                 {analytics.sources[0]?.source ?? '—'}
               </Text>
             </Box>
-            <div style={{ height: 26, marginTop: 6 }} />
+            {/* Empty, but the same reserved track as every other tile — without
+                it this card is 26px shorter than the three beside it. */}
+            <div className={classes.spark} />
           </Box>
         </UnstyledButton>
       </SimpleGrid>

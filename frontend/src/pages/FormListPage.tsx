@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination, Skeleton,
+  Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -23,13 +23,12 @@ import {
   IconWorldUpload,
   IconX,
 } from '@tabler/icons-react';
-import { listForms, deleteForm, updateForm, createForm, publicFormPath, publicFormUrl, type WorkspaceStats } from '@/lib/api';
+import { listForms, deleteForm, updateForm, createForm, publicFormPath, publicFormUrl } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form, FormTheme } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
-import { WorkspaceStatsBar } from '@/components/builder/WorkspaceStatsBar';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { cloneWithNewIds } from '@/lib/fieldTree';
 import classes from './FormListPage.module.css';
@@ -39,6 +38,15 @@ function formatDate(iso: string) {
 }
 
 type SortOption = 'date' | 'dateAsc' | 'name' | 'nameDesc' | 'status';
+
+/** Filtered on the server — see `listForms`, which pages the result set. */
+type StatusFilter = 'all' | 'published' | 'draft';
+
+const STATUS_TABS: { value: StatusFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'published', label: 'Live' },
+  { value: 'draft', label: 'Drafts' },
+];
 
 const SORT_LABEL: Record<SortOption, string> = {
   date: 'Newest first',
@@ -57,29 +65,32 @@ export function FormListPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
   const [debouncedSearch] = useDebouncedValue(search, 300);
   const [sort, setSort] = useState<SortOption>('date');
+  const [status, setStatus] = useState<StatusFilter>('all');
   const [loading, setLoading] = useState(true);
   const [newFormOpen, setNewFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState<Form | null>(null);
-  const [stats, setStats] = useState<WorkspaceStats | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<Form | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
-    return listForms(workspaceId, { page, limit: PAGE_SIZE, q: debouncedSearch, sort })
+    return listForms(workspaceId, {
+      page,
+      limit: PAGE_SIZE,
+      q: debouncedSearch,
+      sort,
+      status: status === 'all' ? undefined : status,
+    })
       .then((res) => {
         setForms(res.items);
         setTotal(res.total);
-        setStats(res.stats);
       })
       .finally(() => setLoading(false));
-  }, [workspaceId, page, debouncedSearch, sort]);
+  }, [workspaceId, page, debouncedSearch, sort, status]);
 
   // Keyed on the location as well as the loader, so returning from the builder
   // refetches rather than showing the list as it was before the edit — however
@@ -88,24 +99,13 @@ export function FormListPage() {
     load();
   }, [location.key, load]);
 
-  // A new search or sort narrows/reorders the result set, so paging resets to
-  // the top rather than landing on a page that may no longer exist.
+  const isFiltered = debouncedSearch !== '' || status !== 'all';
+
+  // A new search, sort or filter narrows/reorders the result set, so paging
+  // resets to the top rather than landing on a page that may no longer exist.
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, sort]);
-
-  useEffect(() => {
-    if (!searchOpen) return;
-
-    function handlePointerDown(event: PointerEvent) {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setSearchOpen(false);
-      }
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [searchOpen]);
+  }, [debouncedSearch, sort, status]);
 
   async function toggleStatus(form: Form) {
     const status = form.status === 'published' ? 'draft' : 'published';
@@ -175,48 +175,59 @@ export function FormListPage() {
         <Text fw={600} size="lg">
           Leads Capture
         </Text>
-        <Group gap="xs">
-          <div ref={searchRef}>
-            {searchOpen ? (
-              <TextInput
-                placeholder="Search forms"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                leftSection={<IconSearch size={16} />}
-                rightSection={
-                  search ? (
-                    <ActionIcon variant="subtle" color="gray" onClick={() => setSearch('')} aria-label="Clear search">
-                      <IconX size={14} />
-                    </ActionIcon>
-                  ) : undefined
-                }
-                radius="xl"
-                size="sm"
-                w={220}
-                autoFocus
-              />
-            ) : (
-              <Tooltip label="Search forms" withArrow>
+        <Button
+          color="emerald"
+          leftSection={<IconPlus size={16} />}
+          onClick={() => setNewFormOpen(true)}
+        >
+          New Form
+        </Button>
+      </Group>
+
+      {/* Search, filter and sort sit with the list they act on rather than in
+          the header — the header holds the page's identity and the one action
+          that creates something. */}
+      <Group justify="space-between" gap="sm" px="xl" pt="xl" wrap="wrap">
+        <Group gap="sm" wrap="nowrap">
+          <TextInput
+            placeholder="Search forms"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            leftSection={<IconSearch size={16} />}
+            rightSection={
+              search ? (
                 <ActionIcon
                   variant="subtle"
                   color="gray"
-                  radius="xl"
-                  size="lg"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label="Search forms"
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search"
                 >
-                  <IconSearch size={18} />
+                  <IconX size={14} />
                 </ActionIcon>
-              </Tooltip>
-            )}
-          </div>
-          <Menu shadow="md" width={180}>
+              ) : undefined
+            }
+            size="sm"
+            w={260}
+            classNames={{ input: classes.searchInput }}
+          />
+          <SegmentedControl
+            value={status}
+            onChange={(value) => setStatus(value as StatusFilter)}
+            data={STATUS_TABS}
+            size="sm"
+          />
+        </Group>
+
+        <Group gap="xs" wrap="nowrap">
+          <Menu shadow="md" width={180} position="bottom-end">
             <Menu.Target>
-              <Tooltip label="Sort" withArrow>
-                <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" aria-label="Sort">
-                  <IconArrowsSort size={18} />
-                </ActionIcon>
-              </Tooltip>
+              <Button
+                variant="default"
+                size="sm"
+                leftSection={<IconArrowsSort size={15} />}
+              >
+                {SORT_LABEL[sort]}
+              </Button>
             </Menu.Target>
             <Menu.Dropdown>
               {(Object.keys(SORT_LABEL) as SortOption[]).map((key) => (
@@ -228,30 +239,17 @@ export function FormListPage() {
           </Menu>
           <Tooltip label="Refresh" withArrow>
             <ActionIcon
-              variant="subtle"
-              radius="xl"
-              color="gray"
-             
-              size="lg"
+              variant="default"
+              size="input-sm"
               onClick={() => load()}
               loading={loading}
               aria-label="Refresh"
             >
-              <IconRefresh size={18} />
+              <IconRefresh size={17} />
             </ActionIcon>
           </Tooltip>
-          <Button
-           
-            color="emerald"
-            leftSection={<IconPlus size={16} />}
-            onClick={() => setNewFormOpen(true)}
-          >
-            New Form
-          </Button>
         </Group>
       </Group>
-
-      <WorkspaceStatsBar stats={stats} />
 
       <Stack gap="xs" px="xl" py="md">
         {loading && forms.length === 0 ? (
@@ -281,23 +279,39 @@ export function FormListPage() {
             <div className={classes.emptyIcon} aria-hidden>
               <IconFileText size={38} stroke={1.25} />
             </div>
+            {/* A filtered empty list is not an empty workspace — offering
+                "create your first form" to someone whose only form is a draft
+                they filtered out would be wrong. */}
             <Text fw={650} fz="lg" mt="lg">
-              {debouncedSearch ? 'No forms match your search' : 'No forms yet'}
+              {isFiltered ? 'No forms match these filters' : 'No forms yet'}
             </Text>
             <Text size="sm" c="dimmed" mt={6} className={classes.emptyText}>
-              {debouncedSearch
-                ? 'Try a different search term.'
+              {isFiltered
+                ? 'Try a different search term or status.'
                 : 'Build a form to collect leads, then share its link or embed it on your site.'}
             </Text>
-            <Button
-              mt="xl"
-              size="md"
-             
-              leftSection={<IconPlus size={16} />}
-              onClick={() => setNewFormOpen(true)}
-            >
-              Create your first form
-            </Button>
+            {isFiltered ? (
+              <Button
+                mt="xl"
+                size="md"
+                variant="default"
+                onClick={() => {
+                  setSearch('');
+                  setStatus('all');
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : (
+              <Button
+                mt="xl"
+                size="md"
+                leftSection={<IconPlus size={16} />}
+                onClick={() => setNewFormOpen(true)}
+              >
+                Create your first form
+              </Button>
+            )}
           </Stack>
         )}
 

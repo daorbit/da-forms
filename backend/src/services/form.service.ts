@@ -40,12 +40,21 @@ export interface FormListResult extends Paginated<InstanceType<typeof FormModel>
 
 export async function listForms(
   workspaceId: string,
-  options: { page?: number; limit?: number; q?: string; sort?: keyof typeof sortMap } = {}
+  options: {
+    page?: number;
+    limit?: number;
+    q?: string;
+    sort?: keyof typeof sortMap;
+    status?: 'published' | 'draft';
+  } = {}
 ): Promise<FormListResult> {
   const page = Math.max(1, options.page ?? 1);
   const limit = Math.max(1, options.limit ?? 10);
   const filter: Record<string, unknown> = { workspaceId };
   if (options.q) filter.name = { $regex: options.q, $options: 'i' };
+  // Filtered server-side rather than in the page component: the list is paged,
+  // so filtering the current page would hide matches sitting on later ones.
+  if (options.status) filter.status = options.status;
   const sort = sortMap[options.sort ?? 'date'];
 
   const [items, total, allForms] = await Promise.all([

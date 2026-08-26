@@ -65,13 +65,20 @@ export interface FormListResult extends Paginated<Form> {
 
 export function listForms(
   workspaceId = DEFAULT_WORKSPACE,
-  options: { page?: number; limit?: number; q?: string; sort?: string } = {}
+  options: {
+    page?: number;
+    limit?: number;
+    q?: string;
+    sort?: string;
+    status?: 'published' | 'draft';
+  } = {}
 ) {
   const params = new URLSearchParams();
   if (options.page) params.set('page', String(options.page));
   if (options.limit) params.set('limit', String(options.limit));
   if (options.q) params.set('q', options.q);
   if (options.sort) params.set('sort', options.sort);
+  if (options.status) params.set('status', options.status);
   const qs = params.toString();
   return request<FormListResult>(`${ws(workspaceId)}${qs ? `?${qs}` : ''}`);
 }

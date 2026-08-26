@@ -3,32 +3,39 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 12px 0;
+  gap: 2px;
+  padding: 10px 0;
   background-color: var(--mantine-color-body);
 }
 
+/*
+ * Monochrome by default: five differently-coloured glyphs competed with each
+ * other and with the canvas, and none of the colours meant anything. The accent
+ * is reserved for the panel that is actually open.
+ */
 .railButton {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border: 1px solid transparent;
+  width: 36px;
+  height: 36px;
+  border: none;
   border-radius: 8px;
   background: transparent;
+  color: var(--mantine-color-dimmed);
   cursor: pointer;
   transition:
-    background-color 120ms ease,
-    color 120ms ease;
+    background-color 100ms ease,
+    color 100ms ease;
 }
 
 .railButton:hover {
-  border-color: var(--mantine-color-gray-3);
-  background-color: var(--mantine-color-gray-0);
+  background-color: var(--mantine-color-default-hover);
+  color: var(--mantine-color-text);
 }
 
-.railButtonActive {
-  border-color: var(--mantine-color-gray-3);
-  background-color: var(--mantine-color-gray-1);
+.railButtonActive,
+.railButtonActive:hover {
+  background-color: var(--mantine-color-emerald-9);
+  color: var(--mantine-color-emerald-3);
 }

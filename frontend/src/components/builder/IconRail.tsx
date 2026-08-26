@@ -9,12 +9,12 @@ interface Props {
   onSelect: (panel: RailPanel) => void;
 }
 
-const items: { id: RailPanel; label: string; icon: typeof IconCode; color: string }[] = [
-  { id: 'quickSettings', label: 'Quick Settings', icon: IconAdjustmentsHorizontal, color: 'blue' },
-  { id: 'theme', label: 'Theme', icon: IconPalette, color: 'pink' },
-  { id: 'steps', label: 'Steps & Progress', icon: IconListNumbers, color: 'orange' },
-  { id: 'thankYou', label: 'Thank You Page & Redirection', icon: IconCircleCheck, color: 'emerald' },
-  { id: 'embed', label: 'Share & Embed', icon: IconCode, color: 'grape' },
+const items: { id: RailPanel; label: string; icon: typeof IconCode }[] = [
+  { id: 'quickSettings', label: 'Quick Settings', icon: IconAdjustmentsHorizontal },
+  { id: 'theme', label: 'Theme', icon: IconPalette },
+  { id: 'steps', label: 'Steps & Progress', icon: IconListNumbers },
+  { id: 'thankYou', label: 'Thank You Page & Redirection', icon: IconCircleCheck },
+  { id: 'embed', label: 'Share & Embed', icon: IconCode },
 ];
 
 export function IconRail({ active, onSelect }: Props) {
@@ -28,7 +28,7 @@ export function IconRail({ active, onSelect }: Props) {
             onClick={() => onSelect(item.id)}
             aria-label={item.label}
           >
-            <item.icon size={20} stroke={1.6} color={`var(--mantine-color-${item.color}-6)`} />
+            <item.icon size={19} stroke={1.6} />
           </button>
         </Tooltip>
       ))}

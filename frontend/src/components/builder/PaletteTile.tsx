@@ -13,9 +13,15 @@ import classes from './FieldPalette.module.css';
 export function PaletteTile({
   item,
   onAdd,
+  index = 0,
+  accent,
 }: {
   item: PaletteItem;
   onAdd: () => void;
+  /** Position within its group, used to stagger the mount animation. */
+  index?: number;
+  /** The group's accent as bare `r, g, b`, so the stylesheet can vary alpha. */
+  accent: string;
 }) {
   const key = paletteKey(item);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -28,11 +34,18 @@ export function PaletteTile({
       ref={setNodeRef}
       type="button"
       className={`${classes.paletteItem} ${isDragging ? classes.paletteItemDragging : ''}`}
+      style={{
+        // Capped, or the last tiles in a long group animate in noticeably late.
+        animationDelay: `${Math.min(index, 10) * 22}ms`,
+        ['--tile-accent' as string]: accent,
+      }}
       onClick={onAdd}
       {...attributes}
       {...listeners}
     >
-      <item.icon size={24} stroke={1.5} color={`var(--mantine-color-${item.color}-6)`} />
+      <span className={classes.itemIcon}>
+        <item.icon size={18} stroke={1.6} />
+      </span>
       <span className={classes.itemLabel}>{item.label}</span>
     </button>
   );

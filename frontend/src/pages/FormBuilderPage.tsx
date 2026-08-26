@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text, Stack, Skeleton, Burger } from '@mantine/core';
+import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text, Stack, Skeleton, Burger, Badge, Divider } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconFileText, IconEye, IconEyeOff, IconWorld, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -523,14 +523,14 @@ export function FormBuilderPage() {
       onDragEnd={handleDragEnd}
     >
     <AppShell
-      header={{ height: 60 }}
-      navbar={{ width: 300, breakpoint: 'sm', collapsed: { mobile: !navOpened } }}
-      aside={{ width: 52, breakpoint: 'sm' }}
+      header={{ height: 52 }}
+      navbar={{ width: 312, breakpoint: 'sm', collapsed: { mobile: !navOpened } }}
+      aside={{ width: 56, breakpoint: 'sm' }}
       padding={0}
       classNames={{ main: classes.main }}
     >
       <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+        <Group h="100%" px="sm" gap="sm" justify="space-between" wrap="nowrap">
           <Group gap="xs" wrap="nowrap" style={{ flex: 1 }}>
             <Burger opened={navOpened} onClick={toggleNav} hiddenFrom="sm" size="sm" />
             <Tooltip label="Back to all forms" position="bottom" withArrow>
@@ -561,46 +561,75 @@ export function FormBuilderPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               fw={600}
-              size="md"
-              style={{ flex: 1, maxWidth: 400 }}
+              size="sm"
+              className={classes.nameInput}
             />
+            {/* Publish state belongs next to the name it describes, not inferred
+                from which way the button in the corner is pointing. */}
+            {savedForm && (
+              <Badge
+                variant="light"
+                color={savedForm.status === 'published' ? 'emerald' : 'gray'}
+                radius="sm"
+                size="sm"
+                visibleFrom="sm"
+              >
+                {savedForm.status === 'published' ? 'Live' : 'Draft'}
+              </Badge>
+            )}
+            {isDirty && (
+              <Text size="xs" c="dimmed" visibleFrom="sm">
+                Unsaved
+              </Text>
+            )}
           </Group>
-          <Group gap="xs">
-            <Tooltip label="Undo (Ctrl+Z)" position="bottom" withArrow>
+          <Group gap={6} wrap="nowrap">
+            {/* History and preview are inspection tools; save and publish change
+                the form. The divider keeps a mis-aimed click from crossing that
+                line. */}
+            <Group gap={2} wrap="nowrap" className={classes.historyGroup}>
+              <Tooltip label="Undo (Ctrl+Z)" position="bottom" withArrow>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="md"
+                  aria-label="Undo"
+                  disabled={!canUndo}
+                  onClick={undo}
+                >
+                  <IconArrowBackUp size={17} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Redo (Ctrl+Y)" position="bottom" withArrow>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="md"
+                  aria-label="Redo"
+                  disabled={!canRedo}
+                  onClick={redo}
+                >
+                  <IconArrowForwardUp size={17} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+            <Tooltip label="Preview" position="bottom" withArrow>
               <ActionIcon
                 variant="subtle"
                 color="gray"
                 size="lg"
-                aria-label="Undo"
-                disabled={!canUndo}
-                onClick={undo}
+                aria-label="Preview"
+                onClick={() => setPreviewOpen(true)}
               >
-                <IconArrowBackUp size={18} />
+                <IconEye size={18} />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="Redo (Ctrl+Y)" position="bottom" withArrow>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="lg"
-                aria-label="Redo"
-                disabled={!canRedo}
-                onClick={redo}
-              >
-                <IconArrowForwardUp size={18} />
-              </ActionIcon>
-            </Tooltip>
+            <Divider orientation="vertical" my={14} />
             <Button
-              variant="default"
+              variant="subtle"
+              color="gray"
               radius="md"
-              leftSection={<IconEye size={16} />}
-              onClick={() => setPreviewOpen(true)}
-            >
-              Preview
-            </Button>
-            <Button
-              variant="default"
-              radius="md"
+              size="sm"
               onClick={handleSave}
               loading={saving}
               disabled={!isDirty || publishing}
@@ -611,6 +640,7 @@ export function FormBuilderPage() {
               variant="filled"
               color={savedForm?.status === 'published' ? 'gray' : 'emerald'}
               radius="md"
+              size="sm"
               leftSection={
                 savedForm?.status === 'published' ? (
                   <IconEyeOff size={16} />

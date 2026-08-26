@@ -8,12 +8,14 @@
 .canvasScroll {
   height: 100%;
   overflow-y: auto;
-  background-color: #eef0f3 !important;
+  /* Warm neutral rather than the old cold blue-gray slab: the card has to read
+     as floating on the stage, not set into it. */
+  background-color: #f6f7f8 !important;
   scrollbar-gutter: stable;
 }
 
 .canvasArea {
-  padding: 28px 32px 64px;
+  padding: 32px 32px 72px;
   min-height: 100%;
   transition: padding-right 200ms ease;
 }
@@ -30,6 +32,9 @@
   color: #1a1b1e;
   /* the hover toolbar sits just outside the right edge */
   overflow: visible;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 12px 32px -12px rgba(16, 24, 40, 0.12);
 }
 
 .fieldRow {
@@ -68,44 +73,59 @@
   background-color: var(--mantine-color-gray-2);
 }
 
-/* The outline replaces the separator while a row is active, or the two draw
-   over each other. */
-.fieldRow:hover::before,
+/* The selection ring replaces the separator, or the two draw over each other.
+   A plain hover keeps its separators: the tint has no outline to collide with,
+   and dropping the hairlines on hover made rows twitch as the pointer moved. */
 .fieldRowSelected::before,
-.fieldRow:hover + .fieldRow::before,
 .fieldRowSelected + .fieldRow::before {
   opacity: 0;
 }
 
-/* Dashed while hovered or selected: it reads as an editable region rather than
-   as a solid card the respondent would see. */
-.fieldRow:hover,
-.fieldRowSelected {
-  border: 1px dashed var(--mantine-color-emerald-5);
-  border-radius: 4px;
-  background-color: var(--mantine-color-emerald-0);
+/*
+ * Hover is a bare tint; selection adds the accent ring. Both were dashed
+ * emerald before, which read as an unfinished wireframe and gave a merely
+ * hovered row the same weight as the selected one.
+ */
+.fieldRow:hover {
+  border-color: transparent;
+  border-radius: 6px;
+  background-color: rgba(16, 24, 40, 0.03);
 }
- 
+
+.fieldRowSelected,
+.fieldRowSelected:hover {
+  border-color: var(--mantine-color-emerald-5);
+  border-radius: 6px;
+  background-color: var(--mantine-color-emerald-0);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
 /* On a dark-themed card the default mint tint swallows light label text —
    this covers every hover/selected state on the row, not just the selected
    one, since a plain (unselected) hover hits the same rule otherwise. */
-.fieldRowDark:hover,
-.fieldRowDark.fieldRowSelected {
-  background-color: rgba(255, 255, 255, 0.06) !important;
+.fieldRowDark:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+.fieldRowDark.fieldRowSelected,
+.fieldRowDark.fieldRowSelected:hover {
+  background-color: rgba(255, 255, 255, 0.07) !important;
   border-color: var(--mantine-color-emerald-4) !important;
 }
 
+/* Still dashed — this one is a drop target, which is the one place the dashed
+   edge carries real meaning rather than decorating a finished surface. */
 .emptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 220px;
-  margin: 20px 28px;
+  margin: 20px 24px;
   padding: 40px 24px;
-  border: 1px dashed #ced4da;
-  border-radius: 8px;
-  background-color: #f8f9fa;
+  border: 1px dashed #dfe3e8;
+  border-radius: 10px;
+  background-color: #fafbfc;
   text-align: center;
 }
 
@@ -113,11 +133,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: #e9ecef;
-  color: #868e96;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #eef0f3;
+  color: #8b929c;
 }
 
 /* ---- Grid layout ---- */

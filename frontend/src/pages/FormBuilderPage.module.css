@@ -11,6 +11,33 @@
   height: 100%;
 }
 
+.nameInput {
+  flex: 1;
+  max-width: 360px;
+}
+
+.nameInput input {
+  padding-inline: 6px;
+  border-radius: 6px;
+  transition: background-color 100ms ease;
+}
+
+/* The title is editable, but nothing said so until you happened to click it. */
+.nameInput input:hover {
+  background-color: var(--mantine-color-default-hover);
+}
+
+.nameInput input:focus {
+  background-color: var(--mantine-color-default-hover);
+  outline: 1px solid var(--mantine-color-default-border);
+}
+
+.historyGroup {
+  padding: 2px;
+  border-radius: 8px;
+  background-color: var(--mantine-color-default);
+}
+
 /* What the cursor carries during a drag. */
 .dragChip {
   padding: 8px 14px;

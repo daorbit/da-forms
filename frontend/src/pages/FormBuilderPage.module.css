@@ -11,14 +11,18 @@
   height: 100%;
 }
 
+/* Sized to the name it holds, not to the space available: stretched across the
+   header the field read as an empty search bar rather than as a title. */
 .nameInput {
-  flex: 1;
-  max-width: 360px;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 320px;
 }
 
 .nameInput input {
-  padding-inline: 6px;
+  padding-inline: 8px;
   border-radius: 6px;
+  text-overflow: ellipsis;
   transition: background-color 100ms ease;
 }
 
@@ -27,8 +31,10 @@
   background-color: var(--mantine-color-default-hover);
 }
 
+/* No fill on focus — the caret and the ring already say it is being edited, and
+   the block of colour behind a short name was the loudest thing in the header. */
 .nameInput input:focus {
-  background-color: var(--mantine-color-default-hover);
+  background-color: transparent;
   outline: 1px solid var(--mantine-color-default-border);
 }
 

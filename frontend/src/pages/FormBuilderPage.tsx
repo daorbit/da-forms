@@ -563,6 +563,8 @@ export function FormBuilderPage() {
               fw={600}
               size="sm"
               className={classes.nameInput}
+              // Grows with the name instead of holding a fixed block of header.
+              style={{ width: `${Math.min(Math.max(name.length, 8) + 2, 34)}ch` }}
             />
             {/* Publish state belongs next to the name it describes, not inferred
                 from which way the button in the corner is pointing. */}

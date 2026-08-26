@@ -193,7 +193,7 @@ export function FormListPage() {
             placeholder="Search forms"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            leftSection={<IconSearch size={16} />}
+            leftSection={<IconSearch size={15} className={classes.searchIcon} />}
             rightSection={
               search ? (
                 <ActionIcon
@@ -208,7 +208,7 @@ export function FormListPage() {
             }
             size="sm"
             w={260}
-            classNames={{ input: classes.searchInput }}
+            classNames={{ wrapper: classes.searchInput }}
           />
           <SegmentedControl
             value={status}

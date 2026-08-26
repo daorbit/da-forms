@@ -1,4 +1,9 @@
-import { createTheme, type MantineColorScheme, type MantineColorsTuple } from '@mantine/core';
+import {
+  createTheme,
+  mergeThemeOverrides,
+  type MantineColorScheme,
+  type MantineColorsTuple,
+} from '@mantine/core';
 import { theme as baseTheme } from './theme';
 
 export type RadiusStyle = 'rounded' | 'soft' | 'sharp';
@@ -69,7 +74,10 @@ export function themeFromParams(search: string): ThemeParams {
   const overrides: Parameters<typeof createTheme>[0] = {};
 
   if (accent && /^#?[0-9a-fA-F]{6}$/.test(accent)) {
-    overrides.colors = { emerald: rampFrom(accent, colorScheme) };
+    // Spread the base palette back in: `colors` is replaced wholesale, not
+    // merged key by key, so naming only `emerald` here would drop the custom
+    // `dark` ramp and drop every surface back to Mantine's stock greys.
+    overrides.colors = { ...baseTheme.colors, emerald: rampFrom(accent, colorScheme) };
   }
 
   if (radius && radius in RADIUS) {
@@ -82,6 +90,11 @@ export function themeFromParams(search: string): ThemeParams {
 
   return {
     colorScheme,
-    theme: createTheme({ ...baseTheme, ...overrides }),
+    // `createTheme({ ...baseTheme, ...overrides })` looked equivalent and was
+    // not: spreading an already-created theme back through `createTheme` lost
+    // the custom `colors`, so every surface in the app silently fell back to
+    // Mantine's stock dark palette (dark-6 #2e2e2e rather than this app's
+    // #16181b). This merges the two overrides properly instead.
+    theme: mergeThemeOverrides(baseTheme, overrides),
   };
 }

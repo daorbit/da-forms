@@ -3,21 +3,27 @@
   background-color: var(--mantine-color-body);
 }
 
-/* Filled rather than transparent: at the page colour the field was an outline
-   floating next to a SegmentedControl that has a real surface, and the two read
-   as different kinds of control. */
-.searchInput {
-  background-color: var(--mantine-color-dark-6);
-  border-color: var(--mantine-color-default-border);
+/*
+ * Only the focus state is set here. The resting fill is Mantine's own default
+ * for the variant — `--input-bg: var(--mantine-color-dark-6)`, which this
+ * app's palette maps to the same #16181b the shell's search button wears — so
+ * restating it would be duplication that can drift.
+ *
+ * Set through the variable rather than as a `background-color`: the input's own
+ * rule reads `background-color: var(--input-bg)`, which wins over a competing
+ * declaration on the same element whatever its specificity. It goes on the
+ * wrapper because that is where Mantine's varsResolver writes these, and uses
+ * `:focus-within` because the wrapper is never itself the focused node.
+ */
+.searchInput:focus-within {
+  --input-bg: var(--mantine-color-default-hover);
+  --input-bd: var(--mantine-color-emerald-7);
 }
 
-.searchInput:focus {
-  background-color: var(--mantine-color-dark-5);
-  border-color: var(--mantine-color-emerald-7);
-}
-
-:global(html[data-mantine-color-scheme='light']) .searchInput {
-  background-color: #ffffff;
+/* The shell's search glyph is muted rather than full-strength text colour, and
+   a brighter icon here read as a different control. */
+.searchIcon {
+  color: var(--mantine-color-placeholder);
 }
 
 .row {

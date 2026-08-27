@@ -98,7 +98,7 @@ html[data-mantine-color-scheme='dark'] .mantine-Modal-content,
 html[data-mantine-color-scheme='dark'] .mantine-Drawer-content {
   background-color: #16181b !important;
   color: #f2f4f6 !important;
-  border: 1px solid #34383e !important;
+  /* border: 1px solid #34383e !important; */
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55) !important;
 }
 

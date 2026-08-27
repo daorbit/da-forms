@@ -24,6 +24,8 @@ export function PublicFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+ 
+  const embedded = window.self !== window.top;
 
   useEffect(() => {
     if (!id) return;
@@ -100,16 +102,19 @@ export function PublicFormPage() {
     setSubmitted(true);
   }
 
+  // Same standalone/embedded split as the status screens below: a spinner
+  // pinned to the middle of its own tab, but only as tall as it needs to be
+  // inside someone's page.
   if (error)
     return (
-      <Center h="100vh">
+      <Center mih={embedded ? 160 : "100dvh"} py={embedded ? 32 : 0}>
         <Text c="dimmed">Form not found.</Text>
       </Center>
     );
 
   if (!form)
     return (
-      <Center h="100vh">
+      <Center mih={embedded ? 160 : "100dvh"} py={embedded ? 32 : 0}>
         <Loader />
       </Center>
     );
@@ -117,7 +122,8 @@ export function PublicFormPage() {
   if (form.status !== "published" && !isPreview)
     return (
       <Center
-        // h="100vh"
+        mih={embedded ? undefined : "100dvh"}
+        py={64}
         className="da-forms-light-surface"
         data-mantine-color-scheme="light"
         style={{ background: "#fff" }}
@@ -154,7 +160,8 @@ export function PublicFormPage() {
       // Respondents see the form's own colours, never a host app's theme — the
       // share link and the embed are public pages, not part of anyone's dashboard.
       <Center
-        // h="100vh"
+        mih={embedded ? undefined : "100dvh"}
+        py={64}
         className="da-forms-light-surface"
         data-mantine-color-scheme="light"
         style={{ background: "#fff" }}

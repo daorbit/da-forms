@@ -32,21 +32,11 @@ export function PublicFormPage() {
       .catch((e: Error) => setError(e.message));
   }, [id]);
 
-  // Reports this page's height to whatever embedded it, so an iframe with no
-  // fixed height (the copy-paste embed snippet) can resize to fit the form
-  // instead of clipping it or leaving dead space below a short one.
-  //
-  // `#root` is measured, not `documentElement` — the app's own CSS locks
-  // `html`/`body` to 100% of the (currently wrong, pre-resize) viewport height
-  // and makes `#root` the actual scrolling container, so `#root`'s scrollHeight
-  // is the only element whose size reflects the real content. The
-  // `da-forms-bare-embed` class drops that 100% lock in return, so the page's
-  // own content — not the iframe's starting viewport — decides the height.
+
   useEffect(() => {
-    if (window.self === window.top) return; // not embedded — no parent to tell
+    if (window.self === window.top) return;
     document.body.classList.add("da-forms-bare-embed");
-    // Card-scope theme: only the card is meant to carry a background, so the
-    // page stays transparent and the host site's own background shows.
+
     const transparent = form?.theme?.scope === "card";
     document.body.classList.toggle("da-forms-transparent-page", transparent);
     const root = document.getElementById("root");
@@ -127,7 +117,7 @@ export function PublicFormPage() {
   if (form.status !== "published" && !isPreview)
     return (
       <Center
-        h="100vh"
+        // h="100vh"
         className="da-forms-light-surface"
         data-mantine-color-scheme="light"
         style={{ background: "#fff" }}

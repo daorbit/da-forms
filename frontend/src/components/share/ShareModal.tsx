@@ -151,7 +151,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
         body: { flex: 1, minHeight: 0, overflow: 'hidden' },
       }}
     >
-      <Group h="100%" gap={0} align="stretch" wrap="nowrap" className={classes.shell}>
+      <Group gap={0} align="stretch" wrap="nowrap" className={classes.shell}>
         {/* ---- Panel ---- */}
         <Box className={classes.panel}>
           <Group gap="sm" px={20} py="md" wrap="nowrap" className={classes.panelHeader}>

@@ -1,4 +1,9 @@
+/* The panel's width, shared with the preview pane so that pane can be sized
+   from the viewport rather than by flex — see .preview. */
 .shell {
+  --panel-width: 520px;
+
+  width: 100vw;
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
@@ -7,7 +12,7 @@
 /* ---- Left panel ---- */
 
 .panel {
-  width: 520px;
+  width: var(--panel-width);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -118,11 +123,21 @@
 
 /* ---- Right preview ---- */
 
+/*
+ * Sized from the viewport rather than by flex, in both directions.
+ *
+ * The stage inside is measured on mount to work out how far the device frame
+ * has to shrink to fit. Left to `flex: 1`, that measurement can be taken
+ * before the panel beside it has been laid out — the stage then measures the
+ * full window width, the scale comes out too large, and the frame renders
+ * wider than the pane until something forces a re-measure.
+ */
 .preview {
-  flex: 1;
-  min-width: 0;
+  flex-shrink: 0;
+  width: calc(100vw - var(--panel-width));
   height: 100dvh;
   max-height: 100dvh;
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;

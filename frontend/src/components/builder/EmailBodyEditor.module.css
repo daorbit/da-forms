@@ -1,0 +1,70 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.wrap[data-disabled] {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.toolbar {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-default);
+  overflow-x: auto;
+}
+
+.content :global(.ProseMirror) {
+  min-height: 320px;
+  padding: 18px 16px;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--mantine-color-text);
+}
+
+/* Tiptap has no placeholder of its own without the extension; this is the
+   first-paragraph-when-empty trick, which needs no extra dependency. */
+.content :global(.ProseMirror p.is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--mantine-color-dimmed);
+}
+
+.content :global(.ProseMirror p) {
+  margin: 0 0 12px;
+}
+
+.content :global(.ProseMirror p:last-child) {
+  margin-bottom: 0;
+}
+
+.content :global(.ProseMirror h2) {
+  margin: 0 0 10px;
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+.content :global(.ProseMirror h3) {
+  margin: 0 0 8px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.content :global(.ProseMirror ul),
+.content :global(.ProseMirror ol) {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.content :global(.ProseMirror li) {
+  margin-bottom: 4px;
+}
+
+.content :global(.ProseMirror a) {
+  color: var(--mantine-color-emerald-5);
+  text-decoration: underline;
+}

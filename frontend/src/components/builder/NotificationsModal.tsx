@@ -133,25 +133,14 @@ export function NotificationsModal({
     ? notifications.respondentEnabled ?? false
     : notifications.ownerEnabled ?? false;
 
-  /** Inserts a placeholder at the cursor (or the end, with no selection), rather than always appending. */
+  /** Drops a placeholder in at the caret, so a second one chains after the first. */
   function insertPlaceholder(label: string) {
     const token = `{{${label}}}`;
-    const el = bodyRef.current;
-    const current = notifications.respondentBody ?? '';
-    if (!el) {
-      onChange({ respondentBody: `${current}${token}` });
+    if (!bodyEditor) {
+      onChange({ respondentBody: `${notifications.respondentBody ?? ''}${token}` });
       return;
     }
-    const start = el.selectionStart ?? current.length;
-    const end = el.selectionEnd ?? current.length;
-    const next = `${current.slice(0, start)}${token}${current.slice(end)}`;
-    onChange({ respondentBody: next });
-    // Cursor lands right after the inserted token, so a second click chains
-    // naturally instead of jumping back to wherever it started.
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(start + token.length, start + token.length);
-    });
+    bodyEditor.chain().focus().insertContent(token).run();
   }
 
   const sampleAnswers = flattenFields(fields)
@@ -457,9 +446,14 @@ export function NotificationsModal({
             </div>
 
             {isRespondent ? (
-              <>
-                <div className={classes.composerToolbar}>
-                  <Menu shadow="md" position="bottom-start" disabled={!enabled}>
+              <EmailBodyEditor
+                value={notifications.respondentBody ?? ''}
+                onChange={(html) => onChange({ respondentBody: html })}
+                disabled={!enabled}
+                placeholder="Thanks — we received your submission and will be in touch soon."
+                onReady={setBodyEditor}
+                toolbarExtra={
+                  <Menu shadow="md" position="bottom-end" disabled={!enabled}>
                     <Menu.Target>
                       <Button
                         variant="subtle"
@@ -467,6 +461,7 @@ export function NotificationsModal({
                         color="gray"
                         rightSection={<IconChevronDown size={13} />}
                         disabled={!enabled || placeholderFields.length === 0}
+                        onMouseDown={(e) => e.preventDefault()}
                       >
                         Field Labels
                       </Button>
@@ -483,17 +478,8 @@ export function NotificationsModal({
                       ))}
                     </Menu.Dropdown>
                   </Menu>
-                </div>
-
-                <textarea
-                  ref={bodyRef}
-                  className={classes.bodyInput}
-                  placeholder="Thanks — we received your submission and will be in touch soon."
-                  value={notifications.respondentBody ?? ''}
-                  onChange={(e) => onChange({ respondentBody: e.target.value })}
-                  disabled={!enabled}
-                />
-              </>
+                }
+              />
             ) : (
               <Box className={classes.ownerBody}>
                 <Text size="xs" c="dimmed" mb={10}>

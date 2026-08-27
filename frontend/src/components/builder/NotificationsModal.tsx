@@ -1,5 +1,19 @@
 import { useRef, useState } from 'react';
-import { Modal, Group, Box, Text, Button, ActionIcon, Divider, Switch, Menu, UnstyledButton } from '@mantine/core';
+import {
+  Modal,
+  Group,
+  Box,
+  Text,
+  Button,
+  ActionIcon,
+  Divider,
+  Stack,
+  Switch,
+  Select,
+  TagsInput,
+  Menu,
+  UnstyledButton,
+} from '@mantine/core';
 import { IconX, IconMail, IconBellRinging, IconChevronDown, IconPlus } from '@tabler/icons-react';
 import type { FormField, NotificationSettings } from '@/types';
 import classes from './NotificationsModal.module.css';
@@ -33,6 +47,11 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
   const emailFields = flattenFields(fields).filter((f) => f.type === 'email');
   const placeholderFields = flattenFields(fields).filter((f) => f.label && f.type !== 'grid');
   const respondentEmailField = emailFields.find((f) => f.id === notifications.respondentEmailFieldId);
+
+  const isRespondent = tab === 'respondent';
+  const enabled = isRespondent
+    ? notifications.respondentEnabled ?? false
+    : notifications.ownerEnabled ?? false;
 
   /** Inserts a placeholder at the cursor (or the end, with no selection), rather than always appending. */
   function insertPlaceholder(label: string) {
@@ -68,44 +87,45 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
         body: { flex: 1, minHeight: 0, overflow: 'hidden' },
       }}
     >
-      <Box className={classes.shell}>
-        <Group gap="sm" px={20} py="md" wrap="nowrap" className={classes.panelHeader}>
-          <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
-            <IconX size={18} />
-          </ActionIcon>
-          <Divider orientation="vertical" my={6} />
-          <Text fw={600}>Email Notifications</Text>
-        </Group>
+      <Group h="100%" gap={0} align="stretch" wrap="nowrap" className={classes.shell}>
+        {/* ---- Left: tabs and settings ---- */}
+        <Box className={classes.panel}>
+          <Group gap="sm" px={20} py="md" wrap="nowrap" className={classes.panelHeader}>
+            <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
+              <IconX size={18} />
+            </ActionIcon>
+            <Divider orientation="vertical" my={6} />
+            <Text fw={600}>Email Notifications</Text>
+          </Group>
 
-        <Group gap={0} wrap="nowrap" className={classes.tabs}>
-          {TABS.map((item) => {
-            const on = item.id === tab;
-            return (
-              <Box
-                key={item.id}
-                component="button"
-                type="button"
-                onClick={() => setTab(item.id)}
-                aria-current={on}
-                className={classes.tab}
-                style={{
-                  color: on ? item.color : 'var(--mantine-color-dimmed)',
-                  borderBottomColor: on ? item.color : 'transparent',
-                  fontWeight: on ? 600 : 500,
-                }}
-              >
-                <item.icon size={16} />
-                {item.label}
-              </Box>
-            );
-          })}
-        </Group>
+          <Group gap={0} wrap="nowrap" className={classes.tabs}>
+            {TABS.map((item) => {
+              const on = item.id === tab;
+              return (
+                <Box
+                  key={item.id}
+                  component="button"
+                  type="button"
+                  onClick={() => setTab(item.id)}
+                  aria-current={on}
+                  className={classes.tab}
+                  style={{
+                    color: on ? item.color : 'var(--mantine-color-dimmed)',
+                    borderBottomColor: on ? item.color : 'transparent',
+                    fontWeight: on ? 600 : 500,
+                  }}
+                >
+                  <item.icon size={16} />
+                  {item.label}
+                </Box>
+              );
+            })}
+          </Group>
 
-        <Box className={classes.panelBody}>
-          <Box className={classes.composerWrap}>
-            {tab === 'respondent' && (
-              <>
-                <Group justify="space-between" align="center" wrap="nowrap" mb="md">
+          <Box className={classes.panelBody}>
+            {isRespondent ? (
+              <Stack gap="lg">
+                <Group justify="space-between" align="center" wrap="nowrap">
                   <div>
                     <Text size="sm" fw={600}>
                       Email the respondent
@@ -122,100 +142,32 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
                   />
                 </Group>
 
-                {emailFields.length === 0 && (
-                  <Text size="sm" c="red" mb="md">
+                <Divider />
+
+                {emailFields.length === 0 ? (
+                  <Text size="sm" c="red">
                     Add an Email field to this form to send a confirmation — there's nothing to send
                     it to yet.
                   </Text>
+                ) : (
+                  <Select
+                    label="Send to"
+                    description="Which field holds the respondent's address"
+                    data={emailFields.map((f) => ({ value: f.id, label: f.label || 'Untitled field' }))}
+                    value={notifications.respondentEmailFieldId ?? null}
+                    onChange={(value) => onChange({ respondentEmailFieldId: value ?? undefined })}
+                    disabled={!notifications.respondentEnabled}
+                  />
                 )}
 
-                <Box className={classes.composer} data-disabled={!notifications.respondentEnabled || undefined}>
-                  <div className={classes.composerRow}>
-                    <Text className={classes.composerLabel}>From</Text>
-                    <Text className={classes.composerValue}>{formTitle || 'Your form'}</Text>
-                  </div>
-
-                  <div className={classes.composerRow}>
-                    <Text className={classes.composerLabel}>To</Text>
-                    {emailFields.length === 0 ? (
-                      <Text className={classes.composerValueMuted}>No email field on this form</Text>
-                    ) : (
-                      <Menu shadow="md" position="bottom-start" disabled={!notifications.respondentEnabled}>
-                        <Menu.Target>
-                          <UnstyledButton className={classes.toPicker} disabled={!notifications.respondentEnabled}>
-                            <span className={classes.toChip}>
-                              {respondentEmailField?.label || 'Choose a field'}
-                            </span>
-                            <IconChevronDown size={14} />
-                          </UnstyledButton>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                          {emailFields.map((f) => (
-                            <Menu.Item
-                              key={f.id}
-                              onClick={() => onChange({ respondentEmailFieldId: f.id })}
-                            >
-                              {f.label || 'Untitled field'}
-                            </Menu.Item>
-                          ))}
-                        </Menu.Dropdown>
-                      </Menu>
-                    )}
-                  </div>
-
-                  <div className={`${classes.composerRow} ${classes.composerRowNoBorder}`}>
-                    <input
-                      className={classes.subjectInput}
-                      placeholder="Enter subject"
-                      value={notifications.respondentSubject ?? ''}
-                      onChange={(e) => onChange({ respondentSubject: e.target.value })}
-                      disabled={!notifications.respondentEnabled}
-                    />
-                  </div>
-
-                  <div className={classes.composerToolbar}>
-                    <Menu shadow="md" position="bottom-end" disabled={!notifications.respondentEnabled}>
-                      <Menu.Target>
-                        <Button
-                          variant="subtle"
-                          size="xs"
-                          color="gray"
-                          rightSection={<IconChevronDown size={13} />}
-                          disabled={!notifications.respondentEnabled || placeholderFields.length === 0}
-                        >
-                          Field Labels
-                        </Button>
-                      </Menu.Target>
-                      <Menu.Dropdown>
-                        {placeholderFields.map((f) => (
-                          <Menu.Item
-                            key={f.id}
-                            leftSection={<IconPlus size={13} />}
-                            onClick={() => insertPlaceholder(f.label)}
-                          >
-                            {f.label || 'Untitled field'}
-                          </Menu.Item>
-                        ))}
-                      </Menu.Dropdown>
-                    </Menu>
-                  </div>
-
-                  <textarea
-                    ref={bodyRef}
-                    className={classes.bodyInput}
-                    placeholder="Thanks — we received your submission and will be in touch soon."
-                    value={notifications.respondentBody ?? ''}
-                    onChange={(e) => onChange({ respondentBody: e.target.value })}
-                    disabled={!notifications.respondentEnabled}
-                    rows={14}
-                  />
-                </Box>
-              </>
-            )}
-
-            {tab === 'owner' && (
-              <>
-                <Group justify="space-between" align="center" wrap="nowrap" mb="md">
+                <Text size="xs" c="dimmed">
+                  Write the message on the right. Use <strong>Field Labels</strong> to drop a
+                  respondent's own answer into the text.
+                </Text>
+              </Stack>
+            ) : (
+              <Stack gap="lg">
+                <Group justify="space-between" align="center" wrap="nowrap">
                   <div>
                     <Text size="sm" fw={600}>
                       Notify me
@@ -232,56 +184,147 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
                   />
                 </Group>
 
-                <Box className={classes.composer} data-disabled={!notifications.ownerEnabled || undefined}>
-                  <div className={classes.composerRow}>
-                    <Text className={classes.composerLabel}>From</Text>
-                    <Text className={classes.composerValue}>{formTitle || 'Your form'}</Text>
-                  </div>
+                <Divider />
 
-                  <div className={classes.composerRow}>
-                    <Text className={classes.composerLabel}>To</Text>
-                    <input
-                      className={classes.toInput}
-                      placeholder="you@example.com, another@example.com"
-                      value={(notifications.ownerEmails ?? []).join(', ')}
-                      onChange={(e) =>
-                        onChange({
-                          ownerEmails: e.target.value
-                            .split(',')
-                            .map((v) => v.trim())
-                            .filter(Boolean),
-                        })
-                      }
-                      disabled={!notifications.ownerEnabled}
-                    />
-                  </div>
+                <TagsInput
+                  label="Send to"
+                  description="Press enter after each address"
+                  placeholder="you@example.com"
+                  value={notifications.ownerEmails ?? []}
+                  onChange={(value) => onChange({ ownerEmails: value })}
+                  disabled={!notifications.ownerEnabled}
+                />
 
-                  <div className={`${classes.composerRow} ${classes.composerRowNoBorder}`}>
-                    <input
-                      className={classes.subjectInput}
-                      placeholder={`New submission: ${formTitle || 'Untitled form'}`}
-                      value={notifications.ownerSubject ?? ''}
-                      onChange={(e) => onChange({ ownerSubject: e.target.value })}
-                      disabled={!notifications.ownerEnabled}
-                    />
-                  </div>
+                <Text size="xs" c="dimmed">
+                  The message lists every answer submitted on the form — only the subject is yours
+                  to write.
+                </Text>
+              </Stack>
+            )}
+          </Box>
 
-                  <Text size="xs" c="dimmed" className={classes.ownerBodyNote}>
-                    The message lists every answer submitted on the form — there's no separate body
-                    to write.
-                  </Text>
-                </Box>
+          <Group justify="flex-end" px={20} py="md" wrap="nowrap" className={classes.actionBar}>
+            <Button variant="default" onClick={onClose}>
+              Done
+            </Button>
+          </Group>
+        </Box>
+
+        {/* ---- Right: the composer ---- */}
+        <Box className={classes.composerPane}>
+          <Box className={classes.composer} data-disabled={!enabled || undefined}>
+            <div className={classes.composerRow}>
+              <Text className={classes.composerLabel}>From</Text>
+              <Text className={classes.composerValue}>{formTitle || 'Your form'}</Text>
+            </div>
+
+            <div className={classes.composerRow}>
+              <Text className={classes.composerLabel}>To</Text>
+              {isRespondent ? (
+                emailFields.length === 0 ? (
+                  <Text className={classes.composerValueMuted}>No email field on this form</Text>
+                ) : (
+                  <Menu shadow="md" position="bottom-start" disabled={!enabled}>
+                    <Menu.Target>
+                      <UnstyledButton className={classes.toPicker} disabled={!enabled}>
+                        {respondentEmailField?.label || 'Choose a field'}
+                        <IconChevronDown size={14} />
+                      </UnstyledButton>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      {emailFields.map((f) => (
+                        <Menu.Item key={f.id} onClick={() => onChange({ respondentEmailFieldId: f.id })}>
+                          {f.label || 'Untitled field'}
+                        </Menu.Item>
+                      ))}
+                    </Menu.Dropdown>
+                  </Menu>
+                )
+              ) : (
+                <input
+                  className={classes.toInput}
+                  placeholder="you@example.com, another@example.com"
+                  value={(notifications.ownerEmails ?? []).join(', ')}
+                  onChange={(e) =>
+                    onChange({
+                      ownerEmails: e.target.value
+                        .split(',')
+                        .map((v) => v.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  disabled={!enabled}
+                />
+              )}
+            </div>
+
+            <div className={classes.composerRow}>
+              <input
+                className={classes.subjectInput}
+                placeholder={
+                  isRespondent
+                    ? 'Thanks for your submission'
+                    : `New submission: ${formTitle || 'Untitled form'}`
+                }
+                value={(isRespondent ? notifications.respondentSubject : notifications.ownerSubject) ?? ''}
+                onChange={(e) =>
+                  onChange(
+                    isRespondent
+                      ? { respondentSubject: e.target.value }
+                      : { ownerSubject: e.target.value }
+                  )
+                }
+                disabled={!enabled}
+              />
+            </div>
+
+            {isRespondent ? (
+              <>
+                <div className={classes.composerToolbar}>
+                  <Menu shadow="md" position="bottom-start" disabled={!enabled}>
+                    <Menu.Target>
+                      <Button
+                        variant="subtle"
+                        size="xs"
+                        color="gray"
+                        rightSection={<IconChevronDown size={13} />}
+                        disabled={!enabled || placeholderFields.length === 0}
+                      >
+                        Field Labels
+                      </Button>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      {placeholderFields.map((f) => (
+                        <Menu.Item
+                          key={f.id}
+                          leftSection={<IconPlus size={13} />}
+                          onClick={() => insertPlaceholder(f.label)}
+                        >
+                          {f.label || 'Untitled field'}
+                        </Menu.Item>
+                      ))}
+                    </Menu.Dropdown>
+                  </Menu>
+                </div>
+
+                <textarea
+                  ref={bodyRef}
+                  className={classes.bodyInput}
+                  placeholder="Thanks — we received your submission and will be in touch soon."
+                  value={notifications.respondentBody ?? ''}
+                  onChange={(e) => onChange({ respondentBody: e.target.value })}
+                  disabled={!enabled}
+                />
               </>
+            ) : (
+              <Text size="sm" c="dimmed" className={classes.ownerBodyNote}>
+                The message body lists every answer submitted on the form — it is built for you, so
+                there is nothing to write here.
+              </Text>
             )}
           </Box>
         </Box>
-
-        <Group justify="flex-end" px={20} py="md" wrap="nowrap" className={classes.actionBar}>
-          <Button variant="default" onClick={onClose}>
-            Done
-          </Button>
-        </Group>
-      </Box>
+      </Group>
     </Modal>
   );
 }

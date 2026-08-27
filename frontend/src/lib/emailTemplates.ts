@@ -34,7 +34,15 @@ const C = {
 /** The vertical rhythm, as a scale rather than a number per call site. */
 const S = { tight: 8, block: 16, section: 24, major: 32 } as const;
 
-export type EmailLayout = 'plain' | 'thankYou' | 'receipt' | 'nextSteps';
+export type EmailLayout =
+  | 'plain'
+  | 'thankYou'
+  | 'receipt'
+  | 'nextSteps'
+  | 'banner'
+  | 'confirmation'
+  | 'minimal'
+  | 'hero';
 
 export interface LayoutOption {
   id: EmailLayout;
@@ -45,10 +53,14 @@ export interface LayoutOption {
 
 /** What the composer offers. Kept here so the picker and the renderer cannot drift. */
 export const EMAIL_LAYOUTS: LayoutOption[] = [
-  { id: 'plain', label: 'Plain', hint: 'Your text, lightly styled. No heading or extras.' },
   { id: 'thankYou', label: 'Thank you', hint: 'A confirmation tick above your message.' },
   { id: 'receipt', label: 'Receipt', hint: 'Your message, then a copy of what they submitted.' },
   { id: 'nextSteps', label: 'Next steps', hint: 'Your message, then a button to somewhere.' },
+  { id: 'confirmation', label: 'Confirmation', hint: 'Tick, message, their answers, and a button.' },
+  { id: 'banner', label: 'Banner', hint: 'A coloured header band across the top of the card.' },
+  { id: 'hero', label: 'Hero', hint: 'Your first line set large, as a headline.' },
+  { id: 'plain', label: 'Plain', hint: 'Your text, lightly styled. No heading or extras.' },
+  { id: 'minimal', label: 'Minimal', hint: 'No card, no chrome — text on a plain background.' },
 ];
 
 export function escapeHtml(s: string): string {
@@ -59,27 +71,76 @@ function escapeAttr(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
+const FONT = `-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif`;
+
+/** How the card around a message is dressed. */
+type Chrome = 'card' | 'banner' | 'bare';
+
 /**
  * The shell every message shares: the card, the form's name, the body.
  *
  * The form name sits at the top as plain text rather than a logo — the sender
  * is a form we know only by title, and an invented mark would be someone
  * else's brand.
+ *
+ * "banner" moves that name into a coloured band across the top; "bare" drops
+ * the card altogether, for the layout that wants to look like a message
+ * someone typed rather than a designed notification.
  */
-function shell(formName: string, inner: string, accent: string): string {
-  return `<div style="background:${C.page};padding:40px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+function shell(formName: string, inner: string, accent: string, chrome: Chrome = 'card'): string {
+  if (chrome === 'bare') {
+    return `<div style="background:${C.card};padding:40px 16px;font-family:${FONT}">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:520px;margin:0 auto">
+    <tr><td>
+      ${inner}
+      <p style="margin:${S.major}px 0 0;font-size:12px;color:${C.faint}">Sent from ${escapeHtml(formName)}</p>
+    </td></tr>
+  </table>
+</div>`;
+  }
+
+  const header =
+    chrome === 'banner'
+      ? `<tr><td style="background:${accent};border-radius:14px 14px 0 0;padding:20px ${S.major}px">
+        <p style="margin:0;font-size:15px;font-weight:700;color:#ffffff;letter-spacing:-0.2px">${escapeHtml(formName)}</p>
+      </td></tr>`
+      : '';
+
+  const bodyRadius = chrome === 'banner' ? '0 0 14px 14px' : '14px';
+  const bodyBorder =
+    chrome === 'banner'
+      ? `border:1px solid ${C.line};border-top:none`
+      : `border:1px solid ${C.line}`;
+  const nameLine =
+    chrome === 'banner'
+      ? ''
+      : `<p style="margin:0 0 ${S.major}px;font-size:15px;font-weight:700;color:${C.text};letter-spacing:-0.2px;text-align:center">
+        ${escapeHtml(formName)}<span style="color:${accent}">.</span>
+      </p>`;
+
+  return `<div style="background:${C.page};padding:40px 16px;font-family:${FONT}">
   <!--[if mso]>
   <style>.card, .panel { border-radius: 0 !important; }</style>
   <![endif]-->
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto">
-    <tr><td class="card" style="background:${C.card};border:1px solid ${C.line};border-radius:14px;padding:${S.major}px">
-      <p style="margin:0 0 ${S.major}px;font-size:15px;font-weight:700;color:${C.text};letter-spacing:-0.2px;text-align:center">
-        ${escapeHtml(formName)}<span style="color:${accent}">.</span>
-      </p>
+    ${header}
+    <tr><td class="card" style="background:${C.card};${bodyBorder};border-radius:${bodyRadius};padding:${S.major}px">
+      ${nameLine}
       ${inner}
     </td></tr>
   </table>
 </div>`;
+}
+
+/**
+ * The opening line, set as a headline.
+ *
+ * Takes the message's own first paragraph rather than inventing a heading —
+ * the form owner wrote the words, this only sets them larger.
+ */
+function heroSplit(text: string): { headline: string; rest: string } {
+  const blocks = text.split(/\n{2,}/);
+  return { headline: blocks[0] ?? '', rest: blocks.slice(1).join('\n\n') };
 }
 
 /** The author's own text, as paragraphs. Blank lines separate them. */
@@ -176,18 +237,36 @@ export function renderEmail({
   cta,
   accent = DEFAULT_ACCENT,
 }: RenderOptions): string {
-  const centered = layout === 'thankYou';
+  const centered = layout === 'thankYou' || layout === 'confirmation';
+  const showsTick = layout === 'thankYou' || layout === 'confirmation';
+  const showsAnswers = layout === 'receipt' || layout === 'confirmation';
+  const showsButton = layout === 'nextSteps' || layout === 'confirmation';
+  const chrome: Chrome = layout === 'banner' ? 'banner' : layout === 'minimal' ? 'bare' : 'card';
+
   const parts: string[] = [];
 
-  if (layout === 'thankYou') parts.push(tick(accent));
-  parts.push(prose(body, centered ? 'center' : 'left'));
-  if (layout === 'receipt') parts.push(answersPanel(answers));
+  if (showsTick) parts.push(tick(accent));
+
+  if (layout === 'hero') {
+    const { headline, rest } = heroSplit(body);
+    parts.push(
+      `<p style="margin:0 0 ${S.block}px;font-size:24px;font-weight:700;line-height:1.25;letter-spacing:-0.5px;color:${C.text}">${escapeHtml(
+        headline
+      ).replace(/\n/g, '<br>')}</p>`
+    );
+    if (rest) parts.push(prose(rest));
+  } else {
+    parts.push(prose(body, centered ? 'center' : 'left'));
+  }
+
+  if (showsAnswers) parts.push(answersPanel(answers));
+
   // Only an http(s) target gets a button — a `javascript:` or `data:` href
   // typed into the composer would be a scripting vector in whatever client
   // opens the message.
-  if (layout === 'nextSteps' && cta?.href && /^https?:\/\//i.test(cta.href)) {
+  if (showsButton && cta?.href && /^https?:\/\//i.test(cta.href)) {
     parts.push(button(cta.label || 'Continue', cta.href, accent));
   }
 
-  return shell(formName, parts.join(''), accent);
+  return shell(formName, parts.join(''), accent, chrome);
 }

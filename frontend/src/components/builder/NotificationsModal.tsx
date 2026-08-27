@@ -15,6 +15,7 @@ import {
   SegmentedControl,
   Menu,
   UnstyledButton,
+  Tooltip,
 } from '@mantine/core';
 import { IconX, IconMail, IconBellRinging, IconChevronDown, IconPlus } from '@tabler/icons-react';
 import type { EmailLayout, FormField, FormTheme, NotificationSettings } from '@/types';
@@ -65,6 +66,40 @@ function sampleValue(field: FormField): string {
     default:
       return field.placeholder || 'Sample answer';
   }
+}
+
+/**
+ * A miniature of what a layout produces.
+ *
+ * Drawn as bars and blocks rather than rendering the real email at 1/8 scale:
+ * at thumbnail size the actual text is unreadable anyway, and what someone is
+ * choosing between here is the *shape* — where the tick sits, whether there is
+ * a band across the top, whether answers and a button follow the text.
+ */
+function LayoutThumb({ id, accent }: { id: EmailLayout; accent: string }) {
+  const line = (width: string, key: number) => (
+    <span key={key} className={classes.thumbLine} style={{ width }} />
+  );
+
+  return (
+    <span className={classes.thumb} data-bare={id === 'minimal' || undefined}>
+      {id === 'banner' && <span className={classes.thumbBanner} style={{ backgroundColor: accent }} />}
+      <span className={classes.thumbInner}>
+        {id !== 'banner' && id !== 'minimal' && id !== 'hero' && (
+          <span className={classes.thumbName} />
+        )}
+        {(id === 'thankYou' || id === 'confirmation') && (
+          <span className={classes.thumbTick} style={{ backgroundColor: accent }} />
+        )}
+        {id === 'hero' && <span className={classes.thumbHero} />}
+        {[...Array(id === 'hero' ? 2 : 3)].map((_, i) => line(i === 2 ? '60%' : '100%', i))}
+        {(id === 'receipt' || id === 'confirmation') && <span className={classes.thumbPanel} />}
+        {(id === 'nextSteps' || id === 'confirmation') && (
+          <span className={classes.thumbButton} style={{ backgroundColor: accent }} />
+        )}
+      </span>
+    </span>
+  );
 }
 
 /** Fills `{{Field Label}}` with a sample answer — mirrors what the backend does at send time. */
@@ -240,27 +275,26 @@ export function NotificationsModal({
                   <Text size="xs" c="dimmed" mb={10}>
                     How the message is laid out when it lands.
                   </Text>
-                  <Stack gap={8}>
+                  <div className={classes.layoutGrid}>
                     {EMAIL_LAYOUTS.map((option) => {
                       const on = (notifications.respondentLayout ?? 'plain') === option.id;
                       return (
-                        <UnstyledButton
-                          key={option.id}
-                          className={classes.layoutOption}
-                          data-active={on || undefined}
-                          disabled={!notifications.respondentEnabled}
-                          onClick={() => onChange({ respondentLayout: option.id as EmailLayout })}
-                        >
-                          <Text size="sm" fw={on ? 600 : 500}>
-                            {option.label}
-                          </Text>
-                          <Text size="xs" c="dimmed" mt={2}>
-                            {option.hint}
-                          </Text>
-                        </UnstyledButton>
+                        <Tooltip key={option.id} label={option.hint} withArrow position="right" multiline w={200}>
+                          <UnstyledButton
+                            className={classes.layoutOption}
+                            data-active={on || undefined}
+                            disabled={!notifications.respondentEnabled}
+                            onClick={() => onChange({ respondentLayout: option.id as EmailLayout })}
+                          >
+                            <LayoutThumb id={option.id} accent={theme?.accentColor ?? '#059669'} />
+                            <Text size="xs" fw={on ? 600 : 500} className={classes.layoutName}>
+                              {option.label}
+                            </Text>
+                          </UnstyledButton>
+                        </Tooltip>
                       );
                     })}
-                  </Stack>
+                  </div>
                 </div>
 
                 {notifications.respondentLayout === 'nextSteps' && (
@@ -461,10 +495,27 @@ export function NotificationsModal({
                 />
               </>
             ) : (
-              <Text size="sm" c="dimmed" className={classes.ownerBodyNote}>
-                The message body lists every answer submitted on the form — it is built for you, so
-                there is nothing to write here.
-              </Text>
+              <Box className={classes.ownerBody}>
+                <Text size="xs" c="dimmed" mb={10}>
+                  The body is built for you — every answer, as it was submitted:
+                </Text>
+                {sampleAnswers.length === 0 ? (
+                  <Text size="sm" c="dimmed" fs="italic">
+                    Add fields to the form and they will be listed here.
+                  </Text>
+                ) : (
+                  <div className={classes.answerList}>
+                    {sampleAnswers.map((a) => (
+                      <div key={a.label} className={classes.answerRow}>
+                        <Text size="xs" c="dimmed">
+                          {a.label}
+                        </Text>
+                        <Text size="sm">{a.value}</Text>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Box>
             )}
           </Box>
           )}

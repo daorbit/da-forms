@@ -230,7 +230,8 @@ export interface Form {
   updatedAt: string;
 }
 
-export type EmailLayout = 'plain' | 'thankYou' | 'receipt' | 'nextSteps';
+/** Defined with the renderer that implements each one, so the two cannot drift. */
+export type { EmailLayout } from '@/lib/emailTemplates';
 
 export interface NotificationSettings {
   /** Confirmation email to whoever filled the form. */

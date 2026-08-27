@@ -121,10 +121,6 @@
 .preview {
   flex: 1;
   min-width: 0;
-  /* Pinned to the viewport rather than left to inherit a height through the
-     modal's flex chain: the stage inside is measured on mount to scale the
-     device frame, and a height that only resolves on a later pass measures
-     zero at exactly the moment that measurement is taken. */
   height: 100dvh;
   max-height: 100dvh;
   min-height: 0;

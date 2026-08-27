@@ -28,22 +28,42 @@ export function useFitScale(
     const element = ref.current;
     if (!element) return;
 
+    let frame = 0;
+
+    /**
+     * Returns false while the container has no usable size — which is the
+     * state on the first pass when this runs inside a modal that is still
+     * opening, and where treating the zero as a scale of 1 would render the
+     * content full-size and overflowing.
+     */
     const fit = () => {
-      const byWidth = (element.clientWidth - padX) / contentWidth;
-      const byHeight = (element.clientHeight - padY) / contentHeight;
-      const next = Math.min(1, byWidth, byHeight);
-      // A container that has not been laid out yet measures zero, which is not
-      // a scale — treating it as one would render the content unscaled and
-      // overflowing until something else happened to trigger a re-measure.
-      // The observer below fires again once it has a real size.
-      if (!Number.isFinite(next) || next <= 0) return;
+      const width = element.clientWidth - padX;
+      const height = element.clientHeight - padY;
+      if (width <= 0 || height <= 0) return false;
+      const next = Math.min(1, width / contentWidth, height / contentHeight);
+      if (!Number.isFinite(next) || next <= 0) return false;
       setScale(next);
+      return true;
     };
 
-    fit();
-    const observer = new ResizeObserver(fit);
+    // A ResizeObserver on the container alone is not enough here: inside a
+    // modal that mounts already open, the container is laid out by an ancestor
+    // transition, and its own box may never change again afterwards — so the
+    // observer's one initial zero-size callback would be the only one it ever
+    // got. Retrying on animation frames until the first real measurement
+    // covers that, and the observer then handles genuine resizes.
+    const retry = () => {
+      if (fit()) return;
+      frame = requestAnimationFrame(retry);
+    };
+    retry();
+
+    const observer = new ResizeObserver(() => fit());
     observer.observe(element);
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [ref, enabled, contentWidth, contentHeight, padX, padY]);
 
   return scale;

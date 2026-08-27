@@ -142,21 +142,6 @@
   background: var(--preview-stage);
 }
 
-/*
- * Hides the frame for the frame or two before its fit has been measured.
- *
- * `visibility` rather than `display`: the frame still has to take part in
- * layout during that moment, because the stage's measurement is what it is
- * waiting for.
- */
-.frameFade {
-  visibility: hidden;
-}
-
-.frameFade[data-ready] {
-  visibility: visible;
-}
-
 .panel {
   display: flex;
   flex-direction: column;

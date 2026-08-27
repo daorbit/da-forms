@@ -1,8 +1,6 @@
-import { useLayoutEffect, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface Options {
-  /** Skips measuring while the container is not on screen. */
-  enabled: boolean;
   /** The content's natural width and height, before scaling. */
   contentWidth: number;
   contentHeight: number;
@@ -10,56 +8,61 @@ interface Options {
   padding?: { x: number; y: number };
 }
 
+interface FitScale {
+  /** Attach to the element the content has to fit inside. */
+  ref: (node: HTMLElement | null) => void;
+  /** 1 until the container has been measured — pair with `measured` before showing anything. */
+  scale: number;
+  measured: boolean;
+}
+
 /**
  * The largest scale at which `contentWidth × contentHeight` fits inside the
- * ref'd element, capped at 1:1 — content is shrunk to fit but never blown up,
- * which would misrepresent what it looks like at its real size.
+ * measured element, capped at 1:1 — content is shrunk to fit but never blown
+ * up, which would misrepresent what it looks like at its real size.
+ *
+ * Returns a *callback ref* rather than taking a `RefObject`, and that is the
+ * whole point of the design: these previews live in modals, and a modal renders
+ * nothing at all until it opens. With an object ref, the effect runs on the
+ * render that opens the modal — while the ref is still empty, because the
+ * portal has not mounted — finds no element, and never runs again, because
+ * assigning a ref does not retrigger anything. The preview stays unmeasured
+ * forever, and only appears if something unrelated happens to re-run the
+ * effect. A callback ref fires when the element actually arrives, which is the
+ * moment there is something to measure.
  */
-export function useFitScale(
-  ref: RefObject<HTMLElement | null>,
-  { enabled, contentWidth, contentHeight, padding }: Options
-): { scale: number; measured: boolean } {
-  // Starts at 1 but reports itself as unmeasured, so the content can be laid
-  // out — and therefore give the container something to size against — while
-  // still being hidden until the real scale lands. Withholding the content
-  // entirely instead would deadlock: a stage whose only child is the frame has
-  // no height without it, so it would measure zero forever and the frame would
-  // never be allowed in.
+export function useFitScale({ contentWidth, contentHeight, padding }: Options): FitScale {
+  const [element, setElement] = useState<HTMLElement | null>(null);
   const [scale, setScale] = useState(1);
   const [measured, setMeasured] = useState(false);
+
   const padX = padding?.x ?? 0;
   const padY = padding?.y ?? 0;
 
-  useLayoutEffect(() => {
-    if (!enabled) return;
-    const element = ref.current;
+  const ref = useCallback((node: HTMLElement | null) => setElement(node), []);
+
+  useEffect(() => {
     if (!element) return;
 
     let frame = 0;
 
-    /**
-     * Returns false while the container has no usable size — which is the
-     * state on the first pass when this runs inside a modal that is still
-     * opening, and where treating the zero as a scale of 1 would render the
-     * content full-size and overflowing.
-     */
+    /** False while the container has no usable size — it has not been laid out yet. */
     const fit = () => {
       const width = element.clientWidth - padX;
       const height = element.clientHeight - padY;
       if (width <= 0 || height <= 0) return false;
+
       const next = Math.min(1, width / contentWidth, height / contentHeight);
       if (!Number.isFinite(next) || next <= 0) return false;
+
       setScale(next);
       setMeasured(true);
       return true;
     };
 
-    // A ResizeObserver on the container alone is not enough here: inside a
-    // modal that mounts already open, the container is laid out by an ancestor
-    // transition, and its own box may never change again afterwards — so the
-    // observer's one initial zero-size callback would be the only one it ever
-    // got. Retrying on animation frames until the first real measurement
-    // covers that, and the observer then handles genuine resizes.
+    // The element can exist before it has been laid out — a modal's opening
+    // transition is the common case. Retrying per frame until the first real
+    // measurement covers that; the observer then handles genuine resizes.
     const retry = () => {
       if (fit()) return;
       frame = requestAnimationFrame(retry);
@@ -68,11 +71,18 @@ export function useFitScale(
 
     const observer = new ResizeObserver(() => fit());
     observer.observe(element);
+
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [ref, enabled, contentWidth, contentHeight, padX, padY]);
+  }, [element, contentWidth, contentHeight, padX, padY]);
 
-  return { scale, measured };
+  // A closed modal unmounts its content, so the next open starts from an
+  // unmeasured state rather than briefly reusing the last one's scale.
+  useEffect(() => {
+    if (!element) setMeasured(false);
+  }, [element]);
+
+  return { ref, scale, measured };
 }

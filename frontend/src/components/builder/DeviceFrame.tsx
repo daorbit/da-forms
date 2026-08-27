@@ -52,6 +52,13 @@ interface Props {
   device: DeviceId;
   /** Shrinks the whole frame to fit the available space; the page inside still renders at full size. */
   scale: number;
+  /**
+   * Laid out but not painted, for the frame or two before `scale` has been
+   * measured — without it the frame appears once at full size and overflows
+   * its stage. Hidden rather than unrendered because the stage is measured
+   * against what is inside it.
+   */
+  hidden?: boolean;
   children: React.ReactNode;
 }
 
@@ -63,7 +70,7 @@ interface Props {
  * preview honest: a 402px-wide phone layout stays a phone layout, whatever
  * room the modal has.
  */
-export function DeviceFrame({ device, scale, children }: Props) {
+export function DeviceFrame({ device, scale, hidden, children }: Props) {
   const spec = DEVICE_SPECS[device];
   const size = frameSize(device);
   const screenStyle = { width: spec.width, height: spec.height };
@@ -75,7 +82,11 @@ export function DeviceFrame({ device, scale, children }: Props) {
   return (
     <div
       className={classes.frame}
-      style={{ width: size.width * scale, height: size.height * scale }}
+      style={{
+        width: size.width * scale,
+        height: size.height * scale,
+        visibility: hidden ? 'hidden' : undefined,
+      }}
     >
       <div
         className={classes.inner}

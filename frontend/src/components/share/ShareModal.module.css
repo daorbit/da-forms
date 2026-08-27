@@ -195,21 +195,6 @@
   overflow: hidden;
 }
 
-/*
- * Hides the frame for the frame or two before its fit has been measured.
- *
- * `visibility` rather than `display`, deliberately: the frame still has to take
- * part in layout during that moment, because the stage's own measurement is
- * what it is waiting for. Removing it from the flow would leave nothing to
- * measure.
- */
-.frameFade {
-  visibility: hidden;
-}
-
-.frameFade[data-ready] {
-  visibility: visible;
-}
 
 /*
  * The iframe fills whatever size `DeviceFrame` gives its screen slot — that

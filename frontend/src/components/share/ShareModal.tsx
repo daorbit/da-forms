@@ -70,13 +70,11 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
   const [device, setDevice] = useState<DeviceId>('macbook');
   const [published, setPublished] = useState(form.status === 'published');
   const [height, setHeight] = useState<number | string>(600);
-  const stageRef = useRef<HTMLDivElement>(null);
 
   const shareUrl = publicFormUrl(form._id);
 
   const frameDims = frameSize(device);
-  const { scale, measured } = useFitScale(stageRef, {
-    enabled: opened,
+  const { ref: stageRef, scale, measured } = useFitScale({
     contentWidth: frameDims.width,
     contentHeight: frameDims.height,
     padding: { x: 48, y: 48 },
@@ -378,21 +376,18 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
             </Group>
           </Group>
 
-          {/* Laid out from the first render so the stage has something to size
-              against, but kept invisible until the fit has been measured —
-              otherwise the frame paints once at full size and overflows the
-              pane before the scale lands. */}
+          {/* The frame is laid out from the first render so the stage has
+              something to size against, and stays unpainted until that fit has
+              been measured. */}
           <Box className={classes.previewStage} ref={stageRef}>
-            <div className={classes.frameFade} data-ready={measured || undefined}>
-              <DeviceFrame device={device} scale={scale}>
-                <iframe
-                  key={device}
-                  src={`${shareUrl}?preview=1`}
-                  title="Form preview"
-                  className={classes.frame}
-                />
-              </DeviceFrame>
-            </div>
+            <DeviceFrame device={device} scale={scale} hidden={!measured}>
+              <iframe
+                key={device}
+                src={`${shareUrl}?preview=1`}
+                title="Form preview"
+                className={classes.frame}
+              />
+            </DeviceFrame>
           </Box>
 
           <Text size="xs" c="dimmed" ta="center" mt="md">

@@ -71,7 +71,6 @@ export function PreviewModal({
   const [device, setDevice] = useState<DeviceId>('macbook');
   const [panelOpen, setPanelOpen] = useState(true);
   const [pickedId, setPickedId] = useState<string | null>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
 
   // A picked preset is previewed here only; Apply is what reaches the builder.
   useEffect(() => {
@@ -79,8 +78,7 @@ export function PreviewModal({
   }, [opened]);
 
   const size = frameSize(device);
-  const { scale, measured } = useFitScale(stageRef, {
-    enabled: opened,
+  const { ref: stageRef, scale, measured } = useFitScale({
     contentWidth: size.width,
     contentHeight: size.height,
     padding: { x: 64, y: 64 },
@@ -126,12 +124,11 @@ export function PreviewModal({
       />
 
       <Box className={classes.body}>
-        {/* Laid out from the first render so the stage has something to size
-            against, but kept invisible until the fit has been measured —
-            otherwise the frame paints once at full size and overflows. */}
+        {/* The frame is laid out from the first render so the stage has
+            something to size against, and stays unpainted until that fit has
+            been measured. */}
         <Box className={classes.stage} ref={stageRef}>
-          <div className={classes.frameFade} data-ready={measured || undefined}>
-          <DeviceFrame device={device} scale={scale}>
+          <DeviceFrame device={device} scale={scale} hidden={!measured}>
             <FormPage theme={shownTheme} minHeight="100%">
               {/* Remounted per device so each preview starts from page one
                   with the initial values, at that device's layout. */}
@@ -154,7 +151,6 @@ export function PreviewModal({
               />
             </FormPage>
           </DeviceFrame>
-          </div>
         </Box>
 
         {onApplyTheme && (

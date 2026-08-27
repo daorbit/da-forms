@@ -112,7 +112,7 @@ export function FormBuilderPage() {
   const [stepIndicator, setStepIndicator] = useState<StepIndicator>('progress');
   const [showStepHeadings, setShowStepHeadings] = useState(false);
   const [collectIp, setCollectIp] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationSettings>({});
+  const [emailNotifications, setEmailNotifications] = useState<NotificationSettings>({});
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [loadingForm, setLoadingForm] = useState(!!routeFormId);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
@@ -152,7 +152,7 @@ export function FormBuilderPage() {
         stepIndicator,
         showStepHeadings,
         collectIp,
-        notifications,
+        notifications: emailNotifications,
       }),
     [
       name,
@@ -173,7 +173,7 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
-      notifications,
+      emailNotifications,
     ]
   );
   // In the demo workspace nothing can be saved, so nothing is ever "unsaved" —
@@ -200,7 +200,7 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
-      notifications,
+      notifications: emailNotifications,
     }),
     [
       name,
@@ -221,7 +221,7 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
-      notifications,
+      emailNotifications,
     ]
   );
 
@@ -244,7 +244,7 @@ export function FormBuilderPage() {
     setStepIndicator(state.stepIndicator);
     setShowStepHeadings(state.showStepHeadings);
     setCollectIp(state.collectIp);
-    setNotifications(state.notifications);
+    setEmailNotifications(state.notifications);
     // The selected/editing field may not exist in this snapshot's tree.
     setSelectedId((id) => (id && findField(state.fields, id) ? id : null));
     setEditingId((id) => (id && findField(state.fields, id) ? id : null));
@@ -319,7 +319,7 @@ export function FormBuilderPage() {
       setStepIndicator(form.stepIndicator ?? 'progress');
       setShowStepHeadings(form.showStepHeadings ?? false);
       setCollectIp(form.collectIp ?? false);
-      setNotifications(form.notifications ?? {});
+      setEmailNotifications(form.notifications ?? {});
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
       setSavedSnapshot(
         JSON.stringify({
@@ -478,7 +478,7 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
-      notifications,
+      notifications: emailNotifications,
     };
     const form = savedFormId
       ? await updateForm(savedFormId, payload, workspaceId)
@@ -814,8 +814,8 @@ export function FormBuilderPage() {
         opened={railPanel === 'notifications'}
         onClose={() => setRailPanel(null)}
         fields={fields}
-        notifications={notifications}
-        onChange={(patch) => setNotifications((prev) => ({ ...prev, ...patch }))}
+        notifications={emailNotifications}
+        onChange={(patch) => setEmailNotifications((prev) => ({ ...prev, ...patch }))}
       />
 
       <PreviewModal

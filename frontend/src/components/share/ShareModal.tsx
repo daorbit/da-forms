@@ -13,6 +13,7 @@ import {
   Switch,
   Paper,
   Stack,
+  Tooltip,
 } from '@mantine/core';
 import {
   IconX,
@@ -21,14 +22,23 @@ import {
   IconExternalLink,
   IconLink,
   IconCode,
-  IconDeviceDesktop,
+  IconDeviceIpad,
+  IconDeviceLaptop,
   IconDeviceMobile,
   IconInfoCircle,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { updateForm, publicFormUrl } from '@/lib/api';
 import type { Form } from '@/types';
+import { useFitScale } from '@/hooks/useFitScale';
+import { DeviceFrame, DEVICE_ORDER, DEVICE_SPECS, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
 import classes from './ShareModal.module.css';
+
+const DEVICE_ICONS: Record<DeviceId, typeof IconDeviceLaptop> = {
+  macbook: IconDeviceLaptop,
+  ipad: IconDeviceIpad,
+  iphone: IconDeviceMobile,
+};
 
 type TabId = 'link' | 'embed';
 
@@ -57,11 +67,20 @@ function componentNameFor(title: string): string {
 
 export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
   const [tab, setTab] = useState<TabId>('link');
-  const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [device, setDevice] = useState<DeviceId>('macbook');
   const [published, setPublished] = useState(form.status === 'published');
   const [height, setHeight] = useState<number | string>(600);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   const shareUrl = publicFormUrl(form._id);
+
+  const frameDims = frameSize(device);
+  const scale = useFitScale(stageRef, {
+    enabled: opened,
+    contentWidth: frameDims.width,
+    contentHeight: frameDims.height,
+    padding: { x: 48, y: 48 },
+  });
 
   // A unique id per copy of the snippet — if someone embeds the same form
   // twice on one page, each iframe still resizes independently.
@@ -98,7 +117,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
   useEffect(() => {
     if (wasOpen.current && !opened) {
       setTab('link');
-      setDevice('desktop');
+      setDevice('macbook');
     }
     wasOpen.current = opened;
   }, [opened]);
@@ -339,45 +358,35 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
             <Text fw={700} size="lg">
               Preview
             </Text>
-            <Group gap={4} p={4} className={classes.deviceToggle}>
-              {(
-                [
-                  { id: 'desktop' as const, Icon: IconDeviceDesktop },
-                  { id: 'mobile' as const, Icon: IconDeviceMobile },
-                ]
-              ).map(({ id, Icon }) => (
-                <ActionIcon
-                  key={id}
-                  variant={device === id ? 'white' : 'subtle'}
-                  color={device === id ? 'dark' : 'gray'}
-                  size="lg"
-                  radius="sm"
-                  onClick={() => setDevice(id)}
-                  aria-label={id}
-                  aria-pressed={device === id}
-                >
-                  <Icon size={17} />
-                </ActionIcon>
-              ))}
+            <Group gap={2} className={classes.deviceToggle}>
+              {DEVICE_ORDER.map((id) => {
+                const Icon = DEVICE_ICONS[id];
+                return (
+                  <Tooltip key={id} label={DEVICE_SPECS[id].label} withArrow>
+                    <button
+                      type="button"
+                      className={`${classes.deviceButton} ${device === id ? classes.deviceButtonActive : ''}`}
+                      onClick={() => setDevice(id)}
+                      aria-label={DEVICE_SPECS[id].label}
+                      aria-pressed={device === id}
+                    >
+                      <Icon size={17} stroke={1.6} />
+                    </button>
+                  </Tooltip>
+                );
+              })}
             </Group>
           </Group>
 
-          <Box className={classes.previewStage}>
-            <Paper
-              withBorder
-              radius="md"
-              className={device === 'mobile' ? classes.frameMobile : classes.frameDesktop}
-            >
-              <Box className={classes.browserBar}>
-                <span className={classes.dot} />
-                <span className={classes.dot} />
-                <span className={classes.dot} />
-                <Text size="xs" c="dimmed" className={classes.browserUrl}>
-                  {shareUrl}
-                </Text>
-              </Box>
-              <iframe src={`${shareUrl}?preview=1`} title="Form preview" className={classes.frame} />
-            </Paper>
+          <Box className={classes.previewStage} ref={stageRef}>
+            <DeviceFrame device={device} scale={scale}>
+              <iframe
+                key={device}
+                src={`${shareUrl}?preview=1`}
+                title="Form preview"
+                className={classes.frame}
+              />
+            </DeviceFrame>
           </Box>
 
           <Text size="xs" c="dimmed" ta="center" mt="md">

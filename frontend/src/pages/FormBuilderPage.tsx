@@ -813,6 +813,7 @@ export function FormBuilderPage() {
       <NotificationsModal
         opened={railPanel === 'notifications'}
         onClose={() => setRailPanel(null)}
+        formTitle={title}
         fields={fields}
         notifications={emailNotifications}
         onChange={(patch) => setEmailNotifications((prev) => ({ ...prev, ...patch }))}

@@ -241,6 +241,7 @@ body {
  * `#root` to height:100% here would mean it always shows its own scrollbar
  * until the parent catches up, and clips content that's already off-screen.
  */
+html:has(body.da-forms-bare-embed),
 body.da-forms-bare-embed,
 body.da-forms-bare-embed #root {
   height: auto;

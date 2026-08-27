@@ -126,73 +126,57 @@
 }
 
 .deviceToggle {
+  padding: 3px;
   background-color: var(--mantine-color-default);
   border-radius: var(--mantine-radius-md);
+}
+
+.deviceButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mantine-color-dimmed);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.deviceButton:hover {
+  color: var(--mantine-color-text);
+}
+
+.deviceButtonActive {
+  background-color: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .previewStage {
   flex: 1;
   min-height: 0;
   display: flex;
-  align-items: stretch;
-  justify-content: center;
-}
-
-.frameDesktop,
-.frameMobile {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background-color: var(--mantine-color-body);
-  /* fills the stage rather than collapsing to the iframe's intrinsic height */
-  height: 100%;
-  min-height: 0;
-}
-
-.frameDesktop {
-  width: 100%;
-  max-width: 900px;
-}
-
-.frameMobile {
-  width: 390px;
-}
-
-.browserBar {
-  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  background-color: var(--mantine-color-default);
-  flex-shrink: 0;
-}
-
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background-color: var(--mantine-color-gray-4);
-}
-
-.browserUrl {
-  margin-left: 8px;
+  justify-content: center;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /*
- * `flex: 1 1 0` with a zeroed min-height: an iframe carries a default
- * intrinsic height that otherwise wins over the flex growth.
+ * The iframe fills whatever size `DeviceFrame` gives its screen slot — that
+ * slot is already the device's true CSS viewport, scaled as a whole, so the
+ * iframe itself just needs to fill it rather than carry its own sizing.
  */
 .frame {
-  flex: 1 1 0;
-  min-height: 0;
-  height: 100%;
   width: 100%;
+  height: 100%;
   border: 0;
   display: block;
+  background-color: #fff;
 }
 
 .qrStage {

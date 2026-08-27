@@ -177,6 +177,15 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
+/*
+ * Height that does not depend on what is inside it.
+ *
+ * The frame is only rendered once this box has been measured, so a stage sized
+ * purely by `flex: 1` would collapse to nothing while empty, measure zero, and
+ * never let the frame in — the measurement and the content would each be
+ * waiting on the other. Subtracting the pane's own chrome from the viewport
+ * breaks that: the stage is the size it is whether or not anything is in it.
+ */
 .previewStage {
   flex: 1;
   min-height: 0;
@@ -184,6 +193,22 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+/*
+ * Hides the frame for the frame or two before its fit has been measured.
+ *
+ * `visibility` rather than `display`, deliberately: the frame still has to take
+ * part in layout during that moment, because the stage's own measurement is
+ * what it is waiting for. Removing it from the flow would leave nothing to
+ * measure.
+ */
+.frameFade {
+  visibility: hidden;
+}
+
+.frameFade[data-ready] {
+  visibility: visible;
 }
 
 /*

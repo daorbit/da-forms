@@ -18,13 +18,15 @@ interface Options {
 export function useFitScale(
   ref: RefObject<HTMLElement | null>,
   { enabled, contentWidth, contentHeight, padding }: Options
-): number | null {
-  // Null until the container has been measured. Starting at 1 would paint one
-  // frame at full size before the correction landed — which inside a modal
-  // that mounts already open is a visible flash of an oversized, overflowing
-  // preview, because the container cannot be measured until the modal has been
-  // laid out. Callers render nothing until this is a number.
-  const [scale, setScale] = useState<number | null>(null);
+): { scale: number; measured: boolean } {
+  // Starts at 1 but reports itself as unmeasured, so the content can be laid
+  // out — and therefore give the container something to size against — while
+  // still being hidden until the real scale lands. Withholding the content
+  // entirely instead would deadlock: a stage whose only child is the frame has
+  // no height without it, so it would measure zero forever and the frame would
+  // never be allowed in.
+  const [scale, setScale] = useState(1);
+  const [measured, setMeasured] = useState(false);
   const padX = padding?.x ?? 0;
   const padY = padding?.y ?? 0;
 
@@ -48,6 +50,7 @@ export function useFitScale(
       const next = Math.min(1, width / contentWidth, height / contentHeight);
       if (!Number.isFinite(next) || next <= 0) return false;
       setScale(next);
+      setMeasured(true);
       return true;
     };
 
@@ -71,5 +74,5 @@ export function useFitScale(
     };
   }, [ref, enabled, contentWidth, contentHeight, padX, padY]);
 
-  return scale;
+  return { scale, measured };
 }

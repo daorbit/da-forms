@@ -79,7 +79,7 @@ export function PreviewModal({
   }, [opened]);
 
   const size = frameSize(device);
-  const scale = useFitScale(stageRef, {
+  const { scale, measured } = useFitScale(stageRef, {
     enabled: opened,
     contentWidth: size.width,
     contentHeight: size.height,
@@ -126,11 +126,11 @@ export function PreviewModal({
       />
 
       <Box className={classes.body}>
-        {/* The stage always renders — it is what gets measured. The frame
-            inside waits for that measurement, so it is never painted at full
-            size before being scaled down to fit. */}
+        {/* Laid out from the first render so the stage has something to size
+            against, but kept invisible until the fit has been measured —
+            otherwise the frame paints once at full size and overflows. */}
         <Box className={classes.stage} ref={stageRef}>
-          {scale !== null && (
+          <div className={classes.frameFade} data-ready={measured || undefined}>
           <DeviceFrame device={device} scale={scale}>
             <FormPage theme={shownTheme} minHeight="100%">
               {/* Remounted per device so each preview starts from page one
@@ -154,7 +154,7 @@ export function PreviewModal({
               />
             </FormPage>
           </DeviceFrame>
-          )}
+          </div>
         </Box>
 
         {onApplyTheme && (

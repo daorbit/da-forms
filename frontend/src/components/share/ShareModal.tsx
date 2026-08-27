@@ -75,7 +75,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
   const shareUrl = publicFormUrl(form._id);
 
   const frameDims = frameSize(device);
-  const scale = useFitScale(stageRef, {
+  const { scale, measured } = useFitScale(stageRef, {
     enabled: opened,
     contentWidth: frameDims.width,
     contentHeight: frameDims.height,
@@ -378,11 +378,12 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
             </Group>
           </Group>
 
-          {/* The stage always renders — it is what gets measured. The frame
-              inside waits for that measurement, so it is never painted at full
-              size before being scaled down to fit. */}
+          {/* Laid out from the first render so the stage has something to size
+              against, but kept invisible until the fit has been measured —
+              otherwise the frame paints once at full size and overflows the
+              pane before the scale lands. */}
           <Box className={classes.previewStage} ref={stageRef}>
-            {scale !== null && (
+            <div className={classes.frameFade} data-ready={measured || undefined}>
               <DeviceFrame device={device} scale={scale}>
                 <iframe
                   key={device}
@@ -391,7 +392,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                   className={classes.frame}
                 />
               </DeviceFrame>
-            )}
+            </div>
           </Box>
 
           <Text size="xs" c="dimmed" ta="center" mt="md">

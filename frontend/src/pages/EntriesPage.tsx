@@ -159,10 +159,18 @@ export function EntriesPage() {
     loadSubmissions();
   }, [location.key, loadSubmissions]);
 
-  // Filters reset paging so a narrower result set never lands on a page past its end.
-  useEffect(() => {
+  /**
+   * A filter change, with paging reset in the same update.
+   *
+   * Resetting the page from its own effect instead meant two renders with two
+   * different `page` values for one interaction — and since the loader is keyed
+   * on `page`, that fetched the list twice.
+   */
+  const setFilter = (patch: Partial<{ status: StatusFilter; day: DayFilter }>) => {
+    if (patch.status) setStatus(patch.status);
+    if (patch.day) setDay(patch.day);
     setPage(1);
-  }, [status, day]);
+  };
 
   async function moveSubmission(submissionId: string, patch: Partial<Pick<Submission, 'read'>>) {
     if (!id) return;
@@ -332,7 +340,7 @@ export function EntriesPage() {
             </Menu.Target>
             <Menu.Dropdown>
               {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => (
-                <Menu.Item key={key} onClick={() => setStatus(key)}>
+                <Menu.Item key={key} onClick={() => setFilter({ status: key })}>
                   {STATUS_LABEL[key]}
                 </Menu.Item>
               ))}
@@ -352,7 +360,7 @@ export function EntriesPage() {
             </Menu.Target>
             <Menu.Dropdown>
               {(Object.keys(DAY_LABEL) as DayFilter[]).map((key) => (
-                <Menu.Item key={key} onClick={() => setDay(key)}>
+                <Menu.Item key={key} onClick={() => setFilter({ day: key })}>
                   {DAY_LABEL[key]}
                 </Menu.Item>
               ))}
@@ -415,7 +423,7 @@ export function EntriesPage() {
             </Menu.Target>
             <Menu.Dropdown>
               {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => (
-                <Menu.Item key={key} onClick={() => setStatus(key)}>
+                <Menu.Item key={key} onClick={() => setFilter({ status: key })}>
                   {STATUS_LABEL[key]}
                 </Menu.Item>
               ))}

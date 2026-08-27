@@ -79,6 +79,21 @@ export function FormListPage() {
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<Form | null>(null);
 
+  /**
+   * The filters as one value, so a change to any of them is a single update.
+   *
+   * Page lives in here rather than in its own state because a new search, sort
+   * or status has to reset it — and doing that in a separate effect meant two
+   * renders with two different `page` values, which fired the list request
+   * twice for one interaction.
+   */
+  const setFilter = (patch: Partial<{ q: string; sort: SortOption; status: StatusFilter }>) => {
+    setSearch(patch.q ?? search);
+    if (patch.sort) setSort(patch.sort);
+    if (patch.status) setStatus(patch.status);
+    setPage(1);
+  };
+
   const load = useCallback(() => {
     // The demo workspace's forms are built into the app, not stored — there is
     // nothing to fetch, and nothing a visitor does here changes them.
@@ -118,12 +133,6 @@ export function FormListPage() {
   }, [location.key, load]);
 
   const isFiltered = debouncedSearch !== '' || status !== 'all';
-
-  // A new search, sort or filter narrows/reorders the result set, so paging
-  // resets to the top rather than landing on a page that may no longer exist.
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, sort, status]);
 
   async function toggleStatus(form: Form) {
     const status = form.status === 'published' ? 'draft' : 'published';
@@ -242,14 +251,14 @@ export function FormListPage() {
           <TextInput
             placeholder="Search forms"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => setFilter({ q: e.target.value })}
             leftSection={<IconSearch size={15} className={classes.searchIcon} />}
             rightSection={
               search ? (
                 <ActionIcon
                   variant="subtle"
                   color="gray"
-                  onClick={() => setSearch('')}
+                  onClick={() => setFilter({ q: '' })}
                   aria-label="Clear search"
                 >
                   <IconX size={14} />
@@ -262,7 +271,7 @@ export function FormListPage() {
           />
           <SegmentedControl
             value={status}
-            onChange={(value) => setStatus(value as StatusFilter)}
+            onChange={(value) => setFilter({ status: value as StatusFilter })}
             data={STATUS_TABS}
             size="sm"
           />
@@ -281,7 +290,7 @@ export function FormListPage() {
             </Menu.Target>
             <Menu.Dropdown>
               {(Object.keys(SORT_LABEL) as SortOption[]).map((key) => (
-                <Menu.Item key={key} onClick={() => setSort(key)} fw={sort === key ? 700 : 400}>
+                <Menu.Item key={key} onClick={() => setFilter({ sort: key })} fw={sort === key ? 700 : 400}>
                   {SORT_LABEL[key]}
                 </Menu.Item>
               ))}
@@ -346,8 +355,7 @@ export function FormListPage() {
                 size="md"
                 variant="default"
                 onClick={() => {
-                  setSearch('');
-                  setStatus('all');
+                  setFilter({ q: '', status: 'all' });
                 }}
               >
                 Clear filters

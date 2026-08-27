@@ -4,7 +4,6 @@ import {
   Container,
   Text,
   Center,
-  Loader,
   Stack,
   Button,
   ThemeIcon,
@@ -15,6 +14,7 @@ import { getPublicForm, submitForm, recordView, ApiError } from '@/lib/api';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
+import { FormSkeleton } from '@/components/FormSkeleton';
 
 export function PublicFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -112,11 +112,15 @@ export function PublicFormPage() {
       </Center>
     );
 
+  // The form's own theme is not known until it arrives, so this draws on the
+  // default surface — the card, its border and the page's proportions are the
+  // parts that carry over, and they are what stop the real form from landing as
+  // a jump.
   if (!form)
     return (
-      <Center mih={embedded ? 160 : "100dvh"} py={embedded ? 32 : 0}>
-        <Loader />
-      </Center>
+      <FormPage minHeight={embedded ? "auto" : undefined}>
+        <FormSkeleton />
+      </FormPage>
     );
 
   if (form.status !== "published" && !isPreview)

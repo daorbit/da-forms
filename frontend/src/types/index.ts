@@ -231,7 +231,8 @@ export interface Form {
 }
 
 /** Defined with the renderer that implements each one, so the two cannot drift. */
-export type { EmailLayout } from '@/lib/emailTemplates';
+import type { EmailLayout } from '@/lib/emailTemplates';
+export type { EmailLayout };
 
 export interface NotificationSettings {
   /** Confirmation email to whoever filled the form. */

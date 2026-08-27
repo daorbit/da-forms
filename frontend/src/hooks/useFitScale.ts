@@ -32,7 +32,12 @@ export function useFitScale(
       const byWidth = (element.clientWidth - padX) / contentWidth;
       const byHeight = (element.clientHeight - padY) / contentHeight;
       const next = Math.min(1, byWidth, byHeight);
-      setScale(Number.isFinite(next) && next > 0 ? next : 1);
+      // A container that has not been laid out yet measures zero, which is not
+      // a scale — treating it as one would render the content unscaled and
+      // overflowing until something else happened to trigger a re-measure.
+      // The observer below fires again once it has a real size.
+      if (!Number.isFinite(next) || next <= 0) return;
+      setScale(next);
     };
 
     fit();

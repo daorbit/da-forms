@@ -18,8 +18,10 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { IconX, IconMail, IconBellRinging, IconChevronDown, IconPlus } from '@tabler/icons-react';
+import type { Editor } from '@tiptap/react';
 import type { EmailLayout, FormField, FormTheme, NotificationSettings } from '@/types';
 import { EMAIL_LAYOUTS, renderEmail } from '@/lib/emailTemplates';
+import { EmailBodyEditor } from './EmailBodyEditor';
 import classes from './NotificationsModal.module.css';
 
 type TabId = 'respondent' | 'owner';
@@ -123,7 +125,7 @@ export function NotificationsModal({
 }: Props) {
   const [tab, setTab] = useState<TabId>('respondent');
   const [previewing, setPreviewing] = useState(false);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const [bodyEditor, setBodyEditor] = useState<Editor | null>(null);
   const emailFields = flattenFields(fields).filter((f) => f.type === 'email');
   const placeholderFields = flattenFields(fields).filter((f) => f.label && f.type !== 'grid');
   const respondentEmailField = emailFields.find((f) => f.id === notifications.respondentEmailFieldId);

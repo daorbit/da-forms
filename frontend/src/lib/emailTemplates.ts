@@ -12,7 +12,6 @@
  * packages have separate builds and no shared module between them. Change one,
  * change the other.
  */
-
 /**
  * The palette.
  *
@@ -138,23 +137,86 @@ function shell(formName: string, inner: string, accent: string, chrome: Chrome =
  * Takes the message's own first paragraph rather than inventing a heading —
  * the form owner wrote the words, this only sets them larger.
  */
-function heroSplit(text: string): { headline: string; rest: string } {
-  const blocks = text.split(/\n{2,}/);
-  return { headline: blocks[0] ?? '', rest: blocks.slice(1).join('\n\n') };
+function heroSplit(html: string): { headline: string; rest: string } {
+  const clean = sanitizeHtml(html).trim();
+  // The body is HTML from the editor, so the "first line" is its first block
+  // element rather than the text before a blank line.
+  const match = /^\s*<(p|h[1-3])>([\s\S]*?)<\/\1>/i.exec(clean);
+  if (match) {
+    return { headline: match[2], rest: clean.slice(match[0].length) };
+  }
+  // A body with no block markup at all: the first line is the headline.
+  const [first, ...others] = clean.split(/<br\s*\/?>|\n/);
+  return { headline: first ?? '', rest: others.join('<br>') };
 }
 
-/** The author's own text, as paragraphs. Blank lines separate them. */
-function prose(text: string, align: 'left' | 'center' = 'left'): string {
-  return escapeHtml(text)
-    .split(/\n{2,}/)
-    .map(
-      (block) =>
-        `<p style="margin:0 0 ${S.block}px;font-size:14.5px;line-height:1.7;color:${C.dim};text-align:${align}">${block.replace(
-          /\n/g,
-          '<br>'
-        )}</p>`
-    )
-    .join('');
+/**
+ * The tags the composer's editor can produce, and nothing else.
+ *
+ * The body arrives as HTML from a rich text editor, so it cannot simply be
+ * escaped — but it is also not trusted markup: it is stored on a form and sent
+ * to other people, so anything outside this list (a `<script>`, an `<iframe>`,
+ * an event handler) is stripped rather than passed on to a mail client.
+ */
+const ALLOWED_TAGS = new Set([
+  'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
+  'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'a', 'blockquote', 'span',
+]);
+
+function sanitizeHtml(html: string): string {
+  return (
+    html
+      // Whole elements whose content is never body copy, contents included.
+      .replace(/<(script|style|iframe|object|embed)\b[\s\S]*?<\/\1>/gi, '')
+      .replace(/<[^>]+>/g, (tag) => {
+        const name = /^<\/?\s*([a-z0-9]+)/i.exec(tag)?.[1]?.toLowerCase();
+        if (!name || !ALLOWED_TAGS.has(name)) return '';
+        if (name === 'a') {
+          // Only an http(s)/mailto target survives; `javascript:` and `data:`
+          // hrefs are exactly what this is here to drop.
+          const href = /href\s*=\s*["']([^"']*)["']/i.exec(tag)?.[1] ?? '';
+          if (!/^(https?:\/\/|mailto:)/i.test(href)) return tag.startsWith('</') ? '</a>' : '<a>';
+          return tag.startsWith('</')
+            ? '</a>'
+            : `<a href="${escapeAttr(href)}" style="color:${C.text};text-decoration:underline">`;
+        }
+        // Everything else keeps the tag but loses its attributes, which is
+        // where `onclick`, `style` overrides and stray classes would ride in.
+        return tag.startsWith('</') ? `</${name}>` : `<${name}>`;
+      })
+  );
+}
+
+/**
+ * The author's own message.
+ *
+ * Written in a rich text editor, so this is HTML: sanitised, then given the
+ * type scale the rest of the template uses. Plain text still works — a body
+ * with no tags comes through as its own paragraph.
+ */
+function prose(html: string, align: 'left' | 'center' = 'left'): string {
+  const clean = sanitizeHtml(html).trim();
+  const body = /<(p|h[1-3]|ul|ol|blockquote)\b/i.test(clean)
+    ? clean
+    : `<p>${clean.replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+
+  // Styled by wrapping rather than by rewriting each tag: inline styles on a
+  // container are inherited by the text inside it in every mail client that
+  // matters, and the margins below are set on the elements themselves.
+  return `<div style="font-size:14.5px;line-height:1.7;color:${C.dim};text-align:${align}">
+    ${body
+      .replace(/<p>/g, `<p style="margin:0 0 ${S.block}px">`)
+      .replace(/<h1>/g, `<h1 style="margin:0 0 ${S.tight}px;font-size:22px;line-height:1.3;color:${C.text}">`)
+      .replace(/<h2>/g, `<h2 style="margin:0 0 ${S.tight}px;font-size:19px;line-height:1.3;color:${C.text}">`)
+      .replace(/<h3>/g, `<h3 style="margin:0 0 ${S.tight}px;font-size:16px;line-height:1.35;color:${C.text}">`)
+      .replace(/<ul>/g, `<ul style="margin:0 0 ${S.block}px;padding-left:22px">`)
+      .replace(/<ol>/g, `<ol style="margin:0 0 ${S.block}px;padding-left:22px">`)
+      .replace(/<li>/g, `<li style="margin:0 0 4px">`)
+      .replace(
+        /<blockquote>/g,
+        `<blockquote style="margin:0 0 ${S.block}px;padding:2px 0 2px 14px;border-left:3px solid ${C.line};color:${C.faint}">`
+      )}
+  </div>`;
 }
 
 /**
@@ -249,11 +311,11 @@ export function renderEmail({
 
   if (layout === 'hero') {
     const { headline, rest } = heroSplit(body);
-    parts.push(
-      `<p style="margin:0 0 ${S.block}px;font-size:24px;font-weight:700;line-height:1.25;letter-spacing:-0.5px;color:${C.text}">${escapeHtml(
-        headline
-      ).replace(/\n/g, '<br>')}</p>`
-    );
+    if (headline) {
+      parts.push(
+        `<div style="margin:0 0 ${S.block}px;font-size:24px;font-weight:700;line-height:1.25;letter-spacing:-0.5px;color:${C.text}">${headline}</div>`
+      );
+    }
     if (rest) parts.push(prose(rest));
   } else {
     parts.push(prose(body, centered ? 'center' : 'left'));

@@ -126,7 +126,11 @@ export function PreviewModal({
       />
 
       <Box className={classes.body}>
+        {/* The stage always renders — it is what gets measured. The frame
+            inside waits for that measurement, so it is never painted at full
+            size before being scaled down to fit. */}
         <Box className={classes.stage} ref={stageRef}>
+          {scale !== null && (
           <DeviceFrame device={device} scale={scale}>
             <FormPage theme={shownTheme} minHeight="100%">
               {/* Remounted per device so each preview starts from page one
@@ -150,6 +154,7 @@ export function PreviewModal({
               />
             </FormPage>
           </DeviceFrame>
+          )}
         </Box>
 
         {onApplyTheme && (

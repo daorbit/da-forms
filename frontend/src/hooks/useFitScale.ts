@@ -18,8 +18,13 @@ interface Options {
 export function useFitScale(
   ref: RefObject<HTMLElement | null>,
   { enabled, contentWidth, contentHeight, padding }: Options
-): number {
-  const [scale, setScale] = useState(1);
+): number | null {
+  // Null until the container has been measured. Starting at 1 would paint one
+  // frame at full size before the correction landed — which inside a modal
+  // that mounts already open is a visible flash of an oversized, overflowing
+  // preview, because the container cannot be measured until the modal has been
+  // laid out. Callers render nothing until this is a number.
+  const [scale, setScale] = useState<number | null>(null);
   const padX = padding?.x ?? 0;
   const padY = padding?.y ?? 0;
 

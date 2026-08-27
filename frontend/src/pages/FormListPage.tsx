@@ -555,6 +555,7 @@ export function FormListPage() {
         onClose={() => setPendingDelete(null)}
         title="Delete form"
         centered
+        radius="lg"
       >
         <Text size="sm">
           Delete <strong>{pendingDelete?.name || pendingDelete?.title}</strong>? Its submissions stay in the database but the

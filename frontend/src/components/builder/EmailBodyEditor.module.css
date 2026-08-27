@@ -1,6 +1,10 @@
 .wrap {
   display: flex;
   flex-direction: column;
+  /* Fills the composer card rather than sitting at a fixed height — the pane
+     is tall, and a short editor floating in it was the bulk of the empty space
+     under the message. */
+  flex: 1;
   min-height: 0;
 }
 
@@ -15,8 +19,16 @@
   overflow-x: auto;
 }
 
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .content :global(.ProseMirror) {
-  min-height: 320px;
+  /* Fills the scroll box, so clicking anywhere in the empty area below the
+     text puts the caret in the message rather than doing nothing. */
+  min-height: 100%;
   padding: 18px 16px;
   outline: none;
   font-size: 14px;

@@ -618,6 +618,7 @@ export function EntriesPage() {
         title="Response"
         size="lg"
         centered
+        radius="lg"
         classNames={{ content: classes.responseModal, body: classes.responseBody }}
       >
         {viewing && (
@@ -725,7 +726,13 @@ export function EntriesPage() {
         )}
       </Modal>
 
-      <Modal opened={!!pendingDelete} onClose={() => setPendingDelete(null)} title="Delete response" centered>
+      <Modal
+        opened={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        title="Delete response"
+        centered
+        radius="lg"
+      >
         <Text size="sm">This response will be permanently removed. This can't be undone.</Text>
         <Group justify="flex-end" mt="lg">
           <Button variant="default" onClick={() => setPendingDelete(null)}>
@@ -743,6 +750,7 @@ export function EntriesPage() {
         title={attachment?.name ?? 'Attachment'}
         size="xl"
         centered
+        radius="lg"
         classNames={{ content: classes.attachmentModal, body: classes.attachmentBody }}
       >
         {attachment && (

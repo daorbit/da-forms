@@ -854,6 +854,7 @@ export function FormBuilderPage() {
         onClose={() => setPendingLeave(false)}
         title="Leave without saving?"
         centered
+        radius="lg"
       >
         <Text size="sm">You have unsaved changes. If you leave now, they'll be lost.</Text>
         <Group justify="flex-end" mt="lg">

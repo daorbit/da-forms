@@ -378,15 +378,20 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
             </Group>
           </Group>
 
+          {/* The stage always renders — it is what gets measured. The frame
+              inside waits for that measurement, so it is never painted at full
+              size before being scaled down to fit. */}
           <Box className={classes.previewStage} ref={stageRef}>
-            <DeviceFrame device={device} scale={scale}>
-              <iframe
-                key={device}
-                src={`${shareUrl}?preview=1`}
-                title="Form preview"
-                className={classes.frame}
-              />
-            </DeviceFrame>
+            {scale !== null && (
+              <DeviceFrame device={device} scale={scale}>
+                <iframe
+                  key={device}
+                  src={`${shareUrl}?preview=1`}
+                  title="Form preview"
+                  className={classes.frame}
+                />
+              </DeviceFrame>
+            )}
           </Box>
 
           <Text size="xs" c="dimmed" ta="center" mt="md">

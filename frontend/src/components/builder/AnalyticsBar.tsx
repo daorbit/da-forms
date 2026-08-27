@@ -102,6 +102,7 @@ export function AnalyticsBar({ analytics }: { analytics: Analytics | null }) {
         onClose={() => setSourcesOpen(false)}
         title="Traffic sources"
         centered
+        radius="lg"
         overlayProps={{ backgroundOpacity: 0.65, blur: 2 }}
       >
         <SourceBreakdown sources={analytics.sources} />

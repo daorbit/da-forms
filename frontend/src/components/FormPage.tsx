@@ -19,7 +19,9 @@ interface Props {
  * for. The wrapper still borrows the card's own colour past its height, since
  * there is no host page behind it here.
  */
-export function FormPage({ theme, minHeight = '100vh', children }: Props) {
+export function FormPage({ theme, 
+  // minHeight = '100vh', 
+  children }: Props) {
   const cardScope = theme?.scope === 'card';
 
   return (
@@ -27,7 +29,7 @@ export function FormPage({ theme, minHeight = '100vh', children }: Props) {
       className="da-forms-light-surface"
       data-mantine-color-scheme="light"
       style={{
-        minHeight,
+        // minHeight,
         ...(cardScope
           ? { backgroundColor: cardSurfaceStyle(theme).backgroundColor }
           : pageSurfaceStyle(theme)),

@@ -154,7 +154,7 @@ export function PublicFormPage() {
       // Respondents see the form's own colours, never a host app's theme — the
       // share link and the embed are public pages, not part of anyone's dashboard.
       <Center
-        h="100vh"
+        // h="100vh"
         className="da-forms-light-surface"
         data-mantine-color-scheme="light"
         style={{ background: "#fff" }}

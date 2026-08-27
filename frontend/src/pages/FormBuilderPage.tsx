@@ -5,6 +5,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconFileText, IconEye, IconEyeOff, IconWorld, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm } from '@/lib/api';
+import { getDemoForm, isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
 import type { Form, FormField, FieldType, FormStep, StepIndicator, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '@/types';
@@ -67,6 +68,7 @@ export function FormBuilderPage() {
   const navigate = useNavigate();
   const { id: routeFormId } = useParams<{ id: string }>();
   const workspaceId = useWorkspaceId();
+  const isDemo = isDemoWorkspace(workspaceId);
   const embedded = useEmbedded();
   const locationState = location.state as
     | {
@@ -169,7 +171,9 @@ export function FormBuilderPage() {
       collectIp,
     ]
   );
-  const isDirty = currentSnapshot !== savedSnapshot;
+  // In the demo workspace nothing can be saved, so nothing is ever "unsaved" —
+  // that keeps the leave prompt and the beforeunload warning out of a tour.
+  const isDirty = !isDemo && currentSnapshot !== savedSnapshot;
 
   const editableState: EditableState = useMemo(
     () => ({
@@ -283,7 +287,12 @@ export function FormBuilderPage() {
 
   useEffect(() => {
     if (!routeFormId) return;
-    getForm(routeFormId, workspaceId).then((form) => {
+    // A demo form is built into the app, so it loads without a request — the
+    // rest of the editor then works on it exactly as on a stored form, minus
+    // saving.
+    const demo = isDemo ? getDemoForm(routeFormId) : undefined;
+    const source = demo ? Promise.resolve(demo) : getForm(routeFormId, workspaceId);
+    source.then((form) => {
       setSavedForm(form);
       setName(form.name || form.title);
       setTitle(form.title);
@@ -331,7 +340,7 @@ export function FormBuilderPage() {
       notifications.show({ message: 'Could not load this form', color: 'red' });
       navigate(`/${workspaceId}/forms`);
     });
-  }, [routeFormId, workspaceId, navigate]);
+  }, [routeFormId, workspaceId, isDemo, navigate]);
 
   // A brand-new, never-saved form: its own starting state is "clean" — the
   // save button should stay disabled until something actually changes.
@@ -437,6 +446,9 @@ export function FormBuilderPage() {
   }
 
   async function saveForm() {
+    // Belt and braces alongside the hidden buttons: a keyboard shortcut or a
+    // stale handler must not send a write the backend will refuse anyway.
+    if (isDemo) throw new Error('The demo workspace is read-only');
     const payload = {
       name,
       title,
@@ -503,6 +515,13 @@ export function FormBuilderPage() {
   function handleRailSelect(panel: RailPanel) {
     if (panel !== 'embed') {
       setRailPanel(panel);
+      return;
+    }
+    if (isDemo) {
+      notifications.show({
+        message: 'Sample forms have no share link — create a form in your own workspace to embed it',
+        color: 'yellow',
+      });
       return;
     }
     if (!savedFormId) {
@@ -627,6 +646,14 @@ export function FormBuilderPage() {
               </ActionIcon>
             </Tooltip>
             <Divider orientation="vertical" my={14} />
+            {isDemo ? (
+              // Nothing here can be saved, so the editor says so once instead
+              // of offering two buttons that would both be refused.
+              <Badge color="gray" variant="light" radius="sm" size="lg">
+                Demo — changes are not saved
+              </Badge>
+            ) : (
+            <>
             <Button
               variant="subtle"
               color="gray"
@@ -656,6 +683,8 @@ export function FormBuilderPage() {
             >
               {savedForm?.status === 'published' ? 'Unpublish' : 'Publish'}
             </Button>
+            </>
+            )}
           </Group>
         </Group>
       </AppShell.Header>

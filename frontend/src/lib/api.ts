@@ -87,6 +87,12 @@ export function getForm(id: string, workspaceId = DEFAULT_WORKSPACE) {
   return request<Form>(`${ws(workspaceId)}/${id}`);
 }
 
+export class DemoWorkspaceError extends ApiError {
+  constructor() {
+    super(403, 'demo_workspace', 'This is a read-only demo workspace.');
+  }
+}
+
 export function createForm(
   input: {
     name: string;

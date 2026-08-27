@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl,
+  Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl, Alert, Badge,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -22,9 +22,11 @@ import {
   IconEyeOff,
   IconWorldUpload,
   IconX,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 import { listForms, deleteForm, updateForm, createForm, publicFormPath, publicFormUrl } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
+import { isDemoWorkspace, listDemoForms } from '@/lib/demoWorkspace';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form, FormTheme } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
@@ -60,6 +62,7 @@ const PAGE_SIZE = 10;
 
 export function FormListPage() {
   const workspaceId = useWorkspaceId();
+  const isDemo = isDemoWorkspace(workspaceId);
   const location = useLocation();
   const [forms, setForms] = useState<Form[]>([]);
   const [total, setTotal] = useState(0);
@@ -77,6 +80,21 @@ export function FormListPage() {
   const [previewing, setPreviewing] = useState<Form | null>(null);
 
   const load = useCallback(() => {
+    // The demo workspace's forms are built into the app, not stored — there is
+    // nothing to fetch, and nothing a visitor does here changes them.
+    if (isDemo) {
+      const res = listDemoForms({
+        page,
+        limit: PAGE_SIZE,
+        q: debouncedSearch,
+        sort,
+        status: status === 'all' ? undefined : status,
+      });
+      setForms(res.items);
+      setTotal(res.total);
+      setLoading(false);
+      return Promise.resolve();
+    }
     setLoading(true);
     return listForms(workspaceId, {
       page,
@@ -90,7 +108,7 @@ export function FormListPage() {
         setTotal(res.total);
       })
       .finally(() => setLoading(false));
-  }, [workspaceId, page, debouncedSearch, sort, status]);
+  }, [isDemo, workspaceId, page, debouncedSearch, sort, status]);
 
   // Keyed on the location as well as the loader, so returning from the builder
   // refetches rather than showing the list as it was before the edit — however
@@ -172,17 +190,49 @@ export function FormListPage() {
   return (
     <Box>
       <Group justify="space-between" px="xl" py="md" className={classes.topbar}>
-        <Text fw={600} size="lg">
-          Leads Capture
-        </Text>
-        <Button
-          color="emerald"
-          leftSection={<IconPlus size={16} />}
-          onClick={() => setNewFormOpen(true)}
-        >
-          New Form
-        </Button>
+        <Group gap="sm">
+          <Text fw={600} size="lg">
+            Leads Capture
+          </Text>
+          {isDemo && (
+            <Badge color="gray" variant="light" radius="sm">
+              Demo workspace
+            </Badge>
+          )}
+        </Group>
+        {isDemo ? (
+          <Tooltip label="Creating forms is disabled in the demo workspace" withArrow>
+            {/* Wrapped: a disabled Mantine button fires no pointer events, so
+                the tooltip would never open on the button itself. */}
+            <span>
+              <Button color="emerald" leftSection={<IconPlus size={16} />} disabled>
+                New Form
+              </Button>
+            </span>
+          </Tooltip>
+        ) : (
+          <Button
+            color="emerald"
+            leftSection={<IconPlus size={16} />}
+            onClick={() => setNewFormOpen(true)}
+          >
+            New Form
+          </Button>
+        )}
       </Group>
+
+      {isDemo && (
+        <Alert color="blue" variant="light" radius={0} icon={<IconInfoCircle size={18} />}>
+          <Text fw={600} size="sm">
+            You are looking at sample forms
+          </Text>
+          <Text size="sm" mt={4}>
+            This workspace is a read-only tour of the builder while it is in testing. Open any form
+            to explore the editor, themes and preview — nothing you change here is saved, and new
+            forms cannot be created. Real forms live in your own workspace.
+          </Text>
+        </Alert>
+      )}
 
       {/* Search, filter and sort sit with the list they act on rather than in
           the header — the header holds the page's identity and the one action
@@ -303,14 +353,16 @@ export function FormListPage() {
                 Clear filters
               </Button>
             ) : (
-              <Button
-                mt="xl"
-                size="md"
-                leftSection={<IconPlus size={16} />}
-                onClick={() => setNewFormOpen(true)}
-              >
-                Create your first form
-              </Button>
+              !isDemo && (
+                <Button
+                  mt="xl"
+                  size="md"
+                  leftSection={<IconPlus size={16} />}
+                  onClick={() => setNewFormOpen(true)}
+                >
+                  Create your first form
+                </Button>
+              )
             )}
           </Stack>
         )}
@@ -349,18 +401,22 @@ export function FormListPage() {
                   size="xs"
                   leftSection={<IconPencil size={14} />}
                 >
-                  Edit
+                  {isDemo ? 'Open in editor' : 'Edit'}
                 </Button>
-                <Button
-                  component={Link}
-                  to={`/${workspaceId}/forms/${form._id}/entries`}
-                  variant="default"
-                 
-                  size="xs"
-                  leftSection={<IconGridDots size={14} />}
-                >
-                  All Entries
-                </Button>
+                {/* A sample form has no submissions and no share link of its
+                    own, so entries and sharing are left out of its row rather
+                    than shown leading nowhere. */}
+                {!isDemo && (
+                  <Button
+                    component={Link}
+                    to={`/${workspaceId}/forms/${form._id}/entries`}
+                    variant="default"
+                    size="xs"
+                    leftSection={<IconGridDots size={14} />}
+                  >
+                    All Entries
+                  </Button>
+                )}
                 <Button
                   variant="default"
                   size="xs"
@@ -369,18 +425,20 @@ export function FormListPage() {
                 >
                   Preview
                 </Button>
-                <ActionIcon
-                  variant="subtle"
-                  radius="xl"
-                  color="gray"
-                 
-                  size="lg"
-                  onClick={() => setSharing(form)}
-                  aria-label="Share"
-                >
-                  <IconShare2 size={16} />
-                </ActionIcon>
+                {!isDemo && (
+                  <ActionIcon
+                    variant="subtle"
+                    radius="xl"
+                    color="gray"
+                    size="lg"
+                    onClick={() => setSharing(form)}
+                    aria-label="Share"
+                  >
+                    <IconShare2 size={16} />
+                  </ActionIcon>
+                )}
 
+                {!isDemo && (
                 <Menu shadow="md" position="bottom-end" width={200}>
                   <Menu.Target>
                     <ActionIcon variant="subtle" color="gray" radius="xl" size="lg">
@@ -436,6 +494,7 @@ export function FormListPage() {
                     </Menu.Item>
                   </Menu.Dropdown>
                 </Menu>
+                )}
               </Group>
             </Group>
           </Box>
@@ -474,7 +533,9 @@ export function FormListPage() {
           steps={previewing.steps}
           stepIndicator={previewing.stepIndicator}
           showStepHeadings={previewing.showStepHeadings}
-          onApplyTheme={(patch) => applyTheme(previewing, patch)}
+          // Applying a preset saves it, which the demo workspace cannot do —
+          // the preview stays a preview there.
+          onApplyTheme={isDemo ? undefined : (patch) => applyTheme(previewing, patch)}
         />
       )}
 

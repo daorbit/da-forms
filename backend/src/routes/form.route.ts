@@ -4,6 +4,7 @@ import multer from 'multer';
 import * as formController from '../controllers/form.controller.js';
 import { uploadFormFile, uploadBackgroundImage } from '../controllers/upload.controller.js';
 import { asyncHandler } from '../middleware/async-handler.js';
+import { blockDemoWorkspaceWrites } from '../middleware/demo-workspace.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -39,6 +40,9 @@ const submitLimiter = rateLimit({
  * another.
  */
 export const workspaceFormRouter = Router({ mergeParams: true });
+
+// Before any handler: the demo workspace answers reads only.
+workspaceFormRouter.use(blockDemoWorkspaceWrites);
 
 workspaceFormRouter.get('/', asyncHandler(formController.listForms));
 workspaceFormRouter.post('/', asyncHandler(formController.createForm));

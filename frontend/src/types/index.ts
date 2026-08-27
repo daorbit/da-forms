@@ -225,8 +225,23 @@ export interface Form {
   showStepHeadings?: boolean;
   /** Records the respondent's IP with each submission. Off by default. */
   collectIp?: boolean;
+  notifications?: NotificationSettings;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface NotificationSettings {
+  /** Confirmation email to whoever filled the form. */
+  respondentEnabled?: boolean;
+  /** Which field holds the respondent's address — must be an 'email' field. */
+  respondentEmailFieldId?: string;
+  respondentSubject?: string;
+  /** Plain text; `{{field:<fieldId>}}` is replaced with that field's answer. */
+  respondentBody?: string;
+  /** Alerts these addresses on every submission. */
+  ownerEnabled?: boolean;
+  ownerEmails?: string[];
+  ownerSubject?: string;
 }
 
 export interface Submission {

@@ -141,6 +141,24 @@ export interface FormTheme {
   textMode?: 'auto' | 'light' | 'dark';
 }
 
+export interface NotificationSettings {
+  /** Confirmation email to whoever filled the form. */
+  respondentEnabled?: boolean;
+  /** Which field on the form holds the respondent's address — must be an 'email' field. */
+  respondentEmailFieldId?: string;
+  respondentSubject?: string;
+  /**
+   * Plain text. `{{field:<fieldId>}}` is replaced with that field's answer —
+   * the id rather than the label, so renaming a field's label later doesn't
+   * silently break a placeholder already typed into this text.
+   */
+  respondentBody?: string;
+  /** Alerts the form owner on every submission. */
+  ownerEnabled?: boolean;
+  ownerEmails?: string[];
+  ownerSubject?: string;
+}
+
 export interface FormDocument {
   /** Set once at creation; shown in the forms list. Independent of the canvas header text below. */
   name: string;
@@ -165,6 +183,7 @@ export interface FormDocument {
   stepIndicator?: StepIndicator;
   showStepHeadings?: boolean;
   collectIp?: boolean;
+  notifications?: NotificationSettings;
   /** Total public-page loads — the denominator for completion rate. */
   viewCount: number;
   createdAt: Date;
@@ -274,6 +293,20 @@ const formSchema = new Schema<FormDocument>(
     stepIndicator: { type: String, enum: ['progress', 'stepper', 'dots', 'counter', 'none'] },
     showStepHeadings: { type: Boolean },
     collectIp: { type: Boolean },
+    notifications: {
+      type: new Schema<NotificationSettings>(
+        {
+          respondentEnabled: { type: Boolean },
+          respondentEmailFieldId: { type: String },
+          respondentSubject: { type: String },
+          respondentBody: { type: String },
+          ownerEnabled: { type: Boolean },
+          ownerEmails: { type: [String], default: undefined },
+          ownerSubject: { type: String },
+        },
+        { _id: false }
+      ),
+    },
     viewCount: { type: Number, default: 0 },
   },
   { timestamps: true }

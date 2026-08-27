@@ -8,6 +8,7 @@ import type {
   FormTheme,
   FormStep,
   StepIndicator,
+  NotificationSettings,
 } from '../models/form.model.js';
 
 export interface Paginated<T> {
@@ -113,6 +114,7 @@ export function createForm(input: {
   stepIndicator?: StepIndicator;
   showStepHeadings?: boolean;
   collectIp?: boolean;
+  notifications?: NotificationSettings;
 }) {
   return FormModel.create(input);
 }
@@ -140,6 +142,7 @@ export function updateForm(
     stepIndicator: StepIndicator;
     showStepHeadings: boolean;
     collectIp: boolean;
+    notifications: NotificationSettings;
   }>
 ) {
   return FormModel.findOneAndUpdate({ _id: id, workspaceId }, input, { new: true });

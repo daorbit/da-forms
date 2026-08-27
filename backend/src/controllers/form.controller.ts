@@ -1,6 +1,7 @@
 import type { RequestHandler, Request } from 'express';
 import { createHash } from 'node:crypto';
 import * as formService from '../services/form.service.js';
+import { sendSubmissionNotifications } from '../services/notification.service.js';
 
 /**
  * IP + user-agent, hashed. Not identity-grade — just enough to tell "same
@@ -61,6 +62,7 @@ export const createForm: RequestHandler = async (req, res) => {
     stepIndicator,
     showStepHeadings,
     collectIp,
+    notifications,
   } = req.body;
   const form = await formService.createForm({
     name: name ?? title,
@@ -81,6 +83,7 @@ export const createForm: RequestHandler = async (req, res) => {
     stepIndicator,
     showStepHeadings,
     collectIp,
+    notifications,
     workspaceId: workspaceIdOf(req),
   });
   res.status(201).json(form);
@@ -190,6 +193,10 @@ export const submitForm: RequestHandler = async (req, res) => {
   try {
     const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl);
     res.status(201).json(submission);
+    // After responding: the respondent's own confirmation should not make
+    // them wait on an SMTP round trip, and a slow or failing mail server must
+    // never turn a successful submission into an error response.
+    void sendSubmissionNotifications(form, data);
   } catch (err) {
     if (err instanceof formService.DuplicateValueError) {
       return res.status(409).json({

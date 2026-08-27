@@ -8,7 +8,8 @@ import { createForm, getForm, updateForm } from '@/lib/api';
 import { getDemoForm, isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
-import type { Form, FormField, FieldType, FormStep, StepIndicator, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme } from '@/types';
+import type { Form, FormField, FieldType, FormStep, StepIndicator, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme, NotificationSettings } from '@/types';
+import { NotificationsModal } from '@/components/builder/NotificationsModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import {
   DndContext,
@@ -61,6 +62,7 @@ interface EditableState {
   stepIndicator: StepIndicator;
   showStepHeadings: boolean;
   collectIp: boolean;
+  notifications: NotificationSettings;
 }
 
 export function FormBuilderPage() {
@@ -110,6 +112,7 @@ export function FormBuilderPage() {
   const [stepIndicator, setStepIndicator] = useState<StepIndicator>('progress');
   const [showStepHeadings, setShowStepHeadings] = useState(false);
   const [collectIp, setCollectIp] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationSettings>({});
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [loadingForm, setLoadingForm] = useState(!!routeFormId);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
@@ -149,6 +152,7 @@ export function FormBuilderPage() {
         stepIndicator,
         showStepHeadings,
         collectIp,
+        notifications,
       }),
     [
       name,
@@ -169,6 +173,7 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
+      notifications,
     ]
   );
   // In the demo workspace nothing can be saved, so nothing is ever "unsaved" —
@@ -195,6 +200,7 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
+      notifications,
     }),
     [
       name,
@@ -215,6 +221,7 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
+      notifications,
     ]
   );
 
@@ -237,6 +244,7 @@ export function FormBuilderPage() {
     setStepIndicator(state.stepIndicator);
     setShowStepHeadings(state.showStepHeadings);
     setCollectIp(state.collectIp);
+    setNotifications(state.notifications);
     // The selected/editing field may not exist in this snapshot's tree.
     setSelectedId((id) => (id && findField(state.fields, id) ? id : null));
     setEditingId((id) => (id && findField(state.fields, id) ? id : null));
@@ -311,6 +319,7 @@ export function FormBuilderPage() {
       setStepIndicator(form.stepIndicator ?? 'progress');
       setShowStepHeadings(form.showStepHeadings ?? false);
       setCollectIp(form.collectIp ?? false);
+      setNotifications(form.notifications ?? {});
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
       setSavedSnapshot(
         JSON.stringify({
@@ -332,6 +341,7 @@ export function FormBuilderPage() {
           stepIndicator: form.stepIndicator ?? 'progress',
           showStepHeadings: form.showStepHeadings ?? false,
           collectIp: form.collectIp ?? false,
+          notifications: form.notifications ?? {},
         })
       );
       setLoadingForm(false);
@@ -468,6 +478,7 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
+      notifications,
     };
     const form = savedFormId
       ? await updateForm(savedFormId, payload, workspaceId)
@@ -797,6 +808,14 @@ export function FormBuilderPage() {
         redirectUrl={redirectUrl}
         onThankYouChange={setThankYouMessage}
         onRedirectChange={setRedirectUrl}
+      />
+
+      <NotificationsModal
+        opened={railPanel === 'notifications'}
+        onClose={() => setRailPanel(null)}
+        fields={fields}
+        notifications={notifications}
+        onChange={(patch) => setNotifications((prev) => ({ ...prev, ...patch }))}
       />
 
       <PreviewModal

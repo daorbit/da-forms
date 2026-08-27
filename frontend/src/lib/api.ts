@@ -111,6 +111,7 @@ export function createForm(
     stepIndicator?: Form['stepIndicator'];
     showStepHeadings?: Form['showStepHeadings'];
     collectIp?: boolean;
+    notifications?: Form['notifications'];
   },
   workspaceId = DEFAULT_WORKSPACE
 ) {

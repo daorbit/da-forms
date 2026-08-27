@@ -13,4 +13,7 @@ export const env = {
   smtpPass: process.env.SMTP_PASS ?? '',
   smtpFrom: process.env.SMTP_FROM || process.env.SMTP_USER || '',
   smtpFromName: process.env.SMTP_FROM_NAME || 'Forms',
+  /** Where to ask what a workspace's plan allows. Unset disables plan limits entirely. */
+  quantalogApiUrl: (process.env.QUANTALOG_API_URL ?? '').replace(/\/$/, ''),
+  formsServiceSecret: process.env.FORMS_SERVICE_SECRET ?? '',
 };

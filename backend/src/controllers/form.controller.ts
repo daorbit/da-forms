@@ -2,6 +2,7 @@ import type { RequestHandler, Request } from 'express';
 import { createHash } from 'node:crypto';
 import * as formService from '../services/form.service.js';
 import { sendSubmissionNotifications } from '../services/notification.service.js';
+import { getFormLimits, recordSubmission } from '../lib/quantalog.js';
 
 /**
  * IP + user-agent, hashed. Not identity-grade — just enough to tell "same
@@ -64,6 +65,22 @@ export const createForm: RequestHandler = async (req, res) => {
     collectIp,
     notifications,
   } = req.body;
+
+  const workspaceId = workspaceIdOf(req);
+  const limits = await getFormLimits(workspaceId);
+  // Unknown limits refuse the create, unlike a submission, which is accepted.
+  // Nobody loses anything they already had by being asked to try again, and a
+  // cap that can be stepped around by catching an outage is not a cap.
+  if (limits) {
+    const count = await formService.countForms(workspaceId);
+    if (count >= limits.maxForms) {
+      return res.status(402).json({
+        error: 'form_limit_reached',
+        message: `Your plan includes ${limits.maxForms} form${limits.maxForms === 1 ? '' : 's'} — upgrade to build more.`,
+      });
+    }
+  }
+
   const form = await formService.createForm({
     name: name ?? title,
     title,
@@ -84,7 +101,7 @@ export const createForm: RequestHandler = async (req, res) => {
     showStepHeadings,
     collectIp,
     notifications,
-    workspaceId: workspaceIdOf(req),
+    workspaceId,
   });
   res.status(201).json(form);
 };

@@ -94,6 +94,11 @@ export function getForm(id: string) {
   return FormModel.findById(id);
 }
 
+/** How many forms a workspace holds — what the plan's form cap is counted against. */
+export function countForms(workspaceId: string) {
+  return FormModel.countDocuments({ workspaceId });
+}
+
 export function createForm(input: {
   name: string;
   title: string;

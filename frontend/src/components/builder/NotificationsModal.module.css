@@ -84,6 +84,11 @@
   color: var(--mantine-color-emerald-6);
 }
 
+.placeholderTag:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* ---- Right preview ---- */
 
 .preview {
@@ -108,31 +113,44 @@
   width: 100%;
   max-width: 560px;
   height: fit-content;
-  border-radius: var(--mantine-radius-md);
-  border: 1px solid var(--mantine-color-default-border);
-  background-color: var(--mantine-color-body);
+  border-radius: var(--mantine-radius-lg);
   overflow: hidden;
+  /* An email always renders on its own white sheet, in every mail client and
+     regardless of the app's own theme — the preview has to match that or it
+     stops being trustworthy as a preview. */
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
-.emailHeader {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  background-color: var(--mantine-color-default);
+.emailMeta {
+  padding: 14px 22px;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+}
+
+.emailMetaRow {
+  display: flex;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #868e96;
+}
+
+.emailSubject {
+  padding: 16px 22px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .emailBody {
-  padding: 24px 20px;
+  padding: 16px 22px 26px;
   white-space: pre-wrap;
   word-break: break-word;
   font-size: 14px;
-  line-height: 1.6;
-  color: var(--mantine-color-text);
+  line-height: 1.7;
+  color: #374151;
 }
 
 :global(html[data-mantine-color-scheme='light']) .preview {
   background-color: #f1f3f5;
-}
-
-:global(html[data-mantine-color-scheme='light']) .emailCard {
-  background-color: #ffffff;
 }

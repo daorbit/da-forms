@@ -236,7 +236,7 @@ export interface NotificationSettings {
   /** Which field holds the respondent's address — must be an 'email' field. */
   respondentEmailFieldId?: string;
   respondentSubject?: string;
-  /** Plain text; `{{field:<fieldId>}}` is replaced with that field's answer. */
+  /** Plain text; `{{Field Label}}` is replaced with that field's submitted answer. */
   respondentBody?: string;
   /** Alerts these addresses on every submission. */
   ownerEnabled?: boolean;

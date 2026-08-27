@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Modal,
   Group,
@@ -63,15 +63,45 @@ function sampleValue(field: FormField): string {
   }
 }
 
+/**
+ * Fills `{{Field Label}}` with a sample answer, for the live preview — mirrors
+ * what the backend does with the real submission at send time.
+ */
 function fillPlaceholders(template: string, fields: FormField[]): string {
-  const byId = new Map(flattenFields(fields).map((f) => [f.id, sampleValue(f)]));
-  return template.replace(/\{\{\s*field:([\w-]+)\s*\}\}/g, (_, id: string) => byId.get(id) ?? '');
+  const byLabel = new Map(
+    flattenFields(fields)
+      .filter((f) => f.label?.trim())
+      .map((f) => [f.label!.trim(), sampleValue(f)])
+  );
+  return template.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (match, label: string) => byLabel.get(label.trim()) ?? match);
 }
 
 export function NotificationsModal({ opened, onClose, formTitle, fields, notifications, onChange }: Props) {
   const [tab, setTab] = useState<TabId>('respondent');
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const emailFields = flattenFields(fields).filter((f) => f.type === 'email');
   const placeholderFields = flattenFields(fields).filter((f) => f.label && f.type !== 'grid');
+
+  /** Inserts a placeholder at the cursor (or the end, with no selection), rather than always appending. */
+  function insertPlaceholder(label: string) {
+    const token = `{{${label}}}`;
+    const el = bodyRef.current;
+    const current = notifications.respondentBody ?? '';
+    if (!el) {
+      onChange({ respondentBody: `${current}${token}` });
+      return;
+    }
+    const start = el.selectionStart ?? current.length;
+    const end = el.selectionEnd ?? current.length;
+    const next = `${current.slice(0, start)}${token}${current.slice(end)}`;
+    onChange({ respondentBody: next });
+    // Cursor lands right after the inserted token, so a second click chains
+    // naturally instead of jumping back to wherever it started.
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + token.length, start + token.length);
+    });
+  }
 
   const active = TABS.find((t) => t.id === tab) ?? TABS[0];
 
@@ -184,6 +214,7 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
                 />
 
                 <Textarea
+                  ref={bodyRef}
                   label="Message"
                   placeholder="Thanks — we received your submission and will be in touch soon."
                   value={notifications.respondentBody ?? ''}
@@ -205,11 +236,8 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
                           component="button"
                           type="button"
                           className={classes.placeholderTag}
-                          onClick={() =>
-                            onChange({
-                              respondentBody: `${notifications.respondentBody ?? ''}{{field:${f.id}}}`,
-                            })
-                          }
+                          disabled={!notifications.respondentEnabled}
+                          onClick={() => insertPlaceholder(f.label)}
                           title={`Insert ${f.label}`}
                         >
                           {f.label || 'Untitled field'}
@@ -281,12 +309,19 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
 
           <Box className={classes.previewStage}>
             <Box className={classes.emailCard}>
-              <Box className={classes.emailHeader}>
-                <Text size="xs" c="dimmed">
-                  Subject
-                </Text>
-                <Text fw={600}>{tab === 'respondent' ? respondentSubject : ownerSubject}</Text>
+              <Box className={classes.emailMeta}>
+                <div className={classes.emailMetaRow}>
+                  <span>From</span>
+                  <span>{formTitle || 'Your form'}</span>
+                </div>
+                <div className={classes.emailMetaRow}>
+                  <span>To</span>
+                  <span>
+                    {tab === 'respondent' ? 'ada@example.com' : notifications.ownerEmails?.[0] || 'you@example.com'}
+                  </span>
+                </div>
               </Box>
+              <Text className={classes.emailSubject}>{tab === 'respondent' ? respondentSubject : ownerSubject}</Text>
               <Box className={classes.emailBody}>{tab === 'respondent' ? respondentBody : ownerBody}</Box>
             </Box>
           </Box>

@@ -10,9 +10,22 @@ function flattenFields(fields: FormField[]): FormField[] {
   );
 }
 
-/** Replaces `{{field:<id>}}` with that field's submitted answer, blank if unanswered. */
-function fillPlaceholders(template: string, data: Record<string, string>): string {
-  return template.replace(/\{\{\s*field:([\w-]+)\s*\}\}/g, (_, fieldId: string) => data[fieldId] ?? '');
+/**
+ * Replaces `{{Field Label}}` with that field's submitted answer, blank if
+ * unanswered or if no field has that exact label.
+ *
+ * Matched by label rather than id: the composer inserts the name someone
+ * typed for the field, not its internal id, so this is what has to resolve at
+ * send time. A field renamed after the template was written silently stops
+ * matching — accepted as the cost of a placeholder a human can actually read
+ * and type.
+ */
+function fillPlaceholders(template: string, fields: FormField[], data: Record<string, string>): string {
+  const byLabel = new Map(flattenFields(fields).map((f) => [f.label?.trim(), f.id]));
+  return template.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (match, label: string) => {
+    const fieldId = byLabel.get(label.trim());
+    return fieldId !== undefined ? data[fieldId] ?? '' : match;
+  });
 }
 
 function textToHtml(text: string): string {
@@ -46,9 +59,14 @@ export async function sendSubmissionNotifications(
     );
     const to = emailField ? data[emailField.id] : undefined;
     if (to) {
-      const subject = fillPlaceholders(notifications.respondentSubject || 'Thanks for your submission', data);
+      const subject = fillPlaceholders(
+        notifications.respondentSubject || 'Thanks for your submission',
+        form.fields,
+        data
+      );
       const body = fillPlaceholders(
         notifications.respondentBody || 'Thanks — we received your submission.',
+        form.fields,
         data
       );
       jobs.push(sendMail(to, subject, textToHtml(body), body));

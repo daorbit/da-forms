@@ -148,9 +148,9 @@ export interface NotificationSettings {
   respondentEmailFieldId?: string;
   respondentSubject?: string;
   /**
-   * Plain text. `{{field:<fieldId>}}` is replaced with that field's answer —
-   * the id rather than the label, so renaming a field's label later doesn't
-   * silently break a placeholder already typed into this text.
+   * Plain text. `{{Field Label}}` is replaced with that field's submitted
+   * answer — matched by the field's current label, so it stays readable and
+   * typeable by hand. Renaming the field afterward breaks the match silently.
    */
   respondentBody?: string;
   /** Alerts the form owner on every submission. */

@@ -12,6 +12,8 @@ export interface FormLimits {
   maxForms: number;
   monthlySubmissionQuota: number;
   submissionsUsed: number;
+  /** Responses bought on top of the cycle's allowance. These never expire. */
+  submissionCredits: number;
   notificationEmails: boolean;
   fileUploads: boolean;
 }

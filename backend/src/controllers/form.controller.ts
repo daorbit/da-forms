@@ -206,6 +206,18 @@ export const submitForm: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: 'spam_detected', message: 'Submission rejected' });
   }
 
+  // Unknown limits accept the response, unlike form creation, which refuses.
+  // If Quantalog is unreachable the cost of guessing wrong is one row over
+  // quota; the cost of guessing the other way is a lead that a real visitor
+  // already took the trouble to type, lost for good.
+  const limits = await getFormLimits(form.workspaceId);
+  if (limits && limits.submissionsUsed >= limits.monthlySubmissionQuota + limits.submissionCredits) {
+    return res.status(402).json({
+      error: 'submission_quota_reached',
+      message: 'This form is not accepting responses right now. Please try again later.',
+    });
+  }
+
   const sourceUrl = req.get('referer');
   try {
     const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl);
@@ -213,7 +225,11 @@ export const submitForm: RequestHandler = async (req, res) => {
     // After responding: the respondent's own confirmation should not make
     // them wait on an SMTP round trip, and a slow or failing mail server must
     // never turn a successful submission into an error response.
-    void sendSubmissionNotifications(form, data);
+    void recordSubmission(form.workspaceId);
+    // Notification emails are a paid feature, so a plan without them sends
+    // nothing — checked here rather than inside the mailer so an unreachable
+    // Quantalog (null limits) still lets a paying customer's mail go out.
+    if (!limits || limits.notificationEmails) void sendSubmissionNotifications(form, data);
   } catch (err) {
     if (err instanceof formService.DuplicateValueError) {
       return res.status(409).json({

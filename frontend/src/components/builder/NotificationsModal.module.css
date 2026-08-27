@@ -178,6 +178,50 @@
   border-top: 1px solid var(--mantine-color-default-border);
 }
 
+.layoutOption {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  background-color: var(--mantine-color-body);
+}
+
+.layoutOption:hover:not(:disabled) {
+  border-color: var(--mantine-color-emerald-6);
+}
+
+.layoutOption[data-active] {
+  border-color: var(--mantine-color-emerald-6);
+  background-color: color-mix(in srgb, var(--mantine-color-emerald-6) 10%, var(--mantine-color-body));
+}
+
+.layoutOption:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.previewFrameWrap {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.previewFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  border: 0;
+}
+
 :global(html[data-mantine-color-scheme='light']) .composerPane {
   background-color: #f1f3f5;
 }

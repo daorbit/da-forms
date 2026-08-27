@@ -230,6 +230,8 @@ export interface Form {
   updatedAt: string;
 }
 
+export type EmailLayout = 'plain' | 'thankYou' | 'receipt' | 'nextSteps';
+
 export interface NotificationSettings {
   /** Confirmation email to whoever filled the form. */
   respondentEnabled?: boolean;
@@ -238,6 +240,11 @@ export interface NotificationSettings {
   respondentSubject?: string;
   /** Plain text; `{{Field Label}}` is replaced with that field's submitted answer. */
   respondentBody?: string;
+  /** Which HTML layout the message is rendered into. */
+  respondentLayout?: EmailLayout;
+  /** The button the 'nextSteps' layout renders. Ignored by every other layout. */
+  respondentCtaLabel?: string;
+  respondentCtaHref?: string;
   /** Alerts these addresses on every submission. */
   ownerEnabled?: boolean;
   ownerEmails?: string[];

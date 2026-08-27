@@ -153,6 +153,11 @@ export interface NotificationSettings {
    * typeable by hand. Renaming the field afterward breaks the match silently.
    */
   respondentBody?: string;
+  /** Which HTML layout the message is rendered into. See `EMAIL_LAYOUTS`. */
+  respondentLayout?: 'plain' | 'thankYou' | 'receipt' | 'nextSteps';
+  /** The button the 'nextSteps' layout renders. Ignored by every other layout. */
+  respondentCtaLabel?: string;
+  respondentCtaHref?: string;
   /** Alerts the form owner on every submission. */
   ownerEnabled?: boolean;
   ownerEmails?: string[];
@@ -300,6 +305,9 @@ const formSchema = new Schema<FormDocument>(
           respondentEmailFieldId: { type: String },
           respondentSubject: { type: String },
           respondentBody: { type: String },
+          respondentLayout: { type: String, enum: ['plain', 'thankYou', 'receipt', 'nextSteps'] },
+          respondentCtaLabel: { type: String },
+          respondentCtaHref: { type: String },
           ownerEnabled: { type: Boolean },
           ownerEmails: { type: [String], default: undefined },
           ownerSubject: { type: String },

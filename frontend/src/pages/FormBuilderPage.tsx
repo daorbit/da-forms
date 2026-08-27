@@ -815,6 +815,7 @@ export function FormBuilderPage() {
         onClose={() => setRailPanel(null)}
         formTitle={title}
         fields={fields}
+        theme={theme}
         notifications={emailNotifications}
         onChange={(patch) => setEmailNotifications((prev) => ({ ...prev, ...patch }))}
       />

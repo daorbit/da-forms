@@ -1,4 +1,5 @@
 import { sendMail, mailConfigured } from '../lib/mailer.js';
+import { renderEmail } from '../lib/emailTemplates.js';
 import type { FormDocument, FormField } from '../models/form.model.js';
 
 /** Every field in document order, grids included — mirrors `flattenFields` in form.service. */
@@ -28,11 +29,11 @@ function fillPlaceholders(template: string, fields: FormField[], data: Record<st
   });
 }
 
-function textToHtml(text: string): string {
-  return text
-    .split(/\n{2,}/)
-    .map((block) => `<p>${block.replace(/\n/g, '<br>')}</p>`)
-    .join('');
+/** Every answered field as a label/value pair, in the order they appear on the form. */
+function answersOf(fields: FormField[], data: Record<string, string>) {
+  return flattenFields(fields)
+    .filter((f) => f.label && data[f.id] !== undefined && data[f.id] !== '')
+    .map((f) => ({ label: f.label, value: data[f.id] }));
 }
 
 /**
@@ -69,18 +70,35 @@ export async function sendSubmissionNotifications(
         form.fields,
         data
       );
-      jobs.push(sendMail(to, subject, textToHtml(body), body));
+      const html = renderEmail({
+        layout: notifications.respondentLayout,
+        formName: form.title,
+        body,
+        answers: answersOf(form.fields, data),
+        cta: notifications.respondentCtaHref
+          ? { label: notifications.respondentCtaLabel || 'Continue', href: notifications.respondentCtaHref }
+          : undefined,
+        accent: form.theme?.accentColor,
+      });
+      jobs.push(sendMail(to, subject, html, body));
     }
   }
 
   if (notifications.ownerEnabled && notifications.ownerEmails?.length) {
     const subject = notifications.ownerSubject || `New submission: ${form.title}`;
-    const body = flattenFields(form.fields)
-      .filter((f) => data[f.id] !== undefined)
-      .map((f) => `${f.label || f.id}: ${data[f.id]}`)
-      .join('\n');
+    const answers = answersOf(form.fields, data);
+    // The owner's own alert is always the receipt: it exists to carry the
+    // answers, and there is no author-written body to lay out around them.
+    const text = answers.map((a) => `${a.label}: ${a.value}`).join('\n');
+    const html = renderEmail({
+      layout: 'receipt',
+      formName: form.title,
+      body: `A new response came in on ${form.title}.`,
+      answers,
+      accent: form.theme?.accentColor,
+    });
     for (const to of notifications.ownerEmails) {
-      jobs.push(sendMail(to, subject, textToHtml(body), body));
+      jobs.push(sendMail(to, subject, html, text));
     }
   }
 

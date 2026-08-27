@@ -10,12 +10,15 @@ import {
   Stack,
   Switch,
   Select,
+  TextInput,
   TagsInput,
+  SegmentedControl,
   Menu,
   UnstyledButton,
 } from '@mantine/core';
 import { IconX, IconMail, IconBellRinging, IconChevronDown, IconPlus } from '@tabler/icons-react';
-import type { FormField, NotificationSettings } from '@/types';
+import type { EmailLayout, FormField, FormTheme, NotificationSettings } from '@/types';
+import { EMAIL_LAYOUTS, renderEmail } from '@/lib/emailTemplates';
 import classes from './NotificationsModal.module.css';
 
 type TabId = 'respondent' | 'owner';
@@ -30,6 +33,7 @@ interface Props {
   onClose: () => void;
   formTitle: string;
   fields: FormField[];
+  theme?: FormTheme;
   notifications: NotificationSettings;
   onChange: (patch: Partial<NotificationSettings>) => void;
 }
@@ -41,8 +45,49 @@ function flattenFields(fields: FormField[]): FormField[] {
   );
 }
 
-export function NotificationsModal({ opened, onClose, formTitle, fields, notifications, onChange }: Props) {
+/** A stand-in answer per field type, so the preview reads like a real message rather than a template. */
+function sampleValue(field: FormField): string {
+  switch (field.type) {
+    case 'name':
+      return 'Ada Lovelace';
+    case 'email':
+      return 'ada@example.com';
+    case 'phone':
+      return '+1 555 0100';
+    case 'website':
+      return 'https://example.com';
+    case 'number':
+    case 'decimal':
+    case 'currency':
+      return '42';
+    case 'date':
+      return '2026-01-01';
+    default:
+      return field.placeholder || 'Sample answer';
+  }
+}
+
+/** Fills `{{Field Label}}` with a sample answer — mirrors what the backend does at send time. */
+function fillPlaceholders(template: string, fields: FormField[]): string {
+  const byLabel = new Map(
+    flattenFields(fields)
+      .filter((f) => f.label?.trim())
+      .map((f) => [f.label.trim(), sampleValue(f)])
+  );
+  return template.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (match, label: string) => byLabel.get(label.trim()) ?? match);
+}
+
+export function NotificationsModal({
+  opened,
+  onClose,
+  formTitle,
+  fields,
+  theme,
+  notifications,
+  onChange,
+}: Props) {
   const [tab, setTab] = useState<TabId>('respondent');
+  const [previewing, setPreviewing] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const emailFields = flattenFields(fields).filter((f) => f.type === 'email');
   const placeholderFields = flattenFields(fields).filter((f) => f.label && f.type !== 'grid');
@@ -73,6 +118,34 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
       el.setSelectionRange(start + token.length, start + token.length);
     });
   }
+
+  const sampleAnswers = flattenFields(fields)
+    .filter((f) => f.label && f.type !== 'grid')
+    .map((f) => ({ label: f.label, value: sampleValue(f) }));
+
+  // The same renderer the backend sends with, so what is previewed here is the
+  // markup that actually arrives.
+  const previewHtml = isRespondent
+    ? renderEmail({
+        layout: notifications.respondentLayout,
+        formName: formTitle || 'Your form',
+        body: fillPlaceholders(
+          notifications.respondentBody || 'Thanks — we received your submission and will be in touch soon.',
+          fields
+        ),
+        answers: sampleAnswers,
+        cta: notifications.respondentCtaHref
+          ? { label: notifications.respondentCtaLabel || 'Continue', href: notifications.respondentCtaHref }
+          : undefined,
+        accent: theme?.accentColor,
+      })
+    : renderEmail({
+        layout: 'receipt',
+        formName: formTitle || 'Your form',
+        body: `A new response came in on ${formTitle || 'your form'}.`,
+        answers: sampleAnswers,
+        accent: theme?.accentColor,
+      });
 
   return (
     <Modal
@@ -160,6 +233,57 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
                   />
                 )}
 
+                <div>
+                  <Text size="sm" fw={600} mb={4}>
+                    Template
+                  </Text>
+                  <Text size="xs" c="dimmed" mb={10}>
+                    How the message is laid out when it lands.
+                  </Text>
+                  <Stack gap={8}>
+                    {EMAIL_LAYOUTS.map((option) => {
+                      const on = (notifications.respondentLayout ?? 'plain') === option.id;
+                      return (
+                        <UnstyledButton
+                          key={option.id}
+                          className={classes.layoutOption}
+                          data-active={on || undefined}
+                          disabled={!notifications.respondentEnabled}
+                          onClick={() => onChange({ respondentLayout: option.id as EmailLayout })}
+                        >
+                          <Text size="sm" fw={on ? 600 : 500}>
+                            {option.label}
+                          </Text>
+                          <Text size="xs" c="dimmed" mt={2}>
+                            {option.hint}
+                          </Text>
+                        </UnstyledButton>
+                      );
+                    })}
+                  </Stack>
+                </div>
+
+                {notifications.respondentLayout === 'nextSteps' && (
+                  <>
+                    <Divider />
+                    <TextInput
+                      label="Button label"
+                      placeholder="Continue"
+                      value={notifications.respondentCtaLabel ?? ''}
+                      onChange={(e) => onChange({ respondentCtaLabel: e.target.value })}
+                      disabled={!notifications.respondentEnabled}
+                    />
+                    <TextInput
+                      label="Button link"
+                      description="Left empty, no button is shown"
+                      placeholder="https://example.com/next"
+                      value={notifications.respondentCtaHref ?? ''}
+                      onChange={(e) => onChange({ respondentCtaHref: e.target.value })}
+                      disabled={!notifications.respondentEnabled}
+                    />
+                  </>
+                )}
+
                 <Text size="xs" c="dimmed">
                   Write the message on the right. Use <strong>Field Labels</strong> to drop a
                   respondent's own answer into the text.
@@ -212,6 +336,26 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
 
         {/* ---- Right: the composer ---- */}
         <Box className={classes.composerPane}>
+          <Group justify="center" mb="md">
+            <SegmentedControl
+              size="xs"
+              value={previewing ? 'preview' : 'write'}
+              onChange={(value) => setPreviewing(value === 'preview')}
+              data={[
+                { value: 'write', label: 'Write' },
+                { value: 'preview', label: 'Preview' },
+              ]}
+            />
+          </Group>
+
+          {previewing ? (
+            <Box className={classes.previewFrameWrap}>
+              {/* An iframe, so the email's own table markup and inline styles
+                  render exactly as a mail client would show them, without the
+                  app's stylesheet reaching in. */}
+              <iframe title="Email preview" className={classes.previewFrame} srcDoc={previewHtml} />
+            </Box>
+          ) : (
           <Box className={classes.composer} data-disabled={!enabled || undefined}>
             <div className={classes.composerRow}>
               <Text className={classes.composerLabel}>From</Text>
@@ -323,6 +467,7 @@ export function NotificationsModal({ opened, onClose, formTitle, fields, notific
               </Text>
             )}
           </Box>
+          )}
         </Box>
       </Group>
     </Modal>

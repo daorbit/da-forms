@@ -1,6 +1,12 @@
 import { FormModel } from '../models/form.model.js';
 import { SubmissionModel } from '../models/submission.model.js';
 import { FormViewModel } from '../models/formView.model.js';
+import {
+  claimUploads,
+  destroyFormBackground,
+  destroyUploadsForForm,
+  destroyUploadsForSubmissions,
+} from './media.service.js';
 import type {
   FormField,
   SubmitButtonWidth,
@@ -153,8 +159,31 @@ export function updateForm(
   return FormModel.findOneAndUpdate({ _id: id, workspaceId }, input, { new: true });
 }
 
-export function deleteForm(id: string, workspaceId: string) {
-  return FormModel.findOneAndDelete({ _id: id, workspaceId });
+/**
+ * Delete a form and everything that only existed because of it.
+ *
+ * A form's responses are meaningless without it and its uploaded files cost
+ * storage forever, so they go together — leaving them behind is not "keeping
+ * data safe", it is an orphaned collection nobody can reach through the UI and
+ * a Cloudinary bill for files no form references.
+ *
+ * Ordered so nothing is stranded if this fails partway: the files go first
+ * (their rows still name them), then the rows, then the form. The reverse order
+ * would delete the form and lose the only handle on the rest.
+ */
+export async function deleteForm(id: string, workspaceId: string) {
+  const form = await FormModel.findOne({ _id: id, workspaceId });
+  if (!form) return null;
+
+  await destroyUploadsForForm(form._id);
+  await destroyFormBackground(form.get('theme'));
+
+  await SubmissionModel.deleteMany({ formId: form._id });
+  // FormView stores the id as a string, unlike Submission's ObjectId ref.
+  await FormViewModel.deleteMany({ formId: String(form._id) });
+
+  await FormModel.deleteOne({ _id: form._id });
+  return form;
 }
 
 /**
@@ -201,7 +230,14 @@ export async function submitForm(
     const existing = await SubmissionModel.exists({ formId, [`data.${field.id}`]: value });
     if (existing) throw new DuplicateValueError(field);
   }
-  return SubmissionModel.create({ formId, data, sourceUrl });
+  const submission = await SubmissionModel.create({ formId, data, sourceUrl });
+
+  // Attach whatever this answer uploaded, so the abandoned-upload sweep stops
+  // considering those files fair game. Done after the insert because the claim
+  // needs the submission's id.
+  await claimUploads(submission._id, data);
+
+  return submission;
 }
 
 export function submissionCount(formId: string) {
@@ -279,6 +315,17 @@ export function updateSubmission(
   return SubmissionModel.findOneAndUpdate({ _id: id, formId }, patch, { new: true });
 }
 
-export function deleteSubmission(id: string, formId: string) {
-  return SubmissionModel.findOneAndDelete({ _id: id, formId });
+/**
+ * Delete one response, and the files it uploaded along with it.
+ *
+ * Same reasoning as deleting a form: the files existed only to be part of this
+ * answer, so keeping them past it is storage nothing can reach.
+ */
+export async function deleteSubmission(id: string, formId: string) {
+  const submission = await SubmissionModel.findOne({ _id: id, formId });
+  if (!submission) return null;
+
+  await destroyUploadsForSubmissions([submission._id]);
+  await SubmissionModel.deleteOne({ _id: submission._id });
+  return submission;
 }

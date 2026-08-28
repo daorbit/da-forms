@@ -1,5 +1,18 @@
 import type { RequestHandler } from 'express';
 import { cloudinary } from '../config/cloudinary.js';
+import { recordUpload } from '../services/media.service.js';
+
+/** What Cloudinary hands back that we need to keep in order to delete it later. */
+interface Uploaded {
+  secure_url: string;
+  public_id: string;
+  resource_type: string;
+}
+
+/** Cloudinary reports more types than it accepts back on `destroy`. */
+function resourceType(value: string): 'image' | 'video' | 'raw' {
+  return value === 'video' || value === 'raw' ? value : 'image';
+}
 
 /**
  * The client sends `accept` (image/*, audio/*,video/*, etc, taken from the
@@ -27,15 +40,26 @@ export const uploadFormFile: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: 'invalid_type', message: `File type ${file.mimetype} is not accepted here` });
   }
 
-  const result = await new Promise<{ secure_url: string } | null>((resolve, reject) => {
+  const result = await new Promise<Uploaded | null>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder: `da-forms/${req.params.id}`, resource_type: 'auto' },
-      (error, uploaded) => (error ? reject(error) : resolve(uploaded ?? null))
+      (error, uploaded) => (error ? reject(error) : resolve((uploaded as Uploaded) ?? null))
     );
     stream.end(file.buffer);
   });
 
   if (!result) return res.status(502).json({ error: 'upload_failed', message: 'Upload failed' });
+
+  // Recorded before the URL is handed out, so a file can never exist in
+  // Cloudinary without a row that knows how to delete it. Until the submission
+  // claims it, this row is what the abandoned-upload sweep looks for.
+  await recordUpload({
+    publicId: result.public_id,
+    resourceType: resourceType(result.resource_type),
+    url: result.secure_url,
+    formId: req.params.id,
+  });
+
   res.status(201).json({ url: result.secure_url, name: file.originalname });
 };
 
@@ -52,14 +76,25 @@ export const uploadBackgroundImage: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: 'invalid_type', message: 'Background must be an image' });
   }
 
-  const result = await new Promise<{ secure_url: string } | null>((resolve, reject) => {
+  const result = await new Promise<Uploaded | null>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder: `da-forms/backgrounds/${req.params.workspaceId}`, resource_type: 'image' },
-      (error, uploaded) => (error ? reject(error) : resolve(uploaded ?? null))
+      (error, uploaded) => (error ? reject(error) : resolve((uploaded as Uploaded) ?? null))
     );
     stream.end(file.buffer);
   });
 
   if (!result) return res.status(502).json({ error: 'upload_failed', message: 'Upload failed' });
+
+  // A background is an editor asset, not a respondent's answer, so nothing will
+  // ever "claim" it and the abandoned-upload sweep must skip it — see the
+  // `workspaceId` exclusion in `sweepAbandonedUploads`.
+  await recordUpload({
+    publicId: result.public_id,
+    resourceType: resourceType(result.resource_type),
+    url: result.secure_url,
+    workspaceId: req.params.workspaceId,
+  });
+
   res.status(201).json({ url: result.secure_url, name: file.originalname });
 };

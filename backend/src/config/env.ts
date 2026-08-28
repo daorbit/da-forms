@@ -27,5 +27,5 @@ export const env = {
    * A respondent who picks a file and then abandons the form leaves an asset
    * nothing will ever reference, and storage we are paying for.
    */
-  uploadGraceMinutes: Number(process.env.UPLOAD_GRACE_MINUTES ?? 2),
+  uploadGraceMinutes: Number(process.env.UPLOAD_GRACE_MINUTES ?? 5),
 };

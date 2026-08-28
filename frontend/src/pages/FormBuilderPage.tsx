@@ -671,11 +671,16 @@ export function FormBuilderPage() {
               </Badge>
             ) : (
             <>
+            {/* Colours are pinned rather than left to the theme: this editor
+                runs inside the Quantalog shell, whose palette rendered both of
+                these as near-invisible text. Save is the primary action, so it
+                is the filled green one; publish/unpublish is outlined so the
+                two read as a pair without competing. */}
             <Button
-              variant="subtle"
-              color="gray"
+              variant="filled"
               radius="md"
               size="sm"
+              className={classes.saveBtn}
               onClick={handleSave}
               loading={saving}
               disabled={!isDirty || publishing}
@@ -683,10 +688,10 @@ export function FormBuilderPage() {
               Save
             </Button>
             <Button
-              variant="filled"
-              color={savedForm?.status === 'published' ? 'gray' : 'emerald'}
+              variant="outline"
               radius="md"
               size="sm"
+              className={classes.publishBtn}
               leftSection={
                 savedForm?.status === 'published' ? (
                   <IconEyeOff size={16} />

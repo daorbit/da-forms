@@ -93,3 +93,31 @@
 @media (prefers-reduced-motion: reduce) {
   .liveDot { animation: none; }
 }
+
+/* Header action buttons, colours pinned against the embedding shell's theme.
+   A fixed emerald pair (#059669 / #047857) so Save always reads as the live,
+   primary action and Publish sits beside it as its outlined twin. */
+.saveBtn {
+  background-color: #059669 !important;
+  color: #fff !important;
+  border: none !important;
+}
+.saveBtn:hover {
+  background-color: #047857 !important;
+}
+.saveBtn:disabled {
+  background-color: #059669 !important;
+  opacity: 0.45 !important;
+}
+
+.publishBtn {
+  border: 1px solid #059669 !important;
+  color: #10b981 !important;
+  background-color: transparent !important;
+}
+.publishBtn:hover {
+  background-color: rgba(5, 150, 105, 0.12) !important;
+}
+.publishBtn:disabled {
+  opacity: 0.45 !important;
+}

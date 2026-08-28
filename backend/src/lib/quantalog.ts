@@ -9,6 +9,8 @@ import { env } from '../config/env.js';
  */
 export interface FormLimits {
   plan: string;
+  /** Display name of the plan, for anything shown to a customer. */
+  planName?: string;
   maxForms: number;
   monthlySubmissionQuota: number;
   submissionsUsed: number;

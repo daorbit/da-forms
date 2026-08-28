@@ -8,6 +8,7 @@ import type { FormTheme } from '@/types';
 import { formTemplates } from '@/lib/templates';
 import { FormRenderer } from '@/components/FormRenderer';
 import { createForm } from '@/lib/api';
+import { isPlanLimit } from '@/lib/planLimit';
 import classes from './NewFormModal.module.css';
 
 interface Props {
@@ -69,8 +70,14 @@ export function NewFormModal({ opened, onClose }: Props) {
       reset();
       onClose();
       navigate(`/${workspaceId}/forms/${form._id}/edit`);
-    } catch {
+    } catch (err) {
       setCreating(false);
+      // A plan cap already opened the upgrade dialog on its way out of the API
+      // layer. A red toast under it would read as a second, separate failure.
+      if (isPlanLimit(err)) {
+        handleClose();
+        return;
+      }
       notifications.show({ message: 'Could not create form', color: 'red' });
     }
   }

@@ -1,4 +1,5 @@
 import type { HealthResponse, Form, FormField, Submission, Paginated } from '@/types';
+import type { PlanLimitInfo } from './planLimit';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -15,10 +16,40 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public code: string | undefined,
-    message: string
+    message: string,
+    /** Set on a plan-limit refusal: which cap, and how much of it was used. */
+    public limit?: PlanLimitInfo
   ) {
     super(message);
   }
+}
+
+/**
+ * Turn a failed response into an `ApiError`.
+ *
+ * The server sends a machine slug in `code` and a sentence in `error`; older
+ * routes send the sentence in `message` instead, so both are read. A slug is
+ * never used as the message — printing `form_limit_reached` at a customer is
+ * exactly the failure this shape exists to prevent.
+ */
+async function errorFrom(res: Response): Promise<ApiError> {
+  const body = await res.json().catch(() => null);
+  const message = body?.message ?? body?.error ?? `${res.status} ${res.statusText}`;
+  return new ApiError(res.status, body?.code ?? body?.error, message, body?.limit);
+}
+
+/**
+ * Raise the shared upgrade dialog on a plan limit, wherever the call came from.
+ *
+ * Done here rather than at each call site for the same reason the host app does
+ * it in its `baseQuery`: a cap can be hit by any request in the product, and one
+ * screen forgetting to check is one screen that shows a red toast instead of the
+ * upgrade path. The error is still thrown, so callers keep their own recovery —
+ * they just should not also report it.
+ */
+function raise(err: ApiError): never {
+  void import('./planLimit').then((m) => m.handlePlanLimit(err));
+  throw err;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -26,10 +57,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     ...init,
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new ApiError(res.status, body?.error, body?.message ?? `${res.status} ${res.statusText}`);
-  }
+  if (!res.ok) raise(await errorFrom(res));
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
@@ -214,10 +242,7 @@ export async function uploadFormFile(
   if (accept) body.append('accept', accept);
   // Not `request()`: that helper always sends JSON, but this is multipart.
   const res = await fetch(`${BASE_URL}/public/forms/${formId}/upload`, { method: 'POST', body });
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => null);
-    throw new ApiError(res.status, errBody?.error, errBody?.message ?? `${res.status} ${res.statusText}`);
-  }
+  if (!res.ok) raise(await errorFrom(res));
   return res.json();
 }
 
@@ -230,9 +255,6 @@ export async function uploadBackgroundImage(
   body.append('file', file);
   // Not `request()`: that helper always sends JSON, but this is multipart.
   const res = await fetch(`${BASE_URL}${ws(workspaceId)}/backgrounds`, { method: 'POST', body });
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => null);
-    throw new ApiError(res.status, errBody?.error, errBody?.message ?? `${res.status} ${res.statusText}`);
-  }
+  if (!res.ok) raise(await errorFrom(res));
   return res.json();
 }

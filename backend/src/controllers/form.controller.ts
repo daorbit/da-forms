@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import * as formService from '../services/form.service.js';
 import { sendSubmissionNotifications } from '../services/notification.service.js';
 import { getFormLimits, recordSubmission } from '../lib/quantalog.js';
+import { planLimit } from '../lib/plan-limit.js';
 
 /**
  * IP + user-agent, hashed. Not identity-grade — just enough to tell "same
@@ -74,10 +75,17 @@ export const createForm: RequestHandler = async (req, res) => {
   if (limits) {
     const count = await formService.countForms(workspaceId);
     if (count >= limits.maxForms) {
-      return res.status(402).json({
-        error: 'form_limit_reached',
-        message: `Your plan includes ${limits.maxForms} form${limits.maxForms === 1 ? '' : 's'} — upgrade to build more.`,
-      });
+      return planLimit(
+        res,
+        `Your plan includes ${limits.maxForms} form${limits.maxForms === 1 ? '' : 's'} — upgrade to build more.`,
+        {
+          kind: 'forms',
+          label: 'Forms',
+          used: count,
+          quota: limits.maxForms,
+          plan: limits.planName ?? limits.plan,
+        }
+      );
     }
   }
 
@@ -211,6 +219,10 @@ export const submitForm: RequestHandler = async (req, res) => {
   // quota; the cost of guessing the other way is a lead that a real visitor
   // already took the trouble to type, lost for good.
   const limits = await getFormLimits(form.workspaceId);
+  // Deliberately not `planLimit`: the person hitting this is the respondent
+  // filling the form in, not the customer who owns the plan. Nudging a stranger
+  // towards someone else's billing page would be nonsense, so this stays a
+  // neutral "not accepting responses" with no code and no upgrade path.
   if (limits && limits.submissionsUsed >= limits.monthlySubmissionQuota + limits.submissionCredits) {
     return res.status(402).json({
       error: 'submission_quota_reached',

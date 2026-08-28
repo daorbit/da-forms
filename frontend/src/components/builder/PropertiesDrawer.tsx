@@ -20,6 +20,7 @@ import {
   paletteByType,
 } from '@/lib/fieldPalette';
 import { flattenFields } from '@/lib/fieldTree';
+import { ChoiceEditor } from '@/components/builder/ChoiceEditor';
 import classes from './PropertiesDrawer.module.css';
 
 interface Props {
@@ -264,13 +265,9 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
 
               {optionTypes.includes(field.type) && (
                 <Section label="Options">
-                  <Textarea
-                    label="Choices"
-                    description="One per line."
-                    value={(field.options ?? []).join('\n')}
-                    onChange={(e) => set({ options: e.target.value.split('\n') })}
-                    autosize
-                    minRows={4}
+                  <ChoiceEditor
+                    options={field.options ?? []}
+                    onChange={(options) => set({ options })}
                   />
                 </Section>
               )}

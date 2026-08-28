@@ -26,7 +26,6 @@ import {
   IconChevronDown,
   IconShare2,
   IconFilter,
-  IconCalendarPlus,
   IconArrowLeft,
   IconFileExport,
   IconLayoutList,
@@ -54,7 +53,7 @@ import {
 } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
-import { paletteByType, staticTypes, fileTypes } from '@/lib/fieldPalette';
+import { staticTypes, fileTypes } from '@/lib/fieldPalette';
 import { valueFields } from '@/lib/fieldTree';
 import { EntriesKanban } from '@/components/builder/EntriesKanban';
 import { AnalyticsBar } from '@/components/builder/AnalyticsBar';
@@ -456,26 +455,21 @@ export function EntriesPage() {
             >
               <Table.Thead className={classes.thead}>
                 <Table.Tr>
-                  {columns.map((field) => {
-                    const meta = paletteByType[field.type];
-                    return (
-                      <Table.Th key={field.id} className={classes.th}>
-                        <Group gap={6} wrap="nowrap">
-                          <meta.icon size={15} stroke={1.6} color="var(--mantine-color-gray-6)" />
-                          <Text size="sm" fw={600}>
-                            {field.label}
-                          </Text>
-                        </Group>
-                      </Table.Th>
-                    );
-                  })}
-                  <Table.Th className={classes.th}>
-                    <Group gap={6} wrap="nowrap">
-                      <IconCalendarPlus size={15} stroke={1.6} color="var(--mantine-color-gray-6)" />
-                      <Text size="sm" fw={600}>
-                        Added Time
+                  {/* No leading icon: the icon shifted every heading right by its
+                      own width while the values below started at the cell edge,
+                      so each column read as misaligned with its own data. The
+                      field type is already visible from the values. */}
+                  {columns.map((field) => (
+                    <Table.Th key={field.id} className={classes.th}>
+                      <Text size="sm" fw={600} title={field.label} truncate>
+                        {field.label}
                       </Text>
-                    </Group>
+                    </Table.Th>
+                  ))}
+                  <Table.Th className={classes.th}>
+                    <Text size="sm" fw={600}>
+                      Added Time
+                    </Text>
                   </Table.Th>
                   <Table.Th className={`${classes.th} ${classes.actionsCol}`}>
                     <Text size="sm" fw={600}>

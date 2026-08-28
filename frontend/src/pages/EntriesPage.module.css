@@ -62,6 +62,14 @@
   width: 180px;
 }
 
+/* A row is as tall as its tallest value (a wrapped email, a two-line answer).
+   Without this the shorter cells centre themselves against it and the row
+   stops reading as one line. */
+.table th,
+.table td {
+  vertical-align: top;
+}
+
 .actionsCol {
   position: sticky;
   right: 0;

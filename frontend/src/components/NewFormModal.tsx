@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, ScrollArea, UnstyledButton, Loader } from '@mantine/core';
+import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, UnstyledButton, Loader } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconPlus } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
 import { formTemplates } from '@/lib/templates';
 import { FormRenderer } from '@/components/FormRenderer';
+import { FormPage } from '@/components/FormPage';
+import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
+import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
+import { useFitScale } from '@/hooks/useFitScale';
 import { createForm } from '@/lib/api';
 import { isPlanLimit } from '@/lib/planLimit';
 import classes from './NewFormModal.module.css';
@@ -26,13 +30,28 @@ export function NewFormModal({ opened, onClose }: Props) {
   const [templateId, setTemplateId] = useState(defaultTemplateId);
   const [creating, setCreating] = useState(false);
 
+  const [device, setDevice] = useState<DeviceId>('macbook');
+
   const activeTemplate = formTemplates.find((t) => t.id === templateId) ?? formTemplates[0];
+
+  // The frame renders at the device's true CSS width and is scaled down to
+  // whatever room the modal leaves, so the layout inside is the real one.
+  const size = frameSize(device);
+  // Generous padding because the laptop's base sticks out past its lid on both
+  // sides and its foot sits below the chassis: a fit that leaves no margin puts
+  // those against the stage's edge, where `overflow: hidden` shears them off.
+  const { ref: stageRef, scale, measured } = useFitScale({
+    contentWidth: size.width,
+    contentHeight: size.height,
+    padding: { x: 96, y: 72 },
+  });
 
   function reset() {
     setStep(1);
     setName('');
     setScope('page');
     setTemplateId(defaultTemplateId);
+    setDevice('macbook');
     setCreating(false);
   }
 
@@ -88,7 +107,11 @@ export function NewFormModal({ opened, onClose }: Props) {
       onClose={handleClose}
       title={step === 1 ? 'Create a new form' : 'Choose a starting point'}
       centered
-      size={step === 2 ? 960 : 'md'}
+      // A fixed 960 left the preview cramped on a large screen and overflowing
+      // on a small one. The picker step tracks the viewport with a ceiling, so
+      // a long template (RSVP, feedback survey) is readable without scrolling
+      // the modal itself.
+      size={step === 2 ? 'min(1180px, 94vw)' : 'md'}
       radius="lg"
       styles={step === 2 ? { body: { overflow: 'hidden' } } : undefined}
     >
@@ -177,25 +200,32 @@ export function NewFormModal({ opened, onClose }: Props) {
             </div>
 
             {activeTemplate.id !== 'blank' && (
-              <ScrollArea className={classes.previewPane} type="auto">
-                <Box
-                  className={`da-forms-light-surface ${classes.previewInner}`}
-                  data-mantine-color-scheme="light"
-                  style={{ backgroundColor: activeTemplate.theme?.pageBg ?? 'var(--mantine-color-gray-1)' }}
-                >
-                  <Box className={classes.previewCard}>
-                    <FormRenderer
-                      key={activeTemplate.id}
-                      title={activeTemplate.title}
-                      description={activeTemplate.formDescription}
-                      fields={activeTemplate.fields}
-                      theme={activeTemplate.theme}
-                      submitLabel={activeTemplate.submitLabel}
-                      hideHeader={activeTemplate.hideHeader}
-                    />
-                  </Box>
+              <Box className={classes.previewPane}>
+                {/* A thin bar of its own rather than floating over the stage,
+                    where it collided with the modal's close button and its
+                    tooltip opened off the top edge. */}
+                <Box className={classes.previewBar}>
+                  <DeviceSwitch device={device} onChange={setDevice} />
                 </Box>
-              </ScrollArea>
+
+                <Box className={classes.stage} ref={stageRef}>
+                  <DeviceFrame device={device} scale={scale} hidden={!measured}>
+                    <FormPage theme={activeTemplate.theme} minHeight="100%">
+                      {/* Remounted per device so each preview starts from page
+                          one at that device's layout. */}
+                      <FormRenderer
+                        key={`${activeTemplate.id}-${device}`}
+                        title={activeTemplate.title}
+                        description={activeTemplate.formDescription}
+                        fields={activeTemplate.fields}
+                        theme={activeTemplate.theme}
+                        submitLabel={activeTemplate.submitLabel}
+                        hideHeader={activeTemplate.hideHeader}
+                      />
+                    </FormPage>
+                  </DeviceFrame>
+                </Box>
+              </Box>
             )}
           </Box>
 

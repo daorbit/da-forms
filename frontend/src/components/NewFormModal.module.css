@@ -1,11 +1,15 @@
+/* Tracks the window rather than sitting at a fixed 520px: the preview is a
+   real form, and a taller one was cut off at the bottom with no sign that
+   anything was missing. The floor keeps it usable on a short laptop screen. */
 .stepBody {
   display: flex;
   gap: 20px;
-  height: 520px;
+  height: min(76vh, 760px);
+  min-height: 420px;
 }
 
 .templateList {
-  width: 260px;
+  width: 280px;
   flex-shrink: 0;
   overflow-y: auto;
   overflow-x: hidden;
@@ -52,23 +56,34 @@
 }
 
 .previewPane {
+  position: relative;
   flex: 1;
   min-width: 0;
   border: 1px solid var(--mantine-color-gray-3);
   border-radius: 10px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.previewInner {
+.previewBar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  flex-shrink: 0;
+}
+
+/* The stage is what the frame is measured against, so it takes the pane's
+   remaining height exactly — `min-height: 0` is what stops a flex child from
+   refusing to shrink below its content. */
+.stage {
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100%;
-  box-sizing: border-box;
-  padding: 32px;
+  overflow: hidden;
+  background-color: var(--mantine-color-default);
 }
 
-.previewCard {
-  width: 100%;
-  max-width: 440px;
-}

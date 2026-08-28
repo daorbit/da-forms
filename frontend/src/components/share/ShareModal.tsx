@@ -22,23 +22,15 @@ import {
   IconExternalLink,
   IconLink,
   IconCode,
-  IconDeviceIpad,
-  IconDeviceLaptop,
-  IconDeviceMobile,
   IconInfoCircle,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { updateForm, publicFormUrl } from '@/lib/api';
 import type { Form } from '@/types';
 import { useFitScale } from '@/hooks/useFitScale';
-import { DeviceFrame, DEVICE_ORDER, DEVICE_SPECS, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
+import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
+import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
 import classes from './ShareModal.module.css';
-
-const DEVICE_ICONS: Record<DeviceId, typeof IconDeviceLaptop> = {
-  macbook: IconDeviceLaptop,
-  ipad: IconDeviceIpad,
-  iphone: IconDeviceMobile,
-};
 
 type TabId = 'link' | 'embed';
 
@@ -356,24 +348,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
             <Text fw={700} size="lg">
               Preview
             </Text>
-            <Group gap={2} className={classes.deviceToggle}>
-              {DEVICE_ORDER.map((id) => {
-                const Icon = DEVICE_ICONS[id];
-                return (
-                  <Tooltip key={id} label={DEVICE_SPECS[id].label} withArrow>
-                    <button
-                      type="button"
-                      className={`${classes.deviceButton} ${device === id ? classes.deviceButtonActive : ''}`}
-                      onClick={() => setDevice(id)}
-                      aria-label={DEVICE_SPECS[id].label}
-                      aria-pressed={device === id}
-                    >
-                      <Icon size={17} stroke={1.6} />
-                    </button>
-                  </Tooltip>
-                );
-              })}
-            </Group>
+            <DeviceSwitch device={device} onChange={setDevice} />
           </Group>
 
           {/* The frame is laid out from the first render so the stage has

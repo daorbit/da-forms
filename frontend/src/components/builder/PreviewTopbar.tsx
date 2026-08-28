@@ -1,13 +1,8 @@
 import { ActionIcon, Badge, Button, Group, Text, Tooltip } from '@mantine/core';
-import { IconDeviceIpad, IconDeviceLaptop, IconDeviceMobile, IconX } from '@tabler/icons-react';
-import { DEVICE_ORDER, DEVICE_SPECS, type DeviceId } from './DeviceFrame';
+import { IconX } from '@tabler/icons-react';
+import { type DeviceId } from './DeviceFrame';
+import { DeviceSwitch } from './DeviceSwitch';
 import classes from './PreviewModal.module.css';
-
-const DEVICE_ICONS: Record<DeviceId, typeof IconDeviceLaptop> = {
-  macbook: IconDeviceLaptop,
-  ipad: IconDeviceIpad,
-  iphone: IconDeviceMobile,
-};
 
 interface Props {
   title: string;
@@ -41,29 +36,9 @@ export function PreviewTopbar({
         )}
       </Group>
 
-      <Group gap={2} wrap="nowrap" className={classes.deviceGroup}>
-        {DEVICE_ORDER.map((id) => {
-          const Icon = DEVICE_ICONS[id];
-          return (
-            <Tooltip key={id} label={DEVICE_SPECS[id].label} withArrow>
-              <button
-                type="button"
-                className={`${classes.deviceButton} ${device === id ? classes.deviceButtonActive : ''}`}
-                onClick={() => onDeviceChange(id)}
-                aria-label={DEVICE_SPECS[id].label}
-                aria-pressed={device === id}
-              >
-                <Icon size={18} stroke={1.6} />
-              </button>
-            </Tooltip>
-          );
-        })}
-      </Group>
+      <DeviceSwitch device={device} onChange={onDeviceChange} />
 
       <Group justify="flex-end" gap="xs" style={{ flex: 1 }} wrap="nowrap">
-        <Text size="xs" className={classes.topbarMeta} visibleFrom="md">
-          {DEVICE_SPECS[device].width} × {DEVICE_SPECS[device].height}
-        </Text>
         {pickedName && onApply && (
           <Button size="xs" color="emerald" onClick={onApply}>
             Apply theme

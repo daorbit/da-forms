@@ -75,10 +75,6 @@
   color: var(--preview-text);
 }
 
-.topbarMeta {
-  color: var(--preview-dimmed);
-}
-
 .deviceGroup {
   padding: 3px;
   border-radius: var(--mantine-radius-md);

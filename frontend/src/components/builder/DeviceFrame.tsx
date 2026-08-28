@@ -19,9 +19,12 @@ export const DEVICE_SPECS: Record<DeviceId, DeviceSpec> = {
   // Bezels mirror each chassis's own padding in DeviceFrame.module.css — thin,
   // as current hardware is. A value that disagrees with the stylesheet becomes
   // dead space inside the measured frame.
-  macbook: { id: 'macbook', label: 'MacBook Air', width: 1152, height: 720, bezel: 9, chromeBelow: 14 },
-  ipad: { id: 'ipad', label: 'iPad Pro 11"', width: 834, height: 1120, bezel: 10, chromeBelow: 0 },
-  iphone: { id: 'iphone', label: 'iPhone 17', width: 402, height: 874, bezel: 10, chromeBelow: 0 },
+  // Labelled by what the respondent is holding, not by a product name: the
+  // point is which layout the form falls into, and naming a specific model
+  // implies a fidelity the mock does not claim.
+  macbook: { id: 'macbook', label: 'Desktop', width: 1152, height: 720, bezel: 9, chromeBelow: 14 },
+  ipad: { id: 'ipad', label: 'Tablet', width: 834, height: 1120, bezel: 10, chromeBelow: 0 },
+  iphone: { id: 'iphone', label: 'Mobile', width: 402, height: 874, bezel: 10, chromeBelow: 0 },
 };
 
 export const DEVICE_ORDER: DeviceId[] = ['macbook', 'ipad', 'iphone'];

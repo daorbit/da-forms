@@ -1,9 +1,8 @@
 import type { HealthResponse, Form, FormField, Submission, Paginated } from '@/types';
-import type { PlanLimitInfo } from './planLimit';
+import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
-/** The public, respondent-facing URL for a form's share link. */
 export function publicFormPath(formId: string) {
   return `/from/${formId}/view`;
 }
@@ -17,38 +16,20 @@ export class ApiError extends Error {
     public status: number,
     public code: string | undefined,
     message: string,
-    /** Set on a plan-limit refusal: which cap, and how much of it was used. */
     public limit?: PlanLimitInfo
   ) {
     super(message);
   }
 }
 
-/**
- * Turn a failed response into an `ApiError`.
- *
- * The server sends a machine slug in `code` and a sentence in `error`; older
- * routes send the sentence in `message` instead, so both are read. A slug is
- * never used as the message — printing `form_limit_reached` at a customer is
- * exactly the failure this shape exists to prevent.
- */
 async function errorFrom(res: Response): Promise<ApiError> {
   const body = await res.json().catch(() => null);
   const message = body?.message ?? body?.error ?? `${res.status} ${res.statusText}`;
   return new ApiError(res.status, body?.code ?? body?.error, message, body?.limit);
 }
 
-/**
- * Raise the shared upgrade dialog on a plan limit, wherever the call came from.
- *
- * Done here rather than at each call site for the same reason the host app does
- * it in its `baseQuery`: a cap can be hit by any request in the product, and one
- * screen forgetting to check is one screen that shows a red toast instead of the
- * upgrade path. The error is still thrown, so callers keep their own recovery —
- * they just should not also report it.
- */
 function raise(err: ApiError): never {
-  void import('./planLimit').then((m) => m.handlePlanLimit(err));
+  handlePlanLimit(err);
   throw err;
 }
 
@@ -62,12 +43,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/**
- * Which workspace this app instance manages.
- *
- * Standalone it is a single built-in workspace; embedded in another product it
- * comes from the URL, so the host app's own workspace scopes the forms.
- */
 export const DEFAULT_WORKSPACE = 'default';
 
 function ws(workspaceId: string) {
@@ -87,7 +62,6 @@ export interface WorkspaceStats {
 }
 
 export interface FormListResult extends Paginated<Form> {
-  /** Workspace-wide, unaffected by the current search/page. */
   stats: WorkspaceStats;
 }
 
@@ -210,6 +184,7 @@ export function getAnalytics(id: string, workspaceId = DEFAULT_WORKSPACE) {
   return request<Analytics>(`${ws(workspaceId)}/${id}/analytics`);
 }
 
+
 /* ---- Public: reachable by form id alone, no workspace ---- */
 
 export function getPublicForm(id: string) {
@@ -240,7 +215,6 @@ export async function uploadFormFile(
   // Server-side mirror of the field's own `accept` restriction — a respondent
   // editing the request by hand shouldn't bypass what the field type promises.
   if (accept) body.append('accept', accept);
-  // Not `request()`: that helper always sends JSON, but this is multipart.
   const res = await fetch(`${BASE_URL}/public/forms/${formId}/upload`, { method: 'POST', body });
   if (!res.ok) raise(await errorFrom(res));
   return res.json();
@@ -253,7 +227,6 @@ export async function uploadBackgroundImage(
 ): Promise<{ url: string; name: string }> {
   const body = new FormData();
   body.append('file', file);
-  // Not `request()`: that helper always sends JSON, but this is multipart.
   const res = await fetch(`${BASE_URL}${ws(workspaceId)}/backgrounds`, { method: 'POST', body });
   if (!res.ok) raise(await errorFrom(res));
   return res.json();

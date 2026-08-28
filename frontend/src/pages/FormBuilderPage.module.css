@@ -19,23 +19,31 @@
   max-width: 320px;
 }
 
+/* `!important` throughout: when this editor is embedded in the Quantalog shell,
+   that app's global input styling paints a border and fill on every
+   `.mantine-Input-input`, which turned this title into what looked like an
+   empty search box. These rules have to win against a host stylesheet loaded
+   after ours. */
 .nameInput input {
-  padding-inline: 8px;
-  border-radius: 6px;
+  padding-inline: 8px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
   text-overflow: ellipsis;
   transition: background-color 100ms ease;
 }
 
-/* The title is editable, but nothing said so until you happened to click it. */
+/* The title is editable, but nothing said so until you happened to hover it. */
 .nameInput input:hover {
-  background-color: var(--mantine-color-default-hover);
+  background-color: var(--mantine-color-default-hover) !important;
 }
 
-/* No fill on focus — the caret and the ring already say it is being edited, and
-   the block of colour behind a short name was the loudest thing in the header. */
+/* On focus the caret and a hairline ring say it is being edited — no fill,
+   which behind a short name was the loudest thing in the header. */
 .nameInput input:focus {
-  background-color: transparent;
-  outline: 1px solid var(--mantine-color-default-border);
+  background-color: transparent !important;
+  outline: 1px solid var(--mantine-color-default-border) !important;
 }
 
 .historyGroup {
@@ -54,4 +62,34 @@
   font-weight: 500;
   box-shadow: var(--mantine-shadow-md);
   cursor: grabbing;
+}
+
+/* Publish-state badge in the header. `!important` for the same reason as the
+   title input: the embedding shell uppercases every `.mantine-Badge-label` and
+   can recolour it, and a white "LIVE" gave no signal that the form is live. */
+.statusBadge {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 600 !important;
+}
+.statusBadge :global(.mantine-Badge-label) {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+/* The pulsing dot that reads as "this is serving traffic right now". */
+.liveDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: live-dot 1.8s ease-in-out infinite;
+}
+@keyframes live-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .liveDot { animation: none; }
 }

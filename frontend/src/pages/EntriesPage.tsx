@@ -254,7 +254,7 @@ export function EntriesPage() {
     : [];
 
   return (
-    <Box>
+    <Box className={classes.page}>
       <Group justify="space-between" px="md" py="sm" className={classes.topbar} wrap="nowrap">
         {form ? (
           <>
@@ -327,7 +327,7 @@ export function EntriesPage() {
 
       <AnalyticsBar analytics={analytics} />
 
-      <Group justify="space-between" px="md" py="xs" className={classes.filterbar} wrap="nowrap">
+      <Group justify="space-between" px="md" py="xs" className={classes.filterbar} wrap="wrap">
         <Group gap="lg">
           <Menu shadow="md" width={160}>
             <Menu.Target>
@@ -441,7 +441,13 @@ export function EntriesPage() {
         <EntriesKanban submissions={submissions} columns={columns} onMove={moveSubmission} />
       ) : (
         <>
-          <Table.ScrollContainer minWidth={0} className={classes.tableWrap}>
+          {/* Enough width for every value column at 180px plus the date and
+              actions columns, so a narrow screen scrolls the table sideways
+              instead of crushing the columns into unreadable slivers. */}
+          <Table.ScrollContainer
+            minWidth={columns.length * 180 + 90 + 160}
+            className={classes.tableWrap}
+          >
             <Table
               withTableBorder
               highlightOnHover

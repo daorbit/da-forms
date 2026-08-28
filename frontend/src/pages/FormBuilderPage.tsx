@@ -600,11 +600,17 @@ export function FormBuilderPage() {
                 from which way the button in the corner is pointing. */}
             {savedForm && (
               <Badge
-                variant="light"
+                variant={savedForm.status === 'published' ? 'filled' : 'light'}
                 color={savedForm.status === 'published' ? 'emerald' : 'gray'}
                 radius="sm"
                 size="sm"
                 visibleFrom="sm"
+                className={classes.statusBadge}
+                leftSection={
+                  savedForm.status === 'published' ? (
+                    <span className={classes.liveDot} />
+                  ) : undefined
+                }
               >
                 {savedForm.status === 'published' ? 'Live' : 'Draft'}
               </Badge>

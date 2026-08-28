@@ -82,7 +82,14 @@
   line-height: 1.6;
 }
 
-/* ---- Responsive ---------------------------------------------------------- */
+/* ---- Responsive --------------------------------------------------------
+   Container queries, not viewport media queries: this page is often rendered
+   inside a narrow iframe on a wide screen, where `@media (max-width)` reads
+   the outer window and never fires. `container-type: inline-size` makes the
+   `@container` rules below measure this element's own width instead. */
+.page {
+  container-type: inline-size;
+}
 
 .search {
   width: 260px;
@@ -103,38 +110,40 @@
 
 .rowActions {
   flex-wrap: nowrap;
+  align-items: center;
 }
 
-/* On a wide row every action is a button and the menu holds only the rare
-   ones; the duplicated menu items for the narrow layout are hidden. */
+/* Wide layout: every action is a button, the menu holds only the rare ones,
+   and the duplicated narrow-layout menu items stay hidden. */
 .menuOnlyNarrow {
   display: none;
 }
 
-@media (max-width: 720px) {
+@container (max-width: 640px) {
   .toolbar {
     flex-direction: column;
     align-items: stretch;
   }
   .toolbarPrimary {
     width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
   .search {
     width: 100%;
-    flex: 1;
   }
   .statusTabs {
     width: 100%;
   }
 
-  /* The row: name block on top, then a single Edit button and the overflow
-     menu. Entries / Preview / Share move into that menu. */
+  /* The row stacks: name block, then a full-width Edit button and the
+     overflow menu. Entries / Preview / Share fold into that menu. */
   .rowInner {
     flex-direction: column;
     align-items: stretch;
   }
   .rowActions {
-    justify-content: flex-start;
+    justify-content: space-between;
   }
   .editBtn {
     flex: 1;

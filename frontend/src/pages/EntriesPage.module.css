@@ -30,8 +30,7 @@
 
 .table {
   background-color: var(--mantine-color-body);
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
   table-layout: fixed;
 }
 
@@ -137,6 +136,26 @@
   border: 0;
   border-radius: var(--mantine-radius-sm);
   background: #fff;
+}
+
+/* Container query, not viewport: this page is often inside a narrow iframe on
+   a wide screen. See FormListPage.module.css for the same reasoning. */
+.page {
+  container-type: inline-size;
+}
+
+@container (max-width: 640px) {
+  .tableWrap {
+    padding: 12px;
+  }
+
+  /* The toolbar rows stack their two halves instead of forcing them onto one
+     line, which is what pushed the filter icons off the edge. */
+  .topbar,
+  .filterbar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
 }
 
 @media (max-width: 600px) {

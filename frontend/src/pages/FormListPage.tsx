@@ -197,7 +197,7 @@ export function FormListPage() {
   }
 
   return (
-    <Box>
+    <Box className={classes.page}>
       <Group justify="space-between" px={{ base: "md", sm: "xl" }} py="md" className={classes.topbar}>
         <Group gap="sm">
           <Text fw={600} size="lg">

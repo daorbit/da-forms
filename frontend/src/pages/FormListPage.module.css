@@ -113,12 +113,6 @@
   align-items: center;
 }
 
-/* Wide layout: every action is a button, the menu holds only the rare ones,
-   and the duplicated narrow-layout menu items stay hidden. */
-.menuOnlyNarrow {
-  display: none;
-}
-
 @container (max-width: 640px) {
   .toolbar {
     flex-direction: column;
@@ -151,8 +145,5 @@
   .secondaryBtn,
   .shareBtn {
     display: none;
-  }
-  .menuOnlyNarrow {
-    display: flex;
   }
 }

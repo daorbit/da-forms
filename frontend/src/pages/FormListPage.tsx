@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl, Alert, Badge,
 } from '@mantine/core';
+import { useElementSize } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
   IconPlus,
@@ -78,6 +79,18 @@ export function FormListPage() {
   const [sharing, setSharing] = useState<Form | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<Form | null>(null);
+
+  /**
+   * Whether the row has folded its buttons into the overflow menu.
+   *
+   * The same 640px the stylesheet's container query uses, measured in JS
+   * because the menu's dropdown renders in a portal at the document root:
+   * outside this element, the container query can never match it, so the
+   * duplicated items showed on every width — including desktop, next to the
+   * very buttons they stand in for.
+   */
+  const { ref: pageRef, width: pageWidth } = useElementSize();
+  const narrowRow = pageWidth > 0 && pageWidth <= 640;
 
   /**
    * The filters as one value, so a change to any of them is a single update.
@@ -197,7 +210,7 @@ export function FormListPage() {
   }
 
   return (
-    <Box className={classes.page}>
+    <Box className={classes.page} ref={pageRef}>
       <Group justify="space-between" px={{ base: "md", sm: "xl" }} py="md" className={classes.topbar}>
         <Group gap="sm">
           <Text fw={600} size="lg">
@@ -466,31 +479,33 @@ export function FormListPage() {
                     </ActionIcon>
                   </Menu.Target>
                   <Menu.Dropdown>
-                    {/* Duplicated from the row buttons above so the narrow
-                        layout, which hides those, still reaches them. */}
-                    <Menu.Item
-                      className={classes.menuOnlyNarrow}
-                      component={Link}
-                      to={`/${workspaceId}/forms/${form._id}/entries`}
-                      leftSection={<IconGridDots size={15} />}
-                    >
-                      All Entries
-                    </Menu.Item>
-                    <Menu.Item
-                      className={classes.menuOnlyNarrow}
-                      leftSection={<IconEye size={15} />}
-                      onClick={() => setPreviewing(form)}
-                    >
-                      Preview
-                    </Menu.Item>
-                    <Menu.Item
-                      className={classes.menuOnlyNarrow}
-                      leftSection={<IconShare2 size={15} />}
-                      onClick={() => setSharing(form)}
-                    >
-                      Share
-                    </Menu.Item>
-                    <Menu.Divider className={classes.menuOnlyNarrow} />
+                    {/* Only on the narrow layout, which hides the row buttons
+                        these stand in for. On a wide row they would repeat
+                        controls sitting inches away. */}
+                    {narrowRow && (
+                      <>
+                        <Menu.Item
+                          component={Link}
+                          to={`/${workspaceId}/forms/${form._id}/entries`}
+                          leftSection={<IconGridDots size={15} />}
+                        >
+                          All Entries
+                        </Menu.Item>
+                        <Menu.Item
+                          leftSection={<IconEye size={15} />}
+                          onClick={() => setPreviewing(form)}
+                        >
+                          Preview
+                        </Menu.Item>
+                        <Menu.Item
+                          leftSection={<IconShare2 size={15} />}
+                          onClick={() => setSharing(form)}
+                        >
+                          Share
+                        </Menu.Item>
+                        <Menu.Divider />
+                      </>
+                    )}
                     <Menu.Item
                       leftSection={
                         form.status === 'published' ? (

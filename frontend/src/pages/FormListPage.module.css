@@ -81,3 +81,69 @@
   max-width: 42ch;
   line-height: 1.6;
 }
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+.search {
+  width: 260px;
+}
+
+.rowInner {
+  gap: 12px;
+}
+
+/* Keep the name from pushing the row wider than its container — the link
+   inside truncates instead. */
+.title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowActions {
+  flex-wrap: nowrap;
+}
+
+/* On a wide row every action is a button and the menu holds only the rare
+   ones; the duplicated menu items for the narrow layout are hidden. */
+.menuOnlyNarrow {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .toolbarPrimary {
+    width: 100%;
+  }
+  .search {
+    width: 100%;
+    flex: 1;
+  }
+  .statusTabs {
+    width: 100%;
+  }
+
+  /* The row: name block on top, then a single Edit button and the overflow
+     menu. Entries / Preview / Share move into that menu. */
+  .rowInner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rowActions {
+    justify-content: flex-start;
+  }
+  .editBtn {
+    flex: 1;
+  }
+  .secondaryBtn,
+  .shareBtn {
+    display: none;
+  }
+  .menuOnlyNarrow {
+    display: flex;
+  }
+}

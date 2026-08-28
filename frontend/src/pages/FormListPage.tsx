@@ -198,7 +198,7 @@ export function FormListPage() {
 
   return (
     <Box>
-      <Group justify="space-between" px="xl" py="md" className={classes.topbar}>
+      <Group justify="space-between" px={{ base: "md", sm: "xl" }} py="md" className={classes.topbar}>
         <Group gap="sm">
           <Text fw={600} size="lg">
             Leads Capture
@@ -246,8 +246,15 @@ export function FormListPage() {
       {/* Search, filter and sort sit with the list they act on rather than in
           the header — the header holds the page's identity and the one action
           that creates something. */}
-      <Group justify="space-between" gap="sm" px="xl" pt="xl" wrap="wrap">
-        <Group gap="sm" wrap="nowrap">
+      <Group
+        justify="space-between"
+        gap="sm"
+        px={{ base: "md", sm: "xl" }}
+        pt="xl"
+        wrap="wrap"
+        className={classes.toolbar}
+      >
+        <Group gap="sm" wrap="wrap" className={classes.toolbarPrimary}>
           <TextInput
             placeholder="Search forms"
             value={search}
@@ -266,7 +273,7 @@ export function FormListPage() {
               ) : undefined
             }
             size="sm"
-            w={260}
+            className={classes.search}
             classNames={{ wrapper: classes.searchInput }}
           />
           <SegmentedControl
@@ -274,6 +281,7 @@ export function FormListPage() {
             onChange={(value) => setFilter({ status: value as StatusFilter })}
             data={STATUS_TABS}
             size="sm"
+            className={classes.statusTabs}
           />
         </Group>
 
@@ -310,7 +318,7 @@ export function FormListPage() {
         </Group>
       </Group>
 
-      <Stack gap="xs" px="xl" py="md">
+      <Stack gap="xs" px={{ base: "md", sm: "xl" }} py="md">
         {loading && forms.length === 0 ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Box key={i} className={classes.row}>
@@ -377,12 +385,12 @@ export function FormListPage() {
 
         {forms.map((form) => (
           <Box key={form._id} className={classes.row}>
-            <Group justify="space-between" wrap="nowrap">
-              <Group gap="sm" wrap="nowrap">
+            <Group justify="space-between" wrap="wrap" className={classes.rowInner}>
+              <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
                 <ThemeIcon variant="light" color="gray" radius="md" size={38}>
                   <IconFileText size={20} />
                 </ThemeIcon>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <Link to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.title}>
                     {form.name || form.title}
                   </Link>
@@ -400,20 +408,21 @@ export function FormListPage() {
                 </div>
               </Group>
 
-              <Group gap="xs" wrap="nowrap">
+              <Group gap="xs" className={classes.rowActions}>
                 <Button
                   component={Link}
                   to={`/${workspaceId}/forms/${form._id}/edit`}
                   variant="default"
-                 
                   size="xs"
                   leftSection={<IconPencil size={14} />}
+                  className={classes.editBtn}
                 >
                   {isDemo ? 'Open in editor' : 'Edit'}
                 </Button>
-                {/* A sample form has no submissions and no share link of its
-                    own, so entries and sharing are left out of its row rather
-                    than shown leading nowhere. */}
+                {/* Entries and Preview show as buttons on a wide row and fold
+                    into the menu on a narrow one — see `.secondaryBtn`. A
+                    sample form has no submissions, so its entries link is left
+                    out entirely. */}
                 {!isDemo && (
                   <Button
                     component={Link}
@@ -421,6 +430,7 @@ export function FormListPage() {
                     variant="default"
                     size="xs"
                     leftSection={<IconGridDots size={14} />}
+                    className={classes.secondaryBtn}
                   >
                     All Entries
                   </Button>
@@ -430,6 +440,7 @@ export function FormListPage() {
                   size="xs"
                   leftSection={<IconEye size={14} />}
                   onClick={() => setPreviewing(form)}
+                  className={classes.secondaryBtn}
                 >
                   Preview
                 </Button>
@@ -441,6 +452,7 @@ export function FormListPage() {
                     size="lg"
                     onClick={() => setSharing(form)}
                     aria-label="Share"
+                    className={classes.shareBtn}
                   >
                     <IconShare2 size={16} />
                   </ActionIcon>
@@ -454,6 +466,31 @@ export function FormListPage() {
                     </ActionIcon>
                   </Menu.Target>
                   <Menu.Dropdown>
+                    {/* Duplicated from the row buttons above so the narrow
+                        layout, which hides those, still reaches them. */}
+                    <Menu.Item
+                      className={classes.menuOnlyNarrow}
+                      component={Link}
+                      to={`/${workspaceId}/forms/${form._id}/entries`}
+                      leftSection={<IconGridDots size={15} />}
+                    >
+                      All Entries
+                    </Menu.Item>
+                    <Menu.Item
+                      className={classes.menuOnlyNarrow}
+                      leftSection={<IconEye size={15} />}
+                      onClick={() => setPreviewing(form)}
+                    >
+                      Preview
+                    </Menu.Item>
+                    <Menu.Item
+                      className={classes.menuOnlyNarrow}
+                      leftSection={<IconShare2 size={15} />}
+                      onClick={() => setSharing(form)}
+                    >
+                      Share
+                    </Menu.Item>
+                    <Menu.Divider className={classes.menuOnlyNarrow} />
                     <Menu.Item
                       leftSection={
                         form.status === 'published' ? (
@@ -510,7 +547,7 @@ export function FormListPage() {
       </Stack>
 
       {total > 0 && (
-        <Group justify="flex-end" px="xl" py="md">
+        <Group justify="flex-end" px={{ base: "md", sm: "xl" }} py="md">
           <Pagination
             total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
             value={page}

@@ -30,37 +30,22 @@ import {
 } from '@tabler/icons-react';
 import type { FormField, FieldSize, LabelPlacement } from '@/types';
 import { acceptFor } from '@/lib/fieldPalette';
+import { contrastOn } from '@/lib/formTheme';
 
 interface Props {
   field: FormField;
   value: string;
   onChange: (value: string) => void;
-  /**
-   * Renders the control without accepting input, for the builder canvas.
-   *
-   * The canvas and the live form are the same component on purpose: two
-   * renderers for one field type drift, and the drift is invisible until
-   * someone compares the editor with what respondents actually get.
-   */
   readOnly?: boolean;
-  /** Suppresses the label, for a canvas that draws its own above the control. */
   hideLabel?: boolean;
-  /**
-   * A `file`/`imageUpload`/`mediaUpload` field reports its picked file here
-   * instead of uploading immediately — the form uploads it at submit time, so
-   * a respondent who abandons the form never leaves an orphaned Cloudinary asset.
-   */
   onFileSelect?: (file: File | null) => void;
-  /** Where the label sits relative to the input. Defaults to 'top'. */
   labelPlacement?: LabelPlacement;
-  /** Overrides the label's text color — set from the form's theme. */
   labelColor?: string;
-  /** Overrides the input's background — set from the form's theme. */
   inputBg?: string;
-  /** Overrides the input's border — set from the form's theme. */
   inputBorder?: string;
-  /** Overrides the typed-text color inside inputs — set from the form's theme. */
   inputTextColor?: string;
+  /** The form's accent, used to fill a checked box or radio. */
+  accentColor?: string;
 }
 
 
@@ -82,6 +67,7 @@ export function FieldControl({
   inputBg,
   inputBorder,
   inputTextColor,
+  accentColor,
 }: Props) {
   const showLabel = !hideLabel && !field.hideLabel;
   const sideLabel = showLabel && labelPlacement !== 'top';
@@ -142,6 +128,42 @@ export function FieldControl({
             input: { ...inputStyle, ...(field.customHeight ? { height: `${field.customHeight}px` } : undefined) },
           }
         : undefined,
+  };
+
+  // Radio.Group and Checkbox.Group are wrappers, not inputs: `readOnly`,
+  // `placeholder` and the `input` style override are meant for a text field and
+  // reach the option boxes through group context, where `readOnly` stops them
+  // toggling at all. Only the labelling props belong here.
+  const groupBase = {
+    label: base.label,
+    description: base.description,
+    required: base.required,
+    withAsterisk: false,
+    style: base.style,
+    className: base.className,
+    styles: labelColor ? { label: { color: labelColor } } : undefined,
+  };
+
+  // An unchecked box on a dark themed card was drawn in Mantine's default light
+  // palette; a checked one filled with the theme colour and drew the tick in a
+  // fixed white that vanished on a light accent. Both follow the form's theme.
+  const radioProps = {
+    color: accentColor,
+    styles: {
+      label: labelColor ? { color: labelColor } : undefined,
+      radio: inputBorder ? { borderColor: inputBorder } : undefined,
+    },
+  };
+
+  const optionProps = {
+    color: accentColor,
+    iconColor: accentColor ? contrastOn(accentColor) : undefined,
+    styles: {
+      label: labelColor ? { color: labelColor } : undefined,
+      // Only the border: an inline background would beat Mantine's checked-state
+      // fill and leave a ticked box looking empty.
+      input: inputBorder ? { borderColor: inputBorder } : undefined,
+    },
   };
 
   // Sub-field captions ("First", "City") sit inside the themed card, so they
@@ -335,10 +357,10 @@ export function FieldControl({
       );
     case 'radio':
       return (
-        <Radio.Group {...base} value={value} onChange={readOnly ? () => {} : onChange}>
+        <Radio.Group {...groupBase} value={value} onChange={readOnly ? () => {} : onChange}>
           <Stack gap="xs" mt="xs">
             {(field.options ?? []).map((opt) => (
-              <Radio key={opt} value={opt} label={opt} readOnly={readOnly} />
+              <Radio key={opt} value={opt} label={opt} {...radioProps} />
             ))}
           </Stack>
         </Radio.Group>
@@ -347,13 +369,13 @@ export function FieldControl({
       const selected = value ? value.split(', ') : [];
       return (
         <Checkbox.Group
-          {...base}
+          {...groupBase}
           value={selected}
           onChange={(v) => !readOnly && onChange(v.join(', '))}
         >
           <Stack gap="xs" mt="xs">
             {(field.options ?? []).map((opt) => (
-              <Checkbox key={opt} value={opt} label={opt} readOnly={readOnly} />
+              <Checkbox key={opt} value={opt} label={opt} {...optionProps} />
             ))}
           </Stack>
         </Checkbox.Group>
@@ -516,7 +538,7 @@ export function FieldControl({
             label={field.label || 'I accept the terms and conditions'}
             required={field.required}
             checked={value === 'true'}
-            readOnly={readOnly}
+            {...optionProps}
             onChange={(e) => !readOnly && onChange(String(e.target.checked))}
           />
         </Stack>
@@ -527,16 +549,16 @@ export function FieldControl({
           label={field.content || field.label}
           required={field.required}
           checked={value === 'true'}
-          readOnly={readOnly}
+          {...optionProps}
           onChange={(e) => !readOnly && onChange(String(e.target.checked))}
         />
       );
     case 'yesNo':
       return (
-        <Radio.Group {...base} value={value} onChange={readOnly ? () => {} : onChange}>
+        <Radio.Group {...groupBase} value={value} onChange={readOnly ? () => {} : onChange}>
           <Group gap="lg" mt="xs">
-            <Radio value="yes" label="Yes" readOnly={readOnly} />
-            <Radio value="no" label="No" readOnly={readOnly} />
+            <Radio value="yes" label="Yes" {...radioProps} />
+            <Radio value="no" label="No" {...radioProps} />
           </Group>
         </Radio.Group>
       );

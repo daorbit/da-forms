@@ -28,6 +28,31 @@
   padding: 16px;
 }
 
+/* Mantine draws its own scrollbar element here rather than the native one, so
+   the thin bar set globally in global.css never reaches it. These bring it
+   back in line: same 5px track, same muted thumb, no pale overlay strip. */
+.tableWrap :global(.mantine-ScrollArea-scrollbar) {
+  background-color: transparent;
+  padding: 0;
+}
+
+.tableWrap :global(.mantine-ScrollArea-scrollbar[data-orientation='horizontal']) {
+  height: 5px;
+}
+
+.tableWrap :global(.mantine-ScrollArea-scrollbar[data-orientation='vertical']) {
+  width: 5px;
+}
+
+.tableWrap :global(.mantine-ScrollArea-thumb) {
+  background-color: var(--mantine-color-gray-6);
+  border-radius: 3px;
+}
+
+.tableWrap :global(.mantine-ScrollArea-thumb:hover) {
+  background-color: var(--mantine-color-gray-5);
+}
+
 .table {
   background-color: var(--mantine-color-body);
   width: 100%;

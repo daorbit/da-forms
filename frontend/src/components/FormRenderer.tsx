@@ -199,6 +199,7 @@ export function FormRenderer({
         inputBg={theme?.inputBg}
         inputBorder={theme?.inputBorder}
         inputTextColor={theme?.inputTextColor}
+        accentColor={accent}
       />
     );
   }

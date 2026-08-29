@@ -10,6 +10,11 @@ function isLightColor(hex: string): boolean {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6;
 }
 
+/** Text or icon color that stays readable on top of an arbitrary fill. */
+export function contrastOn(hex: string): string {
+  return isLightColor(hex) ? '#1a1b1e' : '#ffffff';
+}
+
 /** The form's resolved body text color: manual override, or auto-picked against the card background. */
 export function resolveTextColor(theme?: FormTheme): string | undefined {
   const mode = theme?.textMode ?? 'auto';

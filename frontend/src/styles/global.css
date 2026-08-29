@@ -192,15 +192,30 @@ html[data-mantine-color-scheme='dark'] .mantine-Menu-item[data-color='red']:hove
 
 /* Inputs read their surface from these, which the block above has already
    flipped — restating them on the controls themselves covers the variants
-   Mantine resolves at the component level. */
-.da-forms-light-surface :is(input, textarea, select, .mantine-Input-input) {
+   Mantine resolves at the component level.
+
+   Checkboxes and radios are excluded on purpose. They are `<input>` elements
+   too, so a blanket rule here painted a ticked box white over Mantine's own
+   checked fill and the tick vanished. Their colours come from the form's
+   theme (accent fill, contrasting icon), not from this surface reset. */
+.da-forms-light-surface
+  :is(input:not([type='checkbox']):not([type='radio']), textarea, select, .mantine-Input-input) {
   background-color: #ffffff;
   color: #1a1b1e;
   border-color: #dee2e6;
 }
 
-.da-forms-light-surface :is(input, textarea, .mantine-Input-input)::placeholder {
+.da-forms-light-surface
+  :is(input:not([type='checkbox']):not([type='radio']), textarea, .mantine-Input-input)::placeholder {
   color: #adb5bd;
+}
+
+/* The unchecked state only — a checked box keeps whatever fill its theme
+   accent gives it, which is what the `:not([data-checked])` guard protects. */
+.da-forms-light-surface
+  :is(.mantine-Checkbox-input, .mantine-Radio-radio):not(:checked):not([data-checked]) {
+  background-color: #ffffff;
+  border-color: #dee2e6;
 }
 
 .da-forms-light-surface .mantine-FileInput-input {

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, UnstyledButton, Loader } from '@mantine/core';
+import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, UnstyledButton, Loader, Chip, ScrollArea, CloseButton } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconPlus } from '@tabler/icons-react';
+import { IconArrowLeft, IconPlus, IconSearch } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
-import { formTemplates } from '@/lib/templates';
+import { formTemplates, templateCategories, type TemplateCategory } from '@/lib/templates';
+import { filterTemplates, usedCategories } from '@/lib/templates/search';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
 import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
@@ -29,10 +30,22 @@ export function NewFormModal({ opened, onClose }: Props) {
   const defaultTemplateId = formTemplates.find((t) => t.id !== 'blank')?.id ?? formTemplates[0].id;
   const [templateId, setTemplateId] = useState(defaultTemplateId);
   const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<TemplateCategory | 'All'>('All');
 
   const [device, setDevice] = useState<DeviceId>('macbook');
 
   const activeTemplate = formTemplates.find((t) => t.id === templateId) ?? formTemplates[0];
+
+  const categories = usedCategories(formTemplates, templateCategories);
+  // The blank card is a shortcut, not a template — it stays pinned at the top
+  // of the list rather than appearing and disappearing with the filters.
+  const blank = formTemplates.find((t) => t.id === 'blank');
+  const results = filterTemplates(
+    formTemplates.filter((t) => t.id !== 'blank'),
+    query,
+    category
+  );
 
   // The frame renders at the device's true CSS width and is scaled down to
   // whatever room the modal leaves, so the layout inside is the real one.
@@ -53,6 +66,8 @@ export function NewFormModal({ opened, onClose }: Props) {
     setTemplateId(defaultTemplateId);
     setDevice('macbook');
     setCreating(false);
+    setQuery('');
+    setCategory('All');
   }
 
   function handleClose() {
@@ -159,44 +174,88 @@ export function NewFormModal({ opened, onClose }: Props) {
       ) : (
         <Stack gap="md">
           <Box className={classes.stepBody}>
-            <div className={classes.templateList}>
-              {formTemplates.map((tpl) =>
-                tpl.id === 'blank' ? (
+            <div className={classes.templateColumn}>
+              <TextInput
+                placeholder="Search templates"
+                value={query}
+                onChange={(e) => setQuery(e.currentTarget.value)}
+                leftSection={<IconSearch size={15} />}
+                rightSection={
+                  query ? <CloseButton size="sm" onClick={() => setQuery('')} aria-label="Clear search" /> : null
+                }
+                size="sm"
+              />
+
+              {/* Horizontal chips rather than a wrapping block: with ten
+                  categories a wrapped bar ate a third of the list's height. */}
+              <ScrollArea type="never" className={classes.filterBar}>
+                <Chip.Group
+                  multiple={false}
+                  value={category}
+                  onChange={(value) => setCategory((value as TemplateCategory) || 'All')}
+                >
+                  <Group gap={6} wrap="nowrap">
+                    <Chip value="All" size="xs" color="emerald" variant="outline">
+                      All
+                    </Chip>
+                    {categories.map((c) => (
+                      <Chip key={c} value={c} size="xs" color="emerald" variant="outline">
+                        {c}
+                      </Chip>
+                    ))}
+                  </Group>
+                </Chip.Group>
+              </ScrollArea>
+
+              <div className={classes.templateList}>
+                {blank && (
                   <UnstyledButton
-                    key={tpl.id}
                     onClick={() => {
-                      setTemplateId(tpl.id);
-                      handleCreate(tpl);
+                      setTemplateId(blank.id);
+                      handleCreate(blank);
                     }}
                     disabled={creating}
-                    className={`${classes.templateItem} ${classes.blankItem} ${tpl.id === templateId ? classes.templateItemActive : ''}`}
+                    className={`${classes.templateItem} ${classes.blankItem} ${blank.id === templateId ? classes.templateItemActive : ''}`}
                     style={{ width: '100%', boxSizing: 'border-box' }}
                   >
-                    {creating && templateId === tpl.id ? (
+                    {creating && templateId === blank.id ? (
                       <Loader size="sm" color="emerald" />
                     ) : (
                       <IconPlus size={20} color="var(--mantine-color-emerald-6)" />
                     )}
                     <Text size="sm" fw={600}>
-                      {tpl.name}
+                      {blank.name}
                     </Text>
                   </UnstyledButton>
-                ) : (
+                )}
+
+                {results.map((tpl) => (
                   <UnstyledButton
                     key={tpl.id}
                     onClick={() => setTemplateId(tpl.id)}
                     className={`${classes.templateItem} ${tpl.id === templateId ? classes.templateItemActive : ''}`}
                     style={{ display: 'block', width: '100%', textAlign: 'left', boxSizing: 'border-box' }}
                   >
-                    <Text size="sm" fw={600}>
-                      {tpl.name}
-                    </Text>
+                    <Group justify="space-between" gap="xs" wrap="nowrap">
+                      <Text size="sm" fw={600}>
+                        {tpl.name}
+                      </Text>
+                      <Text size="10px" c="dimmed" className={classes.categoryTag}>
+                        {tpl.category}
+                      </Text>
+                    </Group>
                     <Text size="xs" c="dimmed" mt={2}>
                       {tpl.description}
                     </Text>
                   </UnstyledButton>
-                )
-              )}
+                ))}
+
+                {results.length === 0 && (
+                  <Text size="xs" c="dimmed" ta="center" py="lg">
+                    No templates match that. Try a different word, or start from a blank form.
+                  </Text>
+                )}
+              </div>
             </div>
 
             {activeTemplate.id !== 'blank' && (

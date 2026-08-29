@@ -7,6 +7,7 @@ export const basicTemplates: FormTemplate[] = [
     id: 'blank',
     name: 'Blank form',
     description: 'Start from scratch with an empty canvas.',
+    category: 'Basics',
     title: 'Untitled form',
     fields: [],
   },
@@ -14,6 +15,7 @@ export const basicTemplates: FormTemplate[] = [
     id: 'contact',
     name: 'Contact form',
     description: 'Name, email, and a message — the standard "get in touch" form.',
+    category: 'Basics',
     title: 'Contact us',
     formDescription: "Tell us what you need and we'll get back to you.",
     fields: [
@@ -26,6 +28,7 @@ export const basicTemplates: FormTemplate[] = [
     id: 'feedback',
     name: 'Feedback survey',
     description: 'A rating scale plus open comments, for gathering product or service feedback.',
+    category: 'Basics',
     title: 'We would love your feedback',
     formDescription: 'Takes less than a minute.',
     fields: [
@@ -42,6 +45,7 @@ export const basicTemplates: FormTemplate[] = [
     id: 'newsletter',
     name: 'Newsletter signup',
     description: 'One email field and a subscribe button — nothing to slow someone down.',
+    category: 'Basics',
     title: 'Subscribe',
     formDescription: 'We use your address for the newsletter and nothing else.',
     submitLabel: 'Subscribe',
@@ -59,6 +63,7 @@ export const basicTemplates: FormTemplate[] = [
     id: 'rsvp',
     name: 'Event RSVP',
     description: 'Attendance, guest count, and dietary needs — ready for your next event.',
+    category: 'Basics',
     title: 'RSVP',
     formDescription: 'Let us know if you can make it.',
     fields: [
@@ -73,6 +78,7 @@ export const basicTemplates: FormTemplate[] = [
     id: 'waitlist',
     name: 'Waitlist signup',
     description: 'Dark, minimal signup for an early-access or coming-soon page.',
+    category: 'Basics',
     title: 'Join the waitlist',
     formDescription: "We'll email you the moment a spot opens up.",
     fields: [

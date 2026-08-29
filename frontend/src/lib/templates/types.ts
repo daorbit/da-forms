@@ -1,10 +1,29 @@
 import type { FormField, FormStep, FormTheme, StepIndicator } from '@/types';
 import { makeField } from '@/lib/fieldPalette';
 
+/** The groups the picker's filter bar offers, in the order they are shown. */
+export const templateCategories = [
+  'Basics',
+  'Support',
+  'Commerce',
+  'Business',
+  'Education',
+  'Health',
+  'HR',
+  'Real estate',
+  'Hospitality',
+  'Community',
+] as const;
+
+export type TemplateCategory = (typeof templateCategories)[number];
+
 export interface FormTemplate {
   id: string;
   name: string;
   description: string;
+  category: TemplateCategory;
+  /** Extra words the picker's search matches on beyond the name and description. */
+  keywords?: string[];
   title: string;
   formDescription?: string;
   fields: FormField[];

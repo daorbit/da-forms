@@ -8,9 +8,32 @@
   min-height: 420px;
 }
 
-.templateList {
-  width: 280px;
+.templateColumn {
+  width: 300px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.filterBar {
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+
+/* Sits opposite the template name, so it must not push the name into ellipsis
+   on a long category like "Real estate". */
+.categoryTag {
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.templateList {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 2px 10px 2px 2px;

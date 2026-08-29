@@ -2,16 +2,29 @@ import { basicTemplates } from './basic';
 import { supportTemplates } from './support';
 import { businessTemplates } from './business';
 import { commerceTemplates } from './commerce';
+import { educationTemplates } from './education';
+import { healthTemplates } from './health';
+import { hrTemplates } from './hr';
+import { propertyTemplates } from './property';
+import { hospitalityTemplates } from './hospitality';
+import { communityTemplates } from './community';
 
-export type { FormTemplate } from './types';
+export type { FormTemplate, TemplateCategory } from './types';
+export { templateCategories } from './types';
 
 /**
- * Every starting point offered in the new-form modal, in the order they
- * are shown: the simplest forms first, the long multi-step ones last.
+ * Every starting point offered in the new-form modal, in the order they are
+ * shown: the simplest forms first, the longer specialised ones after.
  */
 export const formTemplates = [
   ...basicTemplates,
   ...supportTemplates,
   ...commerceTemplates,
   ...businessTemplates,
+  ...educationTemplates,
+  ...healthTemplates,
+  ...hrTemplates,
+  ...propertyTemplates,
+  ...hospitalityTemplates,
+  ...communityTemplates,
 ];

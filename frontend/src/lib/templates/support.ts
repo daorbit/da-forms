@@ -7,6 +7,7 @@ export const supportTemplates: FormTemplate[] = [
     id: 'support',
     name: 'Support request',
     description: 'Dark themed contact form with a topic dropdown, side-by-side fields, and a message box.',
+    category: 'Support',
     title: 'Contact us',
     fields: [
       {
@@ -61,6 +62,7 @@ export const supportTemplates: FormTemplate[] = [
     id: 'productFeedback',
     name: 'Product feedback',
     description: 'Dark themed survey with a satisfaction scale and feature request box.',
+    category: 'Support',
     title: 'Help us improve',
     formDescription: 'Two minutes, and it goes straight to the team building this.',
     fields: [
@@ -88,6 +90,7 @@ export const supportTemplates: FormTemplate[] = [
     id: 'bugReport',
     name: 'Bug report',
     description: 'Severity, reproduction steps, and a screenshot upload, in a monospace dark theme.',
+    category: 'Support',
     title: 'Report a bug',
     formDescription: 'The more precisely you can describe it, the faster it gets fixed.',
     submitLabel: 'File report',
@@ -142,6 +145,7 @@ export const supportTemplates: FormTemplate[] = [
     id: 'nps',
     name: 'NPS survey',
     description: 'A single 0–10 score plus a follow-up — the classic net promoter question.',
+    category: 'Support',
     title: 'How likely are you to recommend us?',
     formDescription: '0 means not at all likely, 10 means extremely likely.',
     submitLabel: 'Send feedback',

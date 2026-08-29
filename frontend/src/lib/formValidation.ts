@@ -29,7 +29,14 @@ export function validateField(field: FormField, raw: string): string {
     return 'Please tick this to continue.';
   }
 
-  if (field.required && !value) {
+  // A payment field carries no answer to fill in (except pay-what-you-want,
+  // which renders a real NumberInput and is validated by the rules below).
+  // Whether payment is required is enforced by the checkout flow at submit,
+  // not by an empty-value check here — otherwise a required payment field
+  // could never be submitted.
+  const isPaymentSummary = field.type === 'payment' && field.pay?.mode !== 'modifiable';
+
+  if (field.required && !value && !isPaymentSummary) {
     if (field.type === 'signature') return 'Please sign in the box.';
     return `${field.label || 'This field'} is required.`;
   }

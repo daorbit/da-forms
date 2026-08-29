@@ -143,6 +143,7 @@ export function FormCanvas({
               color="gray"
               radius="md"
               size="lg"
+              style={{ color: '#495057' }}
               onClick={(e) => {
                 e.stopPropagation();
                 onOpenProperties(field.id);
@@ -157,6 +158,7 @@ export function FormCanvas({
             color="gray"
             radius="md"
             size="lg"
+            style={{ color: '#495057' }}
             onClick={(e) => {
               e.stopPropagation();
               onDuplicate(field.id);
@@ -165,12 +167,15 @@ export function FormCanvas({
           >
             <IconCopyPlus size={16} />
           </ActionIcon>
+          {/* The toolbar sits inside the light-surface wrapper that pins the
+              form's own palette, so the icon colour is stated outright rather
+              than left to a theme token that resolves to the form's scheme. */}
           <ActionIcon
             variant="subtle"
             color="red"
-            className={classes.deleteAction}
             radius="md"
             size="lg"
+            style={{ color: '#e03131' }}
             onClick={(e) => {
               e.stopPropagation();
               onRemove(field.id);

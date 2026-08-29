@@ -408,8 +408,14 @@ export function FormBuilderPage() {
   }
 
   function removeField(id: string) {
-    setFields((prev) => removeFromTree(prev, id));
-    if (selectedId === id) setSelectedId(null);
+    const next = removeFromTree(fields, id);
+    setFields(next);
+    // Checked against the new tree rather than by comparing ids: deleting a
+    // grid takes its columns' fields with it, so the field being edited may be
+    // gone without being the one that was deleted. Left open, the drawer would
+    // describe a field that no longer exists and patch nothing.
+    if (selectedId && !findField(next, selectedId)) setSelectedId(null);
+    if (editingId && !findField(next, editingId)) setEditingId(null);
   }
 
   function duplicateField(id: string) {

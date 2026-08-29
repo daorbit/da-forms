@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import type { FormField, Submission } from '@/types';
-import { fileTypes } from '@/lib/fieldPalette';
+import { uploadedTypes } from '@/lib/fieldPalette';
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
@@ -42,7 +42,7 @@ export function downloadSubmissionPdf(formTitle: string, columns: FormField[], s
 
   for (const field of columns) {
     const raw = submission.data[field.id] ?? '';
-    const isFile = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
+    const isFile = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
 
     ensureSpace(34);
     doc.setFontSize(9);

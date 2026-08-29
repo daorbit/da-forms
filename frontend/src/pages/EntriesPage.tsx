@@ -53,7 +53,7 @@ import {
 } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
-import { staticTypes, fileTypes } from '@/lib/fieldPalette';
+import { staticTypes, uploadedTypes } from '@/lib/fieldPalette';
 import { valueFields } from '@/lib/fieldTree';
 import { EntriesKanban } from '@/components/builder/EntriesKanban';
 import { AnalyticsBar } from '@/components/builder/AnalyticsBar';
@@ -524,8 +524,8 @@ export function EntriesPage() {
                         // Older submissions (or builder-preview edits) may only hold a bare
                         // filename from before uploads were wired to Cloudinary — link only
                         // what's actually a URL.
-                        const isFileLink = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
-                        const isImage = isFileLink && (field.type === 'imageUpload' || isImageUrl(raw));
+                        const isFileLink = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
+                        const isImage = isFileLink && (field.type === 'imageUpload' || field.type === 'signature' || isImageUrl(raw));
                         const fileName = raw.split('/').pop() || 'Attachment';
                         return (
                           <Table.Td key={field.id}>
@@ -666,8 +666,8 @@ export function EntriesPage() {
             <div className={classes.responseGrid}>
               {columns.map((field) => {
                 const raw = viewing.data[field.id] ?? '';
-                const isFileLink = fileTypes.includes(field.type) && /^https?:\/\//.test(raw);
-                const isImage = isFileLink && (field.type === 'imageUpload' || isImageUrl(raw));
+                const isFileLink = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
+                const isImage = isFileLink && (field.type === 'imageUpload' || field.type === 'signature' || isImageUrl(raw));
                 const fileName = raw.split('/').pop() || 'Attachment';
                 return (
                   <div key={field.id} className={`${classes.responseField} ${isImage ? classes.mediaField : ''}`}>

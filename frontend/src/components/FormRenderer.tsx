@@ -65,6 +65,22 @@ function resolveDateSentinel(sentinel: string, type: FormField['type']): string 
   return sentinel;
 }
 
+/**
+ * Turns a canvas data URL into a file the upload endpoint accepts.
+ *
+ * `fetch(dataUrl)` would be shorter, but it is an async round trip through the
+ * network stack for bytes already in memory, and some CSP configurations refuse
+ * a `data:` fetch outright.
+ */
+function dataUrlToFile(dataUrl: string, name: string): File {
+  const [header, encoded] = dataUrl.split(',');
+  const mime = /:(.*?);/.exec(header)?.[1] ?? 'image/png';
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], name, { type: mime });
+}
+
 function initialValues(fields: FormField[]) {
   const values: Record<string, string> = {};
   // Read once: a hidden field's whole job is to carry what the link arrived
@@ -157,9 +173,19 @@ export function FormRenderer({
    */
   useEffect(() => {
     if (!formId || !draft.checked || draft.restored) return;
-    const timer = window.setTimeout(() => draft.save(values, pageIndex), 600);
+    const timer = window.setTimeout(() => {
+      // A signature is a base64 image — a few hundred KB of a 5MB storage
+      // budget, for the one answer easiest to redo. Everything else is kept.
+      const signatureIds = new Set(
+        valueFields(fields).filter((f) => f.type === 'signature').map((f) => f.id)
+      );
+      const saveable = Object.fromEntries(
+        Object.entries(values).filter(([id]) => !signatureIds.has(id))
+      );
+      draft.save(saveable, pageIndex);
+    }, 600);
     return () => window.clearTimeout(timer);
-  }, [values, pageIndex, formId, draft]);
+  }, [values, pageIndex, formId, draft, fields]);
 
   useEffect(() => {
     if (!isMultiPage) return;
@@ -220,15 +246,27 @@ export function FormRenderer({
 
     // Files are only picked up to now — uploaded here, all at once, so a
     // respondent who abandons the form never leaves an orphaned asset behind.
+    //
+    // A signature joins them: it is drawn as a data URL, but storing that
+    // inline would put a base64 blob in the submission and print it as raw
+    // text everywhere an answer is shown. Uploaded, it is a URL like any
+    // other image.
     if (formId) {
-      const toUpload = visibleFields.filter((f) => fileTypes.includes(f.type) && pendingFiles[f.id]);
-      if (toUpload.length > 0) {
+      const files = visibleFields.filter((f) => fileTypes.includes(f.type) && pendingFiles[f.id]);
+      const signatures = visibleFields.filter(
+        (f) => f.type === 'signature' && (submitValues[f.id] ?? '').startsWith('data:image/')
+      );
+
+      if (files.length > 0 || signatures.length > 0) {
         setIsUploading(true);
         try {
-          const uploaded = await Promise.all(
-            toUpload.map((f) => uploadFormFile(formId, pendingFiles[f.id], acceptFor(f.type)))
-          );
-          toUpload.forEach((f, i) => {
+          const uploaded = await Promise.all([
+            ...files.map((f) => uploadFormFile(formId, pendingFiles[f.id], acceptFor(f.type))),
+            ...signatures.map((f) =>
+              uploadFormFile(formId, dataUrlToFile(submitValues[f.id], `signature-${f.id}.png`), 'image/*')
+            ),
+          ]);
+          [...files, ...signatures].forEach((f, i) => {
             submitValues[f.id] = uploaded[i].url;
           });
         } finally {

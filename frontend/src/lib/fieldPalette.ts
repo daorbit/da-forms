@@ -188,6 +188,8 @@ export const optionTypes: FieldType[] = ['select', 'radio', 'checkbox', 'multipl
 export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slider'];
 
 export const fileTypes: FieldType[] = ['file', 'imageUpload', 'mediaUpload'];
+ 
+export const uploadedTypes: FieldType[] = [...fileTypes, 'signature'];
 
 // The generic "file" field is for documents — pdf/doc/xls/etc — not images or
 // video, which have their own dedicated field types. Kept as actual MIME types

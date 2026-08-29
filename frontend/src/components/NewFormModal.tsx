@@ -84,21 +84,20 @@ export function NewFormModal({ opened, onClose }: Props) {
   function handleContinue(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    // Step one already asked where the form will live, so the picker opens on
-    // the matching set rather than making the same choice twice.
-    setScopeFilter(scope === 'card' ? 'card' : 'page');
     setStep(2);
   }
 
   async function handleCreate(template: (typeof formTemplates)[number] = activeTemplate) {
-    const title = name.trim();
-    if (!title) return;
+    const formName = name.trim();
+    if (!formName) return;
     setCreating(true);
     try {
       const form = await createForm(
         {
-          name: title,
-          title,
+          name: formName,
+          // The heading shown on the form is the template's own — a blank form
+          // has none of its own, so it falls back to what the user typed.
+          title: template.id === 'blank' ? formName : template.title,
           description: template.formDescription,
           fields: template.fields,
           hideHeader: template.hideHeader,

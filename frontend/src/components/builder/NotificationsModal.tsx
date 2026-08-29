@@ -48,8 +48,18 @@ function flattenFields(fields: FormField[]): FormField[] {
   );
 }
 
-/** A stand-in answer per field type, so the preview reads like a real message rather than a template. */
+/**
+ * A stand-in answer per field type, so the preview reads like a real message
+ * rather than a template.
+ *
+ * The field's own placeholder is deliberately not used as a fallback: a
+ * placeholder is prompting text ("Enter Multi Line"), and printing it in the
+ * answers column made every preview look like a form nobody had filled in.
+ * A choice field answers with one of its real options instead.
+ */
 function sampleValue(field: FormField): string {
+  const firstOption = field.options?.[0];
+
   switch (field.type) {
     case 'name':
       return 'Ada Lovelace';
@@ -59,14 +69,51 @@ function sampleValue(field: FormField): string {
       return '+1 555 0100';
     case 'website':
       return 'https://example.com';
+    case 'address':
+      return '12 Bridge Street\nManchester\nM1 4TR';
     case 'number':
+      return '3';
     case 'decimal':
+      return '12.50';
     case 'currency':
-      return '42';
+      return '$250.00';
     case 'date':
-      return '2026-01-01';
+      return '12 March 2026';
+    case 'time':
+      return '14:30';
+    case 'datetime':
+      return '12 March 2026, 14:30';
+    case 'monthYear':
+      return 'March 2026';
+    case 'select':
+    case 'radio':
+    case 'multipleChoice':
+      return firstOption ?? 'First choice';
+    case 'checkbox':
+      return field.options?.slice(0, 2).join(', ') ?? 'First choice, Second choice';
+    case 'rating':
+      return `${field.maxRating ?? 5} out of ${field.maxRating ?? 5}`;
+    case 'slider':
+      return String(field.max ?? 10);
+    case 'yesNo':
+      return 'Yes';
+    case 'terms':
+    case 'decisionBox':
+      return 'Accepted';
+    case 'file':
+      return 'document.pdf';
+    case 'imageUpload':
+      return 'photo.jpg';
+    case 'mediaUpload':
+      return 'clip.mp4';
+    case 'uniqueId':
+      return '1042';
+    case 'randomId':
+      return 'ZF1-8842';
+    case 'textarea':
+      return 'A couple of sentences of their own, written in the box on the form.';
     default:
-      return field.placeholder || 'Sample answer';
+      return 'Sample answer';
   }
 }
 

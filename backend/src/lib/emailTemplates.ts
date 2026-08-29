@@ -231,20 +231,35 @@ function tick(accent: string): string {
   </tr></table>`;
 }
 
-/** A label/value line in the submitted-answers panel. */
+/**
+ * One answer in the submitted-answers panel.
+ *
+ * Label above value rather than the two in opposing columns: a right-aligned
+ * value column reads as a price list, and it breaks badly the moment an answer
+ * is a paragraph rather than a word — which is most of them.
+ */
 function answerRow(label: string, value: string, last: boolean): string {
   return `<tr>
-    <td style="padding:9px 0;font-size:12.5px;color:${C.faint};white-space:nowrap;vertical-align:top;width:38%">${escapeHtml(label)}</td>
-    <td style="padding:9px 0;font-size:13.5px;color:${C.text};text-align:right;vertical-align:top">${escapeHtml(value).replace(/\n/g, '<br>')}</td>
-  </tr>${last ? '' : `<tr><td colspan="2" style="padding:0"><div style="height:1px;background:${C.line}"></div></td></tr>`}`;
+    <td style="padding:${last ? `12px 0 2px` : `12px 0`}">
+      <p style="margin:0 0 3px;font-size:11px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;color:${C.faint}">${escapeHtml(label)}</p>
+      <p style="margin:0;font-size:14.5px;line-height:1.5;color:${C.text}">${escapeHtml(value).replace(/\n/g, '<br>')}</p>
+    </td>
+  </tr>${last ? '' : `<tr><td style="padding:0"><div style="height:1px;background:${C.line}"></div></td></tr>`}`;
 }
 
-/** The boxed copy of what someone submitted. */
+/**
+ * The copy of what someone submitted.
+ *
+ * An outlined block with a rule under its heading, rather than a filled grey
+ * card: the fill fought the message above it for attention, and a tinted panel
+ * is the first thing a dark-mode client inverts into something muddy.
+ */
 export function answersPanel(answers: { label: string; value: string }[]): string {
   if (answers.length === 0) return '';
-  return `<p style="margin:${S.section}px 0 ${S.tight}px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${C.faint}">What you sent</p>
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr><td class="panel" style="background:${C.panel};border-radius:10px;padding:6px 18px">
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:${S.section}px 0 0">
+    <tr><td class="panel" style="border:1px solid ${C.line};border-radius:12px;padding:4px 20px 16px">
+      <p style="margin:${S.block}px 0 0;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${C.faint}">What you sent</p>
+      <div style="height:1px;background:${C.line};margin:10px 0 0"></div>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
         ${answers.map((a, i) => answerRow(a.label, a.value, i === answers.length - 1)).join('')}
       </table>

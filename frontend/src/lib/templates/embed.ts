@@ -73,6 +73,37 @@ export const embedTemplates: FormTemplate[] = [
     },
   },
   {
+    id: 'embedNewsletter',
+    name: 'Newsletter block',
+    description: 'A two-field subscribe card sized for a footer or sidebar slot.',
+    category: 'Basics',
+    keywords: ['embed', 'widget', 'subscribe', 'newsletter', 'footer'],
+    title: 'Join the newsletter',
+    formDescription: 'One short email a week. No spam.',
+    submitLabel: 'Subscribe',
+    fields: [
+      row(
+        [field('text', { label: 'First name', placeholder: 'Ada' })],
+        [field('email', { label: 'Email', required: true, placeholder: 'you@company.com' })]
+      ),
+      field('decisionBox', { label: 'I agree to the privacy policy' }),
+    ],
+    theme: {
+      scope: 'card',
+      cardBg: '#0f1115',
+      cardBorder: '#252a33',
+      accentColor: '#14b8a6',
+      labelColor: '#e2e8f0',
+      inputBg: '#171b22',
+      inputBorder: '#2d333d',
+      inputTextColor: '#f8fafc',
+      textMode: 'light',
+      cardRadius: 12,
+      cardShadow: 'md',
+      fontFamily: 'inter',
+    },
+  },
+  {
     id: 'embedRating',
     name: 'Inline rating widget',
     description: 'A single star rating and comment box for the end of an article.',

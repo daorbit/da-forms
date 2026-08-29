@@ -377,8 +377,23 @@ export function NotificationsModal({
             <Box className={classes.previewFrameWrap}>
               {/* An iframe, so the email's own table markup and inline styles
                   render exactly as a mail client would show them, without the
-                  app's stylesheet reaching in. */}
-              <iframe title="Email preview" className={classes.previewFrame} srcDoc={previewHtml} />
+                  app's stylesheet reaching in.
+
+                  Keyed on what the message is built from: a reused iframe does
+                  not re-parse a changed `srcDoc`, so switching layout left the
+                  previous one on screen. */}
+              <iframe
+                key={[
+                  tab,
+                  notifications.respondentLayout ?? 'plain',
+                  notifications.respondentBody ?? '',
+                  notifications.respondentCtaLabel ?? '',
+                  notifications.respondentCtaHref ?? '',
+                ].join('|')}
+                title="Email preview"
+                className={classes.previewFrame}
+                srcDoc={previewHtml}
+              />
             </Box>
           ) : (
           <Box className={classes.composer} data-disabled={!enabled || undefined}>

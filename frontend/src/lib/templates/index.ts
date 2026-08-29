@@ -11,6 +11,7 @@ import { communityTemplates } from './community';
 import { embedTemplates } from './embed';
 import { professionalTemplates } from './professional';
 import { operationsTemplates } from './operations';
+import { advancedTemplates } from './advanced';
 
 export type { FormTemplate, TemplateCategory } from './types';
 export { templateCategories } from './types';
@@ -23,6 +24,7 @@ export const formTemplates = [
   ...businessTemplates,
   ...professionalTemplates,
   ...operationsTemplates,
+  ...advancedTemplates,
   ...educationTemplates,
   ...healthTemplates,
   ...hrTemplates,

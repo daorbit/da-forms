@@ -46,6 +46,8 @@ interface Props {
   inputTextColor?: string;
   /** The form's accent, used to fill a checked box or radio. */
   accentColor?: string;
+  /** What is wrong with the current answer, shown under the control. */
+  error?: string;
 }
 
 
@@ -68,6 +70,7 @@ export function FieldControl({
   inputBorder,
   inputTextColor,
   accentColor,
+  error,
 }: Props) {
   const showLabel = !hideLabel && !field.hideLabel;
   const sideLabel = showLabel && labelPlacement !== 'top';
@@ -115,6 +118,7 @@ export function FieldControl({
     placeholder: field.placeholder,
     title: field.hoverText,
     readOnly,
+    error,
     // A pixel override replaces the preset percentage outright; otherwise
     // the field falls back to its size preset as before.
     style: {
@@ -139,6 +143,7 @@ export function FieldControl({
     description: base.description,
     required: base.required,
     withAsterisk: false,
+    error,
     style: base.style,
     className: base.className,
     styles: labelColor ? { label: { color: labelColor } } : undefined,
@@ -216,7 +221,26 @@ export function FieldControl({
   );
 
   const noLabelTypes: FormField['type'][] = ['heading', 'description', 'divider', 'spacer', 'pageBreak'];
-  return noLabelTypes.includes(field.type) ? renderControl() : control(renderControl());
+
+  // Mantine paints `error` under the controls it owns. The cases below that
+  // build their own markup — name, address, rating, slider, the chip group —
+  // have nowhere for it to land, so the message is rendered here instead.
+  const ownsErrorDisplay: FormField['type'][] = [
+    'name', 'address', 'rating', 'slider', 'multipleChoice', 'decisionBox', 'terms',
+  ];
+
+  if (noLabelTypes.includes(field.type)) return renderControl();
+
+  return (
+    <div data-field-id={field.id} aria-invalid={error ? true : undefined}>
+      {control(renderControl())}
+      {error && ownsErrorDisplay.includes(field.type) && (
+        <Text size="xs" c="red" mt={4}>
+          {error}
+        </Text>
+      )}
+    </div>
+  );
 
   function renderControl(): React.ReactNode {
   switch (field.type) {

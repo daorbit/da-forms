@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Paper, Title, Text, Button, Stack, SimpleGrid, Group } from '@mantine/core';
 import type {
   FormField,
@@ -19,6 +19,8 @@ import { resolveSteps, splitIntoPages } from '@/lib/formSteps';
 import { isFieldVisible } from '@/utils/conditionalLogic';
 import { uploadFormFile } from '@/lib/api';
 import { fileTypes, acceptFor } from '@/lib/fieldPalette';
+import { validateFields, type FieldErrors } from '@/lib/formValidation';
+import { useFormDraft } from '@/hooks/useFormDraft';
 
 interface Props {
   /** The form's id — present only on the respondent-facing render, enabling real file uploads. */
@@ -105,7 +107,15 @@ export function FormRenderer({
   const [honeypot, setHoneypot] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [pageError, setPageError] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  // Set once a page has been submitted, so a half-typed email is not marked
+  // wrong while it is still being typed.
+  const [showErrors, setShowErrors] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const stepHeadingRef = useRef<HTMLDivElement>(null);
+  // Skips the first render: focus belongs to the page on load, not to a
+  // heading nobody has navigated to yet.
+  const hasAdvanced = useRef(false);
   const textColor = resolveTextColor(theme);
   const accent = theme?.accentColor;
 
@@ -114,23 +124,79 @@ export function FormRenderer({
   const isMultiPage = pages.length > 1;
   const isLastPage = pageIndex === pages.length - 1;
   const currentPageFields = pages[pageIndex] ?? [];
+  // Scoped to this page: an error left on a later step is not something the
+  // respondent can act on from here.
+  const errorCount = valueFields(currentPageFields).filter((f) => errors[f.id]).length;
 
-  /** A required field on this page that's hidden by showIf is excluded — the
-   *  same rule submission uses to drop hidden answers. */
-  function pageHasMissingRequired(pageFields: FormField[]): boolean {
-    return valueFields(pageFields).some(
-      (f) => f.required && isFieldVisible(f, values) && !(values[f.id] ?? '').trim()
-    );
+  /**
+   * Moves focus to the new step when a page changes.
+   *
+   * A stepper that swaps its content without moving focus leaves a keyboard or
+   * screen reader user parked on a button that now belongs to a page they can
+   * no longer see, with no announcement that anything happened.
+   */
+  // Only on the respondent-facing render: the builder preview is throwaway, and
+  // saving from it would hand a real respondent the author's test answers.
+  const draft = useFormDraft(formId, Boolean(formId && onSubmit));
+
+  /**
+   * Writes on a pause in typing rather than on every keystroke.
+   *
+   * Held while a restore is still on offer: saving the empty form underneath
+   * the banner would overwrite the very draft being offered.
+   */
+  useEffect(() => {
+    if (!formId || !draft.checked || draft.restored) return;
+    const timer = window.setTimeout(() => draft.save(values, pageIndex), 600);
+    return () => window.clearTimeout(timer);
+  }, [values, pageIndex, formId, draft]);
+
+  useEffect(() => {
+    if (!isMultiPage) return;
+    if (!hasAdvanced.current) {
+      hasAdvanced.current = true;
+      return;
+    }
+    stepHeadingRef.current?.focus();
+  }, [pageIndex, isMultiPage]);
+
+  /** Every problem on a set of fields. A field hidden by showIf is excluded —
+   *  the same rule submission uses to drop hidden answers. */
+  function errorsFor(pageFields: FormField[]): FieldErrors {
+    return validateFields(valueFields(pageFields), values, (f) => isFieldVisible(f, values));
+  }
+
+  /**
+   * Puts the respondent on the first thing they need to fix.
+   *
+   * Without this a long step scrolls back to the top on a failed submit and the
+   * one bad field can be a screen and a half below the message.
+   */
+  function focusFirstError(found: FieldErrors) {
+    const firstId = valueFields(currentPageFields).find((f) => found[f.id])?.id;
+    if (!firstId) return;
+    // After paint, so the field is carrying its error state when it is reached.
+    requestAnimationFrame(() => {
+      const node = formRef.current?.querySelector<HTMLElement>(`[data-field-id="${firstId}"]`);
+      if (!node) return;
+      node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      node.querySelector<HTMLElement>('input, textarea, select, button')?.focus({ preventScroll: true });
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const pageErrors = errorsFor(currentPageFields);
+    setErrors(pageErrors);
+    setShowErrors(true);
+    if (Object.keys(pageErrors).length > 0) {
+      focusFirstError(pageErrors);
+      return;
+    }
+
     if (isMultiPage && !isLastPage) {
-      if (pageHasMissingRequired(currentPageFields)) {
-        setPageError(true);
-        return;
-      }
-      setPageError(false);
+      setShowErrors(false);
       setPageIndex((i) => i + 1);
       return;
     }
@@ -161,7 +227,17 @@ export function FormRenderer({
       }
     }
 
+    // Cleared before the handler runs: a submitted form should not offer to
+    // restore itself if the respondent comes back to the page.
+    draft.clear();
     onSubmit?.(honeypot ? { ...submitValues, _hp: honeypot } : submitValues);
+  }
+
+  function restoreDraft() {
+    if (!draft.restored) return;
+    setValues(draft.restored.values);
+    setPageIndex(Math.min(draft.restored.pageIndex, pages.length - 1));
+    draft.clear();
   }
 
   /** Grids lay their columns out; everything else is a control. */
@@ -185,7 +261,19 @@ export function FormRenderer({
         key={field.id}
         field={field}
         value={values[field.id] ?? ''}
-        onChange={(v) => setValues((prev) => ({ ...prev, [field.id]: v }))}
+        error={showErrors ? errors[field.id] : undefined}
+        onChange={(v) => {
+          setValues((prev) => ({ ...prev, [field.id]: v }));
+          // Clears the moment the answer becomes acceptable, rather than
+          // making someone submit again to find out that they fixed it.
+          if (errors[field.id]) {
+            setErrors((prev) => {
+              const next = { ...prev };
+              delete next[field.id];
+              return next;
+            });
+          }
+        }}
         onFileSelect={(file) =>
           setPendingFiles((prev) => {
             const next = { ...prev };
@@ -217,7 +305,7 @@ export function FormRenderer({
         ...(accent ? ({ '--mantine-color-emerald-6': accent } as React.CSSProperties) : {}),
       }}
     >
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} ref={formRef} noValidate>
         {!hideHeader && (
           <>
             <Title order={3} ta={headerAlign ?? 'center'} mb={4} c={textColor}>
@@ -238,13 +326,30 @@ export function FormRenderer({
         )}
 
         {isMultiPage && (
-          <StepIndicatorBar
-            variant={stepIndicator ?? 'progress'}
-            steps={resolvedSteps}
-            current={pageIndex}
-            accent={accent}
-            textColor={textColor}
-          />
+          <>
+            <StepIndicatorBar
+              variant={stepIndicator ?? 'progress'}
+              steps={resolvedSteps}
+              current={pageIndex}
+              accent={accent}
+              textColor={textColor}
+            />
+            {/* Focused on every page change, and worded so what a screen reader
+                announces says where the respondent now is. `tabIndex={-1}`
+                makes it focusable programmatically without adding a tab stop. */}
+            <div
+              ref={stepHeadingRef}
+              tabIndex={-1}
+              aria-live="polite"
+              style={{ outline: 'none' }}
+            >
+              <Text size="xs" style={{ position: 'absolute', left: -9999, width: 1, height: 1, overflow: 'hidden' }}>
+                {`Step ${pageIndex + 1} of ${pages.length}${
+                  resolvedSteps[pageIndex]?.title ? `, ${resolvedSteps[pageIndex].title}` : ''
+                }`}
+              </Text>
+            </div>
+          </>
         )}
 
         {isMultiPage && showStepHeadings && (
@@ -264,11 +369,48 @@ export function FormRenderer({
           </Stack>
         )}
 
-        {pageError && (
-          <Text size="sm" c="red" mt="xs">
-            Fill in the required fields on this page before continuing.
-          </Text>
+        {draft.restored && (
+          <Group
+            justify="space-between"
+            wrap="nowrap"
+            gap="sm"
+            mt="md"
+            p="xs"
+            style={{
+              border: `1px solid ${accent ?? 'var(--mantine-color-emerald-6)'}`,
+              borderRadius: 8,
+            }}
+          >
+            <Text size="xs" c={textColor}>
+              You started filling this in earlier.
+            </Text>
+            <Group gap={6} wrap="nowrap">
+              <Button size="compact-xs" variant="subtle" color="gray" onClick={() => draft.clear()}>
+                Start fresh
+              </Button>
+              <Button
+                size="compact-xs"
+                onClick={restoreDraft}
+                color={accent ? undefined : 'emerald'}
+                style={accent ? { backgroundColor: accent } : undefined}
+              >
+                Restore
+              </Button>
+            </Group>
+          </Group>
         )}
+
+        {/* Announced rather than merely shown: a screen reader user who submits
+            gets no other signal that the page did not advance. */}
+        <div role="alert" aria-live="assertive">
+          {showErrors && errorCount > 0 && (
+            <Text size="sm" c="red" mt="xs">
+              {errorCount === 1
+                ? 'One answer needs fixing before you can continue.'
+                : `${errorCount} answers need fixing before you can continue.`}
+            </Text>
+          )}
+        </div>
 
         <Stack gap="md" mt="lg">
           {fields.length === 0 ? (
@@ -307,7 +449,7 @@ export function FormRenderer({
                     variant="default"
                     size={buttonSize[submitButtonSize ?? 'medium']}
                     onClick={() => {
-                      setPageError(false);
+                      setShowErrors(false);
                       setPageIndex((i) => i - 1);
                     }}
                     style={{ flex: 1 }}

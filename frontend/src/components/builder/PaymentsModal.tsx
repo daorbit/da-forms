@@ -14,8 +14,8 @@ import {
   Alert,
   Anchor,
   Code,
-  Loader,
   Center,
+  Skeleton,
   SegmentedControl,
   Badge,
   Divider,
@@ -226,9 +226,25 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
       }}
     >
       {loading ? (
-        <Center h="100%">
-          <Loader size="sm" />
-        </Center>
+        // Shaped like the two columns it stands in for, so the layout does not
+        // jump when the settings arrive.
+        <Group h="100%" gap={0} align="stretch" wrap="nowrap" className={classes.shell}>
+          <Box className={classes.panel} p="md">
+            <Stack gap="sm">
+              <Skeleton height={44} radius="md" />
+              <Skeleton height={58} radius="md" mt="sm" />
+              <Skeleton height={58} radius="md" />
+              <Skeleton height={58} radius="md" />
+            </Stack>
+          </Box>
+          <Box className={classes.pane} p="xl">
+            <Stack gap="md" maw={620}>
+              <Skeleton height={28} width="40%" radius="md" />
+              <Skeleton height={16} width="80%" radius="md" />
+              <Skeleton height={200} radius="md" mt="md" />
+            </Stack>
+          </Box>
+        </Group>
       ) : denied || !settings ? (
         <Center h="100%" px="xl">
           <Stack align="center" gap="sm" maw={420}>

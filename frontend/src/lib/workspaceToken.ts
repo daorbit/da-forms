@@ -17,6 +17,26 @@ export function workspaceToken(): string {
   return current;
 }
 
+/**
+ * The token, asking the host for one if we have none yet.
+ *
+ * The host loads this app immediately rather than holding the frame back until
+ * a token exists — its own loading states are better than a blank parent
+ * guessing at them — so the first workspace call is usually what discovers
+ * there is no token to send. Awaiting this once, up front, means that call
+ * carries one instead of failing and retrying.
+ */
+let askedOnce = false;
+
+export async function ensureWorkspaceToken(): Promise<string> {
+  if (current) return current;
+  // Asked at most once. Standalone use has no host to answer, and waiting out
+  // the timeout on every call afterwards would make the whole app crawl.
+  if (askedOnce) return '';
+  askedOnce = true;
+  return refreshWorkspaceToken();
+}
+
 /** Whether the host ever gave us one — false in standalone or demo use. */
 export function hasWorkspaceToken(): boolean {
   return Boolean(current);
@@ -38,6 +58,8 @@ export function refreshWorkspaceToken(timeoutMs = 5000): Promise<string> {
   if (typeof window === 'undefined' || window.parent === window) {
     return Promise.resolve('');
   }
+  // An expiry refresh is a fresh ask, whatever the startup attempt concluded.
+  askedOnce = true;
 
   return new Promise((resolve) => {
     waiters.push(resolve);

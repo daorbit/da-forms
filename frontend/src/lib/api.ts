@@ -10,7 +10,7 @@ import type {
   ConnectionTestResult,
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
-import { workspaceToken, refreshWorkspaceToken } from './workspaceToken';
+import { workspaceToken, refreshWorkspaceToken, ensureWorkspaceToken } from './workspaceToken';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -56,7 +56,10 @@ function raise(err: ApiError): never {
  */
 async function request<T>(path: string, init?: RequestInit, isRetry = false): Promise<T> {
   const needsToken = path.startsWith('/workspaces/');
-  const token = workspaceToken();
+  // Asked for up front rather than after a rejection: the host loads this app
+  // before it has handed one over, so the first workspace call would otherwise
+  // always be a wasted round trip.
+  const token = needsToken ? await ensureWorkspaceToken() : '';
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {

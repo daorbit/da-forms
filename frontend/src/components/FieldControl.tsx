@@ -32,6 +32,7 @@ import type { FormField, FieldSize, LabelPlacement } from '@/types';
 import { acceptFor } from '@/lib/fieldPalette';
 import { contrastOn } from '@/lib/formTheme';
 import { SignaturePad } from '@/components/SignaturePad';
+import { MatrixInput } from '@/components/MatrixInput';
 import { RankingInput } from '@/components/RankingInput';
 import { countryOptions } from '@/lib/countries';
 import { sanitizeRichText } from '@/lib/richText';
@@ -702,81 +703,26 @@ export function FieldControl({
         </div>
       );
 
-    case 'matrix': {
-      // One answer per row, stored as "Row: Answer" pairs on a single line so
-      // the value stays a string like every other field's.
-      const selections = new Map(
-        value
-          .split(' | ')
-          .map((pair) => pair.split(': '))
-          .filter((parts): parts is [string, string] => parts.length === 2)
-      );
-      const columns = field.options ?? [];
-
-      function setRow(rowLabel: string, answer: string) {
-        if (readOnly) return;
-        const next = new Map(selections);
-        next.set(rowLabel, answer);
-        onChange(
-          (field.rows ?? [])
-            .filter((r) => next.has(r))
-            .map((r) => `${r}: ${next.get(r)}`)
-            .join(' | ')
-        );
-      }
-
+    case 'matrix':
       return (
         <div style={base.style}>
           {label && (
-            <Text size="sm" fw={500} mb={6} style={labelColor ? { color: labelColor } : undefined}>
+            <Text size="sm" fw={500} mb={8} style={labelColor ? { color: labelColor } : undefined}>
               {label}
             </Text>
           )}
-          {/* Scrolls rather than squeezing: five answer columns on a phone
-              cannot each be a legible tap target at a shared width. */}
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 380 }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'left', padding: '6px 8px' }} />
-                  {columns.map((column) => (
-                    <th
-                      key={column}
-                      style={{
-                        padding: '6px 8px',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: labelColor,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {column}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(field.rows ?? []).map((rowLabel) => (
-                  <tr key={rowLabel} style={{ borderTop: `1px solid ${inputBorder || 'var(--mantine-color-gray-3)'}` }}>
-                    <td style={{ padding: '8px', fontSize: 13, color: labelColor }}>{rowLabel}</td>
-                    {columns.map((column) => (
-                      <td key={column} style={{ padding: '8px', textAlign: 'center' }}>
-                        <Radio
-                          checked={selections.get(rowLabel) === column}
-                          onChange={() => setRow(rowLabel, column)}
-                          aria-label={`${rowLabel}: ${column}`}
-                          {...radioProps}
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <MatrixInput
+            rows={field.rows ?? []}
+            options={field.options ?? []}
+            value={value}
+            onChange={onChange}
+            readOnly={readOnly}
+            labelColor={labelColor}
+            inputBorder={inputBorder}
+            accentColor={accentColor}
+          />
         </div>
       );
-    }
 
     // Collected, never shown: its value comes from a URL parameter, resolved by
     // the renderer before this ever paints.

@@ -1,0 +1,88 @@
+/*
+ * A survey matrix: statements down the side, shared answers across the top.
+ *
+ * Built as a real table rather than a flex grid so a long statement wraps
+ * inside its own cell while the answer columns stay locked to the header above
+ * them — the alignment a grid of divs loses the moment one row is taller.
+ */
+.wrap {
+  /* Five answer columns cannot each be a legible tap target at a phone's width,
+     so the table keeps its size and the block scrolls. */
+  overflow-x: auto;
+  border: 1px solid var(--matrix-border, var(--mantine-color-gray-3));
+  border-radius: 10px;
+}
+
+.table {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+}
+
+.headCell {
+  padding: 10px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: bottom;
+  color: var(--matrix-label, inherit);
+  opacity: 0.75;
+}
+
+/* The empty corner above the statement column. Fixed so the answer columns
+   divide the remaining width evenly rather than being pushed around by however
+   long the longest statement happens to be. */
+.headCorner {
+  width: 45%;
+  min-width: 160px;
+  padding: 10px 14px;
+}
+
+.headRow {
+  border-bottom: 1px solid var(--matrix-border, var(--mantine-color-gray-3));
+}
+
+.rowLabel {
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--matrix-label, inherit);
+}
+
+.optionCell {
+  padding: 12px 8px;
+  text-align: center;
+}
+
+/* Zebra striping rather than a rule between every row: with five columns of
+   identical circles, a tinted band is what keeps the eye on one statement all
+   the way across. */
+.row:nth-child(even) {
+  background-color: var(--matrix-stripe, rgba(128, 128, 128, 0.045));
+}
+
+.row:hover {
+  background-color: var(--matrix-hover, rgba(128, 128, 128, 0.09));
+}
+
+/* Centres Mantine's radio in its cell — its label wrapper is a flex row that
+   otherwise sits the control against the left edge. */
+.optionCell :global(.mantine-Radio-root),
+.optionCell :global(.mantine-Radio-body),
+.optionCell :global(.mantine-Radio-inner) {
+  display: inline-flex;
+  justify-content: center;
+}
+
+/* Below the table's own min-width the header labels are the first thing to
+   become unreadable, so they shrink before the tap targets do. */
+@media (max-width: 480px) {
+  .headCell {
+    font-size: 11px;
+  }
+
+  .headCorner {
+    min-width: 120px;
+  }
+}

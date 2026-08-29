@@ -10,7 +10,7 @@ import type {
   ConnectionTestResult,
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
-import { WORKSPACE_TOKEN } from './bootParams';
+import { workspaceToken, refreshWorkspaceToken } from './workspaceToken';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -44,36 +44,46 @@ function raise(err: ApiError): never {
   throw err;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...init,
-  });
-  if (!res.ok) raise(await errorFrom(res));
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
-}
-
 /**
- * Like `request`, but proves which workspace the caller may act for.
+ * Every call, with the workspace token attached where the server wants one.
  *
- * Only the payment settings routes need this: everything else about a form is
- * reachable by id already, whereas these read and overwrite the Razorpay
- * credentials the workspace charges through.
+ * Workspace-scoped routes need it: a workspace id travels in the URL and is no
+ * kind of secret, so without proof of a session behind it anyone could point
+ * the app at someone else's id and read their forms and responses.
+ *
+ * The public routes must not carry it — those are opened by respondents who
+ * have no session at all, which is the entire point of a share link.
  */
-async function authedRequest<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit, isRetry = false): Promise<T> {
+  const needsToken = path.startsWith('/workspaces/');
+  const token = workspaceToken();
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
-      ...(WORKSPACE_TOKEN ? { authorization: `Bearer ${WORKSPACE_TOKEN}` } : {}),
+      ...(needsToken && token ? { authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
   });
-  if (!res.ok) raise(await errorFrom(res));
+
+  if (!res.ok) {
+    const err = await errorFrom(res);
+    // The token lasts an hour and the builder is a screen people leave open
+    // for longer. Rather than fail the call, ask the host for a fresh one and
+    // try again — once, so a host that cannot answer does not loop.
+    if (err.code === 'workspace_token_expired' && needsToken && !isRetry) {
+      const renewed = await refreshWorkspaceToken();
+      if (renewed) return request<T>(path, init, true);
+    }
+    raise(err);
+  }
+
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
+
+/** Kept as a distinct name where the token is the point of the call. */
+const authedRequest = request;
 
 export const DEFAULT_WORKSPACE = 'default';
 
@@ -321,7 +331,13 @@ export async function uploadBackgroundImage(
 ): Promise<{ url: string; name: string }> {
   const body = new FormData();
   body.append('file', file);
-  const res = await fetch(`${BASE_URL}${ws(workspaceId)}/backgrounds`, { method: 'POST', body });
+  // Workspace-scoped, so it carries the token like every other such call. No
+  // Content-Type: the browser sets its own multipart boundary.
+  const res = await fetch(`${BASE_URL}${ws(workspaceId)}/backgrounds`, {
+    method: 'POST',
+    body,
+    headers: workspaceToken() ? { authorization: `Bearer ${workspaceToken()}` } : undefined,
+  });
   if (!res.ok) raise(await errorFrom(res));
   return res.json();
 }

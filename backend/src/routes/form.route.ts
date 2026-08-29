@@ -45,6 +45,13 @@ export const workspaceFormRouter = Router({ mergeParams: true });
 
 // Before any handler: the demo workspace answers reads only.
 workspaceFormRouter.use(blockDemoWorkspaceWrites);
+// And before that matters, proof the caller may act for this workspace at all.
+// A workspace id is not a secret — it sits in the iframe's own URL — so
+// without this anyone could point the app at someone else's id and read their
+// forms, edit them, or page through every response they have collected.
+// The public respondent routes are deliberately untouched: a share link is
+// meant to be opened by strangers.
+workspaceFormRouter.use(requireWorkspaceToken);
 
 workspaceFormRouter.get('/', asyncHandler(formController.listForms));
 workspaceFormRouter.post('/', asyncHandler(formController.createForm));

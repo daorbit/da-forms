@@ -316,8 +316,10 @@ export function NotificationsModal({
                   <div className={classes.layoutGrid}>
                     {EMAIL_LAYOUTS.map((option) => {
                       const on = (notifications.respondentLayout ?? 'plain') === option.id;
+                      // Tooltip sits above rather than beside: `right` opened
+                      // the hint over the next tile in the grid.
                       return (
-                        <Tooltip key={option.id} label={option.hint} withArrow position="right" multiline w={200}>
+                        <Tooltip key={option.id} label={option.hint} withArrow position="top" multiline w={200}>
                           <UnstyledButton
                             className={classes.layoutOption}
                             data-active={on || undefined}

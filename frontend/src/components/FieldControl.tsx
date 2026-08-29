@@ -35,6 +35,7 @@ import { SignaturePad } from '@/components/SignaturePad';
 import { RankingInput } from '@/components/RankingInput';
 import { countryOptions } from '@/lib/countries';
 import { sanitizeRichText } from '@/lib/richText';
+import richTextClasses from '@/components/RichTextBlock.module.css';
 
 interface Props {
   field: FormField;
@@ -669,12 +670,14 @@ export function FieldControl({
       );
     }
 
-    // Author-written markup, sanitized on the way in by the builder's editor.
+    // Author-written markup, sanitized before it reaches the browser. The
+    // class carries the spacing: the CSS reset leaves paragraphs and lists with
+    // no margins, so without it the whole block runs together as one line.
     case 'richText':
       return (
         <div
-          className={field.cssClass || undefined}
-          style={{ fontSize: 14, lineHeight: 1.6, color: labelColor }}
+          className={`${richTextClasses.richText} ${field.cssClass ?? ''}`.trim()}
+          style={{ color: labelColor }}
           dangerouslySetInnerHTML={{ __html: sanitizeRichText(field.content ?? '') }}
         />
       );

@@ -224,6 +224,30 @@ html[data-mantine-color-scheme='dark'] .mantine-Menu-item[data-color='red']:hove
   border-color: #dee2e6;
 }
 
+/* Subtle icon and text buttons inside a form — the ranking reorder controls,
+   a signature's Clear. Mantine resolves `color="gray"` against the *app's*
+   colour scheme, so on a dark editor these came out near-black on the form's
+   white card. Stated here once rather than inline on each control, so anything
+   added to a form later inherits the fix. */
+.da-forms-light-surface
+  :is(.mantine-ActionIcon-root, .mantine-Button-root)[data-variant='subtle'] {
+  color: #495057;
+}
+
+.da-forms-light-surface
+  :is(.mantine-ActionIcon-root, .mantine-Button-root)[data-variant='subtle']:hover {
+  background-color: #f1f3f5;
+  color: #1a1b1e;
+}
+
+.da-forms-light-surface
+  :is(.mantine-ActionIcon-root, .mantine-Button-root)[data-variant='subtle'][data-disabled],
+.da-forms-light-surface
+  :is(.mantine-ActionIcon-root, .mantine-Button-root)[data-variant='subtle']:disabled {
+  color: #ced4da;
+  background-color: transparent;
+}
+
 .da-forms-light-surface .mantine-Rating-symbol {
   color: #adb5bd;
 }

@@ -1,0 +1,94 @@
+/*
+ * Typography for an author-written rich text block.
+ *
+ * The app's CSS reset strips margins from every element, which is right for
+ * application chrome and wrong here: this is prose, and without spacing a
+ * paragraph followed by a list renders as one unbroken line.
+ */
+.richText {
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.richText > *:first-child {
+  margin-top: 0;
+}
+
+.richText > *:last-child {
+  margin-bottom: 0;
+}
+
+.richText p {
+  margin: 0 0 10px;
+}
+
+.richText h1,
+.richText h2,
+.richText h3,
+.richText h4 {
+  margin: 16px 0 6px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.richText h1 {
+  font-size: 20px;
+}
+
+.richText h2 {
+  font-size: 17px;
+}
+
+.richText h3 {
+  font-size: 15px;
+}
+
+.richText h4 {
+  font-size: 14px;
+}
+
+.richText ul,
+.richText ol {
+  margin: 0 0 10px;
+  padding-left: 22px;
+  /* The reset also clears list markers, and a bulleted list with no bullets is
+     indistinguishable from a stack of paragraphs. */
+  list-style: revert;
+}
+
+.richText li {
+  margin: 0 0 3px;
+}
+
+.richText a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.richText blockquote {
+  margin: 0 0 10px;
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid currentColor;
+  opacity: 0.8;
+}
+
+.richText code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background-color: rgba(128, 128, 128, 0.15);
+}
+
+.richText pre {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  background-color: rgba(128, 128, 128, 0.15);
+}
+
+.richText pre code {
+  padding: 0;
+  background: none;
+}

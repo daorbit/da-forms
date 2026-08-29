@@ -259,7 +259,14 @@ export function makeField(type: FieldType, columns?: number): FormField {
     field.step = 1;
   }
   if (type === 'ranking') field.options = ['First option', 'Second option', 'Third option'];
-  if (type === 'richText') field.content = '<p>Write anything here — <strong>bold</strong>, a list, or a <a href="https://example.com">link</a>.</p>';
+  // Shows the formatting it offers rather than describing it, so the block
+  // reads as content on the canvas instead of as instructions to the author.
+  if (type === 'richText') {
+    field.content =
+      '<p>Replace this with your own text. It can carry <strong>bold</strong>, ' +
+      '<em>italics</em>, and <a href="https://example.com">links</a>.</p>' +
+      '<ul><li>Bulleted points</li><li>Or a numbered list</li></ul>';
+  }
   if (type === 'matrix') {
     field.rows = ['First statement', 'Second statement'];
     field.options = ['Disagree', 'Neutral', 'Agree'];

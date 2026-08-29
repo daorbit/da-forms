@@ -205,22 +205,27 @@
   z-index: 1;
 }
 
+/* Tokens rather than fixed greys: the toolbar sits on the app surface, which
+   follows the editor's own light/dark scheme. */
 .hoverToolbar :global(.mantine-ActionIcon-root[data-variant='subtle']) {
-  color: #495057 !important;
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1)) !important;
 }
 
 .hoverToolbar :global(.mantine-ActionIcon-root[data-variant='subtle']:hover) {
-  background-color: #f1f3f5 !important;
-  color: #1a1b1e !important;
+  background-color: var(--mantine-color-default-hover) !important;
+  color: var(--mantine-color-text) !important;
 }
 
-.hoverToolbar :global(.mantine-ActionIcon-root.deleteAction) {
-  color: #e03131 !important;
+/* `.deleteAction` is a CSS module class, so it is hashed at build time. Wrapped
+   in :global() the literal name never matched anything and delete rendered in
+   the grey above — the rule has to be composed, not written as a global. */
+.hoverToolbar :global(.mantine-ActionIcon-root).deleteAction {
+  color: var(--mantine-color-red-6) !important;
 }
 
-.hoverToolbar :global(.mantine-ActionIcon-root.deleteAction:hover) {
-  background-color: #fff5f5 !important;
-  color: #c92a2a !important;
+.hoverToolbar :global(.mantine-ActionIcon-root).deleteAction:hover {
+  background-color: light-dark(var(--mantine-color-red-0), rgba(224, 49, 49, 0.15)) !important;
+  color: light-dark(var(--mantine-color-red-7), var(--mantine-color-red-4)) !important;
 }
 
 /* Extends the row's own hoverable box rightward to cover the gap before the

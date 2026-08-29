@@ -506,6 +506,17 @@ export function PropertiesDrawer({
                           <Text size="xs" fw={500}>
                             Price per option
                           </Text>
+                          {/* A respondent can tick several of these, and the
+                              charge is their sum — worth saying, since it is
+                              not what "price per option" implies on its own. */}
+                          {selectedAmountField &&
+                            (selectedAmountField.type === 'checkbox' ||
+                              selectedAmountField.type === 'multipleChoice') && (
+                              <Text size="xs" c="dimmed">
+                                This field allows several picks — the respondent pays the total of
+                                everything they tick.
+                              </Text>
+                            )}
                           {(selectedAmountField?.options ?? []).map((option) => (
                             <NumberInput
                               key={option}

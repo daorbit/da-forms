@@ -424,7 +424,9 @@ export const razorpayWebhook: RequestHandler = async (req, res) => {
   void recordSubmission(workspaceId);
   const limits = await getFormLimits(workspaceId);
   if (!limits || limits.notificationEmails) {
-    void sendSubmissionNotifications(form, submission.data);
+    // The payment rides along so the confirmation actually says what was
+    // paid — a receipt that omits the amount is not much of a receipt.
+    void sendSubmissionNotifications(form, submission.data, submission.payment);
   }
 
   res.status(200).json({ ok: true });

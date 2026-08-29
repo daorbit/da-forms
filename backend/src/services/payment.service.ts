@@ -15,6 +15,14 @@ export class InvalidAmountError extends Error {}
  */
 export const MIN_AMOUNT = 100;
 
+/**
+ * Choice fields that can hold more than one pick at a time.
+ *
+ * Their answer is one comma-joined string, so a price read from them is the
+ * sum of what was ticked rather than a single lookup.
+ */
+const MULTI_SELECT_TYPES = ['checkbox', 'multipleChoice'];
+
 /** The payment field on a form, if it has one. Grids included — a payment field may sit in a column. */
 export function findPaymentField(fields: FormField[]): FormField | undefined {
   for (const field of fields) {
@@ -130,11 +138,23 @@ export function resolveAmount(
       // A choice field: the answer is an option's text, and the price is what
       // the form owner assigned to it. Looked up rather than parsed, so an
       // option named "500" cannot be mistaken for a price.
-      const priced = pay.optionPrices[raw];
-      if (priced === undefined) {
-        throw new InvalidAmountError('That choice has no price set');
+      //
+      // A multi-select stores its picks as one comma-joined string, so the
+      // total is the sum of what was ticked — matching how `FieldControl`
+      // writes the value back.
+      const picks = MULTI_SELECT_TYPES.includes(source.type)
+        ? raw.split(', ').filter(Boolean)
+        : [raw];
+
+      let total = 0;
+      for (const pick of picks) {
+        const priced = pay.optionPrices[pick];
+        if (priced === undefined) {
+          throw new InvalidAmountError(`"${pick}" has no price set`);
+        }
+        total += priced;
       }
-      amount = priced;
+      amount = total;
     } else {
       // A number field: the respondent typed major units.
       amount = Math.round(Number(raw) * 100);

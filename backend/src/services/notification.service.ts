@@ -1,6 +1,7 @@
 import { sendMail, mailConfigured } from '../lib/mailer.js';
 import { renderEmail } from '../lib/emailTemplates.js';
 import type { FormDocument, FormField } from '../models/form.model.js';
+import type { SubmissionPayment } from '../models/submission.model.js';
 
 /** Every field in document order, grids included — mirrors `flattenFields` in form.service. */
 function flattenFields(fields: FormField[]): FormField[] {
@@ -29,11 +30,31 @@ function fillPlaceholders(template: string, fields: FormField[], data: Record<st
   });
 }
 
+/** Minor units to a readable figure — 50000 paise reads as ₹500.00. */
+function formatPaid(payment: SubmissionPayment): string {
+  const major = (payment.amount / 100).toFixed(2);
+  const amount = payment.currency === 'INR' ? `₹${major}` : `${major} ${payment.currency}`;
+  return payment.method ? `${amount} (${payment.method.toUpperCase()})` : amount;
+}
+
 /** Every answered field as a label/value pair, in the order they appear on the form. */
-function answersOf(fields: FormField[], data: Record<string, string>) {
+function answersOf(
+  fields: FormField[],
+  data: Record<string, string>,
+  payment?: SubmissionPayment
+) {
   return flattenFields(fields)
-    .filter((f) => f.label && data[f.id] !== undefined && data[f.id] !== '')
-    .map((f) => ({ label: f.label, value: data[f.id] }));
+    .filter((f) => {
+      // A paid payment field earns a row even though it has no answer in
+      // `data` — otherwise someone who just paid gets a receipt that does not
+      // mention the payment at all.
+      if (f.type === 'payment') return Boolean(f.label && payment?.status === 'paid');
+      return Boolean(f.label && data[f.id] !== undefined && data[f.id] !== '');
+    })
+    .map((f) => ({
+      label: f.label,
+      value: f.type === 'payment' && payment ? formatPaid(payment) : data[f.id],
+    }));
 }
 
 /**
@@ -46,7 +67,9 @@ function answersOf(fields: FormField[], data: Record<string, string>) {
  */
 export async function sendSubmissionNotifications(
   form: FormDocument,
-  data: Record<string, string>
+  data: Record<string, string>,
+  /** Present for a paid form — shown as a line in the emailed summary. */
+  payment?: SubmissionPayment
 ): Promise<void> {
   const notifications = form.notifications;
   if (!notifications || !mailConfigured()) return;
@@ -74,7 +97,7 @@ export async function sendSubmissionNotifications(
         layout: notifications.respondentLayout,
         formName: form.title,
         body,
-        answers: answersOf(form.fields, data),
+        answers: answersOf(form.fields, data, payment),
         cta: notifications.respondentCtaHref
           ? { label: notifications.respondentCtaLabel || 'Continue', href: notifications.respondentCtaHref }
           : undefined,
@@ -86,7 +109,7 @@ export async function sendSubmissionNotifications(
 
   if (notifications.ownerEnabled && notifications.ownerEmails?.length) {
     const subject = notifications.ownerSubject || `New submission: ${form.title}`;
-    const answers = answersOf(form.fields, data);
+    const answers = answersOf(form.fields, data, payment);
     // The owner's own alert is always the receipt: it exists to carry the
     // answers, and there is no author-written body to lay out around them.
     const text = answers.map((a) => `${a.label}: ${a.value}`).join('\n');

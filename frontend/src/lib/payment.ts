@@ -92,7 +92,19 @@ export function previewAmount(
   const raw = values[pay.amountFieldId];
   if (raw === undefined || raw === '') return null;
 
-  if (pay.optionPrices) return pay.optionPrices[raw] ?? null;
+  if (pay.optionPrices) {
+    // A multi-select stores its picks as one comma-joined string, so the
+    // shown total is the sum of what was ticked — the same arithmetic the
+    // server does when it works out what to charge.
+    const picks = raw.includes(', ') ? raw.split(', ').filter(Boolean) : [raw];
+    let total = 0;
+    for (const pick of picks) {
+      const priced = pay.optionPrices[pick];
+      if (priced === undefined) return null;
+      total += priced;
+    }
+    return total;
+  }
 
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? toMinorUnits(parsed) : null;

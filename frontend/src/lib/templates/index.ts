@@ -10,20 +10,19 @@ import { hospitalityTemplates } from './hospitality';
 import { communityTemplates } from './community';
 import { embedTemplates } from './embed';
 import { professionalTemplates } from './professional';
+import { operationsTemplates } from './operations';
 
 export type { FormTemplate, TemplateCategory } from './types';
 export { templateCategories } from './types';
 
-/**
- * Every starting point offered in the new-form modal, in the order they are
- * shown: the simplest forms first, the longer specialised ones after.
- */
+ 
 export const formTemplates = [
   ...basicTemplates,
   ...supportTemplates,
   ...commerceTemplates,
   ...businessTemplates,
   ...professionalTemplates,
+  ...operationsTemplates,
   ...educationTemplates,
   ...healthTemplates,
   ...hrTemplates,

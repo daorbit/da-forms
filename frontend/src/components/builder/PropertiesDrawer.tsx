@@ -362,7 +362,7 @@ export function PropertiesDrawer({
                       Without it the only pointer to the settings is a line of
                       prose naming a panel the author may never have opened. */}
                   <Alert
-                    color={paymentReady ? (paymentLive ? 'teal' : 'blue') : 'orange'}
+                    color={paymentReady ? (paymentLive ? 'green' : 'blue') : 'orange'}
                     icon={<IconCreditCard size={16} />}
                     p="xs"
                   >

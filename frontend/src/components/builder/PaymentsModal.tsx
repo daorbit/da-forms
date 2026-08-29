@@ -213,9 +213,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
           {/* ---- Left: steps and status ---- */}
           <Box className={classes.panel}>
             <Group gap="sm" px={20} py="md" wrap="nowrap" className={classes.panelHeader}>
-              <ThemeIcon variant="light" color="lime" size="lg" radius="md">
-                <IconCreditCard size={18} />
-              </ThemeIcon>
+              <IconCreditCard size={22} stroke={1.6} />
               <Box style={{ flex: 1, minWidth: 0 }}>
                 <Text fw={600}>Payments</Text>
                 <Text size="xs" c="dimmed">
@@ -297,7 +295,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
               <Group gap="sm">
                 <Title order={4}>{STEPS.find((s) => s.id === step)?.label}</Title>
                 {settings.mode === 'live' ? (
-                  <Badge color="orange" variant="light">
+                  <Badge color="green" variant="light">
                     Live mode
                   </Badge>
                 ) : (

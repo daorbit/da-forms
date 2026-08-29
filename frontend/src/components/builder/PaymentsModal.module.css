@@ -109,8 +109,8 @@
 
 /* ---- Mode banner ---- */
 
-/* Live mode is the one state where a mistake costs real money, so it is
-   coloured rather than left as neutral chrome. */
+/* Live is the goal state, so it reads as confirmation rather than warning —
+   green, not a caution colour. Test mode stays neutral chrome. */
 .modeBanner {
   border-radius: var(--mantine-radius-md);
   padding: 12px 14px;
@@ -118,8 +118,8 @@
 }
 
 .modeBannerLive {
-  border-color: var(--mantine-color-orange-4);
-  background-color: var(--mantine-color-orange-light);
+  border-color: var(--mantine-color-green-5);
+  background-color: var(--mantine-color-green-light);
 }
 
 .keyCard {

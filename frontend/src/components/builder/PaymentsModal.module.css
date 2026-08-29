@@ -14,7 +14,10 @@
   border-right: 1px solid var(--mantine-color-default-border);
 }
 
+/* Both column headers must be the same height so their bottom borders form one
+   continuous line across the split. */
 .panelHeader {
+  height: 64px;
   border-bottom: 1px solid var(--mantine-color-default-border);
   flex-shrink: 0;
 }
@@ -43,6 +46,7 @@
 }
 
 .paneHeader {
+  height: 64px;
   border-bottom: 1px solid var(--mantine-color-default-border);
   flex-shrink: 0;
   background-color: var(--mantine-color-body);

@@ -213,7 +213,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
         <Group h="100%" gap={0} align="stretch" wrap="nowrap" className={classes.shell}>
           {/* ---- Left: steps and status ---- */}
           <Box className={classes.panel}>
-            <Group gap="sm" px={20} py="md" wrap="nowrap" className={classes.panelHeader}>
+            <Group gap="sm" px={20} wrap="nowrap" className={classes.panelHeader}>
               <ThemeIcon variant="light" color="gray" size="lg" radius="md">
                 <IconCreditCard size={18} />
               </ThemeIcon>
@@ -294,7 +294,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
 
           {/* ---- Right: the step being worked on ---- */}
           <Box className={classes.pane}>
-            <Group justify="space-between" px={28} py="md" className={classes.paneHeader}>
+            <Group justify="space-between" px={28} className={classes.paneHeader}>
               <Group gap="sm">
                 <Title order={4}>{STEPS.find((s) => s.id === step)?.label}</Title>
                 {settings.mode === 'live' ? (

@@ -4,13 +4,14 @@ import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Mod
 import { useDisclosure } from '@mantine/hooks';
 import { IconFileText, IconEye, IconEyeOff, IconWorld, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { createForm, getForm, updateForm } from '@/lib/api';
+import { createForm, getForm, updateForm, getPaymentSettings } from '@/lib/api';
+import { findPaymentField } from '@/lib/payment';
 import { getDemoForm, isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
-import type { Form, FormField, FieldType, FormStep, StepIndicator, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme, NotificationSettings } from '@/types';
+import type { Form, FormField, FieldType, FormStep, StepIndicator, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme, NotificationSettings, PaymentSettings } from '@/types';
 import { NotificationsModal } from '@/components/builder/NotificationsModal';
-import { PaymentSettingsDrawer } from '@/components/builder/PaymentSettingsDrawer';
+import { PaymentsModal } from '@/components/builder/PaymentsModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import {
   DndContext,
@@ -95,6 +96,9 @@ export function FormBuilderPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formSettingsOpen, setFormSettingsOpen] = useState(false);
   const [railPanel, setRailPanel] = useState<RailPanel | null>(null);
+  // Only fetched once the form actually has a payment field — a form that
+  // charges nothing has no reason to ask about Razorpay.
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings | null>(null);
   const [thankYouMessage, setThankYouMessage] = useState(
     'Thanks! Your response has been recorded.'
   );
@@ -352,6 +356,20 @@ export function FormBuilderPage() {
       navigate(`/${workspaceId}/forms`);
     });
   }, [routeFormId, workspaceId, isDemo, navigate]);
+
+  /**
+   * Whether this workspace can actually take money.
+   *
+   * Fetched only once the form has a payment field on it, and refetched when
+   * the payments modal closes — the field's own panel shows this status, and
+   * would otherwise keep claiming "not connected" right after someone
+   * connected an account.
+   */
+  const hasPaymentField = Boolean(findPaymentField(fields));
+  useEffect(() => {
+    if (!hasPaymentField || isDemo || railPanel === 'payments') return;
+    getPaymentSettings(workspaceId).then(setPaymentSettings).catch(() => {});
+  }, [hasPaymentField, workspaceId, isDemo, railPanel]);
 
   // A brand-new, never-saved form: its own starting state is "clean" — the
   // save button should stay disabled until something actually changes.
@@ -751,7 +769,17 @@ export function FormBuilderPage() {
         )}
       </AppShell.Main>
 
-      <PropertiesDrawer field={editingField} allFields={fields} onClose={() => setEditingId(null)} onChange={updateField} />
+      <PropertiesDrawer
+        field={editingField}
+        allFields={fields}
+        onClose={() => setEditingId(null)}
+        onChange={updateField}
+        paymentSettings={paymentSettings}
+        onOpenPaymentSettings={() => {
+          setEditingId(null);
+          setRailPanel('payments');
+        }}
+      />
 
       <FormSettings
         opened={formSettingsOpen}
@@ -832,7 +860,7 @@ export function FormBuilderPage() {
         onChange={(patch) => setEmailNotifications((prev) => ({ ...prev, ...patch }))}
       />
 
-      <PaymentSettingsDrawer
+      <PaymentsModal
         opened={railPanel === 'payments'}
         onClose={() => setRailPanel(null)}
         workspaceId={workspaceId}

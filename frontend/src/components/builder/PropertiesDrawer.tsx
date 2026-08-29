@@ -10,8 +10,17 @@ import {
   Text,
   Switch,
   Select,
+  Alert,
+  Anchor,
 } from '@mantine/core';
-import type { FormField, FieldSize, ShowIfOperator, PaymentMode } from '@/types';
+import { IconCreditCard } from '@tabler/icons-react';
+import type {
+  FormField,
+  FieldSize,
+  ShowIfOperator,
+  PaymentMode,
+  PaymentSettings,
+} from '@/types';
 import {
   optionTypes,
   numericTypes,
@@ -40,6 +49,10 @@ interface Props {
   onClose: () => void;
   /** Applied immediately — the canvas reflects every keystroke. */
   onChange: (id: string, patch: Partial<FormField>) => void;
+  /** The workspace's Razorpay connection, so a payment field can show its state. */
+  paymentSettings?: PaymentSettings | null;
+  /** Opens the payments modal — the field panel is where authors look first. */
+  onOpenPaymentSettings?: () => void;
 }
 
 // Sentinels resolved to an actual date/time at render — never stored as a
@@ -75,7 +88,14 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props) {
+export function PropertiesDrawer({
+  field,
+  allFields,
+  onClose,
+  onChange,
+  paymentSettings,
+  onOpenPaymentSettings,
+}: Props) {
   const meta = field ? paletteByType[field.type] : null;
   const set = (patch: Partial<FormField>) => field && onChange(field.id, patch);
 
@@ -110,6 +130,16 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
 
   const paymentProblem =
     field?.type === 'payment' ? paymentFieldProblem(field, allFields) : null;
+
+  // Ready means keys are saved and switched on — a connected account that is
+  // turned off still cannot charge anyone.
+  const paymentReady = Boolean(
+    paymentSettings?.enabled &&
+      (paymentSettings.mode === 'live'
+        ? paymentSettings.live.keyId
+        : paymentSettings.test.keyId)
+  );
+  const paymentLive = paymentSettings?.mode === 'live';
 
   const showIfRule = field?.showIf;
   const showIfValueless = showIfRule && (showIfRule.operator === 'isEmpty' || showIfRule.operator === 'isNotEmpty');
@@ -328,6 +358,32 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
 
               {field.type === 'payment' && (
                 <Section label="Payment">
+                  {/* Which account this charges into, and a way to get there.
+                      Without it the only pointer to the settings is a line of
+                      prose naming a panel the author may never have opened. */}
+                  <Alert
+                    color={paymentReady ? (paymentLive ? 'teal' : 'blue') : 'orange'}
+                    icon={<IconCreditCard size={16} />}
+                    p="xs"
+                  >
+                    <Stack gap={6}>
+                      <Text size="xs">
+                        {!paymentSettings
+                          ? 'Checking your Razorpay connection…'
+                          : !paymentReady
+                            ? 'No Razorpay account is connected — this form cannot take payments yet.'
+                            : paymentLive
+                              ? 'Connected. Charging real payments in live mode.'
+                              : 'Connected in test mode — no real money will move.'}
+                      </Text>
+                      {onOpenPaymentSettings && (
+                        <Anchor component="button" type="button" size="xs" onClick={onOpenPaymentSettings}>
+                          {paymentReady ? 'Manage payment settings' : 'Connect Razorpay'}
+                        </Anchor>
+                      )}
+                    </Stack>
+                  </Alert>
+
                   <SegmentedControl
                     fullWidth
                     size="xs"
@@ -477,10 +533,6 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
                       {paymentProblem}
                     </Text>
                   )}
-                  <Text size="xs" c="dimmed">
-                    Charged through the Razorpay account connected in workspace
-                    settings. Without one, this form cannot take payments.
-                  </Text>
                 </Section>
               )}
 

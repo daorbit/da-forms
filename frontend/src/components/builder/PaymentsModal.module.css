@@ -1,0 +1,130 @@
+.shell {
+  height: 100%;
+}
+
+/* ---- Left panel: the setup steps ---- */
+
+.panel {
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: var(--mantine-color-body);
+  border-right: 1px solid var(--mantine-color-default-border);
+}
+
+.panelHeader {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  flex-shrink: 0;
+}
+
+.panelBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.actionBar {
+  border-top: 1px solid var(--mantine-color-default-border);
+  flex-shrink: 0;
+}
+
+/* ---- Right side: the working pane ---- */
+
+.pane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--mantine-color-default-hover);
+}
+
+.paneHeader {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  flex-shrink: 0;
+  background-color: var(--mantine-color-body);
+}
+
+.paneBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px;
+}
+
+/* Keeps the form column readable on a wide screen rather than letting inputs
+   stretch the full width of the pane. */
+.paneInner {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* ---- Step list ---- */
+
+/* A step reads as done, current, or still to come — the whole point of the
+   panel is telling those three apart at a glance. */
+.step {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--mantine-radius-md);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.step:hover {
+  background-color: var(--mantine-color-default-hover);
+}
+
+.stepActive {
+  border-color: var(--mantine-color-default-border);
+  background-color: var(--mantine-color-default-hover);
+}
+
+.stepIndex {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stepText {
+  min-width: 0;
+}
+
+/* ---- Mode banner ---- */
+
+/* Live mode is the one state where a mistake costs real money, so it is
+   coloured rather than left as neutral chrome. */
+.modeBanner {
+  border-radius: var(--mantine-radius-md);
+  padding: 12px 14px;
+  border: 1px solid var(--mantine-color-default-border);
+}
+
+.modeBannerLive {
+  border-color: var(--mantine-color-orange-4);
+  background-color: var(--mantine-color-orange-light);
+}
+
+.keyCard {
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  padding: 16px;
+  background-color: var(--mantine-color-body);
+}

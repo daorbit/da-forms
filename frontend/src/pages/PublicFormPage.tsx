@@ -210,7 +210,14 @@ export function PublicFormPage() {
   if (!form)
     return (
       <FormPage minHeight={embedded ? "auto" : undefined}>
-        <FormLoader />
+        {/* Centred in the viewport rather than sitting where the form's first
+            field would be: there is no card yet to anchor it to the top, and
+            a spinner parked under the page's top padding reads as misplaced.
+            Embedded, the frame is only as tall as its content, so it stays
+            put. */}
+        <Center mih={embedded ? undefined : "calc(100vh - 96px)"}>
+          <FormLoader />
+        </Center>
       </FormPage>
     );
 

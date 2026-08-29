@@ -107,21 +107,6 @@
   min-width: 0;
 }
 
-/* ---- Mode banner ---- */
-
-/* Live is the goal state, so it reads as confirmation rather than warning —
-   green, not a caution colour. Test mode stays neutral chrome. */
-.modeBanner {
-  border-radius: var(--mantine-radius-md);
-  padding: 12px 14px;
-  border: 1px solid var(--mantine-color-default-border);
-}
-
-.modeBannerLive {
-  border-color: var(--mantine-color-green-5);
-  background-color: var(--mantine-color-green-light);
-}
-
 .keyCard {
   border: 1px solid var(--mantine-color-default-border);
   border-radius: var(--mantine-radius-md);

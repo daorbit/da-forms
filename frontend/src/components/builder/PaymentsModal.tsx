@@ -37,6 +37,7 @@ import {
   IconKey,
   IconWebhook,
   IconRocket,
+  IconFlask,
 } from '@tabler/icons-react';
 import type { PaymentSettings, RazorpayMode } from '@/types';
 import {
@@ -213,7 +214,9 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
           {/* ---- Left: steps and status ---- */}
           <Box className={classes.panel}>
             <Group gap="sm" px={20} py="md" wrap="nowrap" className={classes.panelHeader}>
-              <IconCreditCard size={22} stroke={1.6} />
+              <ThemeIcon variant="light" color="gray" size="lg" radius="md">
+                <IconCreditCard size={18} />
+              </ThemeIcon>
               <Box style={{ flex: 1, minWidth: 0 }}>
                 <Text fw={600}>Payments</Text>
                 <Text size="xs" c="dimmed">
@@ -295,7 +298,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
               <Group gap="sm">
                 <Title order={4}>{STEPS.find((s) => s.id === step)?.label}</Title>
                 {settings.mode === 'live' ? (
-                  <Badge color="green" variant="light">
+                  <Badge color="emerald" variant="light">
                     Live mode
                   </Badge>
                 ) : (
@@ -312,7 +315,13 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
             <Box className={classes.paneBody}>
               <Box className={classes.paneInner}>
                 {!settings.configurable && (
-                  <Alert color="orange" icon={<IconAlertTriangle size={16} />} mb="lg">
+                  <Alert
+                    variant="light"
+                    color="orange"
+                    radius="md"
+                    icon={<IconAlertTriangle size={16} />}
+                    mb="lg"
+                  >
                     The server has no encryption key configured, so payment credentials cannot
                     be stored. Set <Code>ENCRYPTION_KEY</Code> and restart it.
                   </Alert>
@@ -500,20 +509,25 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
 
                 {step === 'golive' && (
                   <Stack gap="lg">
-                    <Box
-                      className={`${classes.modeBanner} ${
-                        settings.mode === 'live' ? classes.modeBannerLive : ''
-                      }`}
+                    <Alert
+                      variant="light"
+                      radius="md"
+                      color={settings.mode === 'live' ? 'emerald' : 'gray'}
+                      icon={
+                        settings.mode === 'live' ? (
+                          <IconCircleCheck size={16} />
+                        ) : (
+                          <IconFlask size={16} />
+                        )
+                      }
+                      title={settings.mode === 'live' ? 'Charging for real' : 'Test mode'}
                     >
-                      <Text size="sm" fw={600} mb={4}>
-                        {settings.mode === 'live' ? 'Charging for real' : 'Test mode'}
-                      </Text>
-                      <Text size="xs" c="dimmed">
+                      <Text size="xs">
                         {settings.mode === 'test'
                           ? 'No real money moves. Use Razorpay’s test cards to try the whole flow end to end.'
                           : 'Every submission charges the respondent for real, using your live keys.'}
                       </Text>
-                    </Box>
+                    </Alert>
 
                     <SegmentedControl
                       fullWidth
@@ -541,7 +555,13 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                     {/* The remaining gaps, spelled out — someone on this step
                         is about to take money and should see what is missing. */}
                     {settings.checklist.some((c) => !c.done) && (
-                      <Alert color="yellow" icon={<IconAlertTriangle size={16} />}>
+                      <Alert
+                        variant="light"
+                        color="gray"
+                        radius="md"
+                        icon={<IconAlertTriangle size={16} />}
+                        title="Still to do"
+                      >
                         <Stack gap={4}>
                           {settings.checklist
                             .filter((c) => !c.done)

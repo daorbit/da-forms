@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { env } from '../config/env.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import { sweepAbandonedUploads } from '../services/media.service.js';
+import { sweepAbandonedPayments } from '../services/form.service.js';
 
 /**
  * Only the scheduler may run these.
@@ -48,6 +49,21 @@ cronRouter.all(
   '/sweep-uploads',
   asyncHandler(async (_req, res) => {
     const result = await sweepAbandonedUploads();
+    res.json({ ok: true, ...result });
+  })
+);
+
+/**
+ * Delete submissions that opened a checkout and never paid.
+ *
+ * Same shape as the upload sweep, and for the same reason: a respondent who
+ * closes the Razorpay window leaves a row that can never become a response,
+ * along with whatever files it uploaded.
+ */
+cronRouter.all(
+  '/sweep-payments',
+  asyncHandler(async (_req, res) => {
+    const result = await sweepAbandonedPayments(env.paymentGraceMinutes);
     res.json({ ok: true, ...result });
   })
 );

@@ -44,6 +44,7 @@ import {
   IconColumns2,
   IconColumns3,
   IconBook2,
+  IconCreditCard,
   type Icon,
 } from '@tabler/icons-react';
 
@@ -140,6 +141,10 @@ export const fieldPalette: PaletteGroup[] = [
       { type: 'yesNo', label: 'Yes/No', icon: IconYesNo, color: 'grape' },
       { type: 'signature', label: 'Signature', icon: IconSignature, color: 'grape' },
     ],
+  },
+  {
+    group: 'Payment',
+    items: [{ type: 'payment', label: 'Payment', icon: IconCreditCard, color: 'lime' }],
   },
   {
     group: 'Survey',
@@ -270,6 +275,14 @@ export function makeField(type: FieldType, columns?: number): FormField {
   if (type === 'matrix') {
     field.rows = ['First statement', 'Second statement'];
     field.options = ['Disagree', 'Neutral', 'Agree'];
+  }
+  if (type === 'payment') {
+    // Zero until the author sets a price — a payment field that silently
+    // defaulted to some amount would be worse than one that is obviously
+    // unconfigured.
+    field.pay = { mode: 'fixed', amount: 0, currency: 'INR' };
+    field.label = 'Payment';
+    field.required = true;
   }
   if (type === 'hidden') field.label = 'Hidden value';
   if (type === 'heading') field.content = 'Heading';

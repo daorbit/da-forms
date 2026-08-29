@@ -10,6 +10,7 @@ import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
 import type { Form, FormField, FieldType, FormStep, StepIndicator, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme, NotificationSettings } from '@/types';
 import { NotificationsModal } from '@/components/builder/NotificationsModal';
+import { PaymentSettingsDrawer } from '@/components/builder/PaymentSettingsDrawer';
 import { ShareModal } from '@/components/share/ShareModal';
 import {
   DndContext,
@@ -829,6 +830,17 @@ export function FormBuilderPage() {
         theme={theme}
         notifications={emailNotifications}
         onChange={(patch) => setEmailNotifications((prev) => ({ ...prev, ...patch }))}
+      />
+
+      <PaymentSettingsDrawer
+        opened={railPanel === 'payments'}
+        onClose={() => setRailPanel(null)}
+        workspaceId={workspaceId}
+        webhookUrl={
+          savedFormId
+            ? `${import.meta.env.VITE_API_URL ?? `${window.location.origin}/api`}/public/forms/${savedFormId}/payments/webhook`
+            : undefined
+        }
       />
 
       <PreviewModal

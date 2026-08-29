@@ -10,11 +10,41 @@ import {
 } from '@mantine/core';
 import { IconCheck, IconClockPause } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { getPublicForm, submitForm, recordView, ApiError } from '@/lib/api';
+import {
+  getPublicForm,
+  submitForm,
+  recordView,
+  ApiError,
+  isPaymentRequired,
+  getPaymentStatus,
+} from '@/lib/api';
+import { openCheckout, waitForPayment } from '@/lib/razorpay';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
 import { FormLoader } from '@/components/FormLoader';
+
+/**
+ * Carry what the respondent already typed into the Razorpay window, so they
+ * are not asked for their name and email a second time. Best-effort: a form
+ * with none of these fields simply prefills nothing.
+ */
+function prefillFrom(form: Form | null, values: Record<string, string>) {
+  if (!form) return {};
+  const findValue = (types: string[]) => {
+    const flatten = (fields: Form['fields']): Form['fields'] =>
+      fields.flatMap((f) =>
+        f.type === 'grid' ? flatten((f.columns ?? []).flat()) : [f]
+      );
+    const field = flatten(form.fields).find((f) => types.includes(f.type));
+    return field ? values[field.id] : undefined;
+  };
+  return {
+    name: findValue(['name']),
+    email: findValue(['email']),
+    contact: findValue(['phone']),
+  };
+}
 
 export function PublicFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -77,14 +107,49 @@ export function PublicFormPage() {
     if (!id) return;
     setSubmitting(true);
     try {
-      await submitForm(id, values);
+      const result = await submitForm(id, values);
+
+      // A paid form stores the response but withholds it until Razorpay
+      // confirms. Nothing is a submission yet, so nothing below runs until
+      // the payment actually lands.
+      if (isPaymentRequired(result)) {
+        const outcome = await openCheckout(result, prefillFrom(form, values));
+        if (!outcome.ok) {
+          setSubmitting(false);
+          notifications.show({
+            message: outcome.reason ?? "Payment was not completed.",
+            color: "red",
+          });
+          return;
+        }
+
+        // Checkout succeeding is the bank's word, not the server's. The
+        // webhook is what completes the submission, so wait for it before
+        // telling the respondent they are done.
+        const confirmed = await waitForPayment(() =>
+          getPaymentStatus(id, result.orderId),
+        );
+        if (!confirmed) {
+          setSubmitting(false);
+          notifications.show({
+            message:
+              "Your payment went through, but confirming it is taking longer than usual. " +
+              "You'll get an email once it clears — no need to pay again.",
+            color: "yellow",
+            autoClose: false,
+          });
+          return;
+        }
+      }
     } catch (e) {
       setSubmitting(false);
       if (
         e instanceof ApiError &&
         (e.code === "rate_limited" ||
           e.code === "duplicate_value" ||
-          e.code === "spam_detected")
+          e.code === "spam_detected" ||
+          e.code === "invalid_amount" ||
+          e.code === "payment_unavailable")
       ) {
         notifications.show({ message: e.message, color: "red" });
         return;

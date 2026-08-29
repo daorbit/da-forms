@@ -1,5 +1,6 @@
+import type { Types } from 'mongoose';
 import { FormModel } from '../models/form.model.js';
-import { SubmissionModel } from '../models/submission.model.js';
+import { SubmissionModel, type SubmissionPayment } from '../models/submission.model.js';
 import { FormViewModel } from '../models/formView.model.js';
 import {
   claimUploads,
@@ -77,7 +78,9 @@ export async function listForms(
 
   const formIds = allForms.map((f) => f._id);
   const [totalSubmissions, publishedForms] = await Promise.all([
-    formIds.length ? SubmissionModel.countDocuments({ formId: { $in: formIds } }) : 0,
+    formIds.length
+      ? SubmissionModel.countDocuments({ formId: { $in: formIds }, status: 'complete' })
+      : 0,
     allForms.filter((f) => f.status === 'published').length,
   ]);
 
@@ -221,16 +224,30 @@ export async function submitForm(
   formId: string,
   fields: FormField[],
   data: Record<string, string>,
-  sourceUrl?: string
+  sourceUrl?: string,
+  payment?: SubmissionPayment
 ) {
   const uniqueFields = flattenFields(fields).filter((field) => field.unique);
   for (const field of uniqueFields) {
     const value = data[field.id];
     if (!value) continue;
-    const existing = await SubmissionModel.exists({ formId, [`data.${field.id}`]: value });
+    // Abandoned checkouts must not reserve a value. Someone who opened
+    // Razorpay and closed the tab has not used that email address, and
+    // blocking their retry would make the field impossible to submit.
+    const existing = await SubmissionModel.exists({
+      formId,
+      status: 'complete',
+      [`data.${field.id}`]: value,
+    });
     if (existing) throw new DuplicateValueError(field);
   }
-  const submission = await SubmissionModel.create({ formId, data, sourceUrl });
+  const submission = await SubmissionModel.create({
+    formId,
+    data,
+    sourceUrl,
+    status: payment ? 'pending_payment' : 'complete',
+    payment,
+  });
 
   // Attach whatever this answer uploaded, so the abandoned-upload sweep stops
   // considering those files fair game. Done after the insert because the claim
@@ -240,8 +257,85 @@ export async function submitForm(
   return submission;
 }
 
+/**
+ * Write the real Razorpay order id onto a submission.
+ *
+ * Separate from the insert because Razorpay's receipt is the submission's own
+ * id, so the row has to exist before the order can be opened.
+ */
+export function attachOrderId(submissionId: Types.ObjectId, orderId: string) {
+  return SubmissionModel.updateOne({ _id: submissionId }, { 'payment.orderId': orderId });
+}
+
+/**
+ * Promote a paid submission to a real response.
+ *
+ * The filter is what makes this safe to call twice: Razorpay retries webhooks,
+ * and matching only rows that are not yet paid means a duplicate delivery
+ * updates nothing and returns null. The caller reads that as "already handled"
+ * and skips the notification emails, so a respondent is never thanked twice for
+ * one payment.
+ */
+export async function markSubmissionPaid(
+  orderId: string,
+  paymentId: string,
+  payer: { payerEmail?: string; payerContact?: string; method?: string } = {}
+) {
+  return SubmissionModel.findOneAndUpdate(
+    { 'payment.orderId': orderId, 'payment.status': { $ne: 'paid' } },
+    {
+      status: 'complete',
+      'payment.status': 'paid',
+      'payment.paymentId': paymentId,
+      'payment.paidAt': new Date(),
+      // Undefined keys are dropped by Mongoose rather than written as null,
+      // so a payment without an email simply leaves the field unset.
+      'payment.payerEmail': payer.payerEmail,
+      'payment.payerContact': payer.payerContact,
+      'payment.method': payer.method,
+    },
+    { new: true }
+  );
+}
+
+/** Records a failed attempt. The row stays pending so the sweep can clear it later. */
+export async function markSubmissionFailed(orderId: string) {
+  return SubmissionModel.findOneAndUpdate(
+    { 'payment.orderId': orderId, 'payment.status': 'created' },
+    { 'payment.status': 'failed' },
+    { new: true }
+  );
+}
+
+/** A submission by its Razorpay order id — how the post-checkout poll finds its status. */
+export function getSubmissionByOrderId(orderId: string) {
+  return SubmissionModel.findOne({ 'payment.orderId': orderId });
+}
+
+/**
+ * Delete checkouts that were never completed.
+ *
+ * Mirrors the abandoned-upload sweep: a respondent who opens Razorpay and walks
+ * away leaves a row that will never become a response, and its uploaded files
+ * are storage nothing can reach. Only rows past the grace period are touched,
+ * so a payment still in progress is never pulled out from under someone.
+ */
+export async function sweepAbandonedPayments(graceMinutes: number) {
+  const cutoff = new Date(Date.now() - graceMinutes * 60_000);
+  const stale = await SubmissionModel.find(
+    { status: 'pending_payment', createdAt: { $lt: cutoff } },
+    { _id: 1 }
+  );
+  if (!stale.length) return { deleted: 0 };
+
+  const ids = stale.map((s) => s._id);
+  await destroyUploadsForSubmissions(ids);
+  const result = await SubmissionModel.deleteMany({ _id: { $in: ids } });
+  return { deleted: result.deletedCount ?? 0 };
+}
+
 export function submissionCount(formId: string) {
-  return SubmissionModel.countDocuments({ formId });
+  return SubmissionModel.countDocuments({ formId, status: 'complete' });
 }
 
 export interface SourceBreakdownEntry {
@@ -252,7 +346,7 @@ export interface SourceBreakdownEntry {
 
 /** Submissions grouped by referrer hostname, most common first. */
 export async function sourceBreakdown(formId: string): Promise<SourceBreakdownEntry[]> {
-  const submissions = await SubmissionModel.find({ formId }, { sourceUrl: 1 });
+  const submissions = await SubmissionModel.find({ formId, status: 'complete' }, { sourceUrl: 1 });
   const counts = new Map<string, number>();
   for (const submission of submissions) {
     let source = 'Direct';
@@ -283,7 +377,9 @@ export async function listSubmissions(
 ): Promise<Paginated<InstanceType<typeof SubmissionModel>>> {
   const page = Math.max(1, options.page ?? 1);
   const limit = Math.max(1, options.limit ?? 10);
-  const filter: Record<string, unknown> = { formId };
+  // Checkouts still in progress are not responses — they never appear on the
+  // Entries page, whichever status filter is applied.
+  const filter: Record<string, unknown> = { formId, status: 'complete' };
 
   if (options.status === 'read') filter.read = true;
   else if (options.status === 'unread') filter.read = false;

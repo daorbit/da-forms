@@ -28,4 +28,16 @@ export const env = {
    * nothing will ever reference, and storage we are paying for.
    */
   uploadGraceMinutes: Number(process.env.UPLOAD_GRACE_MINUTES ?? 5),
+  /**
+   * Encrypts workspace payment credentials at rest. Unset means payments
+   * cannot be configured at all — storing a Razorpay secret in the clear is
+   * not a degraded mode worth offering. Generate with `openssl rand -hex 32`.
+   */
+  encryptionKey: process.env.ENCRYPTION_KEY ?? '',
+  /**
+   * How long a submission may sit awaiting payment before the sweep removes
+   * it. Someone who opens checkout and closes the tab leaves a row that will
+   * never complete; without this they accumulate forever.
+   */
+  paymentGraceMinutes: Number(process.env.PAYMENT_GRACE_MINUTES ?? 30),
 };

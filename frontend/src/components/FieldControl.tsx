@@ -27,9 +27,17 @@ import {
   IconPhotoUp,
   IconVideo,
   IconBook2,
+  IconCreditCard,
 } from '@tabler/icons-react';
 import type { FormField, FieldSize, LabelPlacement } from '@/types';
 import { acceptFor } from '@/lib/fieldPalette';
+import {
+  previewAmount,
+  formatAmount,
+  paymentFieldProblem,
+  currencySymbol,
+  toMajorUnits,
+} from '@/lib/payment';
 import { contrastOn } from '@/lib/formTheme';
 import { SignaturePad } from '@/components/SignaturePad';
 import { MatrixInput } from '@/components/MatrixInput';
@@ -54,6 +62,12 @@ interface Props {
   accentColor?: string;
   /** What is wrong with the current answer, shown under the control. */
   error?: string;
+  /**
+   * Every answer on the form, so a payment field can show what a
+   * 'field'-mode price currently works out to. Display only — the server
+   * recomputes the real charge.
+   */
+  allValues?: Record<string, string>;
 }
 
 
@@ -77,6 +91,7 @@ export function FieldControl({
   inputTextColor,
   accentColor,
   error,
+  allValues,
 }: Props) {
   const showLabel = !hideLabel && !field.hideLabel;
   const sideLabel = showLabel && labelPlacement !== 'top';
@@ -597,6 +612,87 @@ export function FieldControl({
           </Group>
         </Radio.Group>
       );
+    case 'payment': {
+      const pay = field.pay;
+      const currency = pay?.currency ?? 'INR';
+      const amount = previewAmount(pay, allValues ?? {}, field.id);
+      const problem = paymentFieldProblem(field);
+      const modifiable = pay?.mode === 'modifiable';
+
+      return (
+        <Stack gap="xs">
+          {/* Pay-what-you-want: the respondent names the figure, so this mode
+              alone renders a real input rather than a summary. */}
+          {modifiable && (
+            <NumberInput
+              {...base}
+              label={label}
+              prefix={currencySymbol(currency)}
+              min={toMajorUnits(pay?.minAmount ?? 100)}
+              max={pay?.maxAmount ? toMajorUnits(pay.maxAmount) : undefined}
+              decimalScale={2}
+              description={
+                pay?.maxAmount
+                  ? `Between ${formatAmount(pay.minAmount ?? 100, currency)} and ${formatAmount(pay.maxAmount, currency)}`
+                  : `Minimum ${formatAmount(pay?.minAmount ?? 100, currency)}`
+              }
+              value={value === '' ? '' : Number(value)}
+              onChange={(v) => !readOnly && onChange(v === '' ? '' : String(v))}
+            />
+          )}
+
+          <Box
+            p="sm"
+            style={{
+              border: `1px solid ${inputBorder ?? 'var(--mantine-color-gray-3)'}`,
+              borderRadius: 'var(--mantine-radius-sm)',
+              backgroundColor: inputBg,
+            }}
+          >
+            <Group justify="space-between" wrap="nowrap">
+              <Group gap="xs" wrap="nowrap">
+                <IconCreditCard size={20} color={accentColor} />
+                <Box>
+                  <Text size="sm" fw={500} c={inputTextColor}>
+                    {pay?.description || field.label || 'Payment'}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    {/* Before the driving answer exists there is genuinely no
+                        figure to show yet. */}
+                    {amount === null
+                      ? 'Amount depends on your answers'
+                      : 'Paid securely via Razorpay'}
+                  </Text>
+                </Box>
+              </Group>
+              {amount !== null && (
+                <Text size="lg" fw={700} c={inputTextColor}>
+                  {formatAmount(amount, currency)}
+                </Text>
+              )}
+            </Group>
+          </Box>
+
+          {/* Only the author sees this — a respondent's copy of the form has
+              already been validated at publish time. */}
+          {readOnly && problem && (
+            <Text size="xs" c="orange">
+              {problem}
+            </Text>
+          )}
+          {!readOnly && (
+            <Text size="xs" c="dimmed">
+              You'll be asked to pay after pressing submit.
+            </Text>
+          )}
+          {error && (
+            <Text size="xs" c="red">
+              {error}
+            </Text>
+          )}
+        </Stack>
+      );
+    }
     case 'country':
       return (
         <Select

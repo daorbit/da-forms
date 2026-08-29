@@ -17,6 +17,14 @@ export function createApp() {
   // advance, and the management API is called by whichever product embeds the
   // builder. Nothing here is authorised by origin.
   app.use(cors());
+
+  // Before the JSON parser, and deliberately so: Razorpay signs the exact
+  // bytes it sent, and a parsed-then-re-serialised body would produce a
+  // different string that never verifies. This path alone keeps its raw body.
+  app.use(
+    '/api/public/forms/:id/payments/webhook',
+    express.raw({ type: 'application/json', limit: '1mb' })
+  );
   app.use(express.json());
 
   // Serverless has no startup phase to connect in, so every request makes sure

@@ -8,5 +8,13 @@ export interface ApiError {
   message: string;
 }
 
-export type { FieldType, FormField, FormDocument } from '../models/form.model.js';
-export type { SubmissionDocument } from '../models/submission.model.js';
+export type { FieldType, FormField, FormDocument, PaymentConfig } from '../models/form.model.js';
+export type {
+  SubmissionDocument,
+  SubmissionPayment,
+  PaymentStatus,
+} from '../models/submission.model.js';
+export type {
+  WorkspaceSettingsDocument,
+  RazorpaySettings,
+} from '../models/workspaceSettings.model.js';

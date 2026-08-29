@@ -309,6 +309,9 @@ export function FormRenderer({
         key={field.id}
         field={field}
         value={values[field.id] ?? ''}
+        // A payment field prices itself off other answers, so it needs the
+        // whole set rather than just its own.
+        allValues={values}
         error={showErrors ? errors[field.id] : undefined}
         onChange={(v) => {
           setValues((prev) => ({ ...prev, [field.id]: v }));

@@ -11,7 +11,7 @@ import {
   Switch,
   Select,
 } from '@mantine/core';
-import type { FormField, FieldSize, ShowIfOperator } from '@/types';
+import type { FormField, FieldSize, ShowIfOperator, PaymentMode } from '@/types';
 import {
   optionTypes,
   numericTypes,
@@ -20,6 +20,15 @@ import {
   paletteByType,
 } from '@/lib/fieldPalette';
 import { flattenFields } from '@/lib/fieldTree';
+import {
+  CURRENCIES,
+  currencySymbol,
+  toMajorUnits,
+  toMinorUnits,
+  paymentFieldProblem,
+  isChoiceField,
+  PRICEABLE_TYPES,
+} from '@/lib/payment';
 import { ChoiceEditor } from '@/components/builder/ChoiceEditor';
 import { EmailBodyEditor } from '@/components/builder/EmailBodyEditor';
 import classes from './PropertiesDrawer.module.css';
@@ -76,6 +85,32 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
         (candidate) => candidate.id !== field.id && candidate.type !== 'grid' && !staticTypes.includes(candidate.type)
       )
     : [];
+  // Patches the nested `pay` block without dropping the keys the patch does
+  // not mention — a plain `set({ pay })` would replace the whole object and
+  // lose the currency every time the amount changed.
+  const setPay = (patch: Partial<NonNullable<FormField['pay']>>) =>
+    field &&
+    onChange(field.id, {
+      pay: { mode: 'fixed', currency: 'INR', ...field.pay, ...patch },
+    });
+
+  // Numbers and choices can both drive a price; a payment field cannot take
+  // its amount from itself.
+  const amountFieldCandidates = field
+    ? flattenFields(allFields).filter(
+        (candidate) => candidate.id !== field.id && PRICEABLE_TYPES.includes(candidate.type)
+      )
+    : [];
+
+  const selectedAmountField = field?.pay?.amountFieldId
+    ? amountFieldCandidates.find((c) => c.id === field.pay?.amountFieldId)
+    : undefined;
+
+  const payCurrency = field?.pay?.currency ?? 'INR';
+
+  const paymentProblem =
+    field?.type === 'payment' ? paymentFieldProblem(field, allFields) : null;
+
   const showIfRule = field?.showIf;
   const showIfValueless = showIfRule && (showIfRule.operator === 'isEmpty' || showIfRule.operator === 'isNotEmpty');
 
@@ -288,6 +323,164 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
               {field.type === 'matrix' && (
                 <Section label="Rows">
                   <ChoiceEditor options={field.rows ?? []} onChange={(rows) => set({ rows })} />
+                </Section>
+              )}
+
+              {field.type === 'payment' && (
+                <Section label="Payment">
+                  <SegmentedControl
+                    fullWidth
+                    size="xs"
+                    value={field.pay?.mode ?? 'fixed'}
+                    onChange={(mode) => setPay({ mode: mode as PaymentMode })}
+                    data={[
+                      { value: 'fixed', label: 'Fixed' },
+                      { value: 'field', label: 'From a field' },
+                      { value: 'modifiable', label: 'Respondent decides' },
+                    ]}
+                  />
+
+                  {(field.pay?.mode ?? 'fixed') === 'fixed' && (
+                    <NumberInput
+                      label="Amount"
+                      description="What every respondent pays."
+                      min={0}
+                      decimalScale={2}
+                      prefix={currencySymbol(payCurrency)}
+                      // Stored in minor units, shown in major — the conversion
+                      // happens here so nothing downstream has to guess which
+                      // one it is holding.
+                      value={field.pay?.amount ? toMajorUnits(field.pay.amount) : ''}
+                      onChange={(v) => setPay({ amount: toMinorUnits(Number(v) || 0) })}
+                    />
+                  )}
+
+                  {field.pay?.mode === 'modifiable' && (
+                    <>
+                      <Text size="xs" c="dimmed">
+                        The respondent types what they want to pay — for donations, or
+                        pay-what-you-want.
+                      </Text>
+                      <Group grow>
+                        <NumberInput
+                          label="Minimum"
+                          min={1}
+                          decimalScale={2}
+                          prefix={currencySymbol(payCurrency)}
+                          value={toMajorUnits(field.pay?.minAmount ?? 100)}
+                          onChange={(v) => setPay({ minAmount: toMinorUnits(Number(v) || 1) })}
+                        />
+                        <NumberInput
+                          label="Maximum"
+                          description="Optional"
+                          min={1}
+                          decimalScale={2}
+                          prefix={currencySymbol(payCurrency)}
+                          value={field.pay?.maxAmount ? toMajorUnits(field.pay.maxAmount) : ''}
+                          onChange={(v) =>
+                            setPay({ maxAmount: v === '' ? undefined : toMinorUnits(Number(v)) })
+                          }
+                        />
+                      </Group>
+                      <NumberInput
+                        label="Suggested amount"
+                        description="What the box starts at. Optional."
+                        min={0}
+                        decimalScale={2}
+                        prefix={currencySymbol(payCurrency)}
+                        value={field.pay?.defaultAmount ? toMajorUnits(field.pay.defaultAmount) : ''}
+                        onChange={(v) =>
+                          setPay({ defaultAmount: v === '' ? undefined : toMinorUnits(Number(v)) })
+                        }
+                      />
+                    </>
+                  )}
+
+                  {field.pay?.mode === 'field' && (
+                    <>
+                      <Select
+                        label="Amount comes from"
+                        description="The respondent's answer to this field sets the price."
+                        placeholder="Pick a field"
+                        value={field.pay?.amountFieldId ?? null}
+                        onChange={(v) => {
+                          const source = amountFieldCandidates.find((c) => c.id === v);
+                          setPay({
+                            amountFieldId: v ?? undefined,
+                            // A choice field prices per option; a number field
+                            // uses the answer directly. Switching between them
+                            // must not leave the other's config behind.
+                            optionPrices: isChoiceField(source)
+                              ? Object.fromEntries((source?.options ?? []).map((o) => [o, 0]))
+                              : undefined,
+                          });
+                        }}
+                        data={amountFieldCandidates.map((candidate) => ({
+                          value: candidate.id,
+                          label: `${candidate.label || candidate.type}${
+                            isChoiceField(candidate) ? ' (priced per option)' : ''
+                          }`,
+                        }))}
+                      />
+
+                      {/* A choice field needs a price against each option —
+                          otherwise picking one would charge nothing. */}
+                      {field.pay?.optionPrices && (
+                        <Stack gap="xs">
+                          <Text size="xs" fw={500}>
+                            Price per option
+                          </Text>
+                          {(selectedAmountField?.options ?? []).map((option) => (
+                            <NumberInput
+                              key={option}
+                              label={option}
+                              size="xs"
+                              min={0}
+                              decimalScale={2}
+                              prefix={currencySymbol(payCurrency)}
+                              value={
+                                field.pay?.optionPrices?.[option]
+                                  ? toMajorUnits(field.pay.optionPrices[option])
+                                  : ''
+                              }
+                              onChange={(v) =>
+                                setPay({
+                                  optionPrices: {
+                                    ...field.pay?.optionPrices,
+                                    [option]: toMinorUnits(Number(v) || 0),
+                                  },
+                                })
+                              }
+                            />
+                          ))}
+                        </Stack>
+                      )}
+                    </>
+                  )}
+
+                  <Select
+                    label="Currency"
+                    value={field.pay?.currency ?? 'INR'}
+                    onChange={(v) => setPay({ currency: v ?? 'INR' })}
+                    data={CURRENCIES.map((c) => ({ value: c.value, label: c.label }))}
+                  />
+
+                  <TextInput
+                    label="Description"
+                    description="Shown on the payment window. Defaults to the form's title."
+                    value={field.pay?.description ?? ''}
+                    onChange={(e) => setPay({ description: e.target.value || undefined })}
+                  />
+
+                  {paymentProblem && (
+                    <Text size="xs" c="orange">
+                      {paymentProblem}
+                    </Text>
+                  )}
+                  <Text size="xs" c="dimmed">
+                    Charged through the Razorpay account connected in workspace
+                    settings. Without one, this form cannot take payments.
+                  </Text>
                 </Section>
               )}
 

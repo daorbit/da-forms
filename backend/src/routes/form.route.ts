@@ -2,6 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import * as formController from '../controllers/form.controller.js';
+import * as settingsController from '../controllers/settings.controller.js';
 import { uploadFormFile, uploadBackgroundImage } from '../controllers/upload.controller.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import { blockDemoWorkspaceWrites } from '../middleware/demo-workspace.js';
@@ -62,6 +63,19 @@ workspaceFormRouter.post(
 );
 
 /**
+ * Workspace settings that are not tied to one form — currently the Razorpay
+ * connection every paid form in the workspace charges through.
+ */
+export const workspaceSettingsRouter = Router({ mergeParams: true });
+
+workspaceSettingsRouter.use(blockDemoWorkspaceWrites);
+
+workspaceSettingsRouter.get('/payments', asyncHandler(settingsController.getPaymentSettings));
+workspaceSettingsRouter.put('/payments', asyncHandler(settingsController.savePaymentSettings));
+workspaceSettingsRouter.post('/payments/test', asyncHandler(settingsController.testPaymentConnection));
+workspaceSettingsRouter.delete('/payments', asyncHandler(settingsController.disconnectPayments));
+
+/**
  * The respondent-facing routes: reachable by form id alone, because that id is
  * the share link. No workspace, no credential.
  */
@@ -71,3 +85,7 @@ publicFormRouter.get('/:id', asyncHandler(formController.getPublicForm));
 publicFormRouter.post('/:id/submissions', submitLimiter, asyncHandler(formController.submitForm));
 publicFormRouter.post('/:id/upload', uploadLimiter, upload.single('file'), asyncHandler(uploadFormFile));
 publicFormRouter.post('/:id/view', asyncHandler(formController.recordView));
+// Razorpay calls this, not a browser — no rate limit, and the signature check
+// inside is what keeps it from being useful to anyone else.
+publicFormRouter.post('/:id/payments/webhook', asyncHandler(formController.razorpayWebhook));
+publicFormRouter.get('/:id/payments/:orderId', asyncHandler(formController.getPaymentStatus));

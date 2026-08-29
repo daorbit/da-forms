@@ -48,6 +48,8 @@ export type FieldType =
   | 'decisionBox'
   | 'yesNo'
   | 'signature'
+  // Payment — collects money rather than an answer
+  | 'payment'
   // Survey
   | 'matrix'
   // Collected without being shown — a UTM tag, a passed-in id
@@ -193,12 +195,47 @@ export interface FormField {
    */
   paramName?: string;
   showIf?: ShowIfRule;
+  /** Payment fields only: what this field charges. */
+  pay?: PaymentConfig;
   /** Pixel width, overriding the size preset outright. */
   customWidth?: number;
   /** Pixel height for this field's input, e.g. a taller text area. */
   customHeight?: number;
   /** Extra class name applied to the field's own input, for power-user styling. */
   cssClass?: string;
+}
+
+/**
+ * What a payment field charges.
+ *
+ * The amount here is what the builder shows and what the server re-derives at
+ * submit time. The browser's copy is display only — the charge is computed
+ * again from the stored form, so editing this client-side changes nothing.
+ */
+export type PaymentMode = 'fixed' | 'field' | 'modifiable';
+
+export interface PaymentConfig {
+  /**
+   * - 'fixed': every respondent pays `amount`.
+   * - 'field': the price is another field's answer — a number typed, or the
+   *   value assigned to the choice picked.
+   * - 'modifiable': the respondent names their own price, within min/max.
+   */
+  mode: PaymentMode;
+  /** Minor units — paise, not rupees. */
+  amount?: number;
+  currency: string;
+  /** mode='field': the field whose answer is the price. */
+  amountFieldId?: string;
+  /** mode='field' against a choice field: what each option is worth, keyed by option text. */
+  optionPrices?: Record<string, number>;
+  /** mode='modifiable': the range the respondent may choose within. Minor units. */
+  minAmount?: number;
+  maxAmount?: number;
+  defaultAmount?: number;
+  /** Shown on the Razorpay checkout. Falls back to the form's title. */
+  description?: string;
+  buttonLabel?: string;
 }
 
 export type ShowIfOperator = 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
@@ -272,14 +309,83 @@ export interface NotificationSettings {
   ownerSubject?: string;
 }
 
+export interface SubmissionPayment {
+  provider: 'razorpay';
+  orderId: string;
+  paymentId?: string;
+  /** Minor units. */
+  amount: number;
+  currency: string;
+  status: 'created' | 'paid' | 'failed';
+  paidAt?: string;
+}
+
 export interface Submission {
   _id: string;
   formId: string;
   data: Record<string, string>;
   sourceUrl?: string;
+  /** Anything the Entries page can see is 'complete' — pending rows are filtered server-side. */
+  status?: 'complete' | 'pending_payment';
+  payment?: SubmissionPayment;
   read: boolean;
   starred: boolean;
   createdAt: string;
+}
+
+/**
+ * What a paid form answers with instead of a submission: everything the
+ * browser needs to open Razorpay checkout. The amount is the server's figure,
+ * not the one the page calculated.
+ */
+export interface PaymentRequired {
+  paymentRequired: true;
+  submissionId: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+  description: string;
+}
+
+export type RazorpayMode = 'test' | 'live';
+
+/** One mode's credentials, with secrets reduced to masks. */
+export interface KeyPairView {
+  keyId?: string;
+  keySecretMask?: string;
+  webhookSecretMask?: string;
+  merchantId?: string;
+  businessName?: string;
+  verifiedAt?: string;
+}
+
+export interface ChecklistItem {
+  id: 'keys' | 'verified' | 'webhook' | 'enabled' | 'charged';
+  label: string;
+  done: boolean;
+  hint?: string;
+}
+
+/** The workspace's Razorpay connection. Test and live keys are kept separately. */
+export interface PaymentSettings {
+  enabled: boolean;
+  mode: RazorpayMode;
+  test: KeyPairView;
+  live: KeyPairView;
+  lastChargeAt?: string;
+  /** False when the server has no ENCRYPTION_KEY — nothing can be saved. */
+  configurable: boolean;
+  /** What is still outstanding before this workspace can take a payment. */
+  checklist: ChecklistItem[];
+}
+
+export interface ConnectionTestResult {
+  ok: boolean;
+  merchantId?: string;
+  businessName?: string;
+  message?: string;
+  settings: PaymentSettings;
 }
 
 export interface Paginated<T> {

@@ -1,4 +1,14 @@
-import type { HealthResponse, Form, FormField, Submission, Paginated } from '@/types';
+import type {
+  HealthResponse,
+  Form,
+  FormField,
+  Submission,
+  Paginated,
+  PaymentRequired,
+  PaymentSettings,
+  RazorpayMode,
+  ConnectionTestResult,
+} from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -195,13 +205,75 @@ export function recordView(id: string) {
   return request<void>(`/public/forms/${id}/view`, { method: 'POST' });
 }
 
+/**
+ * A form with a payment field answers with `PaymentRequired` instead of a
+ * submission — the response is stored but held back until Razorpay confirms.
+ * Callers tell the two apart with `isPaymentRequired`.
+ */
 export function submitForm(id: string, data: Record<string, string>) {
-  return request<Submission>(`/public/forms/${id}/submissions`, {
+  return request<Submission | PaymentRequired>(`/public/forms/${id}/submissions`, {
     method: 'POST',
     // `_hp` rides along in `data` when the honeypot got filled (a bot did
     // it — never a real respondent); otherwise it is simply absent.
     body: JSON.stringify(data),
   });
+}
+
+export function isPaymentRequired(
+  result: Submission | PaymentRequired
+): result is PaymentRequired {
+  return (result as PaymentRequired).paymentRequired === true;
+}
+
+/**
+ * Whether a payment has landed yet.
+ *
+ * Polled after checkout closes: the webhook is what completes the submission,
+ * and it can arrive a moment after the browser does.
+ */
+export function getPaymentStatus(formId: string, orderId: string) {
+  return request<{ status: 'complete' | 'pending_payment'; paymentStatus: string }>(
+    `/public/forms/${formId}/payments/${orderId}`
+  );
+}
+
+/* ---- Workspace payment settings ---- */
+
+export function getPaymentSettings(workspaceId = DEFAULT_WORKSPACE) {
+  return request<PaymentSettings>(`/workspaces/${encodeURIComponent(workspaceId)}/settings/payments`);
+}
+
+export function savePaymentSettings(
+  input: {
+    enabled?: boolean;
+    mode?: RazorpayMode;
+    /** Which key set is being edited. Defaults to the active mode. */
+    target?: RazorpayMode;
+    keyId?: string;
+    keySecret?: string;
+    webhookSecret?: string;
+  },
+  workspaceId = DEFAULT_WORKSPACE
+) {
+  return request<PaymentSettings>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments`,
+    { method: 'PUT', body: JSON.stringify(input) }
+  );
+}
+
+/** Asks Razorpay whether the saved keys work, so a wrong one is caught here. */
+export function testPaymentConnection(mode: RazorpayMode, workspaceId = DEFAULT_WORKSPACE) {
+  return request<ConnectionTestResult>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments/test`,
+    { method: 'POST', body: JSON.stringify({ mode }) }
+  );
+}
+
+export function disconnectPayments(mode: RazorpayMode, workspaceId = DEFAULT_WORKSPACE) {
+  return request<PaymentSettings>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments?mode=${mode}`,
+    { method: 'DELETE' }
+  );
 }
 
 /** Uploads a respondent's file ahead of submission; the returned URL is what gets stored on the field. */

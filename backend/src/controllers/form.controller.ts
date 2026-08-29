@@ -1,6 +1,8 @@
 import type { RequestHandler, Request } from 'express';
 import { createHash } from 'node:crypto';
 import * as formService from '../services/form.service.js';
+import * as paymentService from '../services/payment.service.js';
+import * as workspaceSettingsService from '../services/workspaceSettings.service.js';
 import { sendSubmissionNotifications } from '../services/notification.service.js';
 import { getFormLimits, recordSubmission } from '../lib/quantalog.js';
 import { planLimit } from '../lib/plan-limit.js';
@@ -231,7 +233,48 @@ export const submitForm: RequestHandler = async (req, res) => {
   }
 
   const sourceUrl = req.get('referer');
+  const payField = paymentService.findPaymentField(form.fields);
+
   try {
+    // A form that charges takes a different path: the response is stored, but
+    // held back until Razorpay confirms the money arrived. Nothing downstream
+    // — quota, emails — runs until then.
+    if (payField) {
+      const amount = paymentService.resolveAmount(payField, data, form.fields);
+      const currency = payField.pay?.currency ?? 'INR';
+      const credentials = await paymentService.getCredentials(form.workspaceId);
+
+      const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl, {
+        provider: 'razorpay',
+        // Replaced with the real order id immediately below. Written first
+        // because the receipt Razorpay stores is this submission's id, and
+        // that only exists once the row does.
+        orderId: `pending_${Date.now()}`,
+        amount,
+        currency,
+        status: 'created',
+      });
+
+      const order = await paymentService.createOrder(credentials, {
+        amount,
+        currency,
+        receipt: String(submission._id),
+        notes: { formId: String(form._id), workspaceId: form.workspaceId },
+      });
+
+      await formService.attachOrderId(submission._id, order.id);
+
+      return res.status(202).json({
+        paymentRequired: true,
+        submissionId: submission._id,
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: credentials.keyId,
+        description: payField.pay?.description ?? form.title,
+      });
+    }
+
     const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl);
     res.status(201).json(submission);
     // After responding: the respondent's own confirmation should not make
@@ -250,6 +293,121 @@ export const submitForm: RequestHandler = async (req, res) => {
         fieldId: err.field.id,
       });
     }
+    if (err instanceof paymentService.InvalidAmountError) {
+      return res.status(400).json({ error: 'invalid_amount', message: err.message });
+    }
+    if (err instanceof paymentService.PaymentConfigError) {
+      // The respondent cannot fix this — it is the form owner's setup that is
+      // wrong — so it reads as the form being unavailable rather than as
+      // something they typed being rejected.
+      console.error('[payments] configuration problem:', err.message);
+      return res.status(503).json({
+        error: 'payment_unavailable',
+        message: 'This form cannot take payments right now. Please try again later.',
+      });
+    }
     throw err;
   }
+};
+
+/**
+ * Razorpay telling us a payment settled.
+ *
+ * This is what actually completes a submission. The browser's own report of
+ * success is not trusted for that — it can be fabricated, and it never arrives
+ * at all if the respondent closes the tab at the wrong moment.
+ */
+export const razorpayWebhook: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+
+  const signature = req.get('x-razorpay-signature') ?? '';
+  // `express.raw` is mounted on this path, so the body is the exact bytes
+  // Razorpay signed. Re-serialised JSON would not match.
+  const rawBody = req.body as Buffer;
+  if (!Buffer.isBuffer(rawBody)) {
+    console.error('[payments] webhook body was parsed — raw parser is not mounted');
+    return res.status(500).json({ error: 'server_error', message: 'Webhook misconfigured' });
+  }
+
+  let credentials;
+  try {
+    credentials = await paymentService.getCredentials(form.workspaceId);
+  } catch {
+    return res.status(400).json({ error: 'not_configured', message: 'No Razorpay account' });
+  }
+
+  if (!credentials.webhookSecret) {
+    console.error('[payments] no webhook secret saved for workspace', form.workspaceId);
+    return res.status(400).json({ error: 'not_configured', message: 'No webhook secret' });
+  }
+  if (!paymentService.verifyWebhookSignature(rawBody, signature, credentials.webhookSecret)) {
+    return res.status(401).json({ error: 'bad_signature', message: 'Signature did not verify' });
+  }
+
+  const event = JSON.parse(rawBody.toString('utf8')) as {
+    event: string;
+    payload?: {
+      payment?: {
+        entity?: {
+          id?: string;
+          order_id?: string;
+          email?: string;
+          contact?: string;
+          method?: string;
+        };
+      };
+    };
+  };
+  const entity = event.payload?.payment?.entity;
+  const orderId = entity?.order_id;
+  const paymentId = entity?.id;
+
+  if (!orderId || !paymentId) return res.status(200).json({ ok: true, ignored: 'no order id' });
+
+  if (event.event === 'payment.failed') {
+    await formService.markSubmissionFailed(orderId);
+    return res.status(200).json({ ok: true });
+  }
+
+  if (event.event !== 'payment.captured' && event.event !== 'order.paid') {
+    return res.status(200).json({ ok: true, ignored: event.event });
+  }
+
+  // Razorpay always collects a contact number, and usually an email. Kept so a
+  // form that asked for neither still leaves the owner able to identify who
+  // paid.
+  const submission = await formService.markSubmissionPaid(orderId, paymentId, {
+    payerEmail: entity?.email,
+    payerContact: entity?.contact,
+    method: entity?.method,
+  });
+  // Null means a retry of an event already handled. Acknowledged, but nothing
+  // runs again — otherwise Razorpay's redelivery would send a second set of
+  // confirmation emails for one payment.
+  if (!submission) return res.status(200).json({ ok: true, alreadyHandled: true });
+
+  void workspaceSettingsService.markCharged(form.workspaceId);
+  void recordSubmission(form.workspaceId);
+  const limits = await getFormLimits(form.workspaceId);
+  if (!limits || limits.notificationEmails) {
+    void sendSubmissionNotifications(form, submission.data);
+  }
+
+  res.status(200).json({ ok: true });
+};
+
+/**
+ * Where the respondent's page checks whether its payment landed.
+ *
+ * Polled after checkout closes, because the webhook is what completes the
+ * submission and it may arrive a moment later than the browser does.
+ */
+export const getPaymentStatus: RequestHandler = async (req, res) => {
+  const submission = await formService.getSubmissionByOrderId(req.params.orderId);
+  if (!submission) return res.status(404).json({ error: 'not_found', message: 'Unknown order' });
+  res.json({
+    status: submission.status,
+    paymentStatus: submission.payment?.status ?? 'created',
+  });
 };

@@ -32,6 +32,7 @@ export type FieldType =
   | 'decisionBox'
   | 'yesNo'
   | 'signature'
+  | 'payment'
   | 'matrix'
   | 'hidden'
   | 'uniqueId'
@@ -83,12 +84,54 @@ export interface FormField {
   /** The URL query parameter a hidden field takes its value from. */
   paramName?: string;
   showIf?: ShowIfRule;
+  /** Payment fields only: what this field charges. */
+  pay?: PaymentConfig;
   /** Pixel width, overriding the size preset outright. */
   customWidth?: number;
   /** Pixel height for this field's input, e.g. a taller text area. */
   customHeight?: number;
   /** Extra class name applied to the field's own input, for power-user styling. */
   cssClass?: string;
+}
+
+/**
+ * What a payment field charges.
+ *
+ * Only ever read from the stored form — never from a submitted body. A
+ * respondent who edits the request cannot change what they are billed, because
+ * the amount is derived here and the client's copy is ignored outright.
+ */
+export type PaymentMode = 'fixed' | 'field' | 'modifiable';
+
+export interface PaymentConfig {
+  /**
+   * - 'fixed': every respondent pays `amount`.
+   * - 'field': the price is another field's answer — a number the respondent
+   *   typed, or the value assigned to the choice they picked.
+   * - 'modifiable': the respondent names their own price, within min/max.
+   *   Donations and pay-what-you-want.
+   */
+  mode: PaymentMode;
+  /** Minor units — paise, not rupees. Integers only, so nothing rounds twice. */
+  amount?: number;
+  currency: string;
+  /** mode='field': the field whose answer is the price. */
+  amountFieldId?: string;
+  /**
+   * mode='field' against a choice field: what each option is worth, in minor
+   * units, keyed by the option's own text. An option missing from here is
+   * worth nothing, which is a configuration mistake rather than a free item —
+   * the builder flags it.
+   */
+  optionPrices?: Record<string, number>;
+  /** mode='modifiable': the range the respondent may choose within. Minor units. */
+  minAmount?: number;
+  maxAmount?: number;
+  /** mode='modifiable': what the box starts at. Minor units. */
+  defaultAmount?: number;
+  /** Shown on the Razorpay checkout. Falls back to the form's title. */
+  description?: string;
+  buttonLabel?: string;
 }
 
 export type ShowIfOperator = 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
@@ -246,6 +289,7 @@ const fieldSchema = new Schema<FormField>(
     rows: { type: [String], default: undefined },
     paramName: { type: String },
     showIf: { type: Schema.Types.Mixed },
+    pay: { type: Schema.Types.Mixed },
     customWidth: { type: Number },
     customHeight: { type: Number },
     cssClass: { type: String },

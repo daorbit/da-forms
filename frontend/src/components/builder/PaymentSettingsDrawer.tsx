@@ -348,9 +348,10 @@ export function PaymentSettingsDrawer({ opened, onClose, workspaceId, webhookUrl
                 </Group>
                 <Code block>{webhookUrl}</Code>
                 <Text size="xs" c="dimmed">
-                  Add this in Razorpay under Settings → Webhooks, subscribed to{' '}
-                  <Code>payment.captured</Code> and <Code>payment.failed</Code>. Without it,
-                  payments are never confirmed and responses stay pending.
+                  Add this once in Razorpay under Settings → Webhooks, subscribed to{' '}
+                  <Code>payment.captured</Code> and <Code>payment.failed</Code>. It covers
+                  every paid form in this workspace — you do not add a new one per form.
+                  Without it, payments are never confirmed and responses stay pending.
                 </Text>
               </Stack>
             </>

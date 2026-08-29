@@ -85,7 +85,22 @@ publicFormRouter.get('/:id', asyncHandler(formController.getPublicForm));
 publicFormRouter.post('/:id/submissions', submitLimiter, asyncHandler(formController.submitForm));
 publicFormRouter.post('/:id/upload', uploadLimiter, upload.single('file'), asyncHandler(uploadFormFile));
 publicFormRouter.post('/:id/view', asyncHandler(formController.recordView));
-// Razorpay calls this, not a browser — no rate limit, and the signature check
-// inside is what keeps it from being useful to anyone else.
-publicFormRouter.post('/:id/payments/webhook', asyncHandler(formController.razorpayWebhook));
 publicFormRouter.get('/:id/payments/:orderId', asyncHandler(formController.getPaymentStatus));
+
+/**
+ * Razorpay's webhook, one per workspace.
+ *
+ * Deliberately not per-form: an owner registers this URL once in their
+ * Razorpay dashboard and every paid form in the workspace is covered.
+ * Per-form URLs would mean a new webhook registration for each form, and
+ * Razorpay caps how many an account may have.
+ *
+ * Razorpay calls this, not a browser — no rate limit, and the signature check
+ * inside is what keeps it from being useful to anyone else.
+ */
+export const publicPaymentRouter = Router();
+
+publicPaymentRouter.post(
+  '/:workspaceId/payments/webhook',
+  asyncHandler(formController.razorpayWebhook)
+);

@@ -316,10 +316,14 @@ export const submitForm: RequestHandler = async (req, res) => {
  * This is what actually completes a submission. The browser's own report of
  * success is not trusted for that — it can be fabricated, and it never arrives
  * at all if the respondent closes the tab at the wrong moment.
+ *
+ * Addressed by workspace rather than by form: a workspace registers this once
+ * in its Razorpay dashboard and every paid form it owns is covered. Which form
+ * a payment belongs to is discovered from the submission the order id points
+ * at, so it does not need to be in the URL.
  */
 export const razorpayWebhook: RequestHandler = async (req, res) => {
-  const form = await formService.getForm(req.params.id);
-  if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  const { workspaceId } = req.params;
 
   const signature = req.get('x-razorpay-signature') ?? '';
   // `express.raw` is mounted on this path, so the body is the exact bytes
@@ -332,13 +336,13 @@ export const razorpayWebhook: RequestHandler = async (req, res) => {
 
   let credentials;
   try {
-    credentials = await paymentService.getCredentials(form.workspaceId);
+    credentials = await paymentService.getCredentials(workspaceId);
   } catch {
     return res.status(400).json({ error: 'not_configured', message: 'No Razorpay account' });
   }
 
   if (!credentials.webhookSecret) {
-    console.error('[payments] no webhook secret saved for workspace', form.workspaceId);
+    console.error('[payments] no webhook secret saved for workspace', workspaceId);
     return res.status(400).json({ error: 'not_configured', message: 'No webhook secret' });
   }
   if (!paymentService.verifyWebhookSignature(rawBody, signature, credentials.webhookSecret)) {
@@ -377,6 +381,21 @@ export const razorpayWebhook: RequestHandler = async (req, res) => {
   // Razorpay always collects a contact number, and usually an email. Kept so a
   // form that asked for neither still leaves the owner able to identify who
   // paid.
+  // Which form this belongs to comes from the pending submission the order id
+  // points at — the webhook is registered once per workspace and serves them
+  // all, so it cannot know the form up front.
+  const pending = await formService.getSubmissionByOrderId(orderId);
+  if (!pending) return res.status(200).json({ ok: true, ignored: 'unknown order' });
+
+  const form = await formService.getForm(String(pending.formId));
+  // A signature verified against this workspace's secret should never resolve
+  // to another workspace's form. If it does, something is wrong enough that
+  // completing the submission would be the wrong move.
+  if (!form || form.workspaceId !== workspaceId) {
+    console.error('[payments] order', orderId, 'does not belong to workspace', workspaceId);
+    return res.status(200).json({ ok: true, ignored: 'workspace mismatch' });
+  }
+
   const submission = await formService.markSubmissionPaid(orderId, paymentId, {
     payerEmail: entity?.email,
     payerContact: entity?.contact,
@@ -387,9 +406,9 @@ export const razorpayWebhook: RequestHandler = async (req, res) => {
   // confirmation emails for one payment.
   if (!submission) return res.status(200).json({ ok: true, alreadyHandled: true });
 
-  void workspaceSettingsService.markCharged(form.workspaceId);
-  void recordSubmission(form.workspaceId);
-  const limits = await getFormLimits(form.workspaceId);
+  void workspaceSettingsService.markCharged(workspaceId);
+  void recordSubmission(workspaceId);
+  const limits = await getFormLimits(workspaceId);
   if (!limits || limits.notificationEmails) {
     void sendSubmissionNotifications(form, submission.data);
   }

@@ -22,7 +22,7 @@ export function createApp() {
   // bytes it sent, and a parsed-then-re-serialised body would produce a
   // different string that never verifies. This path alone keeps its raw body.
   app.use(
-    '/api/public/forms/:id/payments/webhook',
+    '/api/public/workspaces/:workspaceId/payments/webhook',
     express.raw({ type: 'application/json', limit: '1mb' })
   );
   app.use(express.json());

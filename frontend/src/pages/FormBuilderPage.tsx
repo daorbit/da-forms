@@ -836,11 +836,11 @@ export function FormBuilderPage() {
         opened={railPanel === 'payments'}
         onClose={() => setRailPanel(null)}
         workspaceId={workspaceId}
-        webhookUrl={
-          savedFormId
-            ? `${import.meta.env.VITE_API_URL ?? `${window.location.origin}/api`}/public/forms/${savedFormId}/payments/webhook`
-            : undefined
-        }
+        // One URL for the whole workspace — registered once in Razorpay,
+        // covering every paid form. Available before the form is even saved.
+        webhookUrl={`${
+          import.meta.env.VITE_API_URL ?? `${window.location.origin}/api`
+        }/public/workspaces/${workspaceId}/payments/webhook`}
       />
 
       <PreviewModal

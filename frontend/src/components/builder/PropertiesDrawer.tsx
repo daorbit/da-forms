@@ -21,6 +21,7 @@ import {
 } from '@/lib/fieldPalette';
 import { flattenFields } from '@/lib/fieldTree';
 import { ChoiceEditor } from '@/components/builder/ChoiceEditor';
+import { EmailBodyEditor } from '@/components/builder/EmailBodyEditor';
 import classes from './PropertiesDrawer.module.css';
 
 interface Props {
@@ -114,7 +115,17 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
     >
       {field && (
         <>
-          {staticTypes.includes(field.type) ? (
+          {field.type === 'richText' ? (
+            <Section label="Content">
+              {/* The same editor the email composer uses, so formatted copy is
+                  authored the same way in both places. */}
+              <EmailBodyEditor
+                value={field.content ?? ''}
+                onChange={(html) => set({ content: html })}
+                placeholder="Write the text shown on the form…"
+              />
+            </Section>
+          ) : staticTypes.includes(field.type) ? (
             <Section label="Content">
               <Textarea
                 label={field.type === 'heading' ? 'Heading text' : 'Text'}

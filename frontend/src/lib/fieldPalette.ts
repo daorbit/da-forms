@@ -32,6 +32,10 @@ import {
   IconSignature,
   IconTable,
   IconEyeOff,
+  IconFlag,
+  IconSortAscending,
+  IconArrowsHorizontal,
+  IconFileText,
   IconHeading,
   IconTypography,
   IconMinus,
@@ -90,6 +94,7 @@ export const fieldPalette: PaletteGroup[] = [
       { type: 'number', label: 'Number', icon: IconNumber123, color: 'violet' },
       { type: 'decimal', label: 'Decimal', icon: IconDecimal, color: 'violet' },
       { type: 'currency', label: 'Currency', icon: IconCurrencyDollar, color: 'violet' },
+      { type: 'numberRange', label: 'Range', icon: IconArrowsHorizontal, color: 'violet' },
     ],
   },
   {
@@ -99,6 +104,8 @@ export const fieldPalette: PaletteGroup[] = [
       { type: 'radio', label: 'Radio', icon: IconCircleDot, color: 'cyan' },
       { type: 'checkbox', label: 'Checkbox', icon: IconCheckbox, color: 'cyan' },
       { type: 'multipleChoice', label: 'Multi Choice', icon: IconListCheck, color: 'cyan' },
+      { type: 'country', label: 'Country', icon: IconFlag, color: 'cyan' },
+      { type: 'ranking', label: 'Ranking', icon: IconSortAscending, color: 'cyan' },
     ],
   },
   {
@@ -151,6 +158,7 @@ export const fieldPalette: PaletteGroup[] = [
     items: [
       { type: 'heading', label: 'Heading', icon: IconHeading, color: 'indigo' },
       { type: 'description', label: 'Description', icon: IconTypography, color: 'indigo' },
+      { type: 'richText', label: 'Rich Text', icon: IconFileText, color: 'indigo' },
       { type: 'divider', label: 'Divider', icon: IconMinus, color: 'indigo' },
       { type: 'spacer', label: 'Spacer', icon: IconArrowAutofitHeight, color: 'indigo' },
       { type: 'pageBreak', label: 'Page Break', icon: IconBook2, color: 'indigo' },
@@ -181,11 +189,15 @@ export const paletteByType = Object.fromEntries(
 ) as Record<FieldType, PaletteItem>;
 
 /** Layout-only elements: no label column, no value collected. */
-export const staticTypes: FieldType[] = ['heading', 'description', 'divider', 'spacer', 'pageBreak'];
+export const staticTypes: FieldType[] = [
+  'heading', 'description', 'richText', 'divider', 'spacer', 'pageBreak',
+];
 
-export const optionTypes: FieldType[] = ['select', 'radio', 'checkbox', 'multipleChoice', 'matrix'];
+export const optionTypes: FieldType[] = [
+  'select', 'radio', 'checkbox', 'multipleChoice', 'matrix', 'ranking',
+];
 
-export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slider'];
+export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slider', 'numberRange'];
 
 export const fileTypes: FieldType[] = ['file', 'imageUpload', 'mediaUpload'];
  
@@ -246,6 +258,8 @@ export function makeField(type: FieldType, columns?: number): FormField {
     field.max = 100;
     field.step = 1;
   }
+  if (type === 'ranking') field.options = ['First option', 'Second option', 'Third option'];
+  if (type === 'richText') field.content = '<p>Write anything here — <strong>bold</strong>, a list, or a <a href="https://example.com">link</a>.</p>';
   if (type === 'matrix') {
     field.rows = ['First statement', 'Second statement'];
     field.options = ['Disagree', 'Neutral', 'Agree'];

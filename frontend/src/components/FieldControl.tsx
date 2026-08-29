@@ -32,6 +32,9 @@ import type { FormField, FieldSize, LabelPlacement } from '@/types';
 import { acceptFor } from '@/lib/fieldPalette';
 import { contrastOn } from '@/lib/formTheme';
 import { SignaturePad } from '@/components/SignaturePad';
+import { RankingInput } from '@/components/RankingInput';
+import { countryOptions } from '@/lib/countries';
+import { sanitizeRichText } from '@/lib/richText';
 
 interface Props {
   field: FormField;
@@ -222,7 +225,7 @@ export function FieldControl({
   );
 
   const noLabelTypes: FormField['type'][] = [
-    'heading', 'description', 'divider', 'spacer', 'pageBreak',
+    'heading', 'description', 'richText', 'divider', 'spacer', 'pageBreak',
     // Renders nothing; a label wrapper would leave a gap where it sits.
     'hidden',
   ];
@@ -232,7 +235,7 @@ export function FieldControl({
   // have nowhere for it to land, so the message is rendered here instead.
   const ownsErrorDisplay: FormField['type'][] = [
     'name', 'address', 'rating', 'slider', 'multipleChoice', 'decisionBox', 'terms',
-    'signature', 'matrix',
+    'signature', 'matrix', 'ranking', 'numberRange',
   ];
 
   if (noLabelTypes.includes(field.type)) return renderControl();
@@ -592,6 +595,90 @@ export function FieldControl({
           </Group>
         </Radio.Group>
       );
+    case 'country':
+      return (
+        <Select
+          {...base}
+          placeholder={field.placeholder || 'Select a country'}
+          data={countryOptions}
+          value={value || null}
+          onChange={(v) => !readOnly && onChange(v ?? '')}
+          searchable
+          // 250 entries is a scroll, not a list — typing is how anyone past
+          // the letter C actually finds their country.
+          nothingFoundMessage="No country matches that"
+        />
+      );
+
+    case 'ranking':
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={6} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          <RankingInput
+            options={field.options ?? []}
+            value={value}
+            onChange={onChange}
+            readOnly={readOnly}
+            inputBg={inputBg}
+            inputBorder={inputBorder}
+            textColor={labelColor}
+          />
+        </div>
+      );
+
+    case 'numberRange': {
+      // Stored as "from - to" so the pair stays one answer and one column in
+      // an export, rather than two fields that can drift apart.
+      const [from = '', to = ''] = value.split(' - ');
+      const push = (nextFrom: string, nextTo: string) =>
+        !readOnly && onChange(nextFrom || nextTo ? `${nextFrom} - ${nextTo}` : '');
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          <Group grow gap="sm" align="flex-start">
+            <NumberInput
+              styles={base.styles}
+              placeholder="From"
+              min={field.min}
+              max={field.max}
+              value={from}
+              readOnly={readOnly}
+              error={Boolean(error)}
+              onChange={(v) => push(String(v ?? ''), to)}
+            />
+            <NumberInput
+              styles={base.styles}
+              placeholder="To"
+              min={field.min}
+              max={field.max}
+              value={to}
+              readOnly={readOnly}
+              error={Boolean(error)}
+              onChange={(v) => push(from, String(v ?? ''))}
+            />
+          </Group>
+        </div>
+      );
+    }
+
+    // Author-written markup, sanitized on the way in by the builder's editor.
+    case 'richText':
+      return (
+        <div
+          className={field.cssClass || undefined}
+          style={{ fontSize: 14, lineHeight: 1.6, color: labelColor }}
+          dangerouslySetInnerHTML={{ __html: sanitizeRichText(field.content ?? '') }}
+        />
+      );
+
     case 'signature':
       return (
         <div style={base.style}>

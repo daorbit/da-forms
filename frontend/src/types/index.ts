@@ -23,11 +23,14 @@ export type FieldType =
   | 'number'
   | 'decimal'
   | 'currency'
+  | 'numberRange'
   // Choices
   | 'select'
   | 'radio'
   | 'checkbox'
   | 'multipleChoice'
+  | 'country'
+  | 'ranking'
   // Date & Time
   | 'date'
   | 'time'
@@ -55,6 +58,7 @@ export type FieldType =
   // Page elements
   | 'heading'
   | 'description'
+  | 'richText'
   | 'divider'
   | 'spacer'
   | 'pageBreak'

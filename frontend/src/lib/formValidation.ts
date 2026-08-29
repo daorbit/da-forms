@@ -74,6 +74,18 @@ export function validateField(field: FormField, raw: string): string {
       if (field.max !== undefined && n > field.max) return `Enter ${field.max} or less.`;
       break;
     }
+    case 'numberRange': {
+      const [from, to] = value.split(' - ').map((part) => Number(part.trim()));
+      if (Number.isNaN(from) || Number.isNaN(to)) return 'Enter both a start and an end.';
+      if (to < from) return 'The end must not be lower than the start.';
+      if (field.min !== undefined && from < field.min) return `Start at ${field.min} or more.`;
+      if (field.max !== undefined && to > field.max) return `End at ${field.max} or less.`;
+      break;
+    }
+    case 'ranking':
+      // The order is always complete — the input seeds it from the options —
+      // so there is nothing a respondent can get wrong here.
+      break;
     case 'regex':
       if (field.pattern) {
         try {

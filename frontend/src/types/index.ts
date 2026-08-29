@@ -360,7 +360,10 @@ export type RazorpayMode = 'test' | 'live';
 
 /** One mode's credentials, with secrets reduced to masks. */
 export interface KeyPairView {
+  /** Masked — a prefix and a tail, enough to recognise which key is saved. */
   keyId?: string;
+  /** Whether a key is saved at all, since `keyId` above is only a fragment. */
+  hasKeyId?: boolean;
   keySecretMask?: string;
   webhookSecretMask?: string;
   merchantId?: string;

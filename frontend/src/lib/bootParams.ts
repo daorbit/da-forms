@@ -15,3 +15,15 @@ export function bootParam(name: string): string | null {
 
 /** True when a host product embedded this app and owns the outer chrome. */
 export const IS_EMBEDDED = params.get('embedded') === '1';
+
+/**
+ * Proof from the host product that this browser may act for its workspace.
+ *
+ * Minted by Quantalog, which owns the session, and required by the routes that
+ * read or overwrite payment credentials — a workspace id in a URL is not
+ * something anyone should be able to point at someone else's Razorpay account.
+ *
+ * Read from the boot query string for the same reason as the theme: routing
+ * rewrites the URL, and the token would otherwise vanish on the first click.
+ */
+export const WORKSPACE_TOKEN = params.get('wt') ?? '';

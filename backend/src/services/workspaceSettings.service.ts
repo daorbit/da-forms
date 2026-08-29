@@ -7,7 +7,16 @@ import { testConnection, keyMatchesMode } from './payment.service.js';
 
 /** One mode's credentials as the settings screen is allowed to see them. */
 export interface KeyPairView {
+  /**
+   * Masked, not the real value. A Key ID is publishable — it reaches the
+   * browser at checkout anyway — but that is at checkout, for a payment
+   * actually being made. Handing the whole id back from a settings read tells
+   * anyone who gets at this response which Razorpay account a workspace uses,
+   * for nothing in return: the screen only needs enough to recognise the key.
+   */
   keyId?: string;
+  /** Whether a key is saved at all, since the id above is only a tail. */
+  hasKeyId?: boolean;
   keySecretMask?: string;
   webhookSecretMask?: string;
   merchantId?: string;
@@ -61,7 +70,7 @@ function buildChecklist(
   enabled: boolean,
   lastChargeAt?: Date
 ): ChecklistItem[] {
-  const hasKeys = Boolean(pair.keyId && pair.keySecretMask);
+  const hasKeys = Boolean(pair.hasKeyId && pair.keySecretMask);
   return [
     {
       id: 'keys',
@@ -108,7 +117,10 @@ export async function getRazorpaySettings(workspaceId: string): Promise<Razorpay
     const pair = razorpay?.[which];
     const account = which === 'live' ? razorpay?.liveAccount : razorpay?.testAccount;
     return {
-      keyId: pair?.keyId,
+      // The prefix says which mode it belongs to and the tail identifies it —
+      // enough to recognise, not enough to name the account.
+      keyId: pair?.keyId ? `${pair.keyId.slice(0, 8)}…${pair.keyId.slice(-4)}` : undefined,
+      hasKeyId: Boolean(pair?.keyId),
       keySecretMask: decryptMask(pair?.keySecretEnc),
       webhookSecretMask: decryptMask(pair?.webhookSecretEnc),
       merchantId: account?.merchantId,

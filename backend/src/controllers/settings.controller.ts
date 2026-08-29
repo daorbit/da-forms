@@ -26,7 +26,7 @@ export const savePaymentSettings: RequestHandler = async (req, res) => {
     const current = await settingsService.getRazorpaySettings(req.params.workspaceId);
     const activeMode = mode ?? current.mode;
     const pair = activeMode === 'live' ? current.live : current.test;
-    const willHaveKeyId = (target ?? activeMode) === activeMode ? keyId ?? pair.keyId : pair.keyId;
+    const willHaveKeyId = (target ?? activeMode) === activeMode ? keyId ?? pair.hasKeyId : pair.hasKeyId;
     const willHaveSecret =
       (target ?? activeMode) === activeMode ? keySecret || pair.keySecretMask : pair.keySecretMask;
     if (!willHaveKeyId || !willHaveSecret) {

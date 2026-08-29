@@ -6,6 +6,7 @@ import * as settingsController from '../controllers/settings.controller.js';
 import { uploadFormFile, uploadBackgroundImage } from '../controllers/upload.controller.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import { blockDemoWorkspaceWrites } from '../middleware/demo-workspace.js';
+import { requireWorkspaceToken } from '../middleware/require-workspace-token.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -69,10 +70,28 @@ workspaceFormRouter.post(
 export const workspaceSettingsRouter = Router({ mergeParams: true });
 
 workspaceSettingsRouter.use(blockDemoWorkspaceWrites);
+// Unlike the form routes, knowing the workspace id is not enough here: these
+// read and overwrite the Razorpay credentials every paid form in the workspace
+// charges through.
+workspaceSettingsRouter.use(requireWorkspaceToken);
+
+// Each call reaches out to Razorpay with whatever keys are saved. Without a
+// limit this is an open proxy for guessing at their API.
+const paymentTestLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited', message: 'Too many attempts — try again in a minute.' },
+});
 
 workspaceSettingsRouter.get('/payments', asyncHandler(settingsController.getPaymentSettings));
 workspaceSettingsRouter.put('/payments', asyncHandler(settingsController.savePaymentSettings));
-workspaceSettingsRouter.post('/payments/test', asyncHandler(settingsController.testPaymentConnection));
+workspaceSettingsRouter.post(
+  '/payments/test',
+  paymentTestLimiter,
+  asyncHandler(settingsController.testPaymentConnection)
+);
 workspaceSettingsRouter.delete('/payments', asyncHandler(settingsController.disconnectPayments));
 
 /**

@@ -82,6 +82,8 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [step, setStep] = useState<StepId>('keys');
+  /** Why this session cannot manage payments, when it cannot. */
+  const [denied, setDenied] = useState<string | null>(null);
 
   /** Which key set is being edited — not necessarily the one being charged through. */
   const [tab, setTab] = useState<RazorpayMode>('test');
@@ -103,7 +105,10 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
   };
 
   function loadTab(next: PaymentSettings, which: RazorpayMode) {
-    setKeyId(next[which].keyId ?? '');
+    // Left blank rather than prefilled: the server returns a masked id, and
+    // putting that in the input would save the mask over the real key on the
+    // next submit. The mask is shown as the field's description instead.
+    setKeyId('');
     setKeySecret('');
     setWebhookSecret('');
   }
@@ -123,7 +128,22 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
           first?.id === 'webhook' ? 'webhook' : first?.id === 'enabled' ? 'golive' : 'keys'
         );
       })
-      .catch(() => notifications.show({ message: 'Could not load payment settings.', color: 'red' }))
+      .catch((e) => {
+        // No token means this session cannot act for the workspace — a viewer,
+        // or a tab left open past the token's hour. Worth saying plainly
+        // rather than as a generic failure, since the fix differs.
+        const code = e instanceof ApiError ? e.code : undefined;
+        setDenied(
+          code === 'workspace_token_expired'
+            ? 'This session has expired. Reload the page to manage payments.'
+            : code === 'workspace_token_required' || code === 'workspace_token_invalid'
+              ? 'Open lead capture from your Quantalog workspace to manage payments. Editors only.'
+              : null
+        );
+        if (!code?.startsWith('workspace_token')) {
+          notifications.show({ message: 'Could not load payment settings.', color: 'red' });
+        }
+      })
       .finally(() => setLoading(false));
   }, [opened, workspaceId]);
 
@@ -205,9 +225,24 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
         content: { display: 'flex', flexDirection: 'column' },
       }}
     >
-      {loading || !settings ? (
+      {loading ? (
         <Center h="100%">
           <Loader size="sm" />
+        </Center>
+      ) : denied || !settings ? (
+        <Center h="100%" px="xl">
+          <Stack align="center" gap="sm" maw={420}>
+            <ThemeIcon variant="light" color="gray" size={52} radius="md">
+              <IconCreditCard size={24} />
+            </ThemeIcon>
+            <Text fw={600}>Payments unavailable</Text>
+            <Text size="sm" c="dimmed" ta="center">
+              {denied ?? 'Could not load payment settings.'}
+            </Text>
+            <Button variant="default" onClick={onClose} mt="xs">
+              Close
+            </Button>
+          </Stack>
         </Center>
       ) : (
         <Group h="100%" gap={0} align="stretch" wrap="nowrap" className={classes.shell}>
@@ -368,8 +403,12 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
 
                         <TextInput
                           label="Key ID"
-                          placeholder={`rzp_${tab}_...`}
-                          description={`${tab === 'live' ? 'Live' : 'Test'} keys start with rzp_${tab}_`}
+                          placeholder={pair?.hasKeyId ? '••••••••' : `rzp_${tab}_...`}
+                          description={
+                            pair?.hasKeyId
+                              ? `Saved: ${pair.keyId}. Leave blank to keep it.`
+                              : `${tab === 'live' ? 'Live' : 'Test'} keys start with rzp_${tab}_`
+                          }
                           value={keyId}
                           onChange={(e) => setKeyId(e.target.value)}
                         />
@@ -409,11 +448,11 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                             leftSection={<IconPlugConnected size={16} />}
                             onClick={handleTest}
                             loading={testing}
-                            disabled={!pair?.keyId}
+                            disabled={!pair?.hasKeyId}
                           >
                             Test connection
                           </Button>
-                          {pair?.keyId && (
+                          {pair?.hasKeyId && (
                             <Button
                               variant="subtle"
                               color="red"

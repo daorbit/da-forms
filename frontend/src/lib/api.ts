@@ -10,6 +10,7 @@ import type {
   ConnectionTestResult,
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
+import { WORKSPACE_TOKEN } from './bootParams';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -47,6 +48,27 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...init,
+  });
+  if (!res.ok) raise(await errorFrom(res));
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+/**
+ * Like `request`, but proves which workspace the caller may act for.
+ *
+ * Only the payment settings routes need this: everything else about a form is
+ * reachable by id already, whereas these read and overwrite the Razorpay
+ * credentials the workspace charges through.
+ */
+async function authedRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(WORKSPACE_TOKEN ? { authorization: `Bearer ${WORKSPACE_TOKEN}` } : {}),
+      ...init?.headers,
+    },
   });
   if (!res.ok) raise(await errorFrom(res));
   if (res.status === 204) return undefined as T;
@@ -240,7 +262,7 @@ export function getPaymentStatus(formId: string, orderId: string) {
 /* ---- Workspace payment settings ---- */
 
 export function getPaymentSettings(workspaceId = DEFAULT_WORKSPACE) {
-  return request<PaymentSettings>(`/workspaces/${encodeURIComponent(workspaceId)}/settings/payments`);
+  return authedRequest<PaymentSettings>(`/workspaces/${encodeURIComponent(workspaceId)}/settings/payments`);
 }
 
 export function savePaymentSettings(
@@ -255,7 +277,7 @@ export function savePaymentSettings(
   },
   workspaceId = DEFAULT_WORKSPACE
 ) {
-  return request<PaymentSettings>(
+  return authedRequest<PaymentSettings>(
     `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments`,
     { method: 'PUT', body: JSON.stringify(input) }
   );
@@ -263,14 +285,14 @@ export function savePaymentSettings(
 
 /** Asks Razorpay whether the saved keys work, so a wrong one is caught here. */
 export function testPaymentConnection(mode: RazorpayMode, workspaceId = DEFAULT_WORKSPACE) {
-  return request<ConnectionTestResult>(
+  return authedRequest<ConnectionTestResult>(
     `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments/test`,
     { method: 'POST', body: JSON.stringify({ mode }) }
   );
 }
 
 export function disconnectPayments(mode: RazorpayMode, workspaceId = DEFAULT_WORKSPACE) {
-  return request<PaymentSettings>(
+  return authedRequest<PaymentSettings>(
     `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments?mode=${mode}`,
     { method: 'DELETE' }
   );

@@ -84,6 +84,9 @@ export function NewFormModal({ opened, onClose }: Props) {
   function handleContinue(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    // Step one already asked where the form will live, so the picker opens on
+    // the matching set instead of making the same choice twice.
+    setScopeFilter(scope === 'card' ? 'card' : 'page');
     setStep(2);
   }
 
@@ -206,27 +209,6 @@ export function NewFormModal({ opened, onClose }: Props) {
                 ]}
               />
 
-              {/* Horizontal chips rather than a wrapping block: with ten
-                  categories a wrapped bar ate a third of the list's height. */}
-              <ScrollArea type="never" className={classes.filterBar}>
-                <Chip.Group
-                  multiple={false}
-                  value={category}
-                  onChange={(value) => setCategory((value as TemplateCategory) || 'All')}
-                >
-                  <Group gap={6} wrap="nowrap">
-                    <Chip value="All" size="xs" color="emerald" variant="outline">
-                      All
-                    </Chip>
-                    {categories.map((c) => (
-                      <Chip key={c} value={c} size="xs" color="emerald" variant="outline">
-                        {c}
-                      </Chip>
-                    ))}
-                  </Group>
-                </Chip.Group>
-              </ScrollArea>
-
               <div className={classes.templateList}>
                 {blank && (
                   <UnstyledButton
@@ -284,6 +266,27 @@ export function NewFormModal({ opened, onClose }: Props) {
                     where it collided with the modal's close button and its
                     tooltip opened off the top edge. */}
                 <Box className={classes.previewBar}>
+                  {/* Horizontal chips rather than a wrapping block: with a dozen
+                      categories a wrapped bar cost the stage its height. */}
+                  <ScrollArea type="never" className={classes.filterBar}>
+                    <Chip.Group
+                      multiple={false}
+                      value={category}
+                      onChange={(value) => setCategory((value as TemplateCategory) || 'All')}
+                    >
+                      <Group gap={6} wrap="nowrap">
+                        <Chip value="All" size="xs" color="emerald" variant="outline">
+                          All
+                        </Chip>
+                        {categories.map((c) => (
+                          <Chip key={c} value={c} size="xs" color="emerald" variant="outline">
+                            {c}
+                          </Chip>
+                        ))}
+                      </Group>
+                    </Chip.Group>
+                  </ScrollArea>
+
                   <DeviceSwitch device={device} onChange={setDevice} />
                 </Box>
 

@@ -9,6 +9,7 @@ import { propertyTemplates } from './property';
 import { hospitalityTemplates } from './hospitality';
 import { communityTemplates } from './community';
 import { embedTemplates } from './embed';
+import { professionalTemplates } from './professional';
 
 export type { FormTemplate, TemplateCategory } from './types';
 export { templateCategories } from './types';
@@ -22,6 +23,7 @@ export const formTemplates = [
   ...supportTemplates,
   ...commerceTemplates,
   ...businessTemplates,
+  ...professionalTemplates,
   ...educationTemplates,
   ...healthTemplates,
   ...hrTemplates,

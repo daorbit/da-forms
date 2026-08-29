@@ -9,7 +9,7 @@
 }
 
 .templateColumn {
-  width: 300px;
+  width: 290px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -17,9 +17,23 @@
   min-height: 0;
 }
 
+/* Takes whatever the device switch leaves and scrolls its own overflow, so a
+   long category list never pushes the switch off the bar's right edge. The
+   rule marks where the chips stop, since the last one is often cut mid-scroll
+   and would otherwise read as running into the device buttons. */
 .filterBar {
-  flex-shrink: 0;
-  padding-bottom: 2px;
+  flex: 1;
+  min-width: 0;
+  border-right: 1px solid var(--mantine-color-default-border);
+  padding-right: 10px;
+}
+
+/* Mantine's viewport renders a table-layout wrapper inside the scroll area; it
+   has to be told to fill the row, or the chips sit against the top edge. */
+.filterBar :global(.mantine-ScrollArea-viewport) > div {
+  display: flex !important;
+  align-items: center;
+  min-height: 100%;
 }
 
 /* Sits opposite the template name, so it must not push the name into ellipsis
@@ -91,7 +105,9 @@
 
 .previewBar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--mantine-color-default-border);
   flex-shrink: 0;

@@ -15,7 +15,7 @@ import { workspaceToken, refreshWorkspaceToken, ensureWorkspaceToken } from './w
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 export function publicFormPath(formId: string) {
-  return `/from/${formId}/view`;
+  return `/form/${formId}/view`;
 }
 
 export function publicFormUrl(formId: string) {

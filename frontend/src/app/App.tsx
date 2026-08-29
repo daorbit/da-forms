@@ -50,6 +50,14 @@ export function App() {
         <Route path="/:workspaceId/forms/:id/entries" element={<EntriesRoute />} />
 
         {/* The public share link: form id only, no workspace. */}
+        <Route path="/form/:id/view" element={<PublicFormPage />} />
+        {/*
+          The original spelling, kept working forever. Links already live in
+          QR codes, printed material and other people's pages — none of which
+          can be reissued — so this stays served rather than redirected: a
+          redirect would still break anything that captured the response
+          directly, and costs a round trip for no gain.
+        */}
         <Route path="/from/:id/view" element={<PublicFormPage />} />
       </Routes>
     </BrowserRouter>

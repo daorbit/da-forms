@@ -123,6 +123,12 @@ export function paymentFieldProblem(field: FormField, allFields?: FormField[]): 
 
   if (!pay.amountFieldId) return 'Pick which field holds the amount';
 
+  // The source field can be deleted long after it was chosen, and nothing
+  // else would say so until a respondent hit an error at submit.
+  if (allFields && !flattenFields(allFields).some((f) => f.id === pay.amountFieldId)) {
+    return 'The field this price came from was deleted — pick another';
+  }
+
   // A choice field priced per option is only configured once every option has
   // a price — an unpriced one would be rejected at submit, which is a bad
   // place to discover it.

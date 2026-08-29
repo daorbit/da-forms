@@ -5,7 +5,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconFileText, IconEye, IconEyeOff, IconWorld, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createForm, getForm, updateForm, getPaymentSettings } from '@/lib/api';
-import { findPaymentField } from '@/lib/payment';
+import { findPaymentField, paymentFieldProblem, paymentStepProblem } from '@/lib/payment';
 import { getDemoForm, isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
@@ -550,6 +550,33 @@ export function FormBuilderPage() {
   }
 
   async function handleTogglePublish() {
+    // Publishing is the last point before real respondents reach this. A
+    // payment field with no amount, or one priced off a deleted field, fails
+    // at submit — after someone has filled the whole form in.
+    const payField = findPaymentField(fields);
+    if (payField && savedForm?.status !== 'published') {
+      const problem = paymentFieldProblem(payField, fields) ?? paymentStepProblem(fields);
+      if (problem) {
+        notifications.show({
+          title: 'Fix the payment field first',
+          message: problem,
+          color: 'orange',
+        });
+        setSelectedId(payField.id);
+        setEditingId(payField.id);
+        return;
+      }
+      if (!paymentSettings?.enabled) {
+        notifications.show({
+          title: 'Payments are switched off',
+          message: 'Connect Razorpay and turn payments on, or this form cannot charge anyone.',
+          color: 'orange',
+        });
+        setRailPanel('payments');
+        return;
+      }
+    }
+
     setPublishing(true);
     try {
       const base = isDirty || !savedFormId ? await saveForm() : savedForm;

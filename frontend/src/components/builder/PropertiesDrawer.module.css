@@ -4,8 +4,10 @@
   overflow: hidden;
 }
 
+/* Theme-aware rather than a fixed grey: gray-3 disappears against the dark
+   surface, leaving the header with no edge at all. */
 .header {
-  border-bottom: 1px solid var(--mantine-color-gray-3);
+  border-bottom: 1px solid var(--mantine-color-default-border);
   min-height: 56px;
   padding: 14px 24px !important;
 }
@@ -51,10 +53,18 @@
 
 /* ---- Sections ---- */
 
+/* The rule spans the whole panel, not just the padded column: negative margins
+   pull it out to the drawer's edges and the padding puts the content back
+   where it was. A rule that stops short of both sides reads as a stray line
+   rather than a divider. */
 .section + .section {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid var(--mantine-color-gray-2);
+  margin-left: -28px;
+  margin-right: -28px;
+  padding-left: 28px;
+  padding-right: 28px;
+  border-top: 1px solid var(--mantine-color-default-border);
 }
 
 .sectionLabel {

@@ -10,10 +10,9 @@ import {
   Text,
   Switch,
   Select,
-  Alert,
   Anchor,
+  Box,
 } from '@mantine/core';
-import { IconCreditCard } from '@tabler/icons-react';
 import type {
   FormField,
   FieldSize,
@@ -363,32 +362,47 @@ export function PropertiesDrawer({
               {field.type === 'payment' && (
                 <Section label="Payment">
                   {/* Which account this charges into, and a way to get there.
-                      Without it the only pointer to the settings is a line of
-                      prose naming a panel the author may never have opened. */}
-                  <Alert
-                    variant="light"
-                    radius="md"
-                    color={paymentReady ? (paymentLive ? 'emerald' : 'gray') : 'orange'}
-                    icon={<IconCreditCard size={16} />}
-                    p="xs"
-                  >
-                    <Stack gap={6}>
-                      <Text size="xs">
+                      A plain row rather than a boxed alert: it is standing
+                      status, not something that just went wrong. */}
+                  <Group justify="space-between" wrap="nowrap" gap="xs">
+                    <Group gap={8} wrap="nowrap">
+                      <Box
+                        w={7}
+                        h={7}
+                        style={{
+                          borderRadius: 999,
+                          flexShrink: 0,
+                          backgroundColor: !paymentSettings
+                            ? 'var(--mantine-color-dimmed)'
+                            : !paymentReady
+                              ? 'var(--mantine-color-orange-6)'
+                              : paymentLive
+                                ? 'var(--mantine-color-emerald-6)'
+                                : 'var(--mantine-color-dimmed)',
+                        }}
+                      />
+                      <Text size="xs" c={paymentReady || !paymentSettings ? 'dimmed' : 'orange'}>
                         {!paymentSettings
-                          ? 'Checking your Razorpay connection…'
+                          ? 'Checking Razorpay…'
                           : !paymentReady
-                            ? 'No Razorpay account is connected — this form cannot take payments yet.'
+                            ? 'Razorpay not connected'
                             : paymentLive
-                              ? 'Connected. Charging real payments in live mode.'
-                              : 'Connected in test mode — no real money will move.'}
+                              ? 'Live — charging real payments'
+                              : 'Test mode — no real money'}
                       </Text>
-                      {onOpenPaymentSettings && (
-                        <Anchor component="button" type="button" size="xs" onClick={onOpenPaymentSettings}>
-                          {paymentReady ? 'Manage payment settings' : 'Connect Razorpay'}
-                        </Anchor>
-                      )}
-                    </Stack>
-                  </Alert>
+                    </Group>
+                    {onOpenPaymentSettings && (
+                      <Anchor
+                        component="button"
+                        type="button"
+                        size="xs"
+                        style={{ flexShrink: 0 }}
+                        onClick={onOpenPaymentSettings}
+                      >
+                        {paymentReady ? 'Manage' : 'Connect'}
+                      </Anchor>
+                    )}
+                  </Group>
 
                   <SegmentedControl
                     fullWidth
@@ -522,6 +536,11 @@ export function PropertiesDrawer({
 
                   <Select
                     label="Currency"
+                    description={
+                      payCurrency !== 'INR'
+                        ? 'Your Razorpay account must be enabled for this currency, or checkout will fail.'
+                        : undefined
+                    }
                     value={field.pay?.currency ?? 'INR'}
                     onChange={(v) => setPay({ currency: v ?? 'INR' })}
                     data={CURRENCIES.map((c) => ({ value: c.value, label: c.label }))}

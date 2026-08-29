@@ -109,6 +109,19 @@ export function PublicFormPage() {
   /** Returns false when nothing was stored, so the renderer keeps the draft. */
   async function handleSubmit(values: Record<string, string>): Promise<boolean> {
     if (!id) return false;
+
+    // An author checking their own form is not a respondent: nothing is
+    // stored, and above all nothing is charged. Without this, previewing a
+    // paid form opens a real checkout and bills the person who built it.
+    if (isPreview) {
+      notifications.show({
+        message: 'Preview — nothing was submitted and no payment was taken.',
+        color: 'blue',
+      });
+      setSubmitted(true);
+      return true;
+    }
+
     setSubmitting(true);
     try {
       const result = await submitForm(

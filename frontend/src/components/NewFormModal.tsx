@@ -6,7 +6,7 @@ import { IconArrowLeft, IconPlus, IconSearch } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
 import { formTemplates, templateCategories, type TemplateCategory } from '@/lib/templates';
-import { filterTemplates, usedCategories } from '@/lib/templates/search';
+import { filterTemplates, usedCategories, type ScopeFilter } from '@/lib/templates/search';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
 import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
@@ -32,10 +32,9 @@ export function NewFormModal({ opened, onClose }: Props) {
   const [creating, setCreating] = useState(false);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<TemplateCategory | 'All'>('All');
+  const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
 
   const [device, setDevice] = useState<DeviceId>('macbook');
-
-  const activeTemplate = formTemplates.find((t) => t.id === templateId) ?? formTemplates[0];
 
   const categories = usedCategories(formTemplates, templateCategories);
   // The blank card is a shortcut, not a template — it stays pinned at the top
@@ -44,8 +43,14 @@ export function NewFormModal({ opened, onClose }: Props) {
   const results = filterTemplates(
     formTemplates.filter((t) => t.id !== 'blank'),
     query,
-    category
+    category,
+    scopeFilter
   );
+
+  // Filtering can hide whatever was selected. Rather than previewing a template
+  // no longer in the list, fall through to the first visible one.
+  const selected = results.find((t) => t.id === templateId);
+  const activeTemplate = selected ?? results[0] ?? formTemplates.find((t) => t.id === templateId) ?? formTemplates[0];
 
   // The frame renders at the device's true CSS width and is scaled down to
   // whatever room the modal leaves, so the layout inside is the real one.
@@ -68,6 +73,7 @@ export function NewFormModal({ opened, onClose }: Props) {
     setCreating(false);
     setQuery('');
     setCategory('All');
+    setScopeFilter('all');
   }
 
   function handleClose() {
@@ -78,6 +84,9 @@ export function NewFormModal({ opened, onClose }: Props) {
   function handleContinue(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    // Step one already asked where the form will live, so the picker opens on
+    // the matching set rather than making the same choice twice.
+    setScopeFilter(scope === 'card' ? 'card' : 'page');
     setStep(2);
   }
 
@@ -186,6 +195,18 @@ export function NewFormModal({ opened, onClose }: Props) {
                 size="sm"
               />
 
+              <SegmentedControl
+                fullWidth
+                size="xs"
+                value={scopeFilter}
+                onChange={(value) => setScopeFilter(value as ScopeFilter)}
+                data={[
+                  { value: 'all', label: 'All' },
+                  { value: 'page', label: 'Standalone' },
+                  { value: 'card', label: 'Embedded' },
+                ]}
+              />
+
               {/* Horizontal chips rather than a wrapping block: with ten
                   categories a wrapped bar ate a third of the list's height. */}
               <ScrollArea type="never" className={classes.filterBar}>
@@ -233,7 +254,7 @@ export function NewFormModal({ opened, onClose }: Props) {
                   <UnstyledButton
                     key={tpl.id}
                     onClick={() => setTemplateId(tpl.id)}
-                    className={`${classes.templateItem} ${tpl.id === templateId ? classes.templateItemActive : ''}`}
+                    className={`${classes.templateItem} ${tpl.id === activeTemplate.id ? classes.templateItemActive : ''}`}
                     style={{ display: 'block', width: '100%', textAlign: 'left', boxSizing: 'border-box' }}
                   >
                     <Group justify="space-between" gap="xs" wrap="nowrap">

@@ -264,10 +264,36 @@ export function PropertiesDrawer({ field, allFields, onClose, onChange }: Props)
               </Section>
 
               {optionTypes.includes(field.type) && (
-                <Section label="Options">
+                <Section label={field.type === 'matrix' ? 'Answer columns' : 'Options'}>
                   <ChoiceEditor
                     options={field.options ?? []}
                     onChange={(options) => set({ options })}
+                  />
+                </Section>
+              )}
+
+              {/* A matrix is rows against those shared columns, so its
+                  statements get an editor of their own. */}
+              {field.type === 'matrix' && (
+                <Section label="Rows">
+                  <ChoiceEditor options={field.rows ?? []} onChange={(rows) => set({ rows })} />
+                </Section>
+              )}
+
+              {field.type === 'hidden' && (
+                <Section label="Value source">
+                  <TextInput
+                    label="URL parameter"
+                    description="Taken from the link's query string, e.g. utm_source."
+                    placeholder="utm_source"
+                    value={field.paramName ?? ''}
+                    onChange={(e) => set({ paramName: e.target.value || undefined })}
+                  />
+                  <TextInput
+                    label="Fallback value"
+                    description="Used when the link carries no such parameter."
+                    value={field.initialValue ?? ''}
+                    onChange={(e) => set({ initialValue: e.target.value || undefined })}
                   />
                 </Section>
               )}

@@ -29,6 +29,9 @@ import {
   IconCheckbox as IconYesNo,
   IconHash,
   IconDice,
+  IconSignature,
+  IconTable,
+  IconEyeOff,
   IconHeading,
   IconTypography,
   IconMinus,
@@ -128,13 +131,19 @@ export const fieldPalette: PaletteGroup[] = [
       { type: 'terms', label: 'Terms', icon: IconFileCertificate, color: 'grape' },
       { type: 'decisionBox', label: 'Decision', icon: IconSquareCheck, color: 'grape' },
       { type: 'yesNo', label: 'Yes/No', icon: IconYesNo, color: 'grape' },
+      { type: 'signature', label: 'Signature', icon: IconSignature, color: 'grape' },
     ],
+  },
+  {
+    group: 'Survey',
+    items: [{ type: 'matrix', label: 'Matrix', icon: IconTable, color: 'cyan' }],
   },
   {
     group: 'Identifier',
     items: [
       { type: 'uniqueId', label: 'Unique ID', icon: IconHash, color: 'red' },
       { type: 'randomId', label: 'Random ID', icon: IconDice, color: 'red' },
+      { type: 'hidden', label: 'Hidden', icon: IconEyeOff, color: 'red' },
     ],
   },
   {
@@ -174,7 +183,7 @@ export const paletteByType = Object.fromEntries(
 /** Layout-only elements: no label column, no value collected. */
 export const staticTypes: FieldType[] = ['heading', 'description', 'divider', 'spacer', 'pageBreak'];
 
-export const optionTypes: FieldType[] = ['select', 'radio', 'checkbox', 'multipleChoice'];
+export const optionTypes: FieldType[] = ['select', 'radio', 'checkbox', 'multipleChoice', 'matrix'];
 
 export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slider'];
 
@@ -227,6 +236,7 @@ export function makeField(type: FieldType, columns?: number): FormField {
     field.label = '';
     return field;
   }
+  // Before the matrix defaults below, which replace these with answer columns.
   if (optionTypes.includes(type)) field.options = ['Option 1', 'Option 2'];
   if (type === 'rating') field.maxRating = 5;
   if (type === 'slider') {
@@ -234,6 +244,11 @@ export function makeField(type: FieldType, columns?: number): FormField {
     field.max = 100;
     field.step = 1;
   }
+  if (type === 'matrix') {
+    field.rows = ['First statement', 'Second statement'];
+    field.options = ['Disagree', 'Neutral', 'Agree'];
+  }
+  if (type === 'hidden') field.label = 'Hidden value';
   if (type === 'heading') field.content = 'Heading';
   if (type === 'description') field.content = 'Description text';
   if (textTypes.includes(type)) field.maxLength = 255;

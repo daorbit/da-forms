@@ -30,7 +30,25 @@ export function validateField(field: FormField, raw: string): string {
   }
 
   if (field.required && !value) {
+    if (field.type === 'signature') return 'Please sign in the box.';
     return `${field.label || 'This field'} is required.`;
+  }
+
+  // A matrix is answered row by row, so "filled in" means every statement has
+  // a choice — a half-completed grid is not a usable answer.
+  if (field.type === 'matrix' && field.required) {
+    const answered = new Set(
+      value
+        .split(' | ')
+        .map((pair) => pair.split(': ')[0])
+        .filter(Boolean)
+    );
+    const missing = (field.rows ?? []).filter((row) => !answered.has(row));
+    if (missing.length > 0) {
+      return missing.length === 1
+        ? `Answer "${missing[0]}".`
+        : `Answer all ${field.rows?.length} rows.`;
+    }
   }
 
   // Every rule below describes the shape of an answer, so an empty optional

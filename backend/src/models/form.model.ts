@@ -28,6 +28,9 @@ export type FieldType =
   | 'terms'
   | 'decisionBox'
   | 'yesNo'
+  | 'signature'
+  | 'matrix'
+  | 'hidden'
   | 'uniqueId'
   | 'randomId'
   | 'heading'
@@ -71,6 +74,10 @@ export interface FormField {
   content?: string;
   /** A grid's columns, each holding its own fields. */
   columns?: FormField[][];
+  /** A matrix's statements, one per row; the answer columns are `options`. */
+  rows?: string[];
+  /** The URL query parameter a hidden field takes its value from. */
+  paramName?: string;
   showIf?: ShowIfRule;
   /** Pixel width, overriding the size preset outright. */
   customWidth?: number;
@@ -232,6 +239,8 @@ const fieldSchema = new Schema<FormField>(
      * nesting into every query that reads a form.
      */
     columns: { type: Schema.Types.Mixed },
+    rows: { type: [String], default: undefined },
+    paramName: { type: String },
     showIf: { type: Schema.Types.Mixed },
     customWidth: { type: Number },
     customHeight: { type: Number },

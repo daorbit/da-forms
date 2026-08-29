@@ -44,6 +44,11 @@ export type FieldType =
   | 'terms'
   | 'decisionBox'
   | 'yesNo'
+  | 'signature'
+  // Survey
+  | 'matrix'
+  // Collected without being shown — a UTM tag, a passed-in id
+  | 'hidden'
   // Identifier
   | 'uniqueId'
   | 'randomId'
@@ -173,6 +178,16 @@ export interface FormField {
    * the drop site rather than by the type, which keeps the shape simple.
    */
   columns?: FormField[][];
+  /**
+   * A matrix's statements, one per row. The shared answer choices live in
+   * `options`, so a matrix is rows × options.
+   */
+  rows?: string[];
+  /**
+   * Where a hidden field takes its value from: a URL query parameter of this
+   * name. Falls back to `initialValue` when the parameter is absent.
+   */
+  paramName?: string;
   showIf?: ShowIfRule;
   /** Pixel width, overriding the size preset outright. */
   customWidth?: number;

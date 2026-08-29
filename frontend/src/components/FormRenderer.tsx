@@ -67,8 +67,18 @@ function resolveDateSentinel(sentinel: string, type: FormField['type']): string 
 
 function initialValues(fields: FormField[]) {
   const values: Record<string, string> = {};
+  // Read once: a hidden field's whole job is to carry what the link arrived
+  // with, so a later navigation should not change an answer in progress.
+  const params = new URLSearchParams(window.location.search);
+
   // Walks into grids: a prefilled field inside a column is still prefilled.
   for (const field of valueFields(fields)) {
+    if (field.type === 'hidden') {
+      const fromUrl = field.paramName ? params.get(field.paramName) : null;
+      const resolved = fromUrl ?? field.initialValue ?? '';
+      if (resolved) values[field.id] = resolved;
+      continue;
+    }
     if (!field.initialValue) continue;
     values[field.id] =
       field.initialValue === '__today__' || field.initialValue === '__now__'

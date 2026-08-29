@@ -44,7 +44,12 @@ interface Props {
   showStepHeadings?: boolean;
   submitting?: boolean;
   /** Omitted in preview, where nothing is recorded and there is no spam to guard against. */
-  onSubmit?: (values: Record<string, string>) => void;
+  /**
+   * Returning `false` means the submission did not land — a cancelled payment,
+   * most often — and the respondent's draft is kept so they can try again
+   * without retyping. Anything else counts as accepted.
+   */
+  onSubmit?: (values: Record<string, string>) => void | boolean | Promise<void | boolean>;
 }
 
 const buttonSize: Record<SubmitButtonSize, string> = {
@@ -269,16 +274,31 @@ export function FormRenderer({
           [...files, ...signatures].forEach((f, i) => {
             submitValues[f.id] = uploaded[i].url;
           });
+          // Written back so a retry after a cancelled payment reuses these
+          // URLs instead of uploading the same files a second time and
+          // stranding the first copies in storage.
+          setValues((prev) => {
+            const next = { ...prev };
+            [...files, ...signatures].forEach((f, i) => {
+              next[f.id] = uploaded[i].url;
+            });
+            return next;
+          });
+          setPendingFiles({});
         } finally {
           setIsUploading(false);
         }
       }
     }
 
-    // Cleared before the handler runs: a submitted form should not offer to
-    // restore itself if the respondent comes back to the page.
-    draft.clear();
-    onSubmit?.(honeypot ? { ...submitValues, _hp: honeypot } : submitValues);
+    // Kept until the handler says the submission actually landed. A paid form
+    // opens a checkout window the respondent may well cancel, and clearing
+    // first would throw away everything they typed on the way to a payment
+    // that never happened.
+    const accepted = await onSubmit?.(
+      honeypot ? { ...submitValues, _hp: honeypot } : submitValues
+    );
+    if (accepted !== false) draft.clear();
   }
 
   function restoreDraft() {

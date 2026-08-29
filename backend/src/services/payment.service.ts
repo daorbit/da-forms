@@ -27,6 +27,52 @@ export function findPaymentField(fields: FormField[]): FormField | undefined {
   return undefined;
 }
 
+/**
+ * Whether a field's `showIf` rule lets it render, given the submitted answers.
+ *
+ * Mirrors the frontend's `isFieldVisible`. Duplicated rather than shared
+ * because the two run in different packages, and the rule matters here for one
+ * reason above all: a payment field hidden by a condition must not charge.
+ * Trusting the browser to leave it out is not enough when money is involved.
+ */
+export function isFieldVisible(field: FormField, values: Record<string, string>): boolean {
+  const rule = field.showIf;
+  if (!rule) return true;
+
+  const actual = values[rule.fieldId];
+  const str = actual == null ? '' : String(actual).trim();
+  switch (rule.operator) {
+    case 'isEmpty':
+      return str === '';
+    case 'isNotEmpty':
+      return str !== '';
+    case 'equals':
+      return str === (rule.value ?? '');
+    case 'notEquals':
+      return str !== (rule.value ?? '');
+    case 'contains':
+      return str.toLowerCase().includes((rule.value ?? '').toLowerCase());
+    default:
+      return true;
+  }
+}
+
+/**
+ * The payment field this submission actually has to pay, if any.
+ *
+ * A payment field whose condition is not met is not charged — someone who
+ * picked "free plan" should not be billed because the field exists on the
+ * form.
+ */
+export function activePaymentField(
+  fields: FormField[],
+  values: Record<string, string>
+): FormField | undefined {
+  const field = findPaymentField(fields);
+  if (!field) return undefined;
+  return isFieldVisible(field, values) ? field : undefined;
+}
+
 /** Every field in document order, grids included. */
 function flatten(fields: FormField[]): FormField[] {
   return fields.flatMap((field) =>

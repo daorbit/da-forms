@@ -381,7 +381,23 @@ export function FormBuilderPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeFormId]);
 
+  /**
+   * A form charges once, so it carries one payment field.
+   *
+   * Refused here rather than at submit: a second one would silently never be
+   * charged, since the backend takes the first it finds.
+   */
+  function refusesSecondPayment(type: FieldType): boolean {
+    if (type !== 'payment' || !findPaymentField(fields)) return false;
+    notifications.show({
+      message: 'A form can only take one payment. Edit the payment field you already have.',
+      color: 'orange',
+    });
+    return true;
+  }
+
   function addField(type: FieldType, columns?: number) {
+    if (refusesSecondPayment(type)) return;
     const field = makeField(type, columns);
     setFields((prev) => [...prev, field]);
     setSelectedId(field.id);
@@ -400,6 +416,15 @@ export function FormBuilderPage() {
     setFields((prev) => {
       const source = findField(prev, id);
       if (!source) return prev;
+      // Copying the payment field would give the form two, and only the first
+      // would ever charge.
+      if (source.type === 'payment') {
+        notifications.show({
+          message: 'A form can only take one payment.',
+          color: 'orange',
+        });
+        return prev;
+      }
       // A fresh id for the copy and for everything inside it, or the tree would
       // hold the same id twice and dnd-kit would address both at once.
       const copy = cloneWithNewIds(source);
@@ -430,7 +455,8 @@ export function FormBuilderPage() {
       data.kind === 'palette'
         ? (() => {
             const item = paletteByKey[data.paletteKey];
-            return item ? makeField(item.type, item.columns) : null;
+            if (!item || refusesSecondPayment(item.type)) return null;
+            return makeField(item.type, item.columns);
           })()
         : data.field;
     if (!field) return;

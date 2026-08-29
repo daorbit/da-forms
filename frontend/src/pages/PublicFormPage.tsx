@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Container,
@@ -54,6 +54,9 @@ export function PublicFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // The order id of the last attempt, so a retry after a cancelled checkout
+  // can tell the server which pending row it supersedes.
+  const lastOrderId = useRef<string | null>(null);
  
   const embedded = window.self !== window.top;
 
@@ -103,16 +106,23 @@ export function PublicFormPage() {
     recordView(id).catch(() => {});
   }, [id, isPreview]);
 
-  async function handleSubmit(values: Record<string, string>) {
-    if (!id) return;
+  /** Returns false when nothing was stored, so the renderer keeps the draft. */
+  async function handleSubmit(values: Record<string, string>): Promise<boolean> {
+    if (!id) return false;
     setSubmitting(true);
     try {
-      const result = await submitForm(id, values);
+      const result = await submitForm(
+        id,
+        // Names the attempt this one replaces, so a cancelled checkout does
+        // not leave a pending row behind on every retry.
+        lastOrderId.current ? { ...values, _retryOrderId: lastOrderId.current } : values,
+      );
 
       // A paid form stores the response but withholds it until Razorpay
       // confirms. Nothing is a submission yet, so nothing below runs until
       // the payment actually lands.
       if (isPaymentRequired(result)) {
+        lastOrderId.current = result.orderId;
         const outcome = await openCheckout(result, prefillFrom(form, values));
         if (!outcome.ok) {
           setSubmitting(false);
@@ -120,7 +130,9 @@ export function PublicFormPage() {
             message: outcome.reason ?? "Payment was not completed.",
             color: "red",
           });
-          return;
+          // Their answers stay put — cancelling a payment should not cost
+          // someone the form they just filled in.
+          return false;
         }
 
         // Checkout succeeding is the bank's word, not the server's. The
@@ -138,7 +150,9 @@ export function PublicFormPage() {
             color: "yellow",
             autoClose: false,
           });
-          return;
+          // Paid but unconfirmed: the draft goes, because submitting again
+          // would charge them a second time.
+          return true;
         }
       }
     } catch (e) {
@@ -152,19 +166,20 @@ export function PublicFormPage() {
           e.code === "payment_unavailable")
       ) {
         notifications.show({ message: e.message, color: "red" });
-        return;
+        return false;
       }
       // The form was unpublished after this page loaded — refetch so the
       // "not accepting responses" screen takes over instead of a dead end.
       getPublicForm(id).then(setForm);
-      return;
+      return false;
     }
     setSubmitting(false);
     if (form?.redirectUrl) {
       window.location.href = form.redirectUrl;
-      return;
+      return true;
     }
     setSubmitted(true);
+    return true;
   }
 
   // Same standalone/embedded split as the status screens below: a spinner

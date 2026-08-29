@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import type { FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
+import { paymentCellText } from '@/lib/payment';
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
@@ -41,7 +42,12 @@ export function downloadSubmissionPdf(formTitle: string, columns: FormField[], s
   y += 28;
 
   for (const field of columns) {
-    const raw = submission.data[field.id] ?? '';
+    // A payment column has no answer in `data` — its value lives on the
+    // submission, written by the webhook once Razorpay confirmed it.
+    const raw =
+      field.type === 'payment'
+        ? paymentCellText(submission.payment)
+        : (submission.data[field.id] ?? '');
     const isFile = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
 
     ensureSpace(34);

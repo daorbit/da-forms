@@ -307,6 +307,26 @@ export async function markSubmissionFailed(orderId: string) {
   );
 }
 
+/**
+ * Drop an abandoned checkout the respondent is now retrying.
+ *
+ * Guarded on 'pending_payment' so a paid submission can never be removed this
+ * way — the order id arrives from the browser, and a client asking to delete a
+ * completed response must get nothing.
+ */
+export async function discardPendingSubmission(orderId: string) {
+  const submission = await SubmissionModel.findOne({
+    'payment.orderId': orderId,
+    status: 'pending_payment',
+  });
+  if (!submission) return null;
+
+  // The uploads stay: the retry reuses the same URLs, so destroying them here
+  // would leave the new submission pointing at files that no longer exist.
+  await SubmissionModel.deleteOne({ _id: submission._id });
+  return submission;
+}
+
 /** A submission by its Razorpay order id — how the post-checkout poll finds its status. */
 export function getSubmissionByOrderId(orderId: string) {
   return SubmissionModel.findOne({ 'payment.orderId': orderId });

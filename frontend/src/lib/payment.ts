@@ -1,4 +1,4 @@
-import type { FormField, PaymentConfig } from '@/types';
+import type { FormField, PaymentConfig, SubmissionPayment } from '@/types';
 
 /**
  * Currencies a form can charge in.
@@ -142,6 +142,69 @@ function flattenFields(fields: FormField[]): FormField[] {
   return fields.flatMap((field) =>
     field.type === 'grid' ? [field, ...(field.columns ?? []).flatMap(flattenFields)] : [field]
   );
+}
+
+/**
+ * Multi-step problems a payment field can have, or null when it is fine.
+ *
+ * Both are about ordering. Payment happens at final submit whatever page the
+ * field sits on, so a field on an early page tells the respondent a price and
+ * then charges it several steps later; and a price read from an answer the
+ * respondent has not reached yet cannot be worked out at all.
+ */
+export function paymentStepProblem(fields: FormField[]): string | null {
+  const pages = splitPages(fields);
+  if (pages.length < 2) return null;
+
+  const paymentPage = pages.findIndex((page) => findPaymentField(page));
+  if (paymentPage === -1) return null;
+
+  const payField = findPaymentField(pages[paymentPage]);
+  const pay = payField?.pay;
+
+  if (pay?.mode === 'field' && pay.amountFieldId) {
+    const sourcePage = pages.findIndex((page) =>
+      flattenFields(page).some((f) => f.id === pay.amountFieldId)
+    );
+    if (sourcePage > paymentPage) {
+      return `The amount comes from a field on step ${sourcePage + 1}, but the payment is on step ${
+        paymentPage + 1
+      }. Move the payment field after it.`;
+    }
+  }
+
+  if (paymentPage < pages.length - 1) {
+    return `Payment is taken when the form is submitted, on step ${pages.length} — not on step ${
+      paymentPage + 1
+    } where this field sits. Move it to the last step.`;
+  }
+
+  return null;
+}
+
+/**
+ * A submission's payment as one line of text, for CSV and PDF exports.
+ *
+ * Those read `data[fieldId]`, which a payment field never populates — the
+ * payment lives on the submission itself, written by the webhook.
+ */
+export function paymentCellText(payment: SubmissionPayment | undefined): string {
+  if (!payment) return '';
+  const amount = formatAmount(payment.amount, payment.currency);
+  if (payment.status === 'paid') {
+    return payment.method ? `${amount} paid (${payment.method})` : `${amount} paid`;
+  }
+  return `${amount} ${payment.status === 'failed' ? 'failed' : 'pending'}`;
+}
+
+/** Top-level page breaks split the form. Mirrors `splitIntoPages`. */
+function splitPages(fields: FormField[]): FormField[][] {
+  const pages: FormField[][] = [[]];
+  for (const field of fields) {
+    if (field.type === 'pageBreak') pages.push([]);
+    else pages[pages.length - 1].push(field);
+  }
+  return pages;
 }
 
 /** The one payment field on a form, if any. Searches grid columns too. */

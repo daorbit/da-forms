@@ -58,6 +58,8 @@ import { valueFields } from '@/lib/fieldTree';
 import { EntriesKanban } from '@/components/builder/EntriesKanban';
 import { AnalyticsBar } from '@/components/builder/AnalyticsBar';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
+import { paymentCellText } from '@/lib/payment';
+import { PaymentCell } from '@/components/builder/PaymentCell';
 import classes from './EntriesPage.module.css';
 
 function formatDateTime(iso: string) {
@@ -234,7 +236,13 @@ export function EntriesPage() {
     if (!form) return;
     const header = [...columns.map((f) => f.label), 'Added Time'];
     const rows = submissions.map((s) => [
-      ...columns.map((f) => JSON.stringify(s.data[f.id] ?? '')),
+      ...columns.map((f) =>
+        JSON.stringify(
+          // A payment column has no answer in `data` — its value is on the
+          // submission, written by the webhook.
+          f.type === 'payment' ? paymentCellText(s.payment) : (s.data[f.id] ?? '')
+        )
+      ),
       JSON.stringify(formatDateTime(s.createdAt)),
     ]);
     const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -520,6 +528,16 @@ export function EntriesPage() {
                       style={{ fontWeight: submission.read ? 400 : 700 }}
                     >
                       {columns.map((field) => {
+                        // A payment is not an answer — it lives on the
+                        // submission itself, written by the webhook rather
+                        // than typed by the respondent.
+                        if (field.type === 'payment') {
+                          return (
+                            <Table.Td key={field.id}>
+                              <PaymentCell payment={submission.payment} />
+                            </Table.Td>
+                          );
+                        }
                         const raw = submission.data[field.id] ?? '';
                         // Older submissions (or builder-preview edits) may only hold a bare
                         // filename from before uploads were wired to Cloudinary — link only

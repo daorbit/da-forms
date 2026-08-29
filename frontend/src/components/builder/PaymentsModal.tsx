@@ -298,7 +298,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
               <Group gap="sm">
                 <Title order={4}>{STEPS.find((s) => s.id === step)?.label}</Title>
                 {settings.mode === 'live' ? (
-                  <Badge color="emerald" variant="light">
+                  <Badge color="emerald" variant="filled">
                     Live mode
                   </Badge>
                 ) : (
@@ -360,7 +360,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                             {tab === 'live' ? 'Live' : 'Test'} credentials
                           </Text>
                           {settings.mode === tab && (
-                            <Badge size="sm" variant="light">
+                            <Badge size="sm" variant="filled" color="emerald">
                               Currently in use
                             </Badge>
                           )}

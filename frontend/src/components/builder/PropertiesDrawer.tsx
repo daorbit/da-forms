@@ -35,6 +35,7 @@ import {
   toMajorUnits,
   toMinorUnits,
   paymentFieldProblem,
+  paymentStepProblem,
   isChoiceField,
   PRICEABLE_TYPES,
 } from '@/lib/payment';
@@ -140,6 +141,9 @@ export function PropertiesDrawer({
         : paymentSettings.test.keyId)
   );
   const paymentLive = paymentSettings?.mode === 'live';
+
+  const paymentStepIssue =
+    field?.type === 'payment' ? paymentStepProblem(allFields) : null;
 
   const showIfRule = field?.showIf;
   const showIfValueless = showIfRule && (showIfRule.operator === 'isEmpty' || showIfRule.operator === 'isNotEmpty');
@@ -533,6 +537,11 @@ export function PropertiesDrawer({
                   {paymentProblem && (
                     <Text size="xs" c="orange">
                       {paymentProblem}
+                    </Text>
+                  )}
+                  {paymentStepIssue && (
+                    <Text size="xs" c="orange">
+                      {paymentStepIssue}
                     </Text>
                   )}
                 </Section>

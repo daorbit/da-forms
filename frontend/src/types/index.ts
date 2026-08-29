@@ -318,6 +318,14 @@ export interface SubmissionPayment {
   currency: string;
   status: 'created' | 'paid' | 'failed';
   paidAt?: string;
+  /**
+   * Who Razorpay says paid. Captured because a form that collects no contact
+   * details would otherwise leave a payment that cannot be matched to a person.
+   */
+  payerEmail?: string;
+  payerContact?: string;
+  /** card, upi, netbanking — whatever they used. */
+  method?: string;
 }
 
 export interface Submission {

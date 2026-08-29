@@ -211,7 +211,9 @@ export const submitForm: RequestHandler = async (req, res) => {
   // `_hp` is a field real respondents never see or fill — a bot filling
   // every input trips it. It is not part of the form's own data and is
   // stripped before the submission is stored.
-  const { _hp, ...data } = req.body;
+  // `_retryOrderId` rides along the same way — it names the abandoned attempt
+  // this submission replaces, and is no more part of the answers than `_hp`.
+  const { _hp, _retryOrderId: _ignoredRetry, ...data } = req.body;
   if (_hp) {
     return res.status(400).json({ error: 'spam_detected', message: 'Submission rejected' });
   }
@@ -233,7 +235,11 @@ export const submitForm: RequestHandler = async (req, res) => {
   }
 
   const sourceUrl = req.get('referer');
-  const payField = paymentService.findPaymentField(form.fields);
+  // Only charges when its own condition is met — someone who picked the free
+  // option should not be billed just because the field exists on the form.
+  // Evaluated here rather than trusted from the browser, since it decides
+  // whether money changes hands.
+  const payField = paymentService.activePaymentField(form.fields, data);
 
   try {
     // A form that charges takes a different path: the response is stored, but
@@ -243,6 +249,14 @@ export const submitForm: RequestHandler = async (req, res) => {
       const amount = paymentService.resolveAmount(payField, data, form.fields);
       const currency = payField.pay?.currency ?? 'INR';
       const credentials = await paymentService.getCredentials(form.workspaceId);
+
+      // Someone retrying after a cancelled checkout leaves a pending row
+      // behind on every attempt. Dropped here rather than left for the sweep,
+      // so three abandoned tries do not become three rows nobody can see but
+      // that still hold this respondent's uploads.
+      if (req.body._retryOrderId) {
+        await formService.discardPendingSubmission(String(req.body._retryOrderId));
+      }
 
       const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl, {
         provider: 'razorpay',

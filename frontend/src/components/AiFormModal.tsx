@@ -18,6 +18,7 @@ import { generatedToTemplate, type GeneratedForm } from '@/lib/generatedForm';
 import { isPlanLimit } from '@/lib/planLimit';
 import classes from './NewFormModal.module.css';
 import ai from './AiFormModal.module.css';
+import { clearOrbitDraft, readOrbitDraft, saveOrbitDraft } from '@/lib/orbitDraft';
 
 interface Props {
   opened: boolean;
@@ -28,39 +29,27 @@ interface Props {
   scope: NonNullable<FormTheme['scope']>;
 }
 
-/** Shown before the first generation, so the box is not a blank stare. */
 const SUGGESTIONS = [
   'A job application form for a restaurant, with CV upload',
   'Patient intake for a dental clinic, calm and light',
   'Event feedback with a 1-5 rating and comments',
 ];
 
-/**
- * Build a form by describing it.
- *
- * Its own modal rather than a box bolted onto the template picker: the two are
- * different ways of starting, and the gallery's search, filters and categories
- * are noise to someone who has already decided to describe what they want.
- *
- * Laid out like the template picker — a column of controls, the preview beside
- * it — because it is the same decision being made, and the preview is what the
- * decision rests on either way. The left column is Orbit's own surface, so the
- * assistant reads as the same one that answers questions in Quantalog.
- *
- * The result is a draft. Nothing is stored until Create form is pressed, and
- * the follow-up box means "nearly right" is a sentence rather than a restart.
- */
+ 
 export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props) {
   const navigate = useNavigate();
   const workspaceId = useWorkspaceId();
 
+ 
+  const [rescued] = useState(() => readOrbitDraft(workspaceId));
+
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState<GeneratedForm | null>(null);
+  const [draft, setDraft] = useState<GeneratedForm | null>(rescued?.form ?? null);
   const [device, setDevice] = useState<DeviceId>('macbook');
   /** Every instruction so far, so the pane reads as a conversation. */
-  const [history, setHistory] = useState<string[]>([]);
+  const [history, setHistory] = useState<string[]>(rescued?.history ?? []);
 
   const template = draft ? generatedToTemplate(draft) : null;
 
@@ -78,6 +67,10 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
     setDraft(null);
     setDevice('macbook');
     setHistory([]);
+    // The stored copy exists only to survive a reload of this session. Leaving
+    // it behind would mean reopening Orbit into an old conversation instead of
+    // a blank pane.
+    clearOrbitDraft();
   }
 
   function handleClose() {
@@ -85,13 +78,7 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
     onClose();
   }
 
-  /**
-   * Generate, or refine what is already there.
-   *
-   * One box does both. Once a draft exists the prompt is read as a change to it
-   * — "add a phone field" — and the draft travels with it so the model edits
-   * rather than starts over.
-   */
+ 
   async function run(text?: string) {
     const asked = (text ?? prompt).trim();
     if (!asked || generating) return;
@@ -101,8 +88,9 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
     try {
       const next = await generateFormDraft(asked, workspaceId, draft ?? undefined);
       setDraft(next);
-      // Cleared so the box reads as ready for the next change rather than still
-      // holding an instruction that has already been applied.
+ 
+      saveOrbitDraft({ workspaceId, formName, history: [...history, asked], form: next });
+ 
       setPrompt('');
     } catch (err) {
       setHistory((h) => h.slice(0, -1));

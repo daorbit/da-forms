@@ -446,8 +446,31 @@ export function FieldControl({
             onChange={(v) => !readOnly && onChange(v.join(', '))}
           >
             <Group gap="xs">
+              {/* Coloured from the form's palette, like every other control
+                  here. Mantine's default chip is the builder's grey, which on a
+                  form with its own colours is the one element still following
+                  the app's dark mode. */}
               {(field.options ?? []).map((opt) => (
-                <Chip key={opt} value={opt} readOnly={readOnly}>
+                <Chip
+                  key={opt}
+                  value={opt}
+                  readOnly={readOnly}
+                  color={accentColor}
+                  styles={
+                    accentColor
+                      ? {
+                          // The checked pill fills with the accent, so its label
+                          // has to be whatever reads on that fill rather than
+                          // the form's own text colour.
+                          label: {
+                            color: selected.includes(opt) ? contrastOn(accentColor) : labelColor,
+                            borderColor: accentColor,
+                          },
+                          iconWrapper: { color: contrastOn(accentColor) },
+                        }
+                      : undefined
+                  }
+                >
                   {opt}
                 </Chip>
               ))}
@@ -543,11 +566,15 @@ export function FieldControl({
               {label}
             </Text>
           )}
+          {/* The form's own accent, not the app's. Left to Mantine this takes
+              the builder's theme — yellow stars that turn near-black against a
+              form whose palette knows nothing about dark mode. */}
           <Rating
             count={field.maxRating ?? 5}
             value={Number(value) || 0}
             readOnly={readOnly}
             onChange={(v) => !readOnly && onChange(String(v))}
+            color={accentColor}
           />
         </div>
       );
@@ -559,12 +586,15 @@ export function FieldControl({
               {label}
             </Text>
           )}
+          {/* Same reason as the rating and the chips: the form's accent, not
+              the builder's. */}
           <Slider
             min={field.min ?? 0}
             max={field.max ?? 100}
             step={field.step ?? 1}
             value={Number(value) || field.min || 0}
             onChange={(v) => !readOnly && onChange(String(v))}
+            color={accentColor}
           />
         </div>
       );

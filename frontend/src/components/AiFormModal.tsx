@@ -338,9 +338,29 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
                 </DeviceFrame>
               ) : (
                 <Center h="100%">
-                  <Text size="xs" c="dimmed" ta="center" maw={220}>
-                    Your form appears here once Orbit has drafted it.
-                  </Text>
+                  <div className={ai.emptyStage}>
+                    {/* Decorative: the text below says the same thing, and three
+                        spinning rings announced to a screen reader are noise. */}
+                    <div className={ai.rings} aria-hidden="true">
+                      <span className={`${ai.ring} ${ai.ring1}`} />
+                      <span className={`${ai.ring} ${ai.ring2}`} />
+                      <span className={`${ai.ring} ${ai.ring3}`} />
+                      <span className={ai.ringsCore}>
+                        <OrbitMark size={30} />
+                      </span>
+                    </div>
+                    {/* Addressed to the person, not a description of the panel:
+                        the rings are already saying "ready", and what is
+                        actually missing is their sentence. */}
+                    <Stack gap={4}>
+                      <Text size="sm" fw={600}>
+                        Waiting for your prompt
+                      </Text>
+                      <Text size="xs" c="dimmed" maw={240}>
+                        Tell Orbit what the form is for and it appears here.
+                      </Text>
+                    </Stack>
+                  </div>
                 </Center>
               )}
             </Box>

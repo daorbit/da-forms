@@ -63,20 +63,10 @@
   display: block;
   width: 100%;
   text-align: left;
-  /* `!important` throughout, as on `.templateItem`: Mantine's own UnstyledButton
-     reset lands after this module in the cascade at equal specificity, and it is
-     what was rendering these as padding-less pills.
-
-     The border is lifted off the default, which the wash behind this pane fades
-     to nearly nothing — the card has no fill of its own, so its edge is the only
-     thing separating one suggestion from the next. */
   border: 1px solid light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-3)) !important;
   border-radius: 8px !important;
   padding: 9px 12px !important;
   color: var(--mantine-color-dimmed);
-  /* Transparent, so the pane's wash carries through the card the way it does in
-     Quantalog's own Orbit panel. The edge comes from the border alone — a solid
-     fill here would stamp three flat blocks over the gradient. */
   background: transparent;
   transition:
     border-color 140ms ease,
@@ -130,6 +120,101 @@
 
 @media (prefers-reduced-motion: reduce) {
   .thinking {
+    animation: none;
+  }
+}
+
+/* ---- The empty preview -------------------------------------------------- */
+
+/*
+ * Rings orbiting the mark, while the stage has nothing in it.
+ *
+ * The same figure Quantalog draws when it is working — concentric rings at
+ * different speeds, one reversed, around a pulsing core. Here it is the resting
+ * state rather than a loading state: the pane is waiting to be told what to
+ * build, and a still line of grey text in a large empty panel reads as broken
+ * rather than as ready.
+ */
+.emptyStage {
+  display: grid;
+  place-items: center;
+  gap: 18px;
+  padding: 24px;
+  text-align: center;
+}
+
+.rings {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+}
+
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--mantine-color-emerald-5) 28%, transparent);
+  /* One lit arc per ring, so the rotation is visible — a fully even ring spins
+     without appearing to move at all. */
+  border-top-color: var(--mantine-color-emerald-5);
+  animation: orbit-ring-spin linear infinite;
+}
+
+.ring1 {
+  width: 132px;
+  height: 132px;
+  animation-duration: 5200ms;
+}
+
+.ring2 {
+  width: 96px;
+  height: 96px;
+  animation-duration: 3800ms;
+  /* Counter-rotating, which is what stops the three reading as one thick ring. */
+  animation-direction: reverse;
+  opacity: 0.75;
+}
+
+.ring3 {
+  width: 62px;
+  height: 62px;
+  animation-duration: 2600ms;
+  opacity: 0.55;
+}
+
+/* The mark at the centre, breathing rather than spinning: it is the thing being
+   orbited, so turning it would undo the figure. */
+.ringsCore {
+  /* Inline by default, which would leave the mark sitting on a text baseline
+     inside the ring stack rather than centred in it. */
+  display: flex;
+  animation: orbit-core-breathe 3600ms ease-in-out infinite;
+}
+
+@keyframes orbit-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-core-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+/* Motion is decoration here, not information — the text says everything the
+   rings do. Stopped outright rather than slowed. */
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .ringsCore {
     animation: none;
   }
 }

@@ -10,6 +10,7 @@ import type {
   ConnectionTestResult,
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
+import type { GeneratedForm } from './generatedForm';
 import { workspaceToken, refreshWorkspaceToken, ensureWorkspaceToken } from './workspaceToken';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -138,6 +139,20 @@ export class DemoWorkspaceError extends ApiError {
   constructor() {
     super(403, 'demo_workspace', 'This is a read-only demo workspace.');
   }
+}
+
+/**
+ * Draft a form from a sentence.
+ *
+ * Nothing is stored by this call — the answer is a starting point the editor
+ * opens, and it becomes a form only when the person saves it. Slower than every
+ * other call here: two model attempts run behind it.
+ */
+export function generateFormDraft(prompt: string, workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<GeneratedForm>(`${ws(workspaceId)}/generate`, {
+    method: 'POST',
+    body: JSON.stringify({ prompt }),
+  });
 }
 
 export function createForm(

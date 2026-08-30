@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, UnstyledButton, Loader, Chip, ScrollArea, CloseButton } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconPlus, IconSearch } from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowRight, IconMessage, IconPlus, IconSearch } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
 import { formTemplates, templateCategories, type TemplateCategory } from '@/lib/templates';
+import type { FormTemplate } from '@/lib/templates/types';
 import { filterTemplates, usedCategories, type ScopeFilter } from '@/lib/templates/search';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
 import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
 import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
 import { useFitScale } from '@/hooks/useFitScale';
-import { createForm } from '@/lib/api';
+import { createForm, generateFormDraft } from '@/lib/api';
+import { generatedToTemplate } from '@/lib/generatedForm';
 import { isPlanLimit } from '@/lib/planLimit';
 import classes from './NewFormModal.module.css';
 
@@ -36,6 +38,18 @@ export function NewFormModal({ opened, onClose }: Props) {
 
   const [device, setDevice] = useState<DeviceId>('macbook');
 
+  const [prompt, setPrompt] = useState('');
+  const [generating, setGenerating] = useState(false);
+  /**
+   * The last generated form, held as a template.
+   *
+   * Kept beside the built-in list rather than merged into it: it is not a
+   * template anyone can search for, it does not survive the modal closing, and
+   * a second generation replaces it. Selecting it works exactly as selecting a
+   * real template does, which is the whole point of converting it.
+   */
+  const [aiTemplate, setAiTemplate] = useState<FormTemplate | null>(null);
+
   const categories = usedCategories(formTemplates, templateCategories);
   // The blank card is a shortcut, not a template — it stays pinned at the top
   // of the list rather than appearing and disappearing with the filters.
@@ -48,9 +62,13 @@ export function NewFormModal({ opened, onClose }: Props) {
   );
 
   // Filtering can hide whatever was selected. Rather than previewing a template
-  // no longer in the list, fall through to the first visible one.
-  const selected = results.find((t) => t.id === templateId);
-  const activeTemplate = selected ?? results[0] ?? formTemplates.find((t) => t.id === templateId) ?? formTemplates[0];
+  // no longer in the list, fall through to the first visible one. The generated
+  // one is checked first — it is never in `results`, and it is what someone who
+  // just generated a form is looking at.
+  const selected =
+    aiTemplate && templateId === aiTemplate.id ? aiTemplate : results.find((t) => t.id === templateId);
+  const activeTemplate =
+    selected ?? results[0] ?? formTemplates.find((t) => t.id === templateId) ?? formTemplates[0];
 
   // The frame renders at the device's true CSS width and is scaled down to
   // whatever room the modal leaves, so the layout inside is the real one.
@@ -74,6 +92,47 @@ export function NewFormModal({ opened, onClose }: Props) {
     setQuery('');
     setCategory('All');
     setScopeFilter('all');
+    setPrompt('');
+    setGenerating(false);
+    setAiTemplate(null);
+  }
+
+  /**
+   * Draft a form from the prompt and select it.
+   *
+   * Selected rather than created: the result lands in the preview beside the
+   * templates, so it is judged the same way they are and discarded by picking
+   * something else. Nothing is stored until Create form is pressed.
+   */
+  async function handleGenerate() {
+    const asked = prompt.trim();
+    if (!asked || generating) return;
+
+    setGenerating(true);
+    try {
+      const draft = await generateFormDraft(asked, workspaceId);
+      const template = generatedToTemplate(draft);
+      setAiTemplate(template);
+      setTemplateId(template.id);
+      // The generated form is not in the filtered list, and leaving a filter on
+      // would hide every alternative behind it for no reason.
+      setQuery('');
+      setCategory('All');
+      setScopeFilter('all');
+    } catch (err) {
+      // A spent AI allowance opens the upgrade dialog on its way out of the API
+      // layer, same as a form cap does.
+      if (isPlanLimit(err)) {
+        handleClose();
+        return;
+      }
+      notifications.show({
+        message: err instanceof Error ? err.message : 'Could not generate a form',
+        color: 'red',
+      });
+    } finally {
+      setGenerating(false);
+    }
   }
 
   function handleClose() {
@@ -186,6 +245,36 @@ export function NewFormModal({ opened, onClose }: Props) {
         <Stack gap="md">
           <Box className={classes.stepBody}>
             <div className={classes.templateColumn}>
+              {/* Above the search, because describing what you want is the
+                  faster path when none of the templates is what you want. */}
+              <TextInput
+                placeholder="Describe a form to build…"
+                value={prompt}
+                onChange={(e) => setPrompt(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && prompt.trim() && !generating) {
+                    e.preventDefault();
+                    handleGenerate();
+                  }
+                }}
+                disabled={generating}
+                leftSection={<IconMessage size={15} />}
+                rightSection={
+                  generating ? (
+                    <Loader size={14} />
+                  ) : prompt.trim() ? (
+                    <UnstyledButton
+                      onClick={handleGenerate}
+                      aria-label="Generate form"
+                      style={{ display: 'flex' }}
+                    >
+                      <IconArrowRight size={15} />
+                    </UnstyledButton>
+                  ) : null
+                }
+                size="sm"
+              />
+
               <TextInput
                 placeholder="Search templates"
                 value={query}
@@ -227,6 +316,29 @@ export function NewFormModal({ opened, onClose }: Props) {
                     )}
                     <Text size="sm" fw={600}>
                       {blank.name}
+                    </Text>
+                  </UnstyledButton>
+                )}
+
+                {/* Directly under the blank card and above the templates: it is
+                    the freshest thing here and the reason the person typed. */}
+                {aiTemplate && (
+                  <UnstyledButton
+                    onClick={() => setTemplateId(aiTemplate.id)}
+                    className={`${classes.templateItem} ${aiTemplate.id === activeTemplate.id ? classes.templateItemActive : ''}`}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', boxSizing: 'border-box' }}
+                  >
+                    <Group justify="space-between" gap="xs" wrap="nowrap">
+                      <Text size="sm" fw={600}>
+                        {aiTemplate.name}
+                      </Text>
+                      <Text size="10px" c="dimmed" className={classes.categoryTag}>
+                        GENERATED
+                      </Text>
+                    </Group>
+                    <Text size="xs" c="dimmed" mt={2}>
+                      {aiTemplate.fields.length} field{aiTemplate.fields.length === 1 ? '' : 's'} — edit
+                      anything after creating.
                     </Text>
                   </UnstyledButton>
                 )}

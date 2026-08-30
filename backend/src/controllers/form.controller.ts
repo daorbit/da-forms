@@ -4,7 +4,7 @@ import * as formService from '../services/form.service.js';
 import * as paymentService from '../services/payment.service.js';
 import * as workspaceSettingsService from '../services/workspaceSettings.service.js';
 import { sendSubmissionNotifications } from '../services/notification.service.js';
-import { getFormLimits, recordSubmission } from '../lib/quantalog.js';
+import { getFormLimits, recordSubmission, generateForm as quantalogGenerate } from '../lib/quantalog.js';
 import { planLimit } from '../lib/plan-limit.js';
 
 /**
@@ -445,4 +445,37 @@ export const getPaymentStatus: RequestHandler = async (req, res) => {
     status: submission.status,
     paymentStatus: submission.payment?.status ?? 'created',
   });
+};
+
+/**
+ * Draft a form from a sentence.
+ *
+ * A pass-through to Quantalog, which owns the model and the AI quota. Nothing
+ * is stored: the answer goes back to the editor as a starting point, and it
+ * becomes a form only if the person saves it — so a generation they dislike
+ * costs them a click, not a row to delete.
+ *
+ * The demo workspace is refused rather than served. Generation spends a real
+ * workspace's AI allowance, and the showcase belongs to no one to spend.
+ */
+export const generateForm: RequestHandler = async (req, res) => {
+  const workspaceId = workspaceIdOf(req);
+  const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
+
+  if (!prompt) {
+    return res.status(400).json({ error: 'prompt_required', message: 'Describe the form you want.' });
+  }
+
+  const result = await quantalogGenerate(workspaceId, prompt);
+
+  if (!result.ok) {
+    // The quota refusal is passed through with its code intact, so the editor
+    // can offer an upgrade rather than showing a generic failure.
+    return res.status(result.status).json({
+      error: result.code ?? 'generation_failed',
+      message: result.error,
+    });
+  }
+
+  res.json(result.form);
 };

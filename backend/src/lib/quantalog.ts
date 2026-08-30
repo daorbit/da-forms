@@ -67,6 +67,90 @@ export async function getFormLimits(workspaceId: string): Promise<FormLimits | n
   }
 }
 
+/** A field as Quantalog's generator describes it — no ids yet, no layout. */
+export interface GeneratedField {
+  type: string;
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  helpText?: string;
+  options?: string[];
+  rows?: string[];
+  content?: string;
+  maxRating?: number;
+  min?: number;
+  max?: number;
+}
+
+export interface GeneratedForm {
+  title: string;
+  formDescription?: string;
+  submitLabel?: string;
+  fields: GeneratedField[];
+  theme?: Record<string, unknown>;
+}
+
+export type GenerateOutcome =
+  | { ok: true; form: GeneratedForm }
+  | { ok: false; status: number; error: string; code?: string };
+
+/**
+ * Draft a form from a sentence.
+ *
+ * The model, the prompt and the AI quota all live in Quantalog — this service
+ * holds no key and keeps no count. It asks, and gets back either a form or the
+ * reason there isn't one.
+ *
+ * Errors are returned rather than swallowed, unlike the calls above: someone is
+ * watching a modal wait for this, and "the AI is out of questions this month"
+ * is something they need told, not logged.
+ */
+export async function generateForm(
+  workspaceId: string,
+  prompt: string
+): Promise<GenerateOutcome> {
+  if (!isConfigured()) {
+    return { ok: false, status: 503, error: 'Form generation is not configured.' };
+  }
+
+  try {
+    const res = await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/generate/${encodeURIComponent(workspaceId)}`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${env.formsServiceSecret}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+        // Generous next to the other calls: two model attempts run behind this,
+        // and giving up at four seconds would abandon work already paid for.
+        signal: AbortSignal.timeout(45_000),
+      }
+    );
+
+    const body = (await res.json().catch(() => null)) as
+      | { form?: GeneratedForm; error?: string; code?: string }
+      | null;
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        error: body?.error ?? `Generation failed (${res.status}).`,
+        code: body?.code,
+      };
+    }
+    if (!body?.form) {
+      return { ok: false, status: 502, error: 'Generation returned nothing usable.' };
+    }
+    return { ok: true, form: body.form };
+  } catch (err) {
+    console.error('[quantalog] generate failed:', err);
+    return { ok: false, status: 504, error: 'The generator took too long to answer.' };
+  }
+}
+
 /**
  * Tell Quantalog a response was stored, so it counts against the cycle.
  *

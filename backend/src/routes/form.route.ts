@@ -53,6 +53,23 @@ workspaceFormRouter.use(blockDemoWorkspaceWrites);
 // meant to be opened by strangers.
 workspaceFormRouter.use(requireWorkspaceToken);
 
+/**
+ * Generation is slow and spends the workspace's AI allowance, so it is capped
+ * well below the other editor routes — a stuck retry loop should cost a few
+ * questions, not a month of them.
+ */
+const generateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 6,
+  standardHeaders: true,
+});
+
+workspaceFormRouter.post(
+  '/generate',
+  generateLimiter,
+  asyncHandler(formController.generateForm)
+);
+
 workspaceFormRouter.get('/', asyncHandler(formController.listForms));
 workspaceFormRouter.post('/', asyncHandler(formController.createForm));
 workspaceFormRouter.get('/:id', asyncHandler(formController.getForm));

@@ -466,7 +466,13 @@ export const generateForm: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: 'prompt_required', message: 'Describe the form you want.' });
   }
 
-  const result = await quantalogGenerate(workspaceId, prompt);
+  // Present on a follow-up ("add a phone field"). Quantalog validates it
+  // before it reaches the model, so nothing is checked here beyond its shape.
+  const previous = req.body?.previous && typeof req.body.previous === 'object'
+    ? req.body.previous
+    : undefined;
+
+  const result = await quantalogGenerate(workspaceId, prompt, previous);
 
   if (!result.ok) {
     // The quota refusal is passed through with its code intact, so the editor

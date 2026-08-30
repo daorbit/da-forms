@@ -107,7 +107,9 @@ export type GenerateOutcome =
  */
 export async function generateForm(
   workspaceId: string,
-  prompt: string
+  prompt: string,
+  /** The form being revised, when this is a follow-up rather than a first ask. */
+  previous?: GeneratedForm
 ): Promise<GenerateOutcome> {
   if (!isConfigured()) {
     return { ok: false, status: 503, error: 'Form generation is not configured.' };
@@ -122,7 +124,7 @@ export async function generateForm(
           authorization: `Bearer ${env.formsServiceSecret}`,
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify(previous ? { prompt, previous } : { prompt }),
         // Generous next to the other calls: two model attempts run behind this,
         // and giving up at four seconds would abandon work already paid for.
         signal: AbortSignal.timeout(45_000),

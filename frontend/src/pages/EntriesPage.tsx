@@ -683,6 +683,18 @@ export function EntriesPage() {
 
             <div className={classes.responseGrid}>
               {columns.map((field) => {
+                // A payment is not an answer — it lives on the submission
+                // itself, written by the webhook. Matches the table's PaymentCell.
+                if (field.type === 'payment') {
+                  return (
+                    <div key={field.id} className={classes.responseField}>
+                      <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
+                        {field.label}
+                      </Text>
+                      <PaymentCell payment={viewing.payment} />
+                    </div>
+                  );
+                }
                 const raw = viewing.data[field.id] ?? '';
                 const isFileLink = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
                 const isImage = isFileLink && (field.type === 'imageUpload' || field.type === 'signature' || isImageUrl(raw));

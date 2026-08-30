@@ -85,7 +85,9 @@ function ColumnDropZone({
       style={{
         flex: 1,
         minWidth: 260,
-        background: isOver ? 'var(--mantine-color-gray-0)' : 'var(--mantine-color-gray-1)',
+        background: isOver
+          ? 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5))'
+          : 'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))',
         borderRadius: 8,
         minHeight: 300,
       }}

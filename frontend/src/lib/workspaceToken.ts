@@ -27,14 +27,23 @@ export function workspaceToken(): string {
  * carries one instead of failing and retrying.
  */
 let askedOnce = false;
+let asking: Promise<string> | null = null;
 
 export async function ensureWorkspaceToken(): Promise<string> {
   if (current) return current;
+  // A request already in flight is awaited rather than skipped. Several calls
+  // can start together on one screen, and answering the later ones with an
+  // empty string sent them without a token — refused by the server, then
+  // repeated once the first ask finally landed.
+  if (asking) return asking;
   // Asked at most once. Standalone use has no host to answer, and waiting out
   // the timeout on every call afterwards would make the whole app crawl.
   if (askedOnce) return '';
   askedOnce = true;
-  return refreshWorkspaceToken();
+  asking = refreshWorkspaceToken().finally(() => {
+    asking = null;
+  });
+  return asking;
 }
 
 /** Whether the host ever gave us one — false in standalone or demo use. */

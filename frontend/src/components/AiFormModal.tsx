@@ -19,6 +19,7 @@ import { isPlanLimit } from '@/lib/planLimit';
 import classes from './NewFormModal.module.css';
 import ai from './AiFormModal.module.css';
 import { clearOrbitDraft, readOrbitDraft, saveOrbitDraft } from '@/lib/orbitDraft';
+import { pickSuggestions } from '@/lib/formSuggestions';
 
 interface Props {
   opened: boolean;
@@ -29,19 +30,21 @@ interface Props {
   scope: NonNullable<FormTheme['scope']>;
 }
 
-const SUGGESTIONS = [
-  'A job application form for a restaurant, with CV upload',
-  'Patient intake for a dental clinic, calm and light',
-  'Event feedback with a 1-5 rating and comments',
-];
-
- 
 export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props) {
   const navigate = useNavigate();
   const workspaceId = useWorkspaceId();
 
  
   const [rescued] = useState(() => readOrbitDraft(workspaceId));
+
+  /**
+   * Drawn once per open, not per render.
+   *
+   * Re-picking on every render would reshuffle the list under the cursor on
+   * each keystroke, which is the one thing more distracting than showing the
+   * same three every time.
+   */
+  const [suggestions] = useState(() => pickSuggestions(3));
 
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -236,7 +239,7 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
                     >
                       Try asking
                     </Text>
-                    {SUGGESTIONS.map((s) => (
+                    {suggestions.map((s) => (
                       <UnstyledButton
                         key={s}
                         className={ai.suggestion}

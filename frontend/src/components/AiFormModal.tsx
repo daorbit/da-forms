@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Modal, Textarea, Button, Group, Stack, Text, Box, Center, Loader, UnstyledButton,
+  Modal, Textarea, Button, Group, Stack, Text, Box, Center, Loader, UnstyledButton, ActionIcon, ScrollArea,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconSend } from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowUp } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
@@ -17,6 +17,7 @@ import { createForm, generateFormDraft } from '@/lib/api';
 import { generatedToTemplate, type GeneratedForm } from '@/lib/generatedForm';
 import { isPlanLimit } from '@/lib/planLimit';
 import classes from './NewFormModal.module.css';
+import ai from './AiFormModal.module.css';
 
 interface Props {
   opened: boolean;
@@ -28,7 +29,7 @@ interface Props {
 }
 
 /** Shown before the first generation, so the box is not a blank stare. */
-const EXAMPLES = [
+const SUGGESTIONS = [
   'A job application form for a restaurant, with CV upload',
   'Patient intake for a dental clinic, calm and light',
   'Event feedback with a 1-5 rating and comments',
@@ -38,13 +39,16 @@ const EXAMPLES = [
  * Build a form by describing it.
  *
  * Its own modal rather than a box bolted onto the template picker: the two are
- * different ways of starting, and the template gallery's search, filters and
- * categories are all noise to someone who has already decided to describe what
- * they want.
+ * different ways of starting, and the gallery's search, filters and categories
+ * are noise to someone who has already decided to describe what they want.
  *
- * The result is a draft. Nothing is stored until Create form is pressed, so a
- * generation someone dislikes costs a click — and the follow-up box means the
- * fix for "nearly right" is a sentence rather than starting over.
+ * Laid out like the template picker — a column of controls, the preview beside
+ * it — because it is the same decision being made, and the preview is what the
+ * decision rests on either way. The left column is Orbit's own surface, so the
+ * assistant reads as the same one that answers questions in Quantalog.
+ *
+ * The result is a draft. Nothing is stored until Create form is pressed, and
+ * the follow-up box means "nearly right" is a sentence rather than a restart.
  */
 export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props) {
   const navigate = useNavigate();
@@ -55,6 +59,8 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<GeneratedForm | null>(null);
   const [device, setDevice] = useState<DeviceId>('macbook');
+  /** Every instruction so far, so the pane reads as a conversation. */
+  const [history, setHistory] = useState<string[]>([]);
 
   const template = draft ? generatedToTemplate(draft) : null;
 
@@ -71,6 +77,7 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
     setCreating(false);
     setDraft(null);
     setDevice('macbook');
+    setHistory([]);
   }
 
   function handleClose() {
@@ -81,22 +88,24 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
   /**
    * Generate, or refine what is already there.
    *
-   * The same box does both. Once a draft exists the prompt is read as a change
-   * to it — "add a phone field" — and the draft goes along so the model edits
+   * One box does both. Once a draft exists the prompt is read as a change to it
+   * — "add a phone field" — and the draft travels with it so the model edits
    * rather than starts over.
    */
-  async function run() {
-    const asked = prompt.trim();
+  async function run(text?: string) {
+    const asked = (text ?? prompt).trim();
     if (!asked || generating) return;
 
     setGenerating(true);
+    setHistory((h) => [...h, asked]);
     try {
       const next = await generateFormDraft(asked, workspaceId, draft ?? undefined);
       setDraft(next);
-      // Cleared so the box reads as ready for the next change rather than
-      // still holding the instruction that has already been applied.
+      // Cleared so the box reads as ready for the next change rather than still
+      // holding an instruction that has already been applied.
       setPrompt('');
     } catch (err) {
+      setHistory((h) => h.slice(0, -1));
       // A spent AI allowance opens the upgrade dialog on its way out of the API
       // layer, same as a form cap does.
       if (isPlanLimit(err)) {
@@ -140,6 +149,55 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
     }
   }
 
+  // One Textarea with the send button in its own right section — the same shape
+  // Quantalog's Orbit composer uses. A button in a sibling element sits outside
+  // the input's border and overflows the pane.
+  const composer = (
+    <Box px="md" pb="sm" pt={4}>
+      <Textarea
+        placeholder={draft ? 'Ask for a change' : 'Describe the form you need'}
+        value={prompt}
+        onChange={(e) => setPrompt(e.currentTarget.value)}
+        // Enter sends, shift+Enter breaks a line — the opposite trips everyone
+        // who has ever used a chat.
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            run();
+          }
+        }}
+        styles={{
+          input: {
+            paddingTop: 5,
+            paddingBottom: 5,
+            background: 'var(--mantine-color-default)',
+            borderColor: 'var(--mantine-color-default-border)',
+          },
+          section: { alignItems: 'center' },
+        }}
+        autosize
+        minRows={1}
+        maxRows={4}
+        radius="md"
+        disabled={generating}
+        data-autofocus
+        rightSection={
+          <ActionIcon
+            variant={prompt.trim() ? 'filled' : 'subtle'}
+            color={prompt.trim() ? 'emerald' : 'gray'}
+            radius="xl"
+            size="sm"
+            disabled={!prompt.trim() || generating}
+            onClick={() => run()}
+            aria-label={draft ? 'Apply change' : 'Generate form'}
+          >
+            <IconArrowUp size={13} />
+          </ActionIcon>
+        }
+      />
+    </Box>
+  );
+
   return (
     <Modal
       opened={opened}
@@ -151,149 +209,150 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
         </Group>
       }
       centered
-      size={draft ? 'min(1180px, 94vw)' : 'lg'}
+      // A click on the backdrop is far more often a miss than an intent to
+      // leave, and it would throw away a typed name, a chosen template, or a
+      // draft that cost an AI question. Escape and the explicit buttons still
+      // close it.
+      closeOnClickOutside={false}
+      // Wider than the template picker: the Orbit pane takes 380px to the
+      // picker column's 290, and the preview must not lose that difference.
+      size="min(1320px, 95vw)"
       radius="lg"
-      styles={draft ? { body: { overflow: 'hidden' } } : undefined}
+      styles={{ body: { overflow: 'hidden' } }}
     >
       <Stack gap="md">
-        {draft ? (
-          <Box className={classes.stepBody}>
-            <div className={classes.templateColumn}>
-              <Textarea
-                placeholder="Change something — “add a phone field”, “make it darker”…"
-                value={prompt}
-                onChange={(e) => setPrompt(e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  // Enter sends; Shift+Enter is a newline, as in any chat box.
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    run();
-                  }
-                }}
-                disabled={generating}
-                autosize
-                minRows={2}
-                maxRows={5}
-                size="sm"
-              />
-              <Button
-                onClick={run}
-                loading={generating}
-                disabled={!prompt.trim()}
-                leftSection={generating ? undefined : <IconSend size={15} />}
-                color="emerald"
-                size="sm"
-              >
-                {generating ? 'Revising…' : 'Revise'}
-              </Button>
+        <Box className={`${classes.stepBody} ${ai.body}`}>
+          {/* Orbit's own surface, so the assistant here reads as the one that
+              answers questions elsewhere in Quantalog. */}
+          <div className={ai.orbitPane}>
+            <ScrollArea className={ai.thread} type="hover" scrollbarSize={6} px="md" py="md">
+              {history.length === 0 ? (
+                <Stack gap="lg" pt={8}>
+                  <Stack gap={6} align="center">
+                    <OrbitMark size={44} />
+                    <Text size="sm" fw={650} ta="center">
+                      Build a form with Orbit
+                    </Text>
+                    <Text size="xs" c="dimmed" ta="center" lh={1.5} maw={260}>
+                      Describe what you need and Orbit drafts the fields, wording and colours.
+                    </Text>
+                  </Stack>
 
-              <Box style={{ borderTop: '1px solid var(--mantine-color-default-border)', paddingTop: 12 }}>
-                <Text size="xs" fw={600} c="dimmed" mb={6}>
-                  {template!.fields.length} field{template!.fields.length === 1 ? '' : 's'}
-                </Text>
-                <Stack gap={4}>
-                  {template!.fields.map((f) => (
-                    <Group key={f.id} gap={6} wrap="nowrap">
-                      <Text size="xs" c="dimmed" style={{ minWidth: 74 }}>
-                        {f.type}
+                  <Stack gap={7}>
+                    <Text
+                      size="xs"
+                      c="dimmed"
+                      fw={600}
+                      tt="uppercase"
+                      style={{ letterSpacing: '0.05em' }}
+                    >
+                      Try asking
+                    </Text>
+                    {SUGGESTIONS.map((s) => (
+                      <UnstyledButton
+                        key={s}
+                        className={ai.suggestion}
+                        onClick={() => run(s)}
+                        disabled={generating}
+                      >
+                        <Text size="xs" lh={1.45}>
+                          {s}
+                        </Text>
+                      </UnstyledButton>
+                    ))}
+                  </Stack>
+                </Stack>
+              ) : (
+                <Stack gap="sm">
+                  {history.map((h, i) => (
+                    <Box key={i} className={ai.askBubble}>
+                      <Text size="xs" lh={1.45}>
+                        {h}
                       </Text>
-                      <Text size="xs" truncate style={{ flex: 1 }}>
-                        {f.label}
-                        {f.required && <span style={{ color: 'var(--mantine-color-red-6)' }}> *</span>}
+                    </Box>
+                  ))}
+
+                  {/* Same dots and pulsing label the Orbit panel uses while a
+                      reply is in flight. */}
+                  {generating && (
+                    <Group gap={8} wrap="nowrap">
+                      <Loader size={12} type="dots" color="var(--mantine-color-emerald-5)" />
+                      <Text size="xs" c="emerald.4" fw={500} className={ai.thinking}>
+                        {draft ? 'Revising' : 'Building your form'}
                       </Text>
                     </Group>
-                  ))}
+                  )}
+
+                  {template && !generating && (
+                    <Box className={ai.fieldSummary}>
+                      <Text size="xs" fw={600} mb={6}>
+                        {template.fields.length} field{template.fields.length === 1 ? '' : 's'}
+                      </Text>
+                      <Stack gap={3}>
+                        {template.fields.map((f) => (
+                          <Group key={f.id} gap={6} wrap="nowrap">
+                            <Text size="10px" c="dimmed" style={{ minWidth: 68 }}>
+                              {f.type}
+                            </Text>
+                            <Text size="xs" truncate style={{ flex: 1 }}>
+                              {f.label}
+                              {f.required && (
+                                <span style={{ color: 'var(--mantine-color-red-6)' }}> *</span>
+                              )}
+                            </Text>
+                          </Group>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
                 </Stack>
-              </Box>
-            </div>
+              )}
+            </ScrollArea>
 
-            <Box className={classes.previewPane}>
-              <Box className={classes.previewBar}>
-                <Text size="xs" c="dimmed" truncate>
-                  {template!.title}
-                </Text>
-                <DeviceSwitch device={device} onChange={setDevice} />
-              </Box>
+            {composer}
+          </div>
 
-              <Box className={classes.stage} ref={stageRef}>
+          <Box className={classes.previewPane}>
+            <Box className={classes.previewBar}>
+              <Text size="xs" c="dimmed" truncate>
+                {template ? template.title : 'Preview'}
+              </Text>
+              <DeviceSwitch device={device} onChange={setDevice} />
+            </Box>
+
+            <Box className={classes.stage} ref={stageRef}>
+              {template ? (
                 <DeviceFrame device={device} scale={scale} hidden={!measured}>
-                  <FormPage theme={template!.theme} minHeight="100%">
+                  <FormPage theme={template.theme} minHeight="100%">
                     <FormRenderer
                       // Remounted whenever the draft or device changes, so the
                       // preview never shows the previous form's page state.
-                      key={`${template!.fields.length}-${template!.title}-${device}`}
-                      title={template!.title}
-                      description={template!.formDescription}
-                      fields={template!.fields}
-                      theme={template!.theme}
-                      submitLabel={template!.submitLabel}
+                      key={`${template.fields.length}-${template.title}-${device}`}
+                      title={template.title}
+                      description={template.formDescription}
+                      fields={template.fields}
+                      theme={template.theme}
+                      submitLabel={template.submitLabel}
                     />
                   </FormPage>
                 </DeviceFrame>
-              </Box>
+              ) : (
+                <Center h="100%">
+                  <Text size="xs" c="dimmed" ta="center" maw={220}>
+                    Your form appears here once Orbit has drafted it.
+                  </Text>
+                </Center>
+              )}
             </Box>
           </Box>
-        ) : generating ? (
-          <Center py={64}>
-            <Stack align="center" gap="sm">
-              <Loader color="emerald" />
-              <Text size="sm" c="dimmed">
-                Building your form…
-              </Text>
-              <Text size="xs" c="dimmed">
-                This takes a few seconds.
-              </Text>
-            </Stack>
-          </Center>
-        ) : (
-          <Stack gap="md">
-            <Text size="sm" c="dimmed">
-              Describe the form you need. Orbit drafts it — fields, wording and colours — and you
-              edit anything afterwards.
-            </Text>
-
-            <Textarea
-              placeholder="A job application form for a restaurant, with CV upload…"
-              value={prompt}
-              onChange={(e) => setPrompt(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  run();
-                }
-              }}
-              autosize
-              minRows={3}
-              maxRows={6}
-              data-autofocus
-            />
-
-            <div>
-              <Text size="xs" c="dimmed" mb={6}>
-                Or start from one of these
-              </Text>
-              <Stack gap={6}>
-                {EXAMPLES.map((example) => (
-                  <UnstyledButton
-                    key={example}
-                    onClick={() => setPrompt(example)}
-                    className={classes.templateItem}
-                    style={{ width: '100%', boxSizing: 'border-box' }}
-                  >
-                    <Text size="xs">{example}</Text>
-                  </UnstyledButton>
-                ))}
-              </Stack>
-            </div>
-          </Stack>
-        )}
+        </Box>
 
         <Group justify="space-between">
           <Button
             variant="subtle"
             color="gray"
             leftSection={<IconArrowLeft size={16} />}
-            onClick={draft ? () => setDraft(null) : onBack}
+            onClick={onBack}
             disabled={generating || creating}
           >
             Back
@@ -302,15 +361,14 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
             <Button variant="default" onClick={handleClose} disabled={creating}>
               Cancel
             </Button>
-            {draft ? (
-              <Button color="emerald" onClick={handleCreate} loading={creating}>
-                Create form
-              </Button>
-            ) : (
-              <Button color="emerald" onClick={run} loading={generating} disabled={!prompt.trim()}>
-                Generate
-              </Button>
-            )}
+            <Button
+              color="emerald"
+              onClick={handleCreate}
+              loading={creating}
+              disabled={!template || generating}
+            >
+              Create form
+            </Button>
           </Group>
         </Group>
       </Stack>

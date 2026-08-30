@@ -1,0 +1,144 @@
+/*
+ * Orbit's surface, inside the form builder.
+ *
+ * The assistant here is the same one that answers questions in Quantalog — the
+ * same models, the same allowance — so it is given the same pane: a bordered
+ * column with the conversation above and the composer pinned below it, and the
+ * same bubble, suggestion and thinking treatments the chat panel uses.
+ *
+ * Sits where the template column sits in the picker, because it is the same
+ * decision being made and the preview beside it is what the decision rests on
+ * either way. Wider than that column, though: it holds a conversation and a
+ * field list rather than one-line template names.
+ */
+/* Tighter than the template picker's 20px. There the column is a list of cards
+   with its own edges; here the pane and the preview are two panels of one
+   surface, and a wide channel between them reads as a seam. */
+.body {
+  gap: 12px;
+}
+
+.orbitPane {
+  position: relative;
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
+}
+
+/* A faint wash so the pane reads as Orbit's own rather than as another panel.
+   Under the content, never over it — the same stacking split the chat uses. */
+.orbitPane::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(16, 185, 129, 0.09), transparent 70%),
+    radial-gradient(90% 50% at 20% 100%, rgba(99, 102, 241, 0.07), transparent 70%);
+  z-index: 0;
+}
+
+.orbitPane > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Takes the pane's remaining height and scrolls its own thread, so a long run
+   of instructions never pushes the composer off the bottom. */
+.thread {
+  flex: 1;
+  min-height: 0;
+}
+
+/* An opening suggestion. Quiet by default — these are a prompt, not the point
+   of the pane — and only the border warms on hover, so three of them stacked
+   read as a list rather than three buttons demanding to be pressed. */
+.suggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  /* `!important` throughout, as on `.templateItem`: Mantine's own UnstyledButton
+     reset lands after this module in the cascade at equal specificity, and it is
+     what was rendering these as padding-less pills.
+
+     The border is lifted off the default, which the wash behind this pane fades
+     to nearly nothing — the card has no fill of its own, so its edge is the only
+     thing separating one suggestion from the next. */
+  border: 1px solid light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-3)) !important;
+  border-radius: 8px !important;
+  padding: 9px 12px !important;
+  color: var(--mantine-color-dimmed);
+  /* Transparent, so the pane's wash carries through the card the way it does in
+     Quantalog's own Orbit panel. The edge comes from the border alone — a solid
+     fill here would stamp three flat blocks over the gradient. */
+  background: transparent;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.suggestion:hover:not(:disabled) {
+  border-color: var(--mantine-color-emerald-6) !important;
+  color: var(--mantine-color-text);
+}
+
+.suggestion:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* What was asked. The same fill the chat gives a user's own message: the deep
+   emerald on a dark panel, the tint on a light one, where white-on-emerald-9
+   would be a heavy block in the middle of the thread. */
+.askBubble {
+  align-self: flex-end;
+  max-width: 92%;
+  margin-left: auto;
+  padding: 7px 10px;
+  border-radius: 10px 10px 2px 10px;
+  background: var(--mantine-color-emerald-9);
+  color: #fff;
+}
+
+[data-mantine-color-scheme='light'] .askBubble {
+  background: var(--mantine-color-emerald-1);
+  color: var(--mantine-color-emerald-9);
+}
+
+/* The label breathes while a draft is in flight. The dots animate on their own,
+   but they are 12px of movement in a tall pane — the label fading with them is
+   what makes the wait read as progress. */
+.thinking {
+  animation: orbit-thinking-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes orbit-thinking-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking {
+    animation: none;
+  }
+}
+
+/* What came back: the fields, listed. Not a bubble — it is a summary of the
+   thing in the preview, not something Orbit said. */
+.fieldSummary {
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 10px;
+  padding: 10px 11px;
+  background: var(--mantine-color-body);
+}

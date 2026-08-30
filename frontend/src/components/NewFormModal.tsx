@@ -20,16 +20,23 @@ import classes from './NewFormModal.module.css';
 interface Props {
   opened: boolean;
   onClose: () => void;
+  /**
+   * What the first step already collected, when reopening from the Orbit modal.
+   *
+   * Without it, coming back from Orbit would land on an empty name field and
+   * ask for a decision already made.
+   */
+  resume?: { name: string; scope: NonNullable<FormTheme['scope']> } | null;
   /** Hand off to the Orbit modal, carrying the name and scope already chosen. */
   onUseAi: (name: string, scope: NonNullable<FormTheme['scope']>) => void;
 }
 
-export function NewFormModal({ opened, onClose, onUseAi }: Props) {
+export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
   const navigate = useNavigate();
   const workspaceId = useWorkspaceId();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [name, setName] = useState('');
-  const [scope, setScope] = useState<NonNullable<FormTheme['scope']>>('page');
+  const [step, setStep] = useState<1 | 2 | 3>(resume ? 2 : 1);
+  const [name, setName] = useState(resume?.name ?? '');
+  const [scope, setScope] = useState<NonNullable<FormTheme['scope']>>(resume?.scope ?? 'page');
   const defaultTemplateId = formTemplates.find((t) => t.id !== 'blank')?.id ?? formTemplates[0].id;
   const [templateId, setTemplateId] = useState(defaultTemplateId);
   const [creating, setCreating] = useState(false);
@@ -136,6 +143,11 @@ export function NewFormModal({ opened, onClose, onUseAi }: Props) {
       onClose={handleClose}
       title={step === 1 ? 'Create a new form' : step === 2 ? 'How do you want to start?' : 'Choose a template'}
       centered
+      // A click on the backdrop is far more often a miss than an intent to
+      // leave, and it would throw away a typed name, a chosen template, or a
+      // draft that cost an AI question. Escape and the explicit buttons still
+      // close it.
+      closeOnClickOutside={false}
       // A fixed 960 left the preview cramped on a large screen and overflowing
       // on a small one. The picker step tracks the viewport with a ceiling, so
       // a long template (RSVP, feedback survey) is readable without scrolling

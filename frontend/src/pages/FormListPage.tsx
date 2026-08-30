@@ -83,6 +83,8 @@ export function FormListPage() {
    * second.
    */
   const [aiForm, setAiForm] = useState<{ name: string; scope: 'page' | 'card' } | null>(null);
+  /** Carried back from the Orbit modal, so returning skips the naming step. */
+  const [resume, setResume] = useState<{ name: string; scope: 'page' | 'card' } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState<Form | null>(null);
@@ -583,8 +585,15 @@ export function FormListPage() {
       )}
 
       <NewFormModal
+        // Remounted when resuming, so the modal picks up the name and step it
+        // is being reopened at — a state initialiser only runs on mount.
+        key={resume ? `resume-${resume.name}` : 'fresh'}
         opened={newFormOpen}
-        onClose={() => setNewFormOpen(false)}
+        resume={resume}
+        onClose={() => {
+          setNewFormOpen(false);
+          setResume(null);
+        }}
         onUseAi={(name, scope) => {
           setNewFormOpen(false);
           setAiForm({ name, scope });
@@ -600,6 +609,7 @@ export function FormListPage() {
           // Back reopens the chooser rather than dropping the person at the
           // list, so changing their mind about the method costs one click.
           onBack={() => {
+            setResume({ name: aiForm.name, scope: aiForm.scope });
             setAiForm(null);
             setNewFormOpen(true);
           }}

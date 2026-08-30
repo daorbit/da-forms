@@ -148,10 +148,15 @@ export class DemoWorkspaceError extends ApiError {
  * opens, and it becomes a form only when the person saves it. Slower than every
  * other call here: two model attempts run behind it.
  */
-export function generateFormDraft(prompt: string, workspaceId = DEFAULT_WORKSPACE) {
+export function generateFormDraft(
+  prompt: string,
+  workspaceId = DEFAULT_WORKSPACE,
+  /** The draft being revised, when the prompt is a change rather than a first ask. */
+  previous?: GeneratedForm
+) {
   return authedRequest<GeneratedForm>(`${ws(workspaceId)}/generate`, {
     method: 'POST',
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify(previous ? { prompt, previous } : { prompt }),
   });
 }
 

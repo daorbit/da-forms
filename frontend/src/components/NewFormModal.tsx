@@ -13,15 +13,18 @@ import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/Devi
 import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
 import { useFitScale } from '@/hooks/useFitScale';
 import { createForm } from '@/lib/api';
+import { OrbitMark } from '@/components/OrbitMark';
 import { isPlanLimit } from '@/lib/planLimit';
 import classes from './NewFormModal.module.css';
 
 interface Props {
   opened: boolean;
   onClose: () => void;
+  /** Hand off to the Orbit modal, carrying the name and scope already chosen. */
+  onUseAi: (name: string, scope: NonNullable<FormTheme['scope']>) => void;
 }
 
-export function NewFormModal({ opened, onClose }: Props) {
+export function NewFormModal({ opened, onClose, onUseAi }: Props) {
   const navigate = useNavigate();
   const workspaceId = useWorkspaceId();
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -131,17 +134,61 @@ export function NewFormModal({ opened, onClose }: Props) {
     <Modal
       opened={opened}
       onClose={handleClose}
-      title={step === 1 ? 'Create a new form' : 'Choose a starting point'}
+      title={step === 1 ? 'Create a new form' : step === 2 ? 'How do you want to start?' : 'Choose a template'}
       centered
       // A fixed 960 left the preview cramped on a large screen and overflowing
       // on a small one. The picker step tracks the viewport with a ceiling, so
       // a long template (RSVP, feedback survey) is readable without scrolling
       // the modal itself.
-      size={step === 2 ? 'min(1180px, 94vw)' : 'md'}
+      size={step === 3 ? 'min(1180px, 94vw)' : step === 2 ? 'lg' : 'md'}
       radius="lg"
-      styles={step === 2 ? { body: { overflow: 'hidden' } } : undefined}
+      styles={step === 3 ? { body: { overflow: 'hidden' } } : undefined}
     >
-      {step === 1 ? (
+      {step === 2 ? (
+        <Stack gap="md">
+          <Text size="sm" c="dimmed">
+            How would you like to start “{name.trim()}”?
+          </Text>
+
+          <Group grow align="stretch" gap="md">
+            <UnstyledButton className={classes.methodCard} onClick={() => setStep(3)}>
+              <IconLayoutGrid size={26} className={classes.methodIcon} />
+              <Text fw={600} size="sm" mt={10}>
+                Start from a template
+              </Text>
+              <Text size="xs" c="dimmed" mt={4}>
+                {formTemplates.length - 1} ready-made forms — contact, feedback, RSVP, intake and
+                more. Preview each before you pick.
+              </Text>
+            </UnstyledButton>
+
+            <UnstyledButton className={classes.methodCard} onClick={() => onUseAi(name.trim(), scope)}>
+              <OrbitMark size={26} />
+              <Text fw={600} size="sm" mt={10}>
+                Build with Orbit
+              </Text>
+              <Text size="xs" c="dimmed" mt={4}>
+                Describe what you need and Orbit drafts the fields, wording and colours. Refine it
+                by asking for changes.
+              </Text>
+            </UnstyledButton>
+          </Group>
+
+          <Group justify="space-between">
+            <Button
+              variant="subtle"
+              color="gray"
+              leftSection={<IconArrowLeft size={16} />}
+              onClick={() => setStep(1)}
+            >
+              Back
+            </Button>
+            <Button variant="default" onClick={handleClose}>
+              Cancel
+            </Button>
+          </Group>
+        </Stack>
+      ) : step === 1 ? (
         <form onSubmit={handleContinue}>
           <Stack gap="md">
             <TextInput
@@ -312,7 +359,7 @@ export function NewFormModal({ opened, onClose }: Props) {
           </Box>
 
           <Group justify="space-between">
-            <Button variant="subtle" color="gray" leftSection={<IconArrowLeft size={16} />} onClick={() => setStep(1)}>
+            <Button variant="subtle" color="gray" leftSection={<IconArrowLeft size={16} />} onClick={() => setStep(2)}>
               Back
             </Button>
             <Group>

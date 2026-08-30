@@ -31,6 +31,7 @@ import { isDemoWorkspace, listDemoForms } from '@/lib/demoWorkspace';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form, FormTheme } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
+import { AiFormModal } from '@/components/AiFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { cloneWithNewIds } from '@/lib/fieldTree';
@@ -74,6 +75,14 @@ export function FormListPage() {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [loading, setLoading] = useState(true);
   const [newFormOpen, setNewFormOpen] = useState(false);
+  /**
+   * The Orbit builder, and what the first step already collected.
+   *
+   * Held here rather than inside either modal: the name and scope are chosen in
+   * one and used by the other, and the handoff closes the first as it opens the
+   * second.
+   */
+  const [aiForm, setAiForm] = useState<{ name: string; scope: 'page' | 'card' } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState<Form | null>(null);
@@ -573,7 +582,29 @@ export function FormListPage() {
         </Group>
       )}
 
-      <NewFormModal opened={newFormOpen} onClose={() => setNewFormOpen(false)} />
+      <NewFormModal
+        opened={newFormOpen}
+        onClose={() => setNewFormOpen(false)}
+        onUseAi={(name, scope) => {
+          setNewFormOpen(false);
+          setAiForm({ name, scope });
+        }}
+      />
+
+      {aiForm && (
+        <AiFormModal
+          opened
+          formName={aiForm.name}
+          scope={aiForm.scope}
+          onClose={() => setAiForm(null)}
+          // Back reopens the chooser rather than dropping the person at the
+          // list, so changing their mind about the method costs one click.
+          onBack={() => {
+            setAiForm(null);
+            setNewFormOpen(true);
+          }}
+        />
+      )}
 
       {previewing && (
         <PreviewModal

@@ -200,7 +200,7 @@ export function PublicFormPage() {
   // inside someone's page.
   if (error)
     return (
-      <Center mih={embedded ? 160 : "100dvh"} py={embedded ? 32 : 0}>
+      <Center mih="100dvh" py={0}>
         <Text c="dimmed">Form not found.</Text>
       </Center>
     );
@@ -209,13 +209,13 @@ export function PublicFormPage() {
   // own accent here and picks up the form's once there is one.
   if (!form)
     return (
-      <FormPage minHeight={embedded ? "auto" : undefined}>
+      <FormPage>
         {/* Centred in the viewport rather than sitting where the form's first
             field would be: there is no card yet to anchor it to the top, and
             a spinner parked under the page's top padding reads as misplaced.
-            Embedded, the frame is only as tall as its content, so it stays
-            put. */}
-        <Center mih={embedded ? undefined : "calc(100vh - 96px)"}>
+            Fills the frame whether standalone or embedded, so the spinner is
+            always vertically centred. */}
+        <Center mih="100dvh">
           <FormLoader />
         </Center>
       </FormPage>
@@ -224,7 +224,7 @@ export function PublicFormPage() {
   if (form.status !== "published" && !isPreview)
     return (
       <Center
-        mih={embedded ? undefined : "100dvh"}
+        mih="100dvh"
         py={64}
         className="da-forms-light-surface"
         data-mantine-color-scheme="light"
@@ -262,7 +262,7 @@ export function PublicFormPage() {
       // Respondents see the form's own colours, never a host app's theme — the
       // share link and the embed are public pages, not part of anyone's dashboard.
       <Center
-        mih={embedded ? undefined : "100dvh"}
+        mih="100dvh"
         py={64}
         className="da-forms-light-surface"
         data-mantine-color-scheme="light"
@@ -274,7 +274,7 @@ export function PublicFormPage() {
           style={{ width: "100%", textAlign: "center" }}
         >
           <Center>
-            <ThemeIcon size={64} radius="xl" color="emerald" variant="light">
+            <ThemeIcon size={64} radius="xl" color="green" variant="filled">
               <IconCheck size={30} stroke={3} />
             </ThemeIcon>
           </Center>

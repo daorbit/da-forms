@@ -870,7 +870,7 @@ export function FormBuilderPage() {
             hideHeader={hideHeader}
             headerAlign={headerAlign}
             onHideHeader={() => setHideHeader(true)}
-            offsetRight={!!editingId}
+            offsetRight={!!editingId || railPanel === 'ai'}
             theme={theme}
           />
         )}

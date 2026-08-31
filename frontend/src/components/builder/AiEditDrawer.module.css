@@ -1,43 +1,126 @@
+/*
+ * Orbit's surface, inside the form builder's right drawer.
+ *
+ * The same treatment the from-scratch generator uses (see AiFormModal): a
+ * bordered column with the conversation above and the composer pinned below,
+ * a faint aurora wash behind, and the same bubble / suggestion / thinking
+ * treatments the chat panel uses — so this reads as the same assistant.
+ */
 .pane {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
+  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
 }
 
+/* Under the content, never over it — the same stacking split the chat uses. */
+.pane::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 45% at 50% 0%, rgba(59, 130, 246, 0.09), transparent 70%),
+    radial-gradient(90% 40% at 15% 100%, rgba(99, 102, 241, 0.06), transparent 70%);
+  z-index: 0;
+}
+
+.pane > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Takes the remaining height and scrolls its own thread, so a long run of
+   instructions never pushes the composer off the bottom. */
 .thread {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
 }
 
-/* A sent instruction — right-aligned so the pane reads as a conversation. */
-.askBubble {
-  align-self: flex-end;
-  max-width: 85%;
-  margin-left: auto;
-  padding: 7px 11px;
-  border-radius: 12px 12px 3px 12px;
-  background: var(--mantine-color-blue-light);
-  color: var(--mantine-color-blue-light-color);
+.mark {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: var(--mantine-color-blue-6);
+  background: color-mix(in srgb, var(--mantine-color-blue-6) 12%, transparent);
 }
 
+/* An opening suggestion. Quiet by default — a prompt, not the point of the
+   pane — and only the border warms on hover, so the stack reads as a list
+   rather than a row of buttons demanding to be pressed. */
 .suggestion {
   display: block;
   width: 100%;
-  padding: 9px 11px;
-  border: 1px solid var(--mantine-color-gray-3);
-  border-radius: 9px;
   text-align: left;
-  transition: border-color 120ms ease, background-color 120ms ease;
+  border: 1px solid light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-3));
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--mantine-color-dimmed);
+  background: transparent;
+  transition: border-color 140ms ease, color 140ms ease;
 }
 
 .suggestion:hover:not(:disabled) {
-  border-color: var(--mantine-color-blue-4);
-  background: var(--mantine-color-blue-0);
+  border-color: var(--mantine-color-blue-5);
+  color: var(--mantine-color-text);
 }
 
 .suggestion:disabled {
   opacity: 0.5;
-  cursor: default;
+  cursor: not-allowed;
+}
+
+/* What was asked — the same fill the chat gives a user's own message: deep on
+   a dark panel, a tint on a light one. */
+.askBubble {
+  align-self: flex-end;
+  max-width: 92%;
+  margin-left: auto;
+  padding: 7px 10px;
+  border-radius: 10px 10px 2px 10px;
+  background: var(--mantine-color-blue-9);
+  color: #fff;
+}
+
+[data-mantine-color-scheme='light'] .askBubble {
+  background: var(--mantine-color-blue-1);
+  color: var(--mantine-color-blue-9);
+}
+
+/* Not a bubble — a note on what changed in the preview, not something Orbit
+   said back. */
+.applied {
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 10px;
+  padding: 8px 11px;
+  background: var(--mantine-color-body);
+}
+
+/* The label breathes while a revision is in flight, on the same beat as the
+   dots beside it. */
+.thinking {
+  animation: ai-edit-thinking-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes ai-edit-thinking-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking { animation: none; }
+}
+
+/* The composer, pinned to the bottom of the pane with its own top edge. */
+.composer {
+  flex-shrink: 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--mantine-color-default-border);
+  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
 }

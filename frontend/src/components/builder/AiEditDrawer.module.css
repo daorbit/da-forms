@@ -1,11 +1,20 @@
 /*
- * The only thing this drawer changes about the shared Orbit pane
- * (AiFormModal.module.css `.orbitPane`): in the modal the pane is a fixed
- * 380px column beside a preview; here it is the whole drawer, full width and
- * full height, with the canvas itself standing in for the preview.
+ * In the modal the shared Orbit pane (AiFormModal.module.css `.orbitPane`) is
+ * a fixed 380px bordered column beside a preview. In this drawer it *is* the
+ * whole surface: full width, full height, no card edge — the canvas stands in
+ * for the preview.
  */
 .pane {
   width: 100%;
   height: 100%;
+  flex: 1;
   flex-shrink: 1;
+  border: none;
+  border-radius: 0;
+}
+
+/* The drawer body carries its own padding for every other panel; this one
+   wants the pane flush to all four edges. */
+.body {
+  padding: 0 !important;
 }

@@ -155,7 +155,7 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
       classNames={{
         header: drawer.header,
         title: drawer.title,
-        body: drawer.body,
+        body: `${drawer.body} ${edit.body}`,
         content: drawer.content,
       }}
     >

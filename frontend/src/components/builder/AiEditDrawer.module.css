@@ -40,17 +40,6 @@
   min-height: 0;
 }
 
-.mark {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  color: var(--mantine-color-blue-6);
-  background: color-mix(in srgb, var(--mantine-color-blue-6) 12%, transparent);
-}
-
 /* An opening suggestion. Quiet by default — a prompt, not the point of the
    pane — and only the border warms on hover, so the stack reads as a list
    rather than a row of buttons demanding to be pressed. */

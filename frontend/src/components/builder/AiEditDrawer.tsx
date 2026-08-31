@@ -3,7 +3,8 @@ import {
   Drawer, Stack, Text, Box, ActionIcon, Textarea, Loader, Group, UnstyledButton, ScrollArea,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowUp, IconRobot } from '@tabler/icons-react';
+import { IconArrowUp } from '@tabler/icons-react';
+import { OrbitMark } from '@/components/OrbitMark';
 import { generateFormDraft } from '@/lib/api';
 import type { GeneratedForm } from '@/lib/generatedForm';
 import { isPlanLimit } from '@/lib/planLimit';
@@ -140,7 +141,7 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
       shadow="lg"
       title={
         <div className={classes.headerBar}>
-          <IconRobot size={17} stroke={1.7} />
+          <OrbitMark size={18} />
           <span className={classes.headerTitle}>Edit with AI</span>
         </div>
       }
@@ -159,9 +160,7 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
           {turns.length === 0 ? (
             <Stack gap="lg" pt={4}>
               <Group gap={10} wrap="nowrap">
-                <span className={ai.mark}>
-                  <IconRobot size={18} stroke={1.6} />
-                </span>
+                <OrbitMark size={30} />
                 <Text size="xs" c="dimmed" lh={1.5}>
                   Describe a change and it is applied to the form on the canvas.
                   Undo (Ctrl+Z) reverts it like any other edit.

@@ -8,7 +8,7 @@ import { OrbitMark } from '@/components/OrbitMark';
 import { generateFormDraft } from '@/lib/api';
 import type { GeneratedForm } from '@/lib/generatedForm';
 import { isPlanLimit } from '@/lib/planLimit';
-import drawer from './PropertiesDrawer.module.css';
+import drawerShared from './PropertiesDrawer.module.css';
 // The exact pane the from-scratch generator uses — same border, wash, bubble,
 // suggestion and thinking treatments, so the two read as one assistant.
 import ai from '@/components/AiFormModal.module.css';
@@ -90,7 +90,7 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
   // One Textarea with the send button in its own right section — the same shape
   // the from-scratch composer uses.
   const composer = (
-    <Box px="md" pb="sm" pt={4}>
+    <Box px="md" pb="sm" pt={4} style={{ flexShrink: 0 }}>
       <Textarea
         placeholder={disabled ? 'Read-only demo workspace' : 'Ask for a change'}
         value={prompt}
@@ -147,20 +147,20 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
       trapFocus={false}
       shadow="lg"
       title={
-        <div className={drawer.headerBar}>
+        <div className={drawerShared.headerBar}>
           <OrbitMark size={18} />
-          <span className={drawer.headerTitle}>Edit with Orbit</span>
+          <span className={drawerShared.headerTitle}>Edit with Orbit</span>
         </div>
       }
       classNames={{
-        header: drawer.header,
-        title: drawer.title,
-        body: `${drawer.body} ${edit.body}`,
-        content: drawer.content,
+        header: edit.header,
+        title: edit.title,
+        body: edit.body,
+        content: edit.content,
       }}
     >
       <div className={`${ai.orbitPane} ${edit.pane}`}>
-        <ScrollArea className={ai.thread} type="hover" scrollbarSize={6} px="md" py="md">
+        <ScrollArea className={edit.thread} type="hover" scrollbarSize={6} px="md" py="md">
           {turns.length === 0 ? (
             <Stack gap="lg" pt={8}>
               <Stack gap={6} align="center">

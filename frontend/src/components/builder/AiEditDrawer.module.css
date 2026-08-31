@@ -1,20 +1,55 @@
 /*
- * In the modal the shared Orbit pane (AiFormModal.module.css `.orbitPane`) is
- * a fixed 380px bordered column beside a preview. In this drawer it *is* the
- * whole surface: full width, full height, no card edge — the canvas stands in
- * for the preview.
+ * The builder's AI drawer. Chrome matches the other right-rail drawers
+ * (PropertiesDrawer et al.) but the body is given entirely to the shared Orbit
+ * pane (AiFormModal.module.css `.orbitPane`) — full width, full height, no
+ * card edge — with the composer pinned to the bottom edge and the canvas
+ * itself standing in for the modal's preview column.
  */
-.pane {
-  width: 100%;
-  height: 100%;
+
+.content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  min-height: 56px;
+  padding: 14px 20px !important;
+}
+
+.title {
   flex: 1;
-  flex-shrink: 1;
+}
+
+
+.body {
+  height: calc(100dvh - 60px) !important;
+  min-height: 0;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* The shared `.orbitPane` is a fixed 380px bordered column in the modal; here
+   it fills the body. Doubled selector so these win over `.orbitPane`
+   regardless of stylesheet order. */
+.body .pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  width: 100%;
+  min-height: 0;
   border: none;
   border-radius: 0;
 }
 
-/* The drawer body carries its own padding for every other panel; this one
-   wants the pane flush to all four edges. */
-.body {
-  padding: 0 !important;
+/* Takes every pixel the composer does not, so the composer is always on the
+   bottom edge. On the ScrollArea root; its viewport handles the overflow. */
+.body .pane .thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
 }

@@ -1,5 +1,12 @@
 import { useComputedColorScheme } from '@mantine/core';
 
+// Imported (not '/foo.png' string) so Vite fingerprints them into the bundle and
+// rewrites the URL for whatever base path the deploy is served from. A bare
+// absolute string only resolves at the domain root, which breaks under a subpath
+// and behind an over-eager SPA rewrite that hands back index.html.
+import darkMark from '../assets/da-ai-dark-mode.png';
+import lightMark from '../assets/da-ai-light-mode.png';
+
 /**
  * The Orbit mark.
  *
@@ -19,7 +26,7 @@ export function OrbitMark({ size = 20 }: { size?: number }) {
 
   return (
     <img
-      src={scheme === 'dark' ? '/da-ai-dark-mode.png' : '/da-ai-light-mode.png'}
+      src={scheme === 'dark' ? darkMark : lightMark}
       alt=""
       // Decorative everywhere it is used — each place already carries a text
       // label or an aria-label, and "Orbit AI Orbit AI" is what a screen reader

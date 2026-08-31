@@ -472,7 +472,12 @@ export const generateForm: RequestHandler = async (req, res) => {
     ? req.body.previous
     : undefined;
 
-  const result = await quantalogGenerate(workspaceId, prompt, previous);
+  // "edit" comes from the builder's AI drawer, changing a live form; "create"
+  // (default) is the generator modal drafting a new one. Quantalog only pulls
+  // an "edit" reply back toward the previous form.
+  const mode = req.body?.mode === 'edit' ? 'edit' : 'create';
+
+  const result = await quantalogGenerate(workspaceId, prompt, previous, mode);
 
   if (!result.ok) {
     // The quota refusal is passed through with its code intact, so the editor

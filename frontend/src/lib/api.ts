@@ -152,11 +152,21 @@ export function generateFormDraft(
   prompt: string,
   workspaceId = DEFAULT_WORKSPACE,
   /** The draft being revised, when the prompt is a change rather than a first ask. */
-  previous?: GeneratedForm
+  previous?: GeneratedForm,
+  /**
+   * "edit" — changing a form that already exists in the builder; the server
+   * keeps fields and theme unless the prompt asks otherwise.
+   * "create" (default) — a draft still being shaped in the generator modal.
+   */
+  mode: 'create' | 'edit' = 'create'
 ) {
   return authedRequest<GeneratedForm>(`${ws(workspaceId)}/generate`, {
     method: 'POST',
-    body: JSON.stringify(previous ? { prompt, previous } : { prompt }),
+    body: JSON.stringify({
+      prompt,
+      ...(previous ? { previous } : {}),
+      ...(mode === 'edit' ? { mode } : {}),
+    }),
   });
 }
 

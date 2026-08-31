@@ -109,7 +109,13 @@ export async function generateForm(
   workspaceId: string,
   prompt: string,
   /** The form being revised, when this is a follow-up rather than a first ask. */
-  previous?: GeneratedForm
+  previous?: GeneratedForm,
+  /**
+   * "edit" — a change to a form already live in the builder; Quantalog keeps
+   * fields and theme unless the prompt asks otherwise. "create" (default) — a
+   * draft in the generator modal.
+   */
+  mode: 'create' | 'edit' = 'create'
 ): Promise<GenerateOutcome> {
   if (!isConfigured()) {
     return { ok: false, status: 503, error: 'Form generation is not configured.' };
@@ -124,7 +130,11 @@ export async function generateForm(
           authorization: `Bearer ${env.formsServiceSecret}`,
           'content-type': 'application/json',
         },
-        body: JSON.stringify(previous ? { prompt, previous } : { prompt }),
+        body: JSON.stringify({
+          prompt,
+          ...(previous ? { previous } : {}),
+          ...(mode === 'edit' ? { mode } : {}),
+        }),
         // Generous next to the other calls: two model attempts run behind this,
         // and giving up at four seconds would abandon work already paid for.
         signal: AbortSignal.timeout(45_000),

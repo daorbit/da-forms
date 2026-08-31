@@ -64,7 +64,7 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
     setBusy(true);
     setTurns((t) => [...t, { prompt: asked }]);
     try {
-      const next = await generateFormDraft(asked, workspaceId, snapshot as GeneratedForm);
+      const next = await generateFormDraft(asked, workspaceId, snapshot as GeneratedForm, 'edit');
       onApply(next);
       setTurns((t) => {
         const copy = [...t];

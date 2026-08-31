@@ -1,0 +1,43 @@
+.pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* A sent instruction — right-aligned so the pane reads as a conversation. */
+.askBubble {
+  align-self: flex-end;
+  max-width: 85%;
+  margin-left: auto;
+  padding: 7px 11px;
+  border-radius: 12px 12px 3px 12px;
+  background: var(--mantine-color-blue-light);
+  color: var(--mantine-color-blue-light-color);
+}
+
+.suggestion {
+  display: block;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--mantine-color-gray-3);
+  border-radius: 9px;
+  text-align: left;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.suggestion:hover:not(:disabled) {
+  border-color: var(--mantine-color-blue-4);
+  background: var(--mantine-color-blue-0);
+}
+
+.suggestion:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

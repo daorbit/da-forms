@@ -37,6 +37,8 @@ import { FormCanvas } from '@/components/builder/FormCanvas';
 import { FormSettings } from '@/components/builder/FormSettings';
 import { PropertiesDrawer } from '@/components/builder/PropertiesDrawer';
 import { IconRail, type RailPanel } from '@/components/builder/IconRail';
+import { AiEditDrawer, type CurrentFormSnapshot } from '@/components/builder/AiEditDrawer';
+import { generatedToTemplate, type GeneratedForm } from '@/lib/generatedForm';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
 import { QuickSettingsDrawer } from '@/components/builder/QuickSettingsDrawer';
 import { ThemeDrawer } from '@/components/builder/ThemeDrawer';
@@ -601,6 +603,52 @@ export function FormBuilderPage() {
     }
   }
 
+  /**
+   * The live form as the generator's wire shape, so a follow-up AI prompt
+   * revises what is on the canvas now. Fields the generator has no concept of
+   * (grids, page breaks, payment) are passed through by label/type — the
+   * server keeps what it does not touch.
+   */
+  const aiSnapshot: CurrentFormSnapshot = {
+    title,
+    formDescription: description || undefined,
+    submitLabel: submitLabel || undefined,
+    theme: theme as unknown as Record<string, unknown>,
+    fields: fields.map((f) => ({
+      type: f.type,
+      label: f.label,
+      required: f.required,
+      placeholder: f.placeholder,
+      helpText: f.helpText,
+      options: f.options,
+      rows: f.rows,
+      content: f.content,
+      maxRating: f.maxRating,
+      min: f.min,
+      max: f.max,
+    })) as GeneratedForm['fields'],
+  };
+
+  /**
+   * Drop an AI revision onto the canvas. Goes through `generatedToTemplate` so
+   * every field lands with the same defaults a palette drag would give it, and
+   * only touches the parts the generator owns — theme, steps, notifications
+   * and payments are left as the user set them. The undo history snapshots
+   * this like any other edit.
+   */
+  function applyAiRevision(form: GeneratedForm) {
+    const template = generatedToTemplate(form);
+    setTitle(template.title);
+    setDescription(template.formDescription ?? '');
+    if (template.submitLabel !== undefined) setSubmitLabel(template.submitLabel);
+    setFields(template.fields);
+    if (template.theme) setTheme((prev) => ({ ...prev, ...template.theme }));
+    // The revised tree may not contain whatever was selected before it.
+    setSelectedId((id) => (id && findField(template.fields, id) ? id : null));
+    setEditingId((id) => (id && findField(template.fields, id) ? id : null));
+    notifications.show({ message: 'Applied — Ctrl+Z to undo', color: 'blue' });
+  }
+
   function handleRailSelect(panel: RailPanel) {
     if (panel !== 'embed') {
       setRailPanel(panel);
@@ -856,6 +904,15 @@ export function FormBuilderPage() {
       <AppShell.Aside>
         <IconRail active={railPanel} onSelect={handleRailSelect} />
       </AppShell.Aside>
+
+      <AiEditDrawer
+        opened={railPanel === 'ai'}
+        onClose={() => setRailPanel(null)}
+        workspaceId={workspaceId}
+        snapshot={aiSnapshot}
+        onApply={applyAiRevision}
+        disabled={isDemo}
+      />
 
       <QuickSettingsDrawer
         opened={railPanel === 'quickSettings'}

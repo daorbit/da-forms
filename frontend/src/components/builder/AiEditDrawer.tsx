@@ -8,8 +8,11 @@ import { OrbitMark } from '@/components/OrbitMark';
 import { generateFormDraft } from '@/lib/api';
 import type { GeneratedForm } from '@/lib/generatedForm';
 import { isPlanLimit } from '@/lib/planLimit';
-import classes from './PropertiesDrawer.module.css';
-import ai from './AiEditDrawer.module.css';
+import drawer from './PropertiesDrawer.module.css';
+// The exact pane the from-scratch generator uses — same border, wash, bubble,
+// suggestion and thinking treatments, so the two read as one assistant.
+import ai from '@/components/AiFormModal.module.css';
+import edit from './AiEditDrawer.module.css';
 
 /**
  * The form as the generator understands it. Rebuilt from live editor state on
@@ -84,8 +87,10 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
     }
   }
 
+  // One Textarea with the send button in its own right section — the same shape
+  // the from-scratch composer uses.
   const composer = (
-    <Box className={ai.composer}>
+    <Box px="md" pb="sm" pt={4}>
       <Textarea
         placeholder={disabled ? 'Read-only demo workspace' : 'Ask for a change'}
         value={prompt}
@@ -96,23 +101,25 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
             run();
           }
         }}
+        styles={{
+          input: {
+            paddingTop: 5,
+            paddingBottom: 5,
+            background: 'var(--mantine-color-default)',
+            borderColor: 'var(--mantine-color-default-border)',
+          },
+          section: { alignItems: 'center' },
+        }}
         autosize
         minRows={1}
         maxRows={4}
         radius="md"
         disabled={busy || disabled}
         data-autofocus
-        styles={{
-          input: {
-            background: 'var(--mantine-color-default)',
-            borderColor: 'var(--mantine-color-default-border)',
-          },
-          section: { alignItems: 'center' },
-        }}
         rightSection={
           <ActionIcon
             variant={prompt.trim() ? 'filled' : 'subtle'}
-            color={prompt.trim() ? 'blue' : 'gray'}
+            color={prompt.trim() ? 'emerald' : 'gray'}
             radius="xl"
             size="sm"
             disabled={!prompt.trim() || busy || disabled}
@@ -140,32 +147,31 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
       trapFocus={false}
       shadow="lg"
       title={
-        <div className={classes.headerBar}>
+        <div className={drawer.headerBar}>
           <OrbitMark size={18} />
-          <span className={classes.headerTitle}>Edit with AI</span>
+          <span className={drawer.headerTitle}>Edit with Orbit</span>
         </div>
       }
       classNames={{
-        header: classes.header,
-        title: classes.title,
-        body: classes.body,
-        content: classes.content,
+        header: drawer.header,
+        title: drawer.title,
+        body: drawer.body,
+        content: drawer.content,
       }}
     >
-      {/* Orbit's own surface, so this reads as the same assistant that drafts a
-          form from scratch — a bordered column, conversation above, composer
-          pinned below, faint aurora wash behind. */}
-      <div className={ai.pane}>
+      <div className={`${ai.orbitPane} ${edit.pane}`}>
         <ScrollArea className={ai.thread} type="hover" scrollbarSize={6} px="md" py="md">
           {turns.length === 0 ? (
-            <Stack gap="lg" pt={4}>
-              <Group gap={10} wrap="nowrap">
-                <OrbitMark size={30} />
-                <Text size="xs" c="dimmed" lh={1.5}>
-                  Describe a change and it is applied to the form on the canvas.
-                  Undo (Ctrl+Z) reverts it like any other edit.
+            <Stack gap="lg" pt={8}>
+              <Stack gap={6} align="center">
+                <OrbitMark size={44} />
+                <Text size="sm" fw={650} ta="center">
+                  Edit this form with Orbit
                 </Text>
-              </Group>
+                <Text size="xs" c="dimmed" ta="center" lh={1.5} maw={260}>
+                  Describe a change and Orbit applies it to the form on the canvas. Undo (Ctrl+Z) reverts it.
+                </Text>
+              </Stack>
 
               <Stack gap={7}>
                 <Text
@@ -199,15 +205,15 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
 
                   {busy && i === turns.length - 1 && turn.fieldCount === undefined && (
                     <Group gap={8} wrap="nowrap">
-                      <Loader size={12} type="dots" color="var(--mantine-color-blue-5)" />
-                      <Text size="xs" c="blue.4" fw={500} className={ai.thinking}>
+                      <Loader size={12} type="dots" color="var(--mantine-color-emerald-5)" />
+                      <Text size="xs" c="emerald.4" fw={500} className={ai.thinking}>
                         Revising
                       </Text>
                     </Group>
                   )}
 
                   {turn.fieldCount !== undefined && (
-                    <Box className={ai.applied}>
+                    <Box className={ai.fieldSummary}>
                       <Text size="xs" c="dimmed">
                         Applied to the canvas — {turn.fieldCount} field
                         {turn.fieldCount === 1 ? '' : 's'}. Ctrl+Z to undo.

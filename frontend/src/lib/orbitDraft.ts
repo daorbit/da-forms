@@ -24,13 +24,24 @@ const KEY = 'quantalog:orbit-form-draft';
  */
 const MAX_AGE_MS = 30 * 60 * 1000;
 
+/**
+ * One exchange: what the person asked, and the form Orbit produced from it.
+ *
+ * The form is kept per turn so the thread can show every version, not only the
+ * latest — a new prompt otherwise overwrites the one field summary and the
+ * previous answer vanishes from the pane.
+ */
+export interface OrbitTurn {
+  prompt: string;
+  form: GeneratedForm | null;
+}
+
 export interface OrbitDraft {
   /** The workspace it belongs to — a draft must not surface in another. */
   workspaceId: string;
   /** The form name chosen on the first step, so a resume is not half-configured. */
   formName: string;
-  history: string[];
-  form: GeneratedForm | null;
+  turns: OrbitTurn[];
   at: number;
 }
 
@@ -55,22 +66,51 @@ export function readOrbitDraft(workspaceId: string): OrbitDraft | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
 
-    const parsed = JSON.parse(raw) as Partial<OrbitDraft> | null;
+    const parsed = JSON.parse(raw) as Record<string, unknown> | null;
     if (!parsed || typeof parsed !== 'object') return null;
     if (parsed.workspaceId !== workspaceId) return null;
     if (typeof parsed.at !== 'number' || Date.now() - parsed.at > MAX_AGE_MS) return null;
-    if (!Array.isArray(parsed.history) || parsed.history.length === 0) return null;
+
+    const turns = readTurns(parsed);
+    if (turns.length === 0) return null;
 
     return {
       workspaceId,
       formName: typeof parsed.formName === 'string' ? parsed.formName : '',
-      history: parsed.history.filter((h): h is string => typeof h === 'string'),
-      form: (parsed.form as GeneratedForm | null) ?? null,
+      turns,
       at: parsed.at,
     };
   } catch {
     return null;
   }
+}
+
+/**
+ * Turns from either the current shape or the old `history: string[]` +
+ * single `form`, so a session written by the previous build still resumes.
+ */
+function readTurns(parsed: Record<string, unknown>): OrbitTurn[] {
+  if (Array.isArray(parsed.turns)) {
+    return parsed.turns
+      .filter((t): t is Record<string, unknown> => !!t && typeof t === 'object')
+      .filter((t) => typeof t.prompt === 'string')
+      .map((t) => ({
+        prompt: t.prompt as string,
+        form: (t.form as GeneratedForm | null) ?? null,
+      }));
+  }
+
+  if (Array.isArray(parsed.history)) {
+    const prompts = parsed.history.filter((h): h is string => typeof h === 'string');
+    const form = (parsed.form as GeneratedForm | null) ?? null;
+    // The old shape only kept the final form; hang it on the last prompt.
+    return prompts.map((prompt, i) => ({
+      prompt,
+      form: i === prompts.length - 1 ? form : null,
+    }));
+  }
+
+  return [];
 }
 
 export function clearOrbitDraft(): void {

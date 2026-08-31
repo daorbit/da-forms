@@ -18,7 +18,7 @@ import { generatedToTemplate, type GeneratedForm } from '@/lib/generatedForm';
 import { isPlanLimit } from '@/lib/planLimit';
 import classes from './NewFormModal.module.css';
 import ai from './AiFormModal.module.css';
-import { clearOrbitDraft, readOrbitDraft, saveOrbitDraft } from '@/lib/orbitDraft';
+import { clearOrbitDraft, readOrbitDraft, saveOrbitDraft, type OrbitTurn } from '@/lib/orbitDraft';
 import { pickSuggestions } from '@/lib/formSuggestions';
 
 interface Props {
@@ -49,11 +49,16 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState<GeneratedForm | null>(rescued?.form ?? null);
   const [device, setDevice] = useState<DeviceId>('macbook');
-  /** Every instruction so far, so the pane reads as a conversation. */
-  const [history, setHistory] = useState<string[]>(rescued?.history ?? []);
+  /**
+   * Every exchange so far — the ask and the form it produced — so the pane
+   * reads as a conversation and each answer stays on screen after the next
+   * prompt instead of being overwritten.
+   */
+  const [turns, setTurns] = useState<OrbitTurn[]>(rescued?.turns ?? []);
 
+  // The live draft is just the most recent turn's form.
+  const draft = [...turns].reverse().find((t) => t.form)?.form ?? null;
   const template = draft ? generatedToTemplate(draft) : null;
 
   const size = frameSize(device);
@@ -67,9 +72,8 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
     setPrompt('');
     setGenerating(false);
     setCreating(false);
-    setDraft(null);
     setDevice('macbook');
-    setHistory([]);
+    setTurns([]);
     // The stored copy exists only to survive a reload of this session. Leaving
     // it behind would mean reopening Orbit into an old conversation instead of
     // a blank pane.
@@ -87,16 +91,17 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
     if (!asked || generating) return;
 
     setGenerating(true);
-    setHistory((h) => [...h, asked]);
+    // The pending turn shows its ask bubble immediately; its form fills in
+    // when the reply lands.
+    setTurns((t) => [...t, { prompt: asked, form: null }]);
     try {
       const next = await generateFormDraft(asked, workspaceId, draft ?? undefined);
-      setDraft(next);
- 
-      saveOrbitDraft({ workspaceId, formName, history: [...history, asked], form: next });
- 
+      const nextTurns: OrbitTurn[] = [...turns, { prompt: asked, form: next }];
+      setTurns(nextTurns);
+      saveOrbitDraft({ workspaceId, formName, turns: nextTurns });
       setPrompt('');
     } catch (err) {
-      setHistory((h) => h.slice(0, -1));
+      setTurns((t) => t.slice(0, -1));
       // A spent AI allowance opens the upgrade dialog on its way out of the API
       // layer, same as a form cap does.
       if (isPlanLimit(err)) {
@@ -217,7 +222,7 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
               answers questions elsewhere in Quantalog. */}
           <div className={ai.orbitPane}>
             <ScrollArea className={ai.thread} type="hover" scrollbarSize={6} px="md" py="md">
-              {history.length === 0 ? (
+              {turns.length === 0 ? (
                 <Stack gap="lg" pt={8}>
                   <Stack gap={6} align="center">
                     <OrbitMark size={44} />
@@ -255,47 +260,54 @@ export function AiFormModal({ opened, onClose, onBack, formName, scope }: Props)
                 </Stack>
               ) : (
                 <Stack gap="sm">
-                  {history.map((h, i) => (
-                    <Box key={i} className={ai.askBubble}>
-                      <Text size="xs" lh={1.45}>
-                        {h}
-                      </Text>
-                    </Box>
-                  ))}
+                  {turns.map((turn, i) => {
+                    const turnTemplate = turn.form ? generatedToTemplate(turn.form) : null;
+                    const pending = generating && i === turns.length - 1 && !turn.form;
+                    return (
+                      <Stack key={i} gap="sm">
+                        <Box className={ai.askBubble}>
+                          <Text size="xs" lh={1.45}>
+                            {turn.prompt}
+                          </Text>
+                        </Box>
 
-                  {/* Same dots and pulsing label the Orbit panel uses while a
-                      reply is in flight. */}
-                  {generating && (
-                    <Group gap={8} wrap="nowrap">
-                      <Loader size={12} type="dots" color="var(--mantine-color-emerald-5)" />
-                      <Text size="xs" c="emerald.4" fw={500} className={ai.thinking}>
-                        {draft ? 'Revising' : 'Building your form'}
-                      </Text>
-                    </Group>
-                  )}
-
-                  {template && !generating && (
-                    <Box className={ai.fieldSummary}>
-                      <Text size="xs" fw={600} mb={6}>
-                        {template.fields.length} field{template.fields.length === 1 ? '' : 's'}
-                      </Text>
-                      <Stack gap={3}>
-                        {template.fields.map((f) => (
-                          <Group key={f.id} gap={6} wrap="nowrap">
-                            <Text size="10px" c="dimmed" style={{ minWidth: 68 }}>
-                              {f.type}
-                            </Text>
-                            <Text size="xs" truncate style={{ flex: 1 }}>
-                              {f.label}
-                              {f.required && (
-                                <span style={{ color: 'var(--mantine-color-red-6)' }}> *</span>
-                              )}
+                        {/* Same dots and pulsing label the Orbit panel uses
+                            while a reply is in flight. */}
+                        {pending && (
+                          <Group gap={8} wrap="nowrap">
+                            <Loader size={12} type="dots" color="var(--mantine-color-emerald-5)" />
+                            <Text size="xs" c="emerald.4" fw={500} className={ai.thinking}>
+                              {i === 0 ? 'Building your form' : 'Revising'}
                             </Text>
                           </Group>
-                        ))}
+                        )}
+
+                        {turnTemplate && (
+                          <Box className={ai.fieldSummary}>
+                            <Text size="xs" fw={600} mb={6}>
+                              {turnTemplate.fields.length} field
+                              {turnTemplate.fields.length === 1 ? '' : 's'}
+                            </Text>
+                            <Stack gap={3}>
+                              {turnTemplate.fields.map((f) => (
+                                <Group key={f.id} gap={6} wrap="nowrap">
+                                  <Text size="10px" c="dimmed" style={{ minWidth: 68 }}>
+                                    {f.type}
+                                  </Text>
+                                  <Text size="xs" truncate style={{ flex: 1 }}>
+                                    {f.label}
+                                    {f.required && (
+                                      <span style={{ color: 'var(--mantine-color-red-6)' }}> *</span>
+                                    )}
+                                  </Text>
+                                </Group>
+                              ))}
+                            </Stack>
+                          </Box>
+                        )}
                       </Stack>
-                    </Box>
-                  )}
+                    );
+                  })}
                 </Stack>
               )}
             </ScrollArea>

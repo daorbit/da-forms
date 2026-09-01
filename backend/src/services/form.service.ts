@@ -431,6 +431,18 @@ export function updateSubmission(
   return SubmissionModel.findOneAndUpdate({ _id: id, formId }, patch, { new: true });
 }
 
+/** Same as `updateSubmission`, for a batch of ids — scoped to `formId` the
+ *  same way, so an id that isn't this form's is silently skipped rather than
+ *  failing the whole batch. */
+export async function bulkUpdateSubmissions(
+  ids: string[],
+  formId: string,
+  patch: Partial<{ read: boolean; starred: boolean }>
+) {
+  const result = await SubmissionModel.updateMany({ _id: { $in: ids }, formId }, patch);
+  return { matchedCount: result.matchedCount ?? 0 };
+}
+
 /**
  * Delete one response, and the files it uploaded along with it.
  *

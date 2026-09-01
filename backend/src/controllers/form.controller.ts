@@ -161,6 +161,22 @@ export const updateSubmission: RequestHandler = async (req, res) => {
   res.json(submission);
 };
 
+export const bulkUpdateSubmissions: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form || form.workspaceId !== workspaceIdOf(req)) {
+    return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  }
+  const { ids, read, starred } = req.body ?? {};
+  if (!Array.isArray(ids) || ids.length === 0 || !ids.every((v) => typeof v === 'string')) {
+    return res.status(400).json({ error: 'invalid_ids', message: 'ids must be a non-empty array of strings' });
+  }
+  if (read === undefined && starred === undefined) {
+    return res.status(400).json({ error: 'no_patch', message: 'read or starred must be provided' });
+  }
+  const { matchedCount } = await formService.bulkUpdateSubmissions(ids, req.params.id, { read, starred });
+  res.json({ matchedCount });
+};
+
 export const deleteSubmission: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form || form.workspaceId !== workspaceIdOf(req)) {

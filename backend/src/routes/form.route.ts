@@ -77,6 +77,7 @@ workspaceFormRouter.patch('/:id', asyncHandler(formController.updateForm));
 workspaceFormRouter.delete('/:id', asyncHandler(formController.deleteForm));
 workspaceFormRouter.get('/:id/submissions', asyncHandler(formController.listSubmissions));
 workspaceFormRouter.patch('/:id/submissions/:subId', asyncHandler(formController.updateSubmission));
+workspaceFormRouter.post('/:id/submissions/bulk-update', asyncHandler(formController.bulkUpdateSubmissions));
 workspaceFormRouter.delete('/:id/submissions/:subId', asyncHandler(formController.deleteSubmission));
 // POST, not DELETE-with-body: a body on a DELETE request is dropped by some
 // proxies/clients, and a bulk action already needs a list in the body anyway.

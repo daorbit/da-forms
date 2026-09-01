@@ -8,6 +8,7 @@ import {
   updateSubmission,
   deleteSubmission,
   bulkDeleteSubmissions,
+  bulkUpdateSubmissions,
   updateForm,
   publicFormUrl,
   getAnalytics,
@@ -164,6 +165,19 @@ export function EntriesPage() {
     }
   }
 
+  async function bulkMarkRead(read: boolean) {
+    if (!id || selected.size === 0) return;
+    const ids = [...selected];
+    await bulkUpdateSubmissions(id, ids, { read }, workspaceId);
+    setSubmissions((prev) => prev.map((s) => (selected.has(s._id) ? { ...s, read } : s)));
+    notifications.show({ message: `${ids.length} responses marked ${read ? 'read' : 'unread'}`, color: 'emerald' });
+  }
+
+  function exportSelected() {
+    const rows = submissions.filter((s) => selected.has(s._id));
+    exportCsv(rows, '-selected');
+  }
+
   function startEditingName() {
     if (!form) return;
     setNameDraft(form.name || form.title);
@@ -195,10 +209,12 @@ export function EntriesPage() {
     notifications.show({ message: 'Link copied', color: 'emerald' });
   }
 
-  function exportCsv() {
+  /** `rows` defaults to every loaded submission; the bulk bar passes just the
+   *  checked ones so "export selected" doesn't also carry the rest of the page. */
+  function exportCsv(rows: Submission[] = submissions, filenameSuffix = '') {
     if (!form) return;
     const header = [...columns.map((f) => f.label), 'Added Time'];
-    const rows = submissions.map((s) => [
+    const body = rows.map((s) => [
       ...columns.map((f) =>
         JSON.stringify(
           // A payment column has no answer in `data` — its value is on the
@@ -208,12 +224,12 @@ export function EntriesPage() {
       ),
       JSON.stringify(formatDateTime(s.createdAt)),
     ]);
-    const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const csv = [header.join(','), ...body.map((r) => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${form.title || 'entries'}.csv`;
+    a.download = `${form.title || 'entries'}${filenameSuffix}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -257,7 +273,7 @@ export function EntriesPage() {
           loadSubmissions();
           loadAnalytics();
         }}
-        onExportCsv={exportCsv}
+        onExportCsv={() => exportCsv()}
       />
 
       {/* Before `form` loads there are no field columns yet, so the real
@@ -296,6 +312,9 @@ export function EntriesPage() {
         count={selected.size}
         onClear={() => setSelected(new Set())}
         onDelete={() => setPendingBulkDelete(true)}
+        onMarkRead={() => bulkMarkRead(true)}
+        onMarkUnread={() => bulkMarkRead(false)}
+        onExport={exportSelected}
       />
 
       <ResponseModal

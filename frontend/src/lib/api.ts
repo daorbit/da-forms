@@ -250,6 +250,18 @@ export function bulkDeleteSubmissions(formId: string, submissionIds: string[], w
   });
 }
 
+export function bulkUpdateSubmissions(
+  formId: string,
+  submissionIds: string[],
+  patch: Partial<Pick<Submission, 'read' | 'starred'>>,
+  workspaceId = DEFAULT_WORKSPACE
+) {
+  return request<{ matchedCount: number }>(`${ws(workspaceId)}/${formId}/submissions/bulk-update`, {
+    method: 'POST',
+    body: JSON.stringify({ ids: submissionIds, ...patch }),
+  });
+}
+
 export interface SourceBreakdownEntry {
   source: string;
   count: number;

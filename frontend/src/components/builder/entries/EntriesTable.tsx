@@ -151,7 +151,7 @@ export function EntriesTable({
                     return (
                       <Table.Td key={field.id}>
                         {isImage ? (
-                          <Stack gap={2} align="flex-start">
+                          <Group gap={6} wrap="nowrap">
                             <Anchor href={raw} target="_blank" rel="noopener noreferrer">
                               <Image
                                 src={raw}
@@ -167,7 +167,7 @@ export function EntriesTable({
                               />
                             </Anchor>
                             <FileSizeBadge bytes={bytes} url={raw} />
-                          </Stack>
+                          </Group>
                         ) : isFileLink ? (
                           <Anchor
                             href={raw}

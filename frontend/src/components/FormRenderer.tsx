@@ -530,7 +530,7 @@ export function FormRenderer({
                 )}
                 <Button
                   type="submit"
-                  loading={submitting}
+                  loading={submitting || isUploading}
                   disabled={isUploading}
                   size={buttonSize[submitButtonSize ?? 'medium']}
                   color={accent ? undefined : 'emerald'}

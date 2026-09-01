@@ -9,6 +9,19 @@ function isPdf(name: string): boolean {
   return /\.pdf$/i.test(name);
 }
 
+// Word/Excel/PowerPoint have no native browser renderer, unlike a PDF.
+// Microsoft's Office Online Viewer renders these itself off a public URL —
+// which the Cloudinary URL already is. Google Docs Viewer was tried first but
+// its xlsx support is unreliable ("Could not preview the file"); Office
+// Online is Microsoft's own format, so it renders its own files correctly.
+// Not used for pdf (has its own direct iframe above) or anything neither
+// viewer handles (zip, txt).
+const OFFICE_EXTENSIONS = /\.(?:docx?|xlsx?|pptx?|rtf|odt|ods|odp)$/i;
+
+function officePreviewUrl(fileUrl: string): string {
+  return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+}
+
 export function AttachmentModal({ attachment, onClose }: { attachment: AttachmentState; onClose: () => void }) {
   return (
     <Modal
@@ -26,11 +39,13 @@ export function AttachmentModal({ attachment, onClose }: { attachment: Attachmen
             {attachment.image ? (
               <Image src={attachment.url} alt={attachment.name} fit="contain" mah="65vh" maw="100%" />
             ) : isPdf(attachment.name) ? (
-              // Only a real PDF gets the iframe — a browser can render that
-              // natively. Word/Excel/etc have no in-browser renderer, so
-              // iframing them showed a blank or broken frame; those get a
-              // plain "here's the file" tile with Open/Download instead.
+              // A browser renders a PDF natively, so it goes straight into
+              // the iframe with no viewer service in between.
               <iframe src={attachment.url} title={attachment.name} className={classes.attachmentFrame} />
+            ) : OFFICE_EXTENSIONS.test(attachment.name) ? (
+              // No native renderer for these, so Google Docs Viewer does the
+              // rendering and this just iframes its output.
+              <iframe src={officePreviewUrl(attachment.url)} title={attachment.name} className={classes.attachmentFrame} />
             ) : (
               <Stack align="center" gap="xs" py="xl">
                 <FileTypeIcon fileName={attachment.name} size={64} />

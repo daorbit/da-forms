@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Menu, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Button, Group, Menu, Text, Tooltip } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import {
   IconChevronDown,
@@ -124,6 +124,26 @@ export function EntriesFilterBar({
               // Today, not further out — a form only has responses up to now.
               maxDate={new Date()}
             />
+            {/* The bare `DatePicker` (grid only, no text field) has no built-in
+                clear button the way `DatePickerInput` does — this is that
+                control. Resets the day filter back to "All Days" too, not
+                just the picked dates, so the list actually goes back to
+                unfiltered rather than silently staying on an emptied range. */}
+            {(customRange[0] || customRange[1]) && (
+              <Button
+                variant="subtle"
+                color="gray"
+                size="xs"
+                fullWidth
+                mt={4}
+                onClick={() => {
+                  onCustomRangeChange([null, null]);
+                  onFilter({ day: 'all' });
+                }}
+              >
+                Clear range
+              </Button>
+            )}
           </Menu.Dropdown>
         </Menu>
       </Group>

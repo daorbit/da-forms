@@ -1,46 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useParams, Link } from 'react-router-dom';
-import {
-  Group,
-  Text,
-  Button,
-  ThemeIcon,
-  Table,
-  Box,
-  Menu,
-  ActionIcon,
-  Pagination,
-  Tooltip,
-  Skeleton,
-  Stack,
-  Anchor,
-  Image,
-  Modal,
-  Loader,
-  TextInput,
-} from '@mantine/core';
+import { useLocation, useParams } from 'react-router-dom';
+import { Box } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import {
-  IconFileText,
-  IconVideo,
-  IconChevronDown,
-  IconShare2,
-  IconFilter,
-  IconArrowLeft,
-  IconFileExport,
-  IconLayoutList,
-  IconLayoutKanban,
-  IconCheck,
-  IconEye,
-  IconTrash,
-  IconFileTypePdf,
-  IconMailOpened,
-  IconRefresh,
-  IconDownload,
-  IconExternalLink,
-  IconPencil,
-  IconX,
-} from '@tabler/icons-react';
 import {
   getForm,
   listSubmissions,
@@ -53,56 +14,20 @@ import {
 } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
-import { staticTypes, uploadedTypes } from '@/lib/fieldPalette';
+import { staticTypes } from '@/lib/fieldPalette';
 import { valueFields } from '@/lib/fieldTree';
 import { EntriesKanban } from '@/components/builder/EntriesKanban';
 import { AnalyticsBar } from '@/components/builder/AnalyticsBar';
-import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { paymentCellText } from '@/lib/payment';
-import { PaymentCell } from '@/components/builder/PaymentCell';
+import { EntriesTopbar } from '@/components/builder/entries/EntriesTopbar';
+import { EntriesFilterBar } from '@/components/builder/entries/EntriesFilterBar';
+import { EntriesTableSkeleton } from '@/components/builder/entries/EntriesTableSkeleton';
+import { EntriesTable } from '@/components/builder/entries/EntriesTable';
+import { ResponseModal } from '@/components/builder/entries/ResponseModal';
+import { DeleteResponseModal } from '@/components/builder/entries/DeleteResponseModal';
+import { AttachmentModal, type AttachmentState } from '@/components/builder/entries/AttachmentModal';
+import { dayFilterToRange, formatDateTime, PAGE_SIZE, type DayFilter, type StatusFilter } from '@/components/builder/entries/entriesTypes';
 import classes from './EntriesPage.module.css';
-
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
-function isImageUrl(url: string) {
-  return /\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#]|$)/i.test(url);
-}
-
-type StatusFilter = 'all' | 'unread' | 'read';
-type DayFilter = 'all' | 'today' | '7' | '30';
-
-const STATUS_LABEL: Record<StatusFilter, string> = {
-  all: 'All Entries',
-  unread: 'Unread',
-  read: 'Read',
-};
-
-const DAY_LABEL: Record<DayFilter, string> = {
-  all: 'All Days',
-  today: 'Today',
-  '7': 'Last 7 Days',
-  '30': 'Last 30 Days',
-};
-
-function dayFilterToRange(day: DayFilter): { from?: string } {
-  if (day === 'all') return {};
-  const now = new Date();
-  const days = day === 'today' ? 0 : Number(day) - 1;
-  const from = new Date(now);
-  from.setDate(from.getDate() - days);
-  from.setHours(0, 0, 0, 0);
-  return { from: from.toISOString() };
-}
-
-const PAGE_SIZE = 10;
 
 export function EntriesPage() {
   const { id } = useParams<{ id: string }>();
@@ -115,11 +40,11 @@ export function EntriesPage() {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [day, setDay] = useState<DayFilter>('all');
   const [view, setView] = useState<'list' | 'kanban'>('list');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [viewing, setViewing] = useState<Submission | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Submission | null>(null);
-  const [attachment, setAttachment] = useState<{ url: string; name: string; image: boolean } | null>(null);
+  const [attachment, setAttachment] = useState<AttachmentState>(null);
   const [deleting, setDeleting] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -262,578 +187,86 @@ export function EntriesPage() {
 
   return (
     <Box className={classes.page}>
-      <Group justify="space-between" px="md" py="sm" className={classes.topbar} wrap="nowrap">
-        {form ? (
-          <>
-            <Group gap="xs" wrap="nowrap">
-              <ActionIcon component={Link} to={`/${workspaceId}/forms`} variant="subtle" color="gray" size="lg" aria-label="Back to all forms">
-                <IconArrowLeft size={19} />
-              </ActionIcon>
-             
-              {editingName ? (
-                <Group gap={4} wrap="nowrap">
-                  <TextInput
-                    value={nameDraft}
-                    onChange={(e) => setNameDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveName();
-                      if (e.key === 'Escape') setEditingName(false);
-                    }}
-                    size="sm"
-                    autoFocus
-                    disabled={savingName}
-                  />
-                  <ActionIcon variant="subtle" color="emerald" size="lg" aria-label="Save name" onClick={saveName} loading={savingName}>
-                    <IconCheck size={16} />
-                  </ActionIcon>
-                  <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Cancel" onClick={() => setEditingName(false)} disabled={savingName}>
-                    <IconX size={16} />
-                  </ActionIcon>
-                </Group>
-              ) : (
-                <Group gap={4} wrap="nowrap">
-                  <Text fw={600} component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.formLink}>
-                    {form.name || form.title}
-                  </Text>
-                  <Tooltip label="Rename form" withArrow>
-                    <ActionIcon variant="subtle" color="gray" size="sm" aria-label="Rename form" onClick={startEditingName}>
-                      <IconPencil size={14} />
-                    </ActionIcon>
-                  </Tooltip>
-                </Group>
-              )}
-            </Group>
-            <Group gap="xs">
-              <Button variant="default" radius="md" color="emerald" onClick={copyShareLink}>
-                Share
-              </Button>
-              <Button
-                component={Link}
-                to={`/${workspaceId}/forms/${form._id}/edit`}
-                color="emerald"
-                radius="md"
-                leftSection={<IconPencil size={16} />}
-              >
-                Edit
-              </Button>
-            </Group>
-          </>
-        ) : (
-          <>
-            <Group gap="xs" wrap="nowrap">
-              <Skeleton height={28} width={28} radius="sm" />
-              <Skeleton height={20} width={160} radius="sm" />
-            </Group>
-            <Group gap="xs">
-              <Skeleton height={32} width={80} radius="md" />
-              <Skeleton height={32} width={110} radius="md" />
-            </Group>
-          </>
-        )}
-      </Group>
+      <EntriesTopbar
+        form={form}
+        workspaceId={workspaceId}
+        editingName={editingName}
+        nameDraft={nameDraft}
+        savingName={savingName}
+        onStartEditingName={startEditingName}
+        onNameDraftChange={setNameDraft}
+        onSaveName={saveName}
+        onCancelEditingName={() => setEditingName(false)}
+        onCopyShareLink={copyShareLink}
+      />
 
       <AnalyticsBar analytics={analytics} />
 
-      <Group justify="space-between" px="md" py="xs" className={classes.filterbar} wrap="wrap">
-        <Group gap="lg">
-          <Menu shadow="md" width={160}>
-            <Menu.Target>
-              <Group gap={4} className={classes.filterItem}>
-                <Text fw={600} size="sm">
-                  {STATUS_LABEL[status]}
-                </Text>
-                <IconChevronDown size={14} />
-              </Group>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => (
-                <Menu.Item key={key} onClick={() => setFilter({ status: key })}>
-                  {STATUS_LABEL[key]}
-                </Menu.Item>
-              ))}
-            </Menu.Dropdown>
-          </Menu>
+      <EntriesFilterBar
+        status={status}
+        day={day}
+        view={view}
+        loading={loading}
+        onFilter={setFilter}
+        onSetView={setView}
+        onCopyShareLink={copyShareLink}
+        onRefresh={() => {
+          loadSubmissions();
+          loadAnalytics();
+        }}
+        onExportCsv={exportCsv}
+      />
 
-          <Text c="dimmed">|</Text>
-
-          <Menu shadow="md" width={160}>
-            <Menu.Target>
-              <Group gap={4} className={classes.filterItem}>
-                <Text fw={600} size="sm">
-                  {DAY_LABEL[day]}
-                </Text>
-                <IconChevronDown size={14} />
-              </Group>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {(Object.keys(DAY_LABEL) as DayFilter[]).map((key) => (
-                <Menu.Item key={key} onClick={() => setFilter({ day: key })}>
-                  {DAY_LABEL[key]}
-                </Menu.Item>
-              ))}
-            </Menu.Dropdown>
-          </Menu>
-        </Group>
-
-        <Group gap="xs">
-          <Menu shadow="md" width={160} position="bottom-end">
-            <Menu.Target>
-              <Tooltip label="View" withArrow>
-                <ActionIcon variant="subtle" color="gray">
-                  {view === 'list' ? <IconLayoutList size={17} /> : <IconLayoutKanban size={17} />}
-                </ActionIcon>
-              </Tooltip>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item
-                leftSection={<IconLayoutList size={15} />}
-                rightSection={view === 'list' ? <IconCheck size={14} color="var(--mantine-color-emerald-6)" /> : undefined}
-                onClick={() => setView('list')}
-              >
-                List View
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<IconLayoutKanban size={15} />}
-                rightSection={view === 'kanban' ? <IconCheck size={14} color="var(--mantine-color-emerald-6)" /> : undefined}
-                onClick={() => setView('kanban')}
-              >
-                Kanban View
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-          <Tooltip label="Copy share link" withArrow>
-            <ActionIcon variant="subtle" color="gray" onClick={copyShareLink}>
-              <IconShare2 size={17} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Refresh responses" withArrow>
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              onClick={() => {
-                loadSubmissions();
-                loadAnalytics();
-              }}
-              loading={loading}
-              aria-label="Refresh responses"
-            >
-              <IconRefresh size={17} />
-            </ActionIcon>
-          </Tooltip>
-          <Menu shadow="md" width={160}>
-            <Menu.Target>
-              <Tooltip label="Filter" withArrow>
-                <ActionIcon variant="subtle" color="gray">
-                  <IconFilter size={17} />
-                </ActionIcon>
-              </Tooltip>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => (
-                <Menu.Item key={key} onClick={() => setFilter({ status: key })}>
-                  {STATUS_LABEL[key]}
-                </Menu.Item>
-              ))}
-            </Menu.Dropdown>
-          </Menu>
-          <Tooltip label="Export CSV" withArrow>
-            <ActionIcon variant="subtle" color="gray" onClick={exportCsv}>
-              <IconFileExport size={17} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-      </Group>
-
-      {view === 'kanban' ? (
+      {/* Before `form` loads there are no field columns yet, so the real
+          table (header included) can't draw its real shape — showing it with
+          an empty column set and then reflowing once `form` arrives read as
+          two different tables. And `form` alone isn't enough to switch off
+          the skeleton: submissions load separately, so dropping to the real
+          table the moment `form` lands but before that fetch resolves showed
+          the "no responses yet" empty state for a beat, on a form that likely
+          has responses. Keep the skeleton up until both are ready. */}
+      {!form || (loading && submissions.length === 0) ? (
+        <EntriesTableSkeleton />
+      ) : view === 'kanban' ? (
         <EntriesKanban submissions={submissions} columns={columns} onMove={moveSubmission} />
       ) : (
-        <>
-          {/* Enough width for every value column at 180px plus the date and
-              actions columns, so a narrow screen scrolls the table sideways
-              instead of crushing the columns into unreadable slivers. */}
-          <Table.ScrollContainer
-            minWidth={columns.length * 180 + 90 + 160}
-            className={classes.tableWrap}
-          >
-            <Table
-              withTableBorder
-              highlightOnHover
-              className={`${classes.table} ${loading && submissions.length > 0 ? classes.tableLoading : ''}`}
-              aria-busy={loading}
-            >
-              <Table.Thead className={classes.thead}>
-                <Table.Tr>
-                  {/* No leading icon: the icon shifted every heading right by its
-                      own width while the values below started at the cell edge,
-                      so each column read as misaligned with its own data. The
-                      field type is already visible from the values. */}
-                  {columns.map((field) => (
-                    <Table.Th key={field.id} className={classes.th}>
-                      <Text size="sm" fw={600} title={field.label} truncate>
-                        {field.label}
-                      </Text>
-                    </Table.Th>
-                  ))}
-                  <Table.Th className={classes.th}>
-                    <Text size="sm" fw={600}>
-                      Added Time
-                    </Text>
-                  </Table.Th>
-                  <Table.Th className={`${classes.th} ${classes.actionsCol}`}>
-                    <Text size="sm" fw={600}>
-                      Actions
-                    </Text>
-                  </Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-
-              <Table.Tbody>
-                {loading && submissions.length === 0 ? (
-                  <Table.Tr>
-                    <Table.Td colSpan={columns.length + 2} className={classes.loadingCell}>
-                      <Loader size="sm" color="emerald" />
-                    </Table.Td>
-                  </Table.Tr>
-                ) : submissions.length === 0 ? (
-                  <Table.Tr>
-                    <Table.Td colSpan={columns.length + 2}>
-                      <Stack align="center" gap={4} py="xl">
-                        <ThemeIcon variant="light" color="gray" size={44} radius="xl">
-                          <IconMailOpened size={22} />
-                        </ThemeIcon>
-                        <Text fw={600} size="sm">
-                          No responses yet
-                        </Text>
-                        <Text size="xs" c="dimmed" ta="center" maw={320}>
-                          Share your form's link to start collecting responses.
-                        </Text>
-                        <Button
-                          variant="light"
-                          color="emerald"
-                          size="xs"
-                          mt="xs"
-                          leftSection={<IconShare2 size={14} />}
-                          onClick={copyShareLink}
-                        >
-                          Copy share link
-                        </Button>
-                      </Stack>
-                    </Table.Td>
-                  </Table.Tr>
-                ) : (
-                  submissions.map((submission) => (
-                    <Table.Tr
-                      key={submission._id}
-                      onClick={() => markRead(submission)}
-                      style={{ fontWeight: submission.read ? 400 : 700 }}
-                    >
-                      {columns.map((field) => {
-                        // A payment is not an answer — it lives on the
-                        // submission itself, written by the webhook rather
-                        // than typed by the respondent.
-                        if (field.type === 'payment') {
-                          return (
-                            <Table.Td key={field.id}>
-                              <PaymentCell payment={submission.payment} />
-                            </Table.Td>
-                          );
-                        }
-                        const raw = submission.data[field.id] ?? '';
-                        // Older submissions (or builder-preview edits) may only hold a bare
-                        // filename from before uploads were wired to Cloudinary — link only
-                        // what's actually a URL.
-                        const isFileLink = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
-                        const isImage = isFileLink && (field.type === 'imageUpload' || field.type === 'signature' || isImageUrl(raw));
-                        const fileName = raw.split('/').pop() || 'Attachment';
-                        return (
-                          <Table.Td key={field.id}>
-                            {isImage ? (
-                              <Anchor href={raw} target="_blank" rel="noopener noreferrer">
-                                  <Image
-                                    src={raw}
-                                    alt={fileName}
-                                    h={40}
-                                    w={40}
-                                    fit="cover"
-                                    radius="sm"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setAttachment({ url: raw, name: fileName, image: true });
-                                    }}
-                                  />
-                              </Anchor>
-                            ) : isFileLink ? (
-                              <Anchor
-                                href={raw}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                underline="never"
-                                c="inherit"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setAttachment({ url: raw, name: fileName, image: false });
-                                }}
-                              >
-                                <Group gap={6} wrap="nowrap">
-                                  <ThemeIcon variant="light" color="gray" size={28} radius="sm">
-                                    {field.type === 'mediaUpload' ? <IconVideo size={15} /> : <IconFileText size={15} />}
-                                  </ThemeIcon>
-                                  <Text size="sm" td="underline" truncate maw={160}>
-                                    {fileName}
-                                  </Text>
-                                </Group>
-                              </Anchor>
-                            ) : (
-                              <Text size="sm" className={classes.cellText} title={raw}>
-                                {raw}
-                              </Text>
-                            )}
-                          </Table.Td>
-                        );
-                      })}
-                      <Table.Td>
-                        <Text size="sm" c="dimmed">
-                          {formatDateTime(submission.createdAt)}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td className={classes.actionsCol} onClick={(e) => e.stopPropagation()}>
-                        <Group gap={4} wrap="nowrap">
-                          <Tooltip label="View response" withArrow>
-                            <ActionIcon variant="subtle" color="gray" onClick={() => setViewing(submission)}>
-                              <IconEye size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                          <Tooltip label="Download PDF" withArrow>
-                            <ActionIcon
-                              variant="subtle"
-                              color="gray"
-                              onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, submission)}
-                            >
-                              <IconFileTypePdf size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                          <Tooltip label="Delete response" withArrow>
-                            <ActionIcon variant="subtle" color="red" onClick={() => setPendingDelete(submission)}>
-                              <IconTrash size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                        </Group>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))
-                )}
-              </Table.Tbody>
-            </Table>
-          </Table.ScrollContainer>
-
-          <Group justify="flex-end" px="md" py="md">
-            <Pagination
-              total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
-              value={page}
-              onChange={setPage}
-              color="emerald"
-              disabled={total <= PAGE_SIZE}
-            />
-          </Group>
-        </>
+        <EntriesTable
+          form={form}
+          columns={columns}
+          submissions={submissions}
+          total={total}
+          page={page}
+          loading={loading}
+          onPageChange={setPage}
+          onMarkRead={markRead}
+          onView={setViewing}
+          onDelete={setPendingDelete}
+          onCopyShareLink={copyShareLink}
+          onOpenAttachment={setAttachment}
+        />
       )}
 
-      <Modal
-        opened={!!viewing}
+      <ResponseModal
+        form={form}
+        columns={columns}
+        viewing={viewing}
         onClose={() => setViewing(null)}
-        title="Response"
-        size="lg"
-        centered
-        radius="lg"
-        classNames={{ content: classes.responseModal, body: classes.responseBody }}
-      >
-        {viewing && (
-          <Stack gap="md">
-            <Group justify="space-between" className={classes.responseMeta}>
-              <Text size="sm" c="dimmed">
-                {viewing.read ? 'Read response' : 'Unread response'}
-              </Text>
-              <Group gap="xs">
-                <Tooltip label={viewing.read ? 'Already read' : 'Mark as read'} withArrow>
-                  <ActionIcon
-                    variant="light"
-                    color="emerald"
-                    disabled={viewing.read}
-                    aria-label={viewing.read ? 'Response already read' : 'Mark response as read'}
-                    onClick={() => markRead(viewing)}
-                  >
-                    <IconMailOpened size={17} />
-                  </ActionIcon>
-                </Tooltip>
-                <Tooltip label="Delete response" withArrow>
-                  <ActionIcon
-                    variant="light"
-                    color="red"
-                    aria-label="Delete response"
-                    onClick={() => {
-                      setPendingDelete(viewing);
-                      setViewing(null);
-                    }}
-                  >
-                    <IconTrash size={17} />
-                  </ActionIcon>
-                </Tooltip>
-              </Group>
-            </Group>
+        onMarkRead={markRead}
+        onDelete={(submission) => {
+          setPendingDelete(submission);
+          setViewing(null);
+        }}
+        onOpenAttachment={setAttachment}
+      />
 
-            <div className={classes.responseGrid}>
-              {columns.map((field) => {
-                // A payment is not an answer — it lives on the submission
-                // itself, written by the webhook. Matches the table's PaymentCell.
-                if (field.type === 'payment') {
-                  return (
-                    <div key={field.id} className={classes.responseField}>
-                      <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
-                        {field.label}
-                      </Text>
-                      <PaymentCell payment={viewing.payment} />
-                    </div>
-                  );
-                }
-                const raw = viewing.data[field.id] ?? '';
-                const isFileLink = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
-                const isImage = isFileLink && (field.type === 'imageUpload' || field.type === 'signature' || isImageUrl(raw));
-                const fileName = raw.split('/').pop() || 'Attachment';
-                return (
-                  <div key={field.id} className={`${classes.responseField} ${isImage ? classes.mediaField : ''}`}>
-                    <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
-                      {field.label}
-                    </Text>
-                    {isImage ? (
-                      <Anchor
-                        href={raw}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setAttachment({ url: raw, name: fileName, image: true });
-                        }}
-                      >
-                        <Image src={raw} alt={fileName} mah={220} w="auto" fit="contain" radius="sm" />
-                      </Anchor>
-                    ) : isFileLink ? (
-                      <Anchor
-                        href={raw}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        underline="never"
-                        c="inherit"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setAttachment({ url: raw, name: fileName, image: false });
-                        }}
-                      >
-                        <Group gap={6} wrap="nowrap">
-                          <ThemeIcon variant="light" color="gray" size={28} radius="sm">
-                            {field.type === 'mediaUpload' ? <IconVideo size={15} /> : <IconFileText size={15} />}
-                          </ThemeIcon>
-                          <Text size="sm" td="underline">
-                            {fileName}
-                          </Text>
-                        </Group>
-                      </Anchor>
-                    ) : (
-                      <Text size="sm">{raw || '—'}</Text>
-                    )}
-                  </div>
-                );
-              })}
-              <div className={classes.responseField}>
-                <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
-                  Added Time
-                </Text>
-                <Text size="sm">{formatDateTime(viewing.createdAt)}</Text>
-              </div>
-            </div>
-
-            <Group justify="flex-end" className={classes.responseFooter}>
-              <Button
-                variant="default"
-                leftSection={<IconFileTypePdf size={16} />}
-                onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, viewing)}
-              >
-                Download PDF
-              </Button>
-            </Group>
-          </Stack>
-        )}
-      </Modal>
-
-      <Modal
+      <DeleteResponseModal
         opened={!!pendingDelete}
+        deleting={deleting}
         onClose={() => setPendingDelete(null)}
-        title="Delete response"
-        centered
-        radius="lg"
-      >
-        <Text size="sm">This response will be permanently removed. This can't be undone.</Text>
-        <Group justify="flex-end" mt="lg">
-          <Button variant="default" onClick={() => setPendingDelete(null)}>
-            Cancel
-          </Button>
-          <Button color="red" loading={deleting} onClick={confirmDeleteSubmission}>
-            Delete
-          </Button>
-        </Group>
-      </Modal>
+        onConfirm={confirmDeleteSubmission}
+      />
 
-      <Modal
-        opened={!!attachment}
-        onClose={() => setAttachment(null)}
-        title={attachment?.name ?? 'Attachment'}
-        size="xl"
-        centered
-        radius="lg"
-        classNames={{ content: classes.attachmentModal, body: classes.attachmentBody }}
-      >
-        {attachment && (
-          <Stack gap="md">
-            <Box className={classes.attachmentPreview}>
-              {attachment.image ? (
-                <Image
-                  src={attachment.url}
-                  alt={attachment.name}
-                  fit="contain"
-                  mah="65vh"
-                  maw="100%"
-                />
-              ) : (
-                <iframe
-                  src={attachment.url}
-                  title={attachment.name}
-                  className={classes.attachmentFrame}
-                />
-              )}
-            </Box>
-            <Group justify="flex-end" gap="sm">
-              <Button
-                component="a"
-                href={attachment.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="default"
-                leftSection={<IconExternalLink size={16} />}
-              >
-                Open in new tab
-              </Button>
-              <Button
-                component="a"
-                href={attachment.url}
-                download={attachment.name}
-                color="emerald"
-                leftSection={<IconDownload size={16} />}
-              >
-                Download
-              </Button>
-            </Group>
-          </Stack>
-        )}
-      </Modal>
+      <AttachmentModal attachment={attachment} onClose={() => setAttachment(null)} />
     </Box>
   );
 }

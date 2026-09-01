@@ -1,8 +1,14 @@
 export type StatusFilter = 'all' | 'unread' | 'read';
 export type DayFilter = 'all' | 'today' | '7' | '30' | 'custom';
 /** A picked [start, end] pair, or either half still unset while the range
- *  picker is mid-selection. Only meaningful when `day === 'custom'`. */
-export type CustomRange = [Date | null, Date | null];
+ *  picker is mid-selection. Only meaningful when `day === 'custom'`.
+ *
+ * Strings, not `Date` objects — Mantine's range pickers (`DatePicker`,
+ * `DatePickerInput` with `type="range"`) report `[string | null, string |
+ * null]` (ISO `YYYY-MM-DD`), not `Date`. Treating this as `Date[]` compiled
+ * fine behind an `as CustomRange` cast but broke at runtime the moment
+ * `.toLocaleDateString()` was called on what was actually a string. */
+export type CustomRange = [string | null, string | null];
 
 export const STATUS_LABEL: Record<StatusFilter, string> = {
   all: 'All Entries',

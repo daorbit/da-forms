@@ -14,11 +14,13 @@ import {
 import { DAY_LABEL, STATUS_LABEL, type CustomRange, type DayFilter, type StatusFilter } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
-/** "Sep 1 – Sep 8, 2026", or just the start once only that's picked. */
+/** "Sep 1 – Sep 8", or just the start once only that's picked. `start`/`end`
+ *  are ISO date strings (Mantine's range value shape), parsed here rather
+ *  than assumed to already be `Date` objects. */
 function rangeLabel(range: CustomRange): string {
   const [start, end] = range;
   if (!start) return DAY_LABEL.custom;
-  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const fmt = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   return end ? `${fmt(start)} – ${fmt(end)}` : `From ${fmt(start)}`;
 }
 
@@ -115,7 +117,7 @@ export function EntriesFilterBar({
               size="xs"
               value={customRange}
               onChange={(range) => {
-                onCustomRangeChange(range as CustomRange);
+                onCustomRangeChange(range);
                 onFilter({ day: 'custom' });
               }}
               allowSingleDateInRange

@@ -1,4 +1,4 @@
-import type { RequestHandler, Request } from 'express';
+import type { RequestHandler, Request, Response } from 'express';
 import { createHash } from 'node:crypto';
 import * as formService from '../services/form.service.js';
 import * as paymentService from '../services/payment.service.js';
@@ -161,15 +161,31 @@ export const updateSubmission: RequestHandler = async (req, res) => {
   res.json(submission);
 };
 
+ 
+const BULK_ACTION_LIMIT = 200;
+
+function validateBulkIds(ids: unknown, res: Response): ids is string[] {
+  if (!Array.isArray(ids) || ids.length === 0 || !ids.every((v) => typeof v === 'string')) {
+    res.status(400).json({ error: 'invalid_ids', message: 'ids must be a non-empty array of strings' });
+    return false;
+  }
+  if (ids.length > BULK_ACTION_LIMIT) {
+    res.status(400).json({
+      error: 'too_many_ids',
+      message: `At most ${BULK_ACTION_LIMIT} ids per request`,
+    });
+    return false;
+  }
+  return true;
+}
+
 export const bulkUpdateSubmissions: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form || form.workspaceId !== workspaceIdOf(req)) {
     return res.status(404).json({ error: 'not_found', message: 'Form not found' });
   }
   const { ids, read, starred } = req.body ?? {};
-  if (!Array.isArray(ids) || ids.length === 0 || !ids.every((v) => typeof v === 'string')) {
-    return res.status(400).json({ error: 'invalid_ids', message: 'ids must be a non-empty array of strings' });
-  }
+  if (!validateBulkIds(ids, res)) return;
   if (read === undefined && starred === undefined) {
     return res.status(400).json({ error: 'no_patch', message: 'read or starred must be provided' });
   }
@@ -193,9 +209,7 @@ export const bulkDeleteSubmissions: RequestHandler = async (req, res) => {
     return res.status(404).json({ error: 'not_found', message: 'Form not found' });
   }
   const ids = req.body?.ids;
-  if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => typeof id === 'string')) {
-    return res.status(400).json({ error: 'invalid_ids', message: 'ids must be a non-empty array of strings' });
-  }
+  if (!validateBulkIds(ids, res)) return;
   const { deletedCount } = await formService.bulkDeleteSubmissions(ids, req.params.id);
   res.json({ deletedCount });
 };

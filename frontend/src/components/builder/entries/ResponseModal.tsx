@@ -5,6 +5,7 @@ import { uploadedTypes } from '@/lib/fieldPalette';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
+import { FileSizeBadge } from './FileSizeBadge';
 import { formatDateTime, isImageUrl } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
@@ -110,9 +111,10 @@ export function ResponseModal({
                     >
                       <Group gap={6} wrap="nowrap">
                         <FileTypeIcon fileName={fileName} size={26} previewable />
-                        <Text size="sm">
-                          {fileName}
-                        </Text>
+                        <Stack gap={0}>
+                          <Text size="sm">{fileName}</Text>
+                          <FileSizeBadge url={raw} />
+                        </Stack>
                       </Group>
                     </Anchor>
                   ) : (

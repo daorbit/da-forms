@@ -10,6 +10,7 @@ import { uploadedTypes } from '@/lib/fieldPalette';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
+import { FileSizeBadge } from './FileSizeBadge';
 import { formatDateTime, isImageUrl, PAGE_SIZE } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
@@ -177,9 +178,12 @@ export function EntriesTable({
                           >
                             <Group gap={6} wrap="nowrap">
                               <FileTypeIcon fileName={fileName} size={26} previewable />
-                              <Text size="sm" truncate maw={140}>
-                                {fileName}
-                              </Text>
+                              <Stack gap={0} style={{ minWidth: 0 }}>
+                                <Text size="sm" truncate maw={140}>
+                                  {fileName}
+                                </Text>
+                                <FileSizeBadge url={raw} />
+                              </Stack>
                             </Group>
                           </Anchor>
                         ) : (

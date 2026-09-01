@@ -3,7 +3,6 @@ import {
   IconShare2,
   IconEye,
   IconTrash,
-  IconFileTypePdf,
   IconMailOpened,
 } from '@tabler/icons-react';
 import type { Form, FormField, Submission } from '@/types';
@@ -150,7 +149,7 @@ export function EntriesTable({
                             }}
                           >
                             <Group gap={6} wrap="nowrap">
-                              <FileTypeIcon fileName={fileName} size={26} />
+                              <FileTypeIcon fileName={fileName} size={26} previewable />
                               <Text size="sm" truncate maw={140}>
                                 {fileName}
                               </Text>
@@ -178,7 +177,11 @@ export function EntriesTable({
                       </Tooltip>
                       <Tooltip label="Download PDF" withArrow>
                         <ActionIcon variant="subtle" color="gray" onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, submission)}>
-                          <IconFileTypePdf size={16} />
+                          {/* The real branded glyph, same as the file-type
+                              icons elsewhere in this table — a fixed filename
+                              since this button always produces a PDF, not one
+                              taken from an uploaded file. */}
+                          <FileTypeIcon fileName="response.pdf" size={16} />
                         </ActionIcon>
                       </Tooltip>
                       <Tooltip label="Delete response" withArrow>

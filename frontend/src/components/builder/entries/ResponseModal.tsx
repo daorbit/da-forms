@@ -1,5 +1,5 @@
 import { ActionIcon, Anchor, Button, Group, Image, Modal, Stack, Text, Tooltip } from '@mantine/core';
-import { IconTrash, IconFileTypePdf, IconMailOpened } from '@tabler/icons-react';
+import { IconTrash, IconMailOpened } from '@tabler/icons-react';
 import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
@@ -109,7 +109,7 @@ export function ResponseModal({
                       }}
                     >
                       <Group gap={6} wrap="nowrap">
-                        <FileTypeIcon fileName={fileName} size={26} />
+                        <FileTypeIcon fileName={fileName} size={26} previewable />
                         <Text size="sm">
                           {fileName}
                         </Text>
@@ -130,7 +130,11 @@ export function ResponseModal({
           </div>
 
           <Group justify="flex-end" className={classes.responseFooter}>
-            <Button variant="default" leftSection={<IconFileTypePdf size={16} />} onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, viewing)}>
+            <Button
+              variant="default"
+              leftSection={<FileTypeIcon fileName="response.pdf" size={16} />}
+              onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, viewing)}
+            >
               Download PDF
             </Button>
           </Group>

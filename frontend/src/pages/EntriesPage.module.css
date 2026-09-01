@@ -156,13 +156,25 @@
   padding: 20px;
 }
 
+/* A PDF/Office iframe is its own document with its own chrome (Excel's
+   toolbar, the PDF viewer's page controls) — the card's border and padding
+   just shrank how much of that the viewer got, on top of framing that was
+   already redundant with the iframe's own edge. Image and no-preview states
+   keep the card look above; only the iframe case drops it. */
+.attachmentPreview:has(.attachmentFrame) {
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  padding: 0;
+}
+
 .attachmentFrame {
   display: block;
   width: 100%;
-  height: 65vh;
-  min-height: 420px;
+  height: 72vh;
+  min-height: 460px;
   border: 0;
-  border-radius: var(--mantine-radius-sm);
+  border-radius: var(--mantine-radius-md);
   background: #fff;
 }
 

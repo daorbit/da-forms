@@ -1,3 +1,4 @@
+import { IconEye } from '@tabler/icons-react';
 import { FileIcon, defaultStyles, type DefaultExtensionType } from 'react-file-icon';
 
 function extensionOf(fileName: string): string {
@@ -5,18 +6,29 @@ function extensionOf(fileName: string): string {
   return dot === -1 ? '' : fileName.slice(dot + 1).toLowerCase();
 }
 
-/**
- * The real branded file glyph (folded corner + coloured PDF/DOC/XLS label),
- * not a generic outline icon — tabler has one shape for every non-image
- * file, which made a PDF and a spreadsheet look identical apart from the
- * filename text next to them.
- */
-export function FileTypeIcon({ fileName, size = 22 }: { fileName: string; size?: number }) {
+ 
+export function FileTypeIcon({
+  fileName,
+  size = 22,
+  previewable = false,
+}: {
+  fileName: string;
+  size?: number;
+  previewable?: boolean;
+}) {
   const ext = extensionOf(fileName);
   const style = defaultStyles[ext as DefaultExtensionType];
   return (
-    <span style={{ display: 'inline-flex', width: size, height: size, flexShrink: 0 }}>
+    <span
+      className={previewable ? 'fileTypeIcon fileTypeIcon--previewable' : 'fileTypeIcon'}
+      style={{ display: 'inline-flex', position: 'relative', width: size, height: size, flexShrink: 0 }}
+    >
       <FileIcon extension={ext} {...style} />
+      {previewable && (
+        <span className="fileTypeIcon-hoverEye">
+          <IconEye size={Math.round(size * 0.5)} color="#fff" />
+        </span>
+      )}
     </span>
   );
 }

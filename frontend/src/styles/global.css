@@ -314,3 +314,27 @@ body[data-mantine-scroll-locked] {
   padding-right: 0 !important;
   margin-right: 0 !important;
 }
+
+/* Hover affordance for a FileTypeIcon marked `previewable`: an eye icon fades
+ * in centered over the glyph so the icon itself signals "click opens a
+ * preview" without needing separate hover chrome around it. */
+.fileTypeIcon--previewable {
+  cursor: pointer;
+}
+
+.fileTypeIcon-hoverEye {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 120ms ease;
+  pointer-events: none;
+}
+
+.fileTypeIcon--previewable:hover .fileTypeIcon-hoverEye {
+  opacity: 1;
+}

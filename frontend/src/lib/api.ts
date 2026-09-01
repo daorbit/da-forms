@@ -243,6 +243,13 @@ export function deleteSubmission(formId: string, submissionId: string, workspace
   return request<void>(`${ws(workspaceId)}/${formId}/submissions/${submissionId}`, { method: 'DELETE' });
 }
 
+export function bulkDeleteSubmissions(formId: string, submissionIds: string[], workspaceId = DEFAULT_WORKSPACE) {
+  return request<{ deletedCount: number }>(`${ws(workspaceId)}/${formId}/submissions/bulk-delete`, {
+    method: 'POST',
+    body: JSON.stringify({ ids: submissionIds }),
+  });
+}
+
 export interface SourceBreakdownEntry {
   source: string;
   count: number;

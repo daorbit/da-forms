@@ -171,6 +171,19 @@ export const deleteSubmission: RequestHandler = async (req, res) => {
   res.status(204).send();
 };
 
+export const bulkDeleteSubmissions: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form || form.workspaceId !== workspaceIdOf(req)) {
+    return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  }
+  const ids = req.body?.ids;
+  if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => typeof id === 'string')) {
+    return res.status(400).json({ error: 'invalid_ids', message: 'ids must be a non-empty array of strings' });
+  }
+  const { deletedCount } = await formService.bulkDeleteSubmissions(ids, req.params.id);
+  res.json({ deletedCount });
+};
+
 export const getAnalytics: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form || form.workspaceId !== workspaceIdOf(req)) {

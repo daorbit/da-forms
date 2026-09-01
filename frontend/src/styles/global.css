@@ -338,3 +338,16 @@ body[data-mantine-scroll-locked] {
 .fileTypeIcon--previewable:hover .fileTypeIcon-hoverEye {
   opacity: 1;
 }
+
+/* Snackbar-style bulk-selection bar: floats above the page rather than
+ * living in the table's own flow, so appearing/disappearing as rows are
+ * checked never shifts the table underneath it. */
+.bulkActionBar {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 200;
+  background-color: var(--mantine-color-body);
+}
+

@@ -1,4 +1,4 @@
-import { ActionIcon, Anchor, Button, Group, Image, Pagination, Stack, Table, Text, ThemeIcon, Tooltip } from '@mantine/core';
+import { ActionIcon, Anchor, Button, Checkbox, Group, Image, Pagination, Stack, Table, Text, ThemeIcon, Tooltip } from '@mantine/core';
 import {
   IconShare2,
   IconEye,
@@ -20,6 +20,9 @@ export function EntriesTable({
   total,
   page,
   loading,
+  selected,
+  onToggleSelect,
+  onToggleSelectAll,
   onPageChange,
   onMarkRead,
   onView,
@@ -33,6 +36,11 @@ export function EntriesTable({
   total: number;
   page: number;
   loading: boolean;
+  /** Ids of the checked rows, scoped to the current page — selection doesn't
+   *  carry across pages, so a "select all" only ever means "this page". */
+  selected: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleSelectAll: (checked: boolean) => void;
   onPageChange: (page: number) => void;
   onMarkRead: (submission: Submission) => void;
   onView: (submission: Submission) => void;
@@ -40,12 +48,14 @@ export function EntriesTable({
   onCopyShareLink: () => void;
   onOpenAttachment: (attachment: { url: string; name: string; image: boolean }) => void;
 }) {
+  const allSelected = submissions.length > 0 && submissions.every((s) => selected.has(s._id));
+  const someSelected = !allSelected && submissions.some((s) => selected.has(s._id));
   return (
     <>
       {/* Enough width for every value column at 180px plus the date and
           actions columns, so a narrow screen scrolls the table sideways
           instead of crushing the columns into unreadable slivers. */}
-      <Table.ScrollContainer minWidth={columns.length * 180 + 90 + 160} className={classes.tableWrap}>
+      <Table.ScrollContainer minWidth={columns.length * 180 + 90 + 160 + 40} className={classes.tableWrap}>
         <Table
           withTableBorder
           highlightOnHover
@@ -54,6 +64,15 @@ export function EntriesTable({
         >
           <Table.Thead className={classes.thead}>
             <Table.Tr>
+              <Table.Th className={classes.th} style={{ width: 40 }}>
+                <Checkbox
+                  size="sm"
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onChange={(e) => onToggleSelectAll(e.currentTarget.checked)}
+                  aria-label="Select all responses on this page"
+                />
+              </Table.Th>
               {/* No leading icon: the icon shifted every heading right by its
                   own width while the values below started at the cell edge,
                   so each column read as misaligned with its own data. The
@@ -81,7 +100,7 @@ export function EntriesTable({
           <Table.Tbody>
             {submissions.length === 0 ? (
               <Table.Tr>
-                <Table.Td colSpan={columns.length + 2}>
+                <Table.Td colSpan={columns.length + 3}>
                   <Stack align="center" gap={4} py="xl">
                     <ThemeIcon variant="light" color="gray" size={44} radius="xl">
                       <IconMailOpened size={22} />
@@ -101,6 +120,14 @@ export function EntriesTable({
             ) : (
               submissions.map((submission) => (
                 <Table.Tr key={submission._id} onClick={() => onMarkRead(submission)} style={{ fontWeight: submission.read ? 400 : 700 }}>
+                  <Table.Td onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      size="sm"
+                      checked={selected.has(submission._id)}
+                      onChange={() => onToggleSelect(submission._id)}
+                      aria-label={`Select response from ${formatDateTime(submission.createdAt)}`}
+                    />
+                  </Table.Td>
                   {columns.map((field) => {
                     // A payment is not an answer — it lives on the
                     // submission itself, written by the webhook rather

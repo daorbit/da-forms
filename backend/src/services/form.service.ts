@@ -445,3 +445,22 @@ export async function deleteSubmission(id: string, formId: string) {
   await SubmissionModel.deleteOne({ _id: submission._id });
   return submission;
 }
+
+/**
+ * Same as `deleteSubmission`, for a batch of ids at once.
+ *
+ * Scoped to `formId` the same way — every id is matched against `{ _id, formId }`
+ * before deletion, so a client can't smuggle in another form's submission id
+ * and have it deleted through this form's route. Ids that don't match (already
+ * deleted, or not this form's) are silently skipped rather than failing the
+ * whole batch — the caller only sent ids it believed were still there.
+ */
+export async function bulkDeleteSubmissions(ids: string[], formId: string) {
+  const submissions = await SubmissionModel.find({ _id: { $in: ids }, formId }, { _id: 1 });
+  const matchedIds = submissions.map((s) => s._id);
+  if (matchedIds.length === 0) return { deletedCount: 0 };
+
+  await destroyUploadsForSubmissions(matchedIds);
+  const result = await SubmissionModel.deleteMany({ _id: { $in: matchedIds } });
+  return { deletedCount: result.deletedCount ?? matchedIds.length };
+}

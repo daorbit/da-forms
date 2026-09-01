@@ -7,6 +7,7 @@ import {
   listSubmissions,
   updateSubmission,
   deleteSubmission,
+  bulkDeleteSubmissions,
   updateForm,
   publicFormUrl,
   getAnalytics,
@@ -25,6 +26,7 @@ import { EntriesTableSkeleton } from '@/components/builder/entries/EntriesTableS
 import { EntriesTable } from '@/components/builder/entries/EntriesTable';
 import { ResponseModal } from '@/components/builder/entries/ResponseModal';
 import { DeleteResponseModal } from '@/components/builder/entries/DeleteResponseModal';
+import { BulkActionBar } from '@/components/builder/entries/BulkActionBar';
 import { AttachmentModal, type AttachmentState } from '@/components/builder/entries/AttachmentModal';
 import { dayFilterToRange, formatDateTime, PAGE_SIZE, type DayFilter, type StatusFilter } from '@/components/builder/entries/entriesTypes';
 import classes from './EntriesPage.module.css';
@@ -44,6 +46,8 @@ export function EntriesPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [viewing, setViewing] = useState<Submission | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Submission | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [pendingBulkDelete, setPendingBulkDelete] = useState(false);
   const [attachment, setAttachment] = useState<AttachmentState>(null);
   const [deleting, setDeleting] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -83,6 +87,10 @@ export function EntriesPage() {
 
   useEffect(() => {
     loadSubmissions();
+    // A fresh page of submissions invalidates any selection made on the
+    // previous one — ids that no longer appear on screen shouldn't stay
+    // checked in the background.
+    setSelected(new Set());
   }, [location.key, loadSubmissions]);
 
   /**
@@ -121,6 +129,36 @@ export function EntriesPage() {
       loadAnalytics();
       notifications.show({ message: 'Response deleted', color: 'emerald' });
       setPendingDelete(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function toggleSelect(submissionId: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(submissionId)) next.delete(submissionId);
+      else next.add(submissionId);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(checked: boolean) {
+    setSelected(checked ? new Set(submissions.map((s) => s._id)) : new Set());
+  }
+
+  async function confirmBulkDelete() {
+    if (!id || selected.size === 0) return;
+    setDeleting(true);
+    try {
+      const ids = [...selected];
+      await bulkDeleteSubmissions(id, ids, workspaceId);
+      setSubmissions((prev) => prev.filter((s) => !selected.has(s._id)));
+      setTotal((prev) => prev - ids.length);
+      setSelected(new Set());
+      loadAnalytics();
+      notifications.show({ message: `${ids.length} responses deleted`, color: 'emerald' });
+      setPendingBulkDelete(false);
     } finally {
       setDeleting(false);
     }
@@ -208,7 +246,12 @@ export function EntriesPage() {
         view={view}
         loading={loading}
         onFilter={setFilter}
-        onSetView={setView}
+        onSetView={(v) => {
+          setView(v);
+          // Kanban has no checkboxes, so a selection carried over from list
+          // view would leave the floating bar showing with no way to change it.
+          setSelected(new Set());
+        }}
         onCopyShareLink={copyShareLink}
         onRefresh={() => {
           loadSubmissions();
@@ -237,6 +280,9 @@ export function EntriesPage() {
           total={total}
           page={page}
           loading={loading}
+          selected={selected}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
           onPageChange={setPage}
           onMarkRead={markRead}
           onView={setViewing}
@@ -245,6 +291,12 @@ export function EntriesPage() {
           onOpenAttachment={setAttachment}
         />
       )}
+
+      <BulkActionBar
+        count={selected.size}
+        onClear={() => setSelected(new Set())}
+        onDelete={() => setPendingBulkDelete(true)}
+      />
 
       <ResponseModal
         form={form}
@@ -259,11 +311,18 @@ export function EntriesPage() {
         onOpenAttachment={setAttachment}
       />
 
+      {/* One modal for both flows: a single row's delete icon sets
+          `pendingDelete`, the bulk bar sets `pendingBulkDelete` — never both
+          at once, so `count` and `onConfirm` just follow whichever is set. */}
       <DeleteResponseModal
-        opened={!!pendingDelete}
+        opened={!!pendingDelete || pendingBulkDelete}
         deleting={deleting}
-        onClose={() => setPendingDelete(null)}
-        onConfirm={confirmDeleteSubmission}
+        count={pendingBulkDelete ? selected.size : 1}
+        onClose={() => {
+          setPendingDelete(null);
+          setPendingBulkDelete(false);
+        }}
+        onConfirm={pendingBulkDelete ? confirmBulkDelete : confirmDeleteSubmission}
       />
 
       <AttachmentModal attachment={attachment} onClose={() => setAttachment(null)} />

@@ -42,7 +42,20 @@ export const uploadFormFile: RequestHandler = async (req, res) => {
 
   const result = await new Promise<Uploaded | null>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: `da-forms/${req.params.id}`, resource_type: 'auto' },
+      {
+        folder: `da-forms/${req.params.id}`,
+        resource_type: 'auto',
+        // For an image Cloudinary infers the format from the file content, but
+        // a `raw` resource (doc/docx/xlsx/...) has no such inference — without
+        // an extension on the public_id it stores as a bare id served back as
+        // `application/octet-stream`, which is what broke the file-type icon
+        // and the "open this as its real format" behaviour downstream.
+        // `use_filename` + `filename_override` carries the original name's
+        // extension onto the stored public_id.
+        use_filename: true,
+        unique_filename: true,
+        filename_override: file.originalname,
+      },
       (error, uploaded) => (error ? reject(error) : resolve((uploaded as Uploaded) ?? null))
     );
     stream.end(file.buffer);

@@ -73,7 +73,10 @@ export const uploadFormFile: RequestHandler = async (req, res) => {
     formId: req.params.id,
   });
 
-  res.status(201).json({ url: result.secure_url, name: file.originalname });
+  // `file.size` (multer, from the raw upload) rather than anything off
+  // Cloudinary's response — it's the same number and doesn't need waiting on
+  // the upload round-trip to know.
+  res.status(201).json({ url: result.secure_url, name: file.originalname, bytes: file.size });
 };
 
 /**

@@ -6,28 +6,15 @@ import { useEffect, useState } from 'react';
  *  "fetched, no size available" (server didn't send Content-Length). */
 const cache = new Map<string, number | null>();
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  const units = ['KB', 'MB', 'GB'];
-  let value = bytes / 1024;
-  let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit += 1;
-  }
-  return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`;
-}
-
 /**
- * A file's size, read off the `Content-Length` header of a HEAD request to
- * its URL rather than stored anywhere — the submission's file fields hold a
- * bare URL string, not an object, so this is the size without widening that
- * shape everywhere it's read and written.
+ * Fallback for a submission with no `fileMeta` (made before that was
+ * recorded at upload time) — reads the size off the `Content-Length` header
+ * of a HEAD request to the file's own URL instead.
  *
  * Returns `undefined` while loading/unknown, so callers can render nothing
  * rather than a "0 B" placeholder that would be wrong more often than right.
  */
-export function useFileSize(url: string | undefined): string | undefined {
+export function useFileSize(url: string | undefined): number | undefined {
   const [, forceRender] = useState(0);
 
   useEffect(() => {
@@ -53,5 +40,5 @@ export function useFileSize(url: string | undefined): string | undefined {
 
   if (!url) return undefined;
   const bytes = cache.get(url);
-  return bytes == null ? undefined : formatBytes(bytes);
+  return bytes == null ? undefined : bytes;
 }

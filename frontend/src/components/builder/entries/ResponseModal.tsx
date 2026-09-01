@@ -80,23 +80,27 @@ export function ResponseModal({
               const isFileLink = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
               const isImage = isFileLink && (field.type === 'imageUpload' || field.type === 'signature' || isImageUrl(raw));
               const fileName = raw.split('/').pop() || 'Attachment';
+              const bytes = viewing.fileMeta?.[field.id]?.bytes;
               return (
                 <div key={field.id} className={`${classes.responseField} ${isImage ? classes.mediaField : ''}`}>
                   <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
                     {field.label}
                   </Text>
                   {isImage ? (
-                    <Anchor
-                      href={raw}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onOpenAttachment({ url: raw, name: fileName, image: true });
-                      }}
-                    >
-                      <Image src={raw} alt={fileName} mah={220} w="auto" fit="contain" radius="sm" />
-                    </Anchor>
+                    <Stack gap={4} align="flex-start">
+                      <Anchor
+                        href={raw}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onOpenAttachment({ url: raw, name: fileName, image: true });
+                        }}
+                      >
+                        <Image src={raw} alt={fileName} mah={220} w="auto" fit="contain" radius="sm" />
+                      </Anchor>
+                      <FileSizeBadge bytes={bytes} url={raw} />
+                    </Stack>
                   ) : isFileLink ? (
                     <Anchor
                       href={raw}
@@ -113,7 +117,7 @@ export function ResponseModal({
                         <FileTypeIcon fileName={fileName} size={26} previewable />
                         <Stack gap={0}>
                           <Text size="sm">{fileName}</Text>
-                          <FileSizeBadge url={raw} />
+                          <FileSizeBadge bytes={bytes} url={raw} />
                         </Stack>
                       </Group>
                     </Anchor>

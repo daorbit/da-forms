@@ -29,7 +29,10 @@ import { ResponseModal } from '@/components/builder/entries/ResponseModal';
 import { DeleteResponseModal } from '@/components/builder/entries/DeleteResponseModal';
 import { BulkActionBar } from '@/components/builder/entries/BulkActionBar';
 import { AttachmentModal, type AttachmentState } from '@/components/builder/entries/AttachmentModal';
-import { dayFilterToRange, formatDateTime, PAGE_SIZE, type DayFilter, type StatusFilter } from '@/components/builder/entries/entriesTypes';
+import {
+  dayFilterToRange, formatDateTime, PAGE_SIZE,
+  type CustomRange, type DayFilter, type StatusFilter,
+} from '@/components/builder/entries/entriesTypes';
 import classes from './EntriesPage.module.css';
 
 export function EntriesPage() {
@@ -42,6 +45,7 @@ export function EntriesPage() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<StatusFilter>('all');
   const [day, setDay] = useState<DayFilter>('all');
+  const [customRange, setCustomRange] = useState<CustomRange>([null, null]);
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
@@ -62,14 +66,14 @@ export function EntriesPage() {
       page: view === 'kanban' ? 1 : page,
       limit: view === 'kanban' ? 200 : PAGE_SIZE,
       status: view === 'kanban' ? 'all' : status,
-      ...dayFilterToRange(day),
+      ...dayFilterToRange(day, customRange),
     })
       .then((res) => {
         setSubmissions(res.items);
         setTotal(res.total);
       })
       .finally(() => setLoading(false));
-  }, [id, workspaceId, page, status, day, view]);
+  }, [id, workspaceId, page, status, day, customRange, view]);
 
   const loadAnalytics = useCallback(() => {
     if (!id) return;
@@ -106,6 +110,11 @@ export function EntriesPage() {
     if (patch.day) setDay(patch.day);
     setPage(1);
   };
+
+  function setCustomDateRange(range: CustomRange) {
+    setCustomRange(range);
+    setPage(1);
+  }
 
   async function moveSubmission(submissionId: string, patch: Partial<Pick<Submission, 'read'>>) {
     if (!id) return;
@@ -259,9 +268,11 @@ export function EntriesPage() {
       <EntriesFilterBar
         status={status}
         day={day}
+        customRange={customRange}
         view={view}
         loading={loading}
         onFilter={setFilter}
+        onCustomRangeChange={setCustomDateRange}
         onSetView={(v) => {
           setView(v);
           // Kanban has no checkboxes, so a selection carried over from list

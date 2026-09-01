@@ -256,9 +256,24 @@ export const submitForm: RequestHandler = async (req, res) => {
   // stripped before the submission is stored.
   // `_retryOrderId` rides along the same way — it names the abandoned attempt
   // this submission replaces, and is no more part of the answers than `_hp`.
-  const { _hp, _retryOrderId: _ignoredRetry, ...data } = req.body;
+  // `_fileMeta` is metadata about the upload answers (currently just byte
+  // size, read off Cloudinary's own upload response client-side) rather than
+  // an answer itself, so it is split off the same way.
+  const { _hp, _retryOrderId: _ignoredRetry, _fileMeta, ...data } = req.body;
   if (_hp) {
     return res.status(400).json({ error: 'spam_detected', message: 'Submission rejected' });
+  }
+  // Sent as a JSON string, not a nested object: the submit payload's own
+  // type is `Record<string, string>`, matching every other field, so this
+  // rides along the same shape everything else does rather than special-cased.
+  let fileMeta: Record<string, { bytes: number }> | undefined;
+  if (typeof _fileMeta === 'string') {
+    try {
+      fileMeta = JSON.parse(_fileMeta);
+    } catch {
+      // Malformed input from a hand-edited request — the size badge is
+      // cosmetic, so the submission still goes through without it.
+    }
   }
 
   // Unknown limits accept the response, unlike form creation, which refuses.
@@ -301,16 +316,23 @@ export const submitForm: RequestHandler = async (req, res) => {
         await formService.discardPendingSubmission(String(req.body._retryOrderId));
       }
 
-      const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl, {
-        provider: 'razorpay',
-        // Replaced with the real order id immediately below. Written first
-        // because the receipt Razorpay stores is this submission's id, and
-        // that only exists once the row does.
-        orderId: `pending_${Date.now()}`,
-        amount,
-        currency,
-        status: 'created',
-      });
+      const submission = await formService.submitForm(
+        req.params.id,
+        form.fields,
+        data,
+        sourceUrl,
+        {
+          provider: 'razorpay',
+          // Replaced with the real order id immediately below. Written first
+          // because the receipt Razorpay stores is this submission's id, and
+          // that only exists once the row does.
+          orderId: `pending_${Date.now()}`,
+          amount,
+          currency,
+          status: 'created',
+        },
+        fileMeta
+      );
 
       const order = await paymentService.createOrder(credentials, {
         amount,
@@ -332,7 +354,7 @@ export const submitForm: RequestHandler = async (req, res) => {
       });
     }
 
-    const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl);
+    const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl, undefined, fileMeta);
     res.status(201).json(submission);
     // After responding: the respondent's own confirmation should not make
     // them wait on an SMTP round trip, and a slow or failing mail server must

@@ -1,4 +1,5 @@
 import { ActionIcon, Group, Menu, Text, Tooltip } from '@mantine/core';
+import { DatePicker } from '@mantine/dates';
 import {
   IconChevronDown,
   IconShare2,
@@ -8,16 +9,27 @@ import {
   IconLayoutKanban,
   IconCheck,
   IconRefresh,
+  IconCalendar,
 } from '@tabler/icons-react';
-import { DAY_LABEL, STATUS_LABEL, type DayFilter, type StatusFilter } from './entriesTypes';
+import { DAY_LABEL, STATUS_LABEL, type CustomRange, type DayFilter, type StatusFilter } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
+
+/** "Sep 1 – Sep 8, 2026", or just the start once only that's picked. */
+function rangeLabel(range: CustomRange): string {
+  const [start, end] = range;
+  if (!start) return DAY_LABEL.custom;
+  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return end ? `${fmt(start)} – ${fmt(end)}` : `From ${fmt(start)}`;
+}
 
 export function EntriesFilterBar({
   status,
   day,
+  customRange,
   view,
   loading,
   onFilter,
+  onCustomRangeChange,
   onSetView,
   onCopyShareLink,
   onRefresh,
@@ -25,9 +37,11 @@ export function EntriesFilterBar({
 }: {
   status: StatusFilter;
   day: DayFilter;
+  customRange: CustomRange;
   view: 'list' | 'kanban';
   loading: boolean;
   onFilter: (patch: Partial<{ status: StatusFilter; day: DayFilter }>) => void;
+  onCustomRangeChange: (range: CustomRange) => void;
   onSetView: (view: 'list' | 'kanban') => void;
   onCopyShareLink: () => void;
   onRefresh: () => void;
@@ -60,17 +74,54 @@ export function EntriesFilterBar({
           <Menu.Target>
             <Group gap={4} className={classes.filterItem}>
               <Text fw={600} size="sm">
-                {DAY_LABEL[day]}
+                {day === 'custom' ? rangeLabel(customRange) : DAY_LABEL[day]}
               </Text>
               <IconChevronDown size={14} />
             </Group>
           </Menu.Target>
           <Menu.Dropdown>
-            {(Object.keys(DAY_LABEL) as DayFilter[]).map((key) => (
-              <Menu.Item key={key} onClick={() => onFilter({ day: key })}>
-                {DAY_LABEL[key]}
-              </Menu.Item>
-            ))}
+            {(Object.keys(DAY_LABEL) as DayFilter[])
+              .filter((key) => key !== 'custom')
+              .map((key) => (
+                <Menu.Item key={key} onClick={() => onFilter({ day: key })}>
+                  {DAY_LABEL[key]}
+                </Menu.Item>
+              ))}
+          </Menu.Dropdown>
+        </Menu>
+
+        {/* Its own button, not another item in the "All Days" menu — a range
+            picker needs to stay open across two clicks (start, then end),
+            which fought the day-menu's own open/close state when the two
+            shared one dropdown. `DatePicker`, not `DatePickerInput`: the
+            input variant opens onto a text field that then has to be clicked
+            a second time to reach the actual calendar — this drops straight
+            into the grid on the one click that opened the menu. */}
+        <Menu shadow="md" width="auto" closeOnItemClick={false}>
+          <Menu.Target>
+            <Tooltip label="Custom date range" withArrow>
+              <ActionIcon
+                variant={day === 'custom' ? 'light' : 'subtle'}
+                color={day === 'custom' ? 'emerald' : 'gray'}
+                aria-label="Custom date range"
+              >
+                <IconCalendar size={17} />
+              </ActionIcon>
+            </Tooltip>
+          </Menu.Target>
+          <Menu.Dropdown p="sm">
+            <DatePicker
+              type="range"
+              size="xs"
+              value={customRange}
+              onChange={(range) => {
+                onCustomRangeChange(range as CustomRange);
+                onFilter({ day: 'custom' });
+              }}
+              allowSingleDateInRange
+              // Today, not further out — a form only has responses up to now.
+              maxDate={new Date()}
+            />
           </Menu.Dropdown>
         </Menu>
       </Group>

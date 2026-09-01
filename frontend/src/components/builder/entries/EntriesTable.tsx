@@ -147,23 +147,27 @@ export function EntriesTable({
                     const isFileLink = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
                     const isImage = isFileLink && (field.type === 'imageUpload' || field.type === 'signature' || isImageUrl(raw));
                     const fileName = raw.split('/').pop() || 'Attachment';
+                    const bytes = submission.fileMeta?.[field.id]?.bytes;
                     return (
                       <Table.Td key={field.id}>
                         {isImage ? (
-                          <Anchor href={raw} target="_blank" rel="noopener noreferrer">
-                            <Image
-                              src={raw}
-                              alt={fileName}
-                              h={40}
-                              w={40}
-                              fit="cover"
-                              radius="sm"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                onOpenAttachment({ url: raw, name: fileName, image: true });
-                              }}
-                            />
-                          </Anchor>
+                          <Stack gap={2} align="flex-start">
+                            <Anchor href={raw} target="_blank" rel="noopener noreferrer">
+                              <Image
+                                src={raw}
+                                alt={fileName}
+                                h={40}
+                                w={40}
+                                fit="cover"
+                                radius="sm"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  onOpenAttachment({ url: raw, name: fileName, image: true });
+                                }}
+                              />
+                            </Anchor>
+                            <FileSizeBadge bytes={bytes} url={raw} />
+                          </Stack>
                         ) : isFileLink ? (
                           <Anchor
                             href={raw}
@@ -182,7 +186,7 @@ export function EntriesTable({
                                 <Text size="sm" truncate maw={140}>
                                   {fileName}
                                 </Text>
-                                <FileSizeBadge url={raw} />
+                                <FileSizeBadge bytes={bytes} url={raw} />
                               </Stack>
                             </Group>
                           </Anchor>

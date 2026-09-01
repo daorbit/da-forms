@@ -365,7 +365,7 @@ export async function uploadFormFile(
   formId: string,
   file: File,
   accept?: string
-): Promise<{ url: string; name: string }> {
+): Promise<{ url: string; name: string; bytes: number }> {
   const body = new FormData();
   body.append('file', file);
   // Server-side mirror of the field's own `accept` restriction — a respondent

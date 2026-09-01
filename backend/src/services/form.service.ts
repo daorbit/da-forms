@@ -225,7 +225,8 @@ export async function submitForm(
   fields: FormField[],
   data: Record<string, string>,
   sourceUrl?: string,
-  payment?: SubmissionPayment
+  payment?: SubmissionPayment,
+  fileMeta?: Record<string, { bytes: number }>
 ) {
   const uniqueFields = flattenFields(fields).filter((field) => field.unique);
   for (const field of uniqueFields) {
@@ -244,6 +245,7 @@ export async function submitForm(
   const submission = await SubmissionModel.create({
     formId,
     data,
+    fileMeta,
     sourceUrl,
     status: payment ? 'pending_payment' : 'complete',
     payment,

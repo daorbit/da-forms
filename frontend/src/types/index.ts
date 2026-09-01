@@ -332,6 +332,11 @@ export interface Submission {
   _id: string;
   formId: string;
   data: Record<string, string>;
+  /** Byte size of each uploaded file/image/media answer, keyed by field id.
+   *  Read off Cloudinary's own upload response, not always present (older
+   *  submissions predate this, or a value came from a link rather than
+   *  a real upload). */
+  fileMeta?: Record<string, { bytes: number }>;
   sourceUrl?: string;
   /** Anything the Entries page can see is 'complete' — pending rows are filtered server-side. */
   status?: 'complete' | 'pending_payment';

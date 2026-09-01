@@ -248,6 +248,10 @@ export function FormRenderer({
     for (const [id, v] of Object.entries(values)) {
       if (visibleIds.has(id)) submitValues[id] = v;
     }
+    // Byte size of each upload, read off the upload response — carried
+    // alongside `submitValues` rather than folded into it, since an answer's
+    // value stays a bare URL everywhere else it's read.
+    const fileMeta: Record<string, { bytes: number }> = {};
 
     // Files are only picked up to now — uploaded here, all at once, so a
     // respondent who abandons the form never leaves an orphaned asset behind.
@@ -273,6 +277,7 @@ export function FormRenderer({
           ]);
           [...files, ...signatures].forEach((f, i) => {
             submitValues[f.id] = uploaded[i].url;
+            fileMeta[f.id] = { bytes: uploaded[i].bytes };
           });
           // Written back so a retry after a cancelled payment reuses these
           // URLs instead of uploading the same files a second time and
@@ -295,8 +300,11 @@ export function FormRenderer({
     // opens a checkout window the respondent may well cancel, and clearing
     // first would throw away everything they typed on the way to a payment
     // that never happened.
+    const withFileMeta = Object.keys(fileMeta).length > 0
+      ? { ...submitValues, _fileMeta: JSON.stringify(fileMeta) }
+      : submitValues;
     const accepted = await onSubmit?.(
-      honeypot ? { ...submitValues, _hp: honeypot } : submitValues
+      honeypot ? { ...withFileMeta, _hp: honeypot } : withFileMeta
     );
     if (accepted !== false) draft.clear();
   }

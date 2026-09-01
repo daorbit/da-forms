@@ -28,6 +28,19 @@ export interface SubmissionPayment {
 export interface SubmissionDocument {
   formId: Types.ObjectId;
   data: Record<string, string>;
+  /**
+   * Byte size of each uploaded file/image/media answer, keyed by field id.
+   * A sibling map rather than widening `data[fieldId]` from a bare URL to an
+   * object — every existing reader of `data` (CSV export, PDF export, the
+   * submit payload itself) keeps working unchanged, and this is additive,
+   * read only where a size actually needs displaying.
+   *
+   * Reported by the client from Cloudinary's own upload response, not
+   * re-verified server-side — it is a display value with no security or
+   * billing consequence, so trusting it is the same trade already made for
+   * every other field in `data`.
+   */
+  fileMeta?: Record<string, { bytes: number }>;
   sourceUrl?: string;
   /**
    * 'pending_payment' rows are invisible everywhere a customer looks — they
@@ -45,6 +58,7 @@ const submissionSchema = new Schema<SubmissionDocument>(
   {
     formId: { type: Schema.Types.ObjectId, ref: 'Form', required: true, index: true },
     data: { type: Schema.Types.Mixed, required: true },
+    fileMeta: { type: Schema.Types.Mixed },
     sourceUrl: { type: String },
     status: {
       type: String,

@@ -1,7 +1,5 @@
 import { ActionIcon, Anchor, Button, Group, Image, Pagination, Stack, Table, Text, ThemeIcon, Tooltip } from '@mantine/core';
 import {
-  IconFileText,
-  IconVideo,
   IconShare2,
   IconEye,
   IconTrash,
@@ -12,6 +10,7 @@ import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
+import { FileTypeIcon } from './fileTypeIcon';
 import { formatDateTime, isImageUrl, PAGE_SIZE } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
@@ -151,10 +150,8 @@ export function EntriesTable({
                             }}
                           >
                             <Group gap={6} wrap="nowrap">
-                              <ThemeIcon variant="light" color="gray" size={28} radius="sm">
-                                {field.type === 'mediaUpload' ? <IconVideo size={15} /> : <IconFileText size={15} />}
-                              </ThemeIcon>
-                              <Text size="sm" td="underline" truncate maw={160}>
+                              <FileTypeIcon fileName={fileName} size={26} />
+                              <Text size="sm" truncate maw={140}>
                                 {fileName}
                               </Text>
                             </Group>

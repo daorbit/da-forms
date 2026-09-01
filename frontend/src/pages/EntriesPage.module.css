@@ -87,7 +87,7 @@
    stops reading as one line. */
 .table th,
 .table td {
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .actionsCol {

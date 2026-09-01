@@ -1,9 +1,10 @@
-import { ActionIcon, Anchor, Button, Group, Image, Modal, Stack, Text, ThemeIcon, Tooltip } from '@mantine/core';
-import { IconFileText, IconVideo, IconTrash, IconFileTypePdf, IconMailOpened } from '@tabler/icons-react';
+import { ActionIcon, Anchor, Button, Group, Image, Modal, Stack, Text, Tooltip } from '@mantine/core';
+import { IconTrash, IconFileTypePdf, IconMailOpened } from '@tabler/icons-react';
 import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
+import { FileTypeIcon } from './fileTypeIcon';
 import { formatDateTime, isImageUrl } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
@@ -108,10 +109,8 @@ export function ResponseModal({
                       }}
                     >
                       <Group gap={6} wrap="nowrap">
-                        <ThemeIcon variant="light" color="gray" size={28} radius="sm">
-                          {field.type === 'mediaUpload' ? <IconVideo size={15} /> : <IconFileText size={15} />}
-                        </ThemeIcon>
-                        <Text size="sm" td="underline">
+                        <FileTypeIcon fileName={fileName} size={26} />
+                        <Text size="sm">
                           {fileName}
                         </Text>
                       </Group>

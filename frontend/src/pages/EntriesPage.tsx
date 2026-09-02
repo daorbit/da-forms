@@ -1,17 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import {
-  Box,
-  Group,
-  TextInput,
-  Button,
-  ActionIcon,
-  Modal,
-  Stack,
-  Text,
-  Anchor,
-} from '@mantine/core';
-import { IconSearch, IconX, IconPaperclip } from '@tabler/icons-react';
+import { Box, Group, Modal, Stack, Text, Anchor } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   getForm,

@@ -1,5 +1,23 @@
-import { Drawer, Stack, TextInput, Radio, Group, Text, Divider, SegmentedControl, Slider, Box } from '@mantine/core';
-import type { LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign } from '@/types';
+import {
+  Drawer,
+  Stack,
+  TextInput,
+  NumberInput,
+  Radio,
+  Group,
+  Text,
+  Divider,
+  SegmentedControl,
+  Slider,
+  Box,
+} from '@mantine/core';
+import type {
+  LabelPlacement,
+  SubmitButtonSize,
+  SubmitButtonWidth,
+  SubmitButtonAlign,
+  FormSchedule,
+} from '@/types';
 import classes from './drawer.module.css';
 
 export interface QuickSettings {
@@ -10,6 +28,34 @@ export interface QuickSettings {
   submitButtonWidth: SubmitButtonWidth;
   submitButtonAlign: SubmitButtonAlign;
   collectIp: boolean;
+  requireCaptcha: boolean;
+  collectPartials: boolean;
+  allowEdit: boolean;
+  schedule?: FormSchedule;
+}
+
+/** `undefined` for an empty box, so a cleared date removes the bound entirely. */
+function toIso(value: string): string | undefined {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+}
+
+/**
+ * An ISO instant as `datetime-local` wants it: local time, no zone, no seconds.
+ *
+ * The input has no notion of a timezone, so the string it is given is read as
+ * whatever the owner's browser is set to — which is what they mean when they
+ * type a closing time.
+ */
+function toLocalInput(iso: string | undefined): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
 }
 
 interface Props {
@@ -181,6 +227,125 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange }: Pro
               </Group>
             </Radio.Group>
           </div>
+
+          <div>
+            <Text size="sm" fw={500} mb={4}>
+              Save partial responses
+            </Text>
+            <Text size="xs" c="dimmed" mb={8}>
+              Records answers as they're typed, so you can see which question people give up on.
+              This stores what someone chose not to send — tell respondents if you turn it on.
+              Drafts are deleted after 30 days.
+            </Text>
+            <Radio.Group
+              value={settings.collectPartials ? 'yes' : 'no'}
+              onChange={(value) => onChange({ collectPartials: value === 'yes' })}
+            >
+              <Group gap="xl">
+                <Radio value="yes" label="Yes" />
+                <Radio value="no" label="No" />
+              </Group>
+            </Radio.Group>
+          </div>
+        </Section>
+
+        <Divider />
+
+        <Section label="Spam protection">
+          <div>
+            <Text size="sm" fw={500} mb={4}>
+              Require a captcha
+            </Text>
+            <Text size="xs" c="dimmed" mb={8}>
+              Adds an invisible Cloudflare check before a response is accepted. Worth it on a form
+              that's linked publicly or takes payment; unnecessary on one only a few people see.
+            </Text>
+            <Radio.Group
+              value={settings.requireCaptcha ? 'yes' : 'no'}
+              onChange={(value) => onChange({ requireCaptcha: value === 'yes' })}
+            >
+              <Group gap="xl">
+                <Radio value="yes" label="Yes" />
+                <Radio value="no" label="No" />
+              </Group>
+            </Radio.Group>
+          </div>
+        </Section>
+
+        <Divider />
+
+        <Section label="After submitting">
+          <div>
+            <Text size="sm" fw={500} mb={4}>
+              Let people edit their response
+            </Text>
+            <Text size="xs" c="dimmed" mb={8}>
+              Adds a link to the confirmation email, valid for 7 days. Needs the respondent
+              confirmation email switched on. Not available on forms that take payment.
+            </Text>
+            <Radio.Group
+              value={settings.allowEdit ? 'yes' : 'no'}
+              onChange={(value) => onChange({ allowEdit: value === 'yes' })}
+            >
+              <Group gap="xl">
+                <Radio value="yes" label="Yes" />
+                <Radio value="no" label="No" />
+              </Group>
+            </Radio.Group>
+          </div>
+        </Section>
+
+        <Divider />
+
+        <Section label="Schedule">
+          <Text size="xs" c="dimmed" mt={-8}>
+            Leave a field empty for no limit. A published form outside these bounds shows your
+            closed message instead of the questions.
+          </Text>
+
+          <TextInput
+            type="datetime-local"
+            label="Opens"
+            value={toLocalInput(settings.schedule?.opensAt)}
+            onChange={(e) =>
+              onChange({ schedule: { ...settings.schedule, opensAt: toIso(e.target.value) } })
+            }
+          />
+
+          <TextInput
+            type="datetime-local"
+            label="Closes"
+            value={toLocalInput(settings.schedule?.closesAt)}
+            onChange={(e) =>
+              onChange({ schedule: { ...settings.schedule, closesAt: toIso(e.target.value) } })
+            }
+          />
+
+          <NumberInput
+            label="Response limit"
+            description="Stops accepting once this many responses are in."
+            min={1}
+            value={settings.schedule?.maxSubmissions ?? ''}
+            onChange={(value) =>
+              onChange({
+                schedule: {
+                  ...settings.schedule,
+                  maxSubmissions: typeof value === 'number' ? value : undefined,
+                },
+              })
+            }
+          />
+
+          <TextInput
+            label="Closed message"
+            placeholder="This form is no longer accepting responses"
+            value={settings.schedule?.closedMessage ?? ''}
+            onChange={(e) =>
+              onChange({
+                schedule: { ...settings.schedule, closedMessage: e.target.value || undefined },
+              })
+            }
+          />
         </Section>
       </Stack>
     </Drawer>

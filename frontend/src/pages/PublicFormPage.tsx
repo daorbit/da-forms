@@ -17,6 +17,8 @@ import {
   ApiError,
   isPaymentRequired,
   getPaymentStatus,
+  getSubmissionForEdit,
+  updateSubmissionByToken,
 } from '@/lib/api';
 import { openCheckout, waitForPayment } from '@/lib/razorpay';
 import type { Form } from '@/types';
@@ -50,10 +52,17 @@ export function PublicFormPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
+  // Present when the respondent followed the edit link in their confirmation
+  // email. The token is the whole credential — there is no session here.
+  const editToken = searchParams.get("edit");
   const [form, setForm] = useState<Form | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  /** The answers being edited, once the token has been exchanged for them. */
+  const [editData, setEditData] = useState<Record<string, string> | null>(null);
+  /** Why the edit link did not work, in words meant for the respondent. */
+  const [editError, setEditError] = useState<string | null>(null);
   // The order id of the last attempt, so a retry after a cancelled checkout
   // can tell the server which pending row it supersedes.
   const lastOrderId = useRef<string | null>(null);
@@ -66,6 +75,21 @@ export function PublicFormPage() {
       .then(setForm)
       .catch((e: Error) => setError(e.message));
   }, [id]);
+
+  // Exchanged for the stored answers before the form renders, so it opens on
+  // what was sent rather than flashing an empty form first.
+  useEffect(() => {
+    if (!id || !editToken) return;
+    getSubmissionForEdit(id, editToken)
+      .then((res) => setEditData(res.data))
+      .catch((e: Error) =>
+        setEditError(
+          e instanceof ApiError && e.code === "link_expired"
+            ? "This edit link has expired. Your response was still received."
+            : "This edit link is no longer valid. Your response was still received."
+        )
+      );
+  }, [id, editToken]);
 
 
   useEffect(() => {
@@ -107,8 +131,33 @@ export function PublicFormPage() {
   }, [id, isPreview]);
 
   /** Returns false when nothing was stored, so the renderer keeps the draft. */
-  async function handleSubmit(values: Record<string, string>): Promise<boolean> {
+  async function handleSubmit(
+    values: Record<string, string>,
+    partialKey?: string | null
+  ): Promise<boolean> {
     if (!id) return false;
+
+    // Editing replaces a response that already exists. It never creates one, so
+    // it skips quota, payment and the draft machinery entirely.
+    if (editToken && editData) {
+      setSubmitting(true);
+      try {
+        await updateSubmissionByToken(id, editToken, values);
+        setSubmitting(false);
+        setSubmitted(true);
+        return true;
+      } catch (e) {
+        setSubmitting(false);
+        notifications.show({
+          message:
+            e instanceof ApiError
+              ? e.message
+              : "Could not save your changes. Please try again.",
+          color: "red",
+        });
+        return false;
+      }
+    }
 
     // An author checking their own form is not a respondent: nothing is
     // stored, and above all nothing is charged. Without this, previewing a
@@ -124,12 +173,15 @@ export function PublicFormPage() {
 
     setSubmitting(true);
     try {
-      const result = await submitForm(
-        id,
+      const result = await submitForm(id, {
+        ...values,
         // Names the attempt this one replaces, so a cancelled checkout does
         // not leave a pending row behind on every retry.
-        lastOrderId.current ? { ...values, _retryOrderId: lastOrderId.current } : values,
-      );
+        ...(lastOrderId.current ? { _retryOrderId: lastOrderId.current } : {}),
+        // Names this visit's autosaved row, so the server promotes it instead
+        // of storing the finished answers beside the abandoned half.
+        ...(partialKey ? { _partialKey: partialKey } : {}),
+      });
 
       // A paid form stores the response but withholds it until Razorpay
       // confirms. Nothing is a submission yet, so nothing below runs until
@@ -207,7 +259,11 @@ export function PublicFormPage() {
 
   // The form's own theme is not known until it arrives, so the loader uses its
   // own accent here and picks up the form's once there is one.
-  if (!form)
+  //
+  // An edit link waits for its answers too: `initialValues` runs once when the
+  // renderer mounts, so a form that appeared before they arrived would stay
+  // empty no matter what came back.
+  if (!form || (editToken && !editData && !editError))
     return (
       <FormPage>
         {/* Centred in the viewport rather than sitting where the form's first
@@ -221,7 +277,46 @@ export function PublicFormPage() {
       </FormPage>
     );
 
-  if (form.status !== "published" && !isPreview)
+  // A dead edit link is shown in place of the form: someone who followed one
+  // has already submitted, and dropping them into a blank form would invite a
+  // duplicate response instead of the change they came to make.
+  if (editError)
+    return (
+      <Center
+        mih="100dvh"
+        py={64}
+        className="da-forms-light-surface"
+        data-mantine-color-scheme="light"
+        style={{ background: "#fff" }}
+      >
+        <Container size="xs" px="md" style={{ width: "100%", textAlign: "center" }}>
+          <Center>
+            <ThemeIcon size={64} radius="xl" color="gray" variant="light">
+              <IconClockPause size={30} stroke={1.8} />
+            </ThemeIcon>
+          </Center>
+          <Text
+            ta="center"
+            size="28px"
+            fw={800}
+            mt="xl"
+            style={{ lineHeight: 1.15, letterSpacing: "-0.02em" }}
+          >
+            This link has expired
+          </Text>
+          <Text size="sm" c="dimmed" mt="md">
+            {editError}
+          </Text>
+        </Container>
+      </Center>
+    );
+
+  // The server decides this, not the page: `availability` is computed from the
+  // schedule and the response count, and the same function refuses the submit.
+  // An edit link is exempt — a form that has closed for new responses has not
+  // withdrawn the answers someone already sent.
+  const closed = form.availability && !form.availability.open;
+  if (closed && !isPreview && !editToken)
     return (
       <Center
         mih="100dvh"
@@ -247,11 +342,19 @@ export function PublicFormPage() {
             mt="xl"
             style={{ lineHeight: 1.15, letterSpacing: "-0.02em" }}
           >
-            This form isn't accepting responses yet
+            {form.availability?.reason === "notYetOpen"
+              ? "This form isn't open yet"
+              : form.availability?.reason === "full"
+                ? "This form is full"
+                : form.availability?.reason === "closed"
+                  ? "This form has closed"
+                  : "This form isn't accepting responses yet"}
           </Text>
           <Text size="sm" c="dimmed" mt="md">
-            The owner hasn't published it. Check back later or contact whoever
-            shared this link.
+            {/* The owner's own wording when they wrote one; the server has
+                already resolved which message applies. */}
+            {form.availability?.message ??
+              "The owner hasn't published it. Check back later or contact whoever shared this link."}
           </Text>
         </Container>
       </Center>
@@ -285,24 +388,32 @@ export function PublicFormPage() {
             mt="xl"
             style={{ lineHeight: 1.15, letterSpacing: "-0.02em" }}
           >
-            {form.thankYouMessage || "Thanks — that reached us."}
+            {editToken
+              ? "Your changes are saved."
+              : form.thankYouMessage || "Thanks — that reached us."}
           </Text>
           <Stack align="center" gap={2} mt="md">
             <Text size="sm" c="dimmed">
-              Your response has been recorded.
+              {editToken
+                ? "Your response has been updated."
+                : "Your response has been recorded."}
             </Text>
             <Text size="sm" c="dimmed">
               You can safely close this page now.
             </Text>
           </Stack>
-          <Button
-            color="emerald"
-            radius="md"
-            mt="xl"
-            onClick={() => setSubmitted(false)}
-          >
-            Submit another response
-          </Button>
+          {/* Not offered after an edit: this person already has a response on
+              file, and the button would invite them to file a second one. */}
+          {!editToken && (
+            <Button
+              color="emerald"
+              radius="md"
+              mt="xl"
+              onClick={() => setSubmitted(false)}
+            >
+              Submit another response
+            </Button>
+          )}
         </Container>
       </Center>
     );
@@ -326,6 +437,11 @@ export function PublicFormPage() {
         stepIndicator={form.stepIndicator}
         showStepHeadings={form.showStepHeadings}
         submitting={submitting}
+        collectPartials={form.collectPartials}
+        // Never in preview: an author checking their own form is not the
+        // traffic this guards against, and nothing they send is stored anyway.
+        requireCaptcha={form.requireCaptcha && !isPreview}
+        initialData={editData ?? undefined}
         onSubmit={handleSubmit}
       />
     </FormPage>

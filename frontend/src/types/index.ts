@@ -282,8 +282,41 @@ export interface Form {
   /** Records the respondent's IP with each submission. Off by default. */
   collectIp?: boolean;
   notifications?: NotificationSettings;
+  /** Puts a Turnstile challenge in front of submitting. Off by default. */
+  requireCaptcha?: boolean;
+  /**
+   * Saves answers as they are typed, so an abandoned form still says where it
+   * lost people. Off by default — it stores what someone chose not to send.
+   */
+  collectPartials?: boolean;
+  /** Lets a respondent change their answers from a link in their email. */
+  allowEdit?: boolean;
+  /** When this form accepts responses. Absent means always, once published. */
+  schedule?: FormSchedule;
+  /**
+   * Why the form is closed right now, computed server-side and sent with the
+   * public form. Absent on the editor's own fetch.
+   */
+  availability?: Availability;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface FormSchedule {
+  /** ISO dates — the API's own format, parsed only where one is displayed. */
+  opensAt?: string;
+  closesAt?: string;
+  maxSubmissions?: number;
+  closedMessage?: string;
+}
+
+export type ClosedReason = 'notPublished' | 'notYetOpen' | 'closed' | 'full';
+
+export interface Availability {
+  open: boolean;
+  reason?: ClosedReason;
+  /** Already resolved server-side: the owner's wording, or a default. */
+  message?: string;
 }
 
 /** Defined with the renderer that implements each one, so the two cannot drift. */

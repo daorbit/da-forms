@@ -267,11 +267,25 @@ export interface SourceBreakdownEntry {
   count: number;
 }
 
+export interface DropOffEntry {
+  fieldId: string;
+  index: number;
+  abandoned: number;
+}
+
 export interface Analytics {
   viewCount: number;
   submissionCount: number;
   completionRate: number;
   sources: SourceBreakdownEntry[];
+  /** Empty unless the form saves drafts — see `partialsEnabled`. */
+  dropOff: DropOffEntry[];
+  /**
+   * Whether this form was recording where people stopped. Tells "nobody
+   * abandoned it" apart from "we were not watching", which are the same empty
+   * list otherwise.
+   */
+  partialsEnabled: boolean;
 }
 
 export function getAnalytics(id: string, workspaceId = DEFAULT_WORKSPACE) {
@@ -290,6 +304,55 @@ export function recordView(id: string) {
 }
 
 /**
+ * Save what the respondent has typed so far.
+ *
+ * Fire-and-forget by design: this runs on a timer behind someone who is still
+ * filling the form in, and a failed draft save is not something they can act on
+ * or should be told about. The server answers 204 even when the form has
+ * drafts turned off.
+ */
+export function savePartial(
+  id: string,
+  data: Record<string, string>,
+  partialKey: string,
+  lastFieldId?: string,
+  lastFieldIndex?: number
+) {
+  return request<void>(`/public/forms/${id}/partial`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      ...data,
+      _partialKey: partialKey,
+      _lastFieldId: lastFieldId,
+      _lastFieldIndex: lastFieldIndex,
+    }),
+  });
+}
+
+/** The answers behind an edit link, so the form can open on what was sent. */
+export function getSubmissionForEdit(id: string, token: string) {
+  return request<{ data: Record<string, string>; fileMeta?: Record<string, { bytes: number }> }>(
+    `/public/forms/${id}/edit?token=${encodeURIComponent(token)}`
+  );
+}
+
+/** Replace a respondent's own answers, authorised by the token alone. */
+export function updateSubmissionByToken(
+  id: string,
+  token: string,
+  data: Record<string, string>
+) {
+  return request<{ ok: true }>(`/public/forms/${id}/edit`, {
+    method: 'PUT',
+    body: JSON.stringify({ ...data, _token: token }),
+  });
+}
+
+export function duplicateForm(id: string, workspaceId = DEFAULT_WORKSPACE) {
+  return request<Form>(`${ws(workspaceId)}/${id}/duplicate`, { method: 'POST' });
+}
+
+/**
  * A form with a payment field answers with `PaymentRequired` instead of a
  * submission — the response is stored but held back until Razorpay confirms.
  * Callers tell the two apart with `isPaymentRequired`.
@@ -298,7 +361,9 @@ export function submitForm(id: string, data: Record<string, string>) {
   return request<Submission | PaymentRequired>(`/public/forms/${id}/submissions`, {
     method: 'POST',
     // `_hp` rides along in `data` when the honeypot got filled (a bot did
-    // it — never a real respondent); otherwise it is simply absent.
+    // it — never a real respondent); otherwise it is simply absent. So do
+    // `_partialKey` and `_captcha`, for the same reason: they are properties of
+    // the attempt, and the server strips each before storing the answers.
     body: JSON.stringify(data),
   });
 }

@@ -25,7 +25,14 @@ import {
   IconX,
   IconInfoCircle,
 } from '@tabler/icons-react';
-import { listForms, deleteForm, updateForm, createForm, publicFormPath, publicFormUrl } from '@/lib/api';
+import {
+  listForms,
+  deleteForm,
+  updateForm,
+  duplicateForm as duplicateFormApi,
+  publicFormPath,
+  publicFormUrl,
+} from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { isDemoWorkspace, listDemoForms } from '@/lib/demoWorkspace';
 import { useDebouncedValue } from '@mantine/hooks';
@@ -34,7 +41,6 @@ import { NewFormModal } from '@/components/NewFormModal';
 import { AiFormModal } from '@/components/AiFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
-import { cloneWithNewIds } from '@/lib/fieldTree';
 import classes from './FormListPage.module.css';
 
 function formatDate(iso: string) {
@@ -168,31 +174,19 @@ export function FormListPage() {
     });
   }
 
+  /**
+   * Copy a form, server-side.
+   *
+   * Was assembled here from the fields the list happened to hold, which meant a
+   * copy silently lost everything this page does not read — steps, notification
+   * settings, header and button alignment — and shared the original's uploaded
+   * background, so deleting either form destroyed the other's image. The server
+   * copies the whole document and drops the parts that must not be shared.
+   */
   async function duplicateForm(form: Form) {
     setDuplicatingId(form._id);
     try {
-      // Fresh ids throughout — same reason the field-level duplicate needs
-      // them: two fields (here, two forms) sharing an id would be addressed
-      // together by every future edit.
-      const fields = form.fields.map(cloneWithNewIds);
-      await createForm(
-        {
-          name: `${form.name} (copy)`,
-          title: form.title,
-          description: form.description,
-          fields,
-          redirectUrl: form.redirectUrl,
-          thankYouMessage: form.thankYouMessage,
-          hideHeader: form.hideHeader,
-          labelPlacement: form.labelPlacement,
-          submitLabel: form.submitLabel,
-          submitButtonSize: form.submitButtonSize,
-          submitButtonWidth: form.submitButtonWidth,
-          theme: form.theme,
-          collectIp: form.collectIp,
-        },
-        workspaceId
-      );
+      await duplicateFormApi(form._id, workspaceId);
       notifications.show({ message: 'Form duplicated', color: 'emerald' });
       load();
     } finally {

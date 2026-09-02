@@ -9,7 +9,7 @@ import { findPaymentField, paymentFieldProblem, paymentStepProblem } from '@/lib
 import { getDemoForm, isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
-import type { Form, FormField, FieldType, FormStep, StepIndicator, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme, NotificationSettings, PaymentSettings } from '@/types';
+import type { Form, FormField, FieldType, FormStep, StepIndicator, LabelPlacement, SubmitButtonSize, SubmitButtonWidth, SubmitButtonAlign, FormTheme, NotificationSettings, PaymentSettings, FormSchedule } from '@/types';
 import { NotificationsModal } from '@/components/builder/NotificationsModal';
 import { PaymentsModal } from '@/components/builder/PaymentsModal';
 import { ShareModal } from '@/components/share/ShareModal';
@@ -66,6 +66,10 @@ interface EditableState {
   stepIndicator: StepIndicator;
   showStepHeadings: boolean;
   collectIp: boolean;
+  requireCaptcha: boolean;
+  collectPartials: boolean;
+  allowEdit: boolean;
+  schedule?: FormSchedule;
   notifications: NotificationSettings;
 }
 
@@ -119,6 +123,10 @@ export function FormBuilderPage() {
   const [stepIndicator, setStepIndicator] = useState<StepIndicator>('progress');
   const [showStepHeadings, setShowStepHeadings] = useState(false);
   const [collectIp, setCollectIp] = useState(false);
+  const [requireCaptcha, setRequireCaptcha] = useState(false);
+  const [collectPartials, setCollectPartials] = useState(false);
+  const [allowEdit, setAllowEdit] = useState(false);
+  const [schedule, setSchedule] = useState<FormSchedule | undefined>(undefined);
   const [emailNotifications, setEmailNotifications] = useState<NotificationSettings>({});
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [loadingForm, setLoadingForm] = useState(!!routeFormId);
@@ -159,6 +167,10 @@ export function FormBuilderPage() {
         stepIndicator,
         showStepHeadings,
         collectIp,
+        requireCaptcha,
+        collectPartials,
+        allowEdit,
+        schedule,
         notifications: emailNotifications,
       }),
     [
@@ -180,6 +192,10 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
+      requireCaptcha,
+      collectPartials,
+      allowEdit,
+      schedule,
       emailNotifications,
     ]
   );
@@ -207,6 +223,10 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
+      requireCaptcha,
+      collectPartials,
+      allowEdit,
+      schedule,
       notifications: emailNotifications,
     }),
     [
@@ -228,6 +248,10 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
+      requireCaptcha,
+      collectPartials,
+      allowEdit,
+      schedule,
       emailNotifications,
     ]
   );
@@ -251,6 +275,10 @@ export function FormBuilderPage() {
     setStepIndicator(state.stepIndicator);
     setShowStepHeadings(state.showStepHeadings);
     setCollectIp(state.collectIp);
+    setRequireCaptcha(state.requireCaptcha);
+    setCollectPartials(state.collectPartials);
+    setAllowEdit(state.allowEdit);
+    setSchedule(state.schedule);
     setEmailNotifications(state.notifications);
     // The selected/editing field may not exist in this snapshot's tree.
     setSelectedId((id) => (id && findField(state.fields, id) ? id : null));
@@ -326,6 +354,10 @@ export function FormBuilderPage() {
       setStepIndicator(form.stepIndicator ?? 'progress');
       setShowStepHeadings(form.showStepHeadings ?? false);
       setCollectIp(form.collectIp ?? false);
+      setRequireCaptcha(form.requireCaptcha ?? false);
+      setCollectPartials(form.collectPartials ?? false);
+      setAllowEdit(form.allowEdit ?? false);
+      setSchedule(form.schedule);
       setEmailNotifications(form.notifications ?? {});
       if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
       setSavedSnapshot(
@@ -348,6 +380,10 @@ export function FormBuilderPage() {
           stepIndicator: form.stepIndicator ?? 'progress',
           showStepHeadings: form.showStepHeadings ?? false,
           collectIp: form.collectIp ?? false,
+          requireCaptcha: form.requireCaptcha ?? false,
+          collectPartials: form.collectPartials ?? false,
+          allowEdit: form.allowEdit ?? false,
+          schedule: form.schedule,
           notifications: form.notifications ?? {},
         })
       );
@@ -531,6 +567,10 @@ export function FormBuilderPage() {
       stepIndicator,
       showStepHeadings,
       collectIp,
+      requireCaptcha,
+      collectPartials,
+      allowEdit,
+      schedule,
       notifications: emailNotifications,
     };
     const form = savedFormId
@@ -925,6 +965,10 @@ export function FormBuilderPage() {
           submitButtonWidth,
           submitButtonAlign,
           collectIp,
+          requireCaptcha,
+          collectPartials,
+          allowEdit,
+          schedule,
         }}
         onChange={(patch) => {
           if (patch.hideHeader !== undefined) setHideHeader(patch.hideHeader);
@@ -934,6 +978,12 @@ export function FormBuilderPage() {
           if (patch.submitButtonWidth) setSubmitButtonWidth(patch.submitButtonWidth);
           if (patch.submitButtonAlign) setSubmitButtonAlign(patch.submitButtonAlign);
           if (patch.collectIp !== undefined) setCollectIp(patch.collectIp);
+          if (patch.requireCaptcha !== undefined) setRequireCaptcha(patch.requireCaptcha);
+          if (patch.collectPartials !== undefined) setCollectPartials(patch.collectPartials);
+          if (patch.allowEdit !== undefined) setAllowEdit(patch.allowEdit);
+          // Not guarded on `undefined`: clearing every date is a real edit, and
+          // the drawer sends the whole schedule object each time.
+          if ('schedule' in patch) setSchedule(patch.schedule);
         }}
       />
 

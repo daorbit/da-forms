@@ -21,6 +21,18 @@ import { uploadFormFile } from '@/lib/api';
 import { fileTypes, acceptFor } from '@/lib/fieldPalette';
 import { validateFields, type FieldErrors } from '@/lib/formValidation';
 import { useFormDraft } from '@/hooks/useFormDraft';
+import { usePartialSave } from '@/hooks/usePartialSave';
+import { TurnstileGate } from '@/components/TurnstileGate';
+
+/**
+ * Cloudflare's public site key, the half that belongs in the browser.
+ *
+ * Absent in a checkout with no captcha configured, which is why every use is
+ * guarded — a form with `requireCaptcha` on and no key here renders no
+ * challenge, and the server accepts the submission rather than trapping the
+ * respondent behind a widget that was never going to appear.
+ */
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 interface Props {
   /** The form's id — present only on the respondent-facing render, enabling real file uploads. */
@@ -43,13 +55,32 @@ interface Props {
   /** Renders each step's title/description above its fields. */
   showStepHeadings?: boolean;
   submitting?: boolean;
+  /**
+   * Mirrors answers to the server as they are typed, so the owner can see where
+   * this form loses people. Off unless the owner asked for it.
+   */
+  collectPartials?: boolean;
+  /** Renders a Turnstile challenge before the submit button. */
+  requireCaptcha?: boolean;
+  /**
+   * Opens on answers already sent, when the respondent arrived by an edit link.
+   * Applied once, in place of the usual URL-and-default prefill.
+   */
+  initialData?: Record<string, string>;
   /** Omitted in preview, where nothing is recorded and there is no spam to guard against. */
   /**
    * Returning `false` means the submission did not land — a cancelled payment,
    * most often — and the respondent's draft is kept so they can try again
    * without retyping. Anything else counts as accepted.
+   *
+   * The second argument names this attempt's autosaved row, so the server
+   * promotes it rather than storing the finished answers beside the abandoned
+   * half of the same visit.
    */
-  onSubmit?: (values: Record<string, string>) => void | boolean | Promise<void | boolean>;
+  onSubmit?: (
+    values: Record<string, string>,
+    partialKey?: string | null
+  ) => void | boolean | Promise<void | boolean>;
 }
 
 const buttonSize: Record<SubmitButtonSize, string> = {
@@ -141,11 +172,20 @@ export function FormRenderer({
   stepIndicator,
   showStepHeadings,
   submitting,
+  collectPartials,
+  requireCaptcha,
+  initialData,
   onSubmit,
 }: Props) {
-  const [values, setValues] = useState<Record<string, string>>(() => initialValues(fields));
+  // An edit link opens on what was actually sent. The URL params and default
+  // values that seed a fresh form would be wrong here — they describe how the
+  // form starts, not what this person answered.
+  const [values, setValues] = useState<Record<string, string>>(
+    () => initialData ?? initialValues(fields)
+  );
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [honeypot, setHoneypot] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -201,6 +241,31 @@ export function FormRenderer({
     }, 600);
     return () => window.clearTimeout(timer);
   }, [values, pageIndex, formId, draft, fields]);
+
+  /**
+   * The same answers, mirrored to the server for the owner's drop-off report.
+   *
+   * Editing an existing response is excluded: those answers are already stored,
+   * and saving them again as a "partial" would report the respondent as having
+   * abandoned a form they submitted weeks ago.
+   */
+  const partial = usePartialSave(formId, Boolean(formId && onSubmit && collectPartials && !initialData));
+
+  useEffect(() => {
+    if (!draft.checked || draft.restored) return;
+    // Where they had got to: the last field on this page carrying an answer.
+    // Read from the visible page rather than the whole form so a multi-step
+    // form reports the step someone stopped on, not the furthest field they
+    // ever filled.
+    const answered = valueFields(currentPageFields).filter((f) => (values[f.id] ?? '').trim());
+    const last = answered[answered.length - 1];
+    const all = valueFields(fields);
+    partial.save(
+      values,
+      last?.id,
+      last ? all.findIndex((f) => f.id === last.id) : undefined
+    );
+  }, [values, currentPageFields, fields, draft.checked, draft.restored, partial]);
 
   useEffect(() => {
     if (!isMultiPage) return;
@@ -314,9 +379,23 @@ export function FormRenderer({
       ? { ...submitValues, _fileMeta: JSON.stringify(fileMeta) }
       : submitValues;
     const accepted = await onSubmit?.(
-      honeypot ? { ...withFileMeta, _hp: honeypot } : withFileMeta
+      {
+        ...withFileMeta,
+        ...(honeypot ? { _hp: honeypot } : {}),
+        // Absent when the challenge has not resolved. The server decides what
+        // that means — a missing token is refused only when it could have
+        // verified one.
+        ...(captchaToken ? { _captcha: captchaToken } : {}),
+      },
+      partial.submitKey()
     );
-    if (accepted !== false) draft.clear();
+    if (accepted !== false) {
+      draft.clear();
+      // Only once it landed. A cancelled checkout leaves the attempt open, and
+      // dropping the key would make the retry write a second partial row beside
+      // the first.
+      partial.clear();
+    }
   }
 
   function restoreDraft() {
@@ -522,6 +601,13 @@ export function FormRenderer({
                 aria-hidden="true"
                 style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
               />
+
+              {/* Only on the last page: the challenge's token is short-lived,
+                  and issuing it at the top of a five-minute form would leave it
+                  expired by the time the form is sent. */}
+              {requireCaptcha && turnstileSiteKey && isLastPage && (
+                <TurnstileGate siteKey={turnstileSiteKey} onToken={setCaptchaToken} />
+              )}
 
               <Group
                 gap="sm"

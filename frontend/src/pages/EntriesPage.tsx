@@ -263,7 +263,7 @@ export function EntriesPage() {
         onCopyShareLink={copyShareLink}
       />
 
-      <AnalyticsBar analytics={analytics} />
+      <AnalyticsBar analytics={analytics} fields={form?.fields ?? []} />
 
       <EntriesFilterBar
         status={status}

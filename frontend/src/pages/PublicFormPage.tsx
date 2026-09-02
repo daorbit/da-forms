@@ -19,6 +19,8 @@ import {
   getPaymentStatus,
   getSubmissionForEdit,
   updateSubmissionByToken,
+  getPartialForResume,
+  emailResumeLink,
 } from '@/lib/api';
 import { openCheckout, waitForPayment } from '@/lib/razorpay';
 import type { Form } from '@/types';
@@ -55,6 +57,8 @@ export function PublicFormPage() {
   // Present when the respondent followed the edit link in their confirmation
   // email. The token is the whole credential — there is no session here.
   const editToken = searchParams.get("edit");
+  // Present when they followed the "finish later" link they emailed themselves.
+  const resumeToken = searchParams.get("resume");
   const [form, setForm] = useState<Form | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -63,6 +67,8 @@ export function PublicFormPage() {
   const [editData, setEditData] = useState<Record<string, string> | null>(null);
   /** Why the edit link did not work, in words meant for the respondent. */
   const [editError, setEditError] = useState<string | null>(null);
+  /** The draft row a resume link points at, so continuing writes back to it. */
+  const [resumeKey, setResumeKey] = useState<string | null>(null);
   // The order id of the last attempt, so a retry after a cancelled checkout
   // can tell the server which pending row it supersedes.
   const lastOrderId = useRef<string | null>(null);
@@ -75,6 +81,25 @@ export function PublicFormPage() {
       .then(setForm)
       .catch((e: Error) => setError(e.message));
   }, [id]);
+
+  // The saved draft, fetched before the form renders for the same reason an
+  // edit link's answers are: `initialValues` runs once on mount, so answers
+  // arriving later would never be shown.
+  useEffect(() => {
+    if (!id || !resumeToken) return;
+    getPartialForResume(id, resumeToken)
+      .then((res) => {
+        setEditData(res.data);
+        // The draft's own key, so continuing writes back to the same row rather
+        // than starting a second one beside it.
+        if (res.partialKey) setResumeKey(res.partialKey);
+      })
+      .catch(() =>
+        setEditError(
+          "This link has expired, or the saved answers are no longer available."
+        )
+      );
+  }, [id, resumeToken]);
 
   // Exchanged for the stored answers before the form renders, so it opens on
   // what was sent rather than flashing an empty form first.
@@ -179,8 +204,12 @@ export function PublicFormPage() {
         // not leave a pending row behind on every retry.
         ...(lastOrderId.current ? { _retryOrderId: lastOrderId.current } : {}),
         // Names this visit's autosaved row, so the server promotes it instead
-        // of storing the finished answers beside the abandoned half.
-        ...(partialKey ? { _partialKey: partialKey } : {}),
+        // of storing the finished answers beside the abandoned half. A resumed
+        // draft's own key wins: this visit's autosave started a new row, but
+        // the one worth promoting is the draft they came back to.
+        ...(resumeKey || partialKey
+          ? { _partialKey: resumeKey ?? partialKey! }
+          : {}),
       });
 
       // A paid form stores the response but withholds it until Razorpay
@@ -263,7 +292,7 @@ export function PublicFormPage() {
   // An edit link waits for its answers too: `initialValues` runs once when the
   // renderer mounts, so a form that appeared before they arrived would stay
   // empty no matter what came back.
-  if (!form || (editToken && !editData && !editError))
+  if (!form || ((editToken || resumeToken) && !editData && !editError))
     return (
       <FormPage>
         {/* Centred in the viewport rather than sitting where the form's first
@@ -441,6 +470,10 @@ export function PublicFormPage() {
         // Never in preview: an author checking their own form is not the
         // traffic this guards against, and nothing they send is stored anyway.
         requireCaptcha={form.requireCaptcha && !isPreview}
+        // Drafts have to be being kept for there to be anything to return to,
+        // and there is no point offering it to someone already finishing one.
+        allowResume={Boolean(form.collectPartials) && !isPreview && !editToken}
+        onSaveForLater={(email, partialKey) => emailResumeLink(id!, partialKey, email)}
         initialData={editData ?? undefined}
         onSubmit={handleSubmit}
       />

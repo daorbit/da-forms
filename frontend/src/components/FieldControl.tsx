@@ -17,6 +17,7 @@ import {
   Chip,
 } from '@mantine/core';
 import { DateInput, TimeInput, DateTimePicker, MonthPickerInput } from '@mantine/dates';
+import { evaluateFormula, numericValues } from '@/lib/formula';
 import {
   IconMail,
   IconPhone,
@@ -68,6 +69,47 @@ interface Props {
    * recomputes the real charge.
    */
   allValues?: Record<string, string>;
+  /**
+   * The form's other fields, for a calculated field to resolve its formula
+   * against.
+   *
+   * `allValues` alone is not enough: a formula names the questions by their
+   * labels, and only the field list knows which id carries which label — or
+   * what a chosen option is worth.
+   */
+  siblingFields?: FormField[];
+}
+
+/**
+ * What a calculated field currently works out to, formatted for display.
+ *
+ * An empty string on a formula that does not compile: the respondent cannot fix
+ * the author's expression, and "unexpected symbol" sitting in a totals box
+ * reads as something they broke.
+ */
+function calculatedValue(
+  field: FormField,
+  values: Record<string, string>,
+  siblings: FormField[]
+): string {
+  if (!field.formula) return '';
+
+  const optionValues: Record<string, Record<string, number>> = {};
+  for (const sibling of siblings) {
+    if (sibling.optionValues) optionValues[sibling.id] = sibling.optionValues;
+  }
+
+  const result = evaluateFormula(
+    field.formula,
+    numericValues(siblings, values, optionValues)
+  );
+  if (!result.ok) return '';
+
+  const precision = field.formulaPrecision ?? (field.formulaFormat === 'currency' ? 2 : 0);
+  const figure = result.value.toFixed(precision);
+  return field.formulaFormat === 'currency'
+    ? `${field.formulaCurrency ?? '₹'}${figure}`
+    : figure;
 }
 
 
@@ -92,6 +134,7 @@ export function FieldControl({
   accentColor,
   error,
   allValues,
+  siblingFields,
 }: Props) {
   const showLabel = !hideLabel && !field.hideLabel;
   const sideLabel = showLabel && labelPlacement !== 'top';
@@ -858,6 +901,20 @@ export function FieldControl({
     case 'uniqueId':
     case 'randomId':
       return <TextInput {...base} readOnly value={value || (field.type === 'uniqueId' ? '1' : 'ZF1')} />;
+ 
+    case 'calculated': {
+      const result = calculatedValue(field, allValues ?? {}, siblingFields ?? []);
+      return (
+        <TextInput
+          {...base}
+          readOnly
+          value={result}
+          // Not disabled: a disabled input is skipped by screen readers and
+          // cannot be selected, and a total is something people copy.
+          styles={{ input: { fontVariantNumeric: 'tabular-nums', fontWeight: 600 } }}
+        />
+      );
+    }
     case 'heading':
       return <Title order={4}>{field.content || field.label}</Title>;
     case 'description':

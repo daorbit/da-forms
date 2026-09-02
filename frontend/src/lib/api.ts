@@ -215,6 +215,10 @@ export function listSubmissions(
     status?: 'all' | 'read' | 'unread' | 'starred';
     from?: string;
     to?: string;
+    /** Free text, matched across every answer. */
+    q?: string;
+    /** Exact-match filters, keyed by field id. */
+    fieldFilters?: Record<string, string>;
   } = {}
 ) {
   const params = new URLSearchParams();
@@ -223,6 +227,13 @@ export function listSubmissions(
   if (options.status && options.status !== 'all') params.set('status', options.status);
   if (options.from) params.set('from', options.from);
   if (options.to) params.set('to', options.to);
+  if (options.q?.trim()) params.set('q', options.q.trim());
+  // `f_` prefix rather than bracket syntax: the server reads flat keys and
+  // checks each id against the form's real fields, so nothing here can name a
+  // path of its own.
+  for (const [fieldId, value] of Object.entries(options.fieldFilters ?? {})) {
+    if (value) params.set(`f_${fieldId}`, value);
+  }
   const qs = params.toString();
   return request<Paginated<Submission>>(`${ws(workspaceId)}/${id}/submissions${qs ? `?${qs}` : ''}`);
 }
@@ -346,6 +357,38 @@ export function updateSubmissionByToken(
     method: 'PUT',
     body: JSON.stringify({ ...data, _token: token }),
   });
+}
+
+/** Email the respondent a link back to the draft they are part-way through. */
+export function emailResumeLink(id: string, partialKey: string, email: string) {
+  return request<void>(`/public/forms/${id}/resume`, {
+    method: 'POST',
+    body: JSON.stringify({ _partialKey: partialKey, email }),
+  });
+}
+
+/** The answers behind a resume link, so the form reopens where it was left. */
+export function getPartialForResume(id: string, token: string) {
+  return request<{ data: Record<string, string>; partialKey?: string }>(
+    `/public/forms/${id}/resume?token=${encodeURIComponent(token)}`
+  );
+}
+
+export interface UploadedFile {
+  url: string;
+  fieldLabel: string;
+  submissionId: string;
+  submittedAt: string;
+}
+
+/**
+ * Every file this form has collected.
+ *
+ * A manifest, not an archive — the browser fetches each file from Cloudinary
+ * directly rather than routing hundreds of megabytes through the API.
+ */
+export function listUploadedFiles(id: string, workspaceId = DEFAULT_WORKSPACE) {
+  return request<{ files: UploadedFile[] }>(`${ws(workspaceId)}/${id}/files`);
 }
 
 export function duplicateForm(id: string, workspaceId = DEFAULT_WORKSPACE) {

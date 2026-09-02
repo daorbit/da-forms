@@ -31,6 +31,7 @@ import {
   IconDice,
   IconSignature,
   IconTable,
+  IconMathFunction,
   IconEyeOff,
   IconFlag,
   IconSortAscending,
@@ -149,6 +150,12 @@ export const fieldPalette: PaletteGroup[] = [
   {
     group: 'Survey',
     items: [{ type: 'matrix', label: 'Matrix', icon: IconTable, color: 'cyan' }],
+  },
+  {
+    group: 'Calculation',
+    items: [
+      { type: 'calculated', label: 'Calculated', icon: IconMathFunction, color: 'violet' },
+    ],
   },
   {
     group: 'Identifier',

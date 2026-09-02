@@ -12,6 +12,7 @@ import {
   Select,
   Anchor,
   Box,
+  Button,
 } from '@mantine/core';
 import type {
   FormField,
@@ -28,6 +29,7 @@ import {
   paletteByType,
 } from '@/lib/fieldPalette';
 import { flattenFields } from '@/lib/fieldTree';
+import { evaluateFormula } from '@/lib/formula';
 import {
   CURRENCIES,
   currencySymbol,
@@ -127,6 +129,38 @@ export function PropertiesDrawer({
     : undefined;
 
   const payCurrency = field?.pay?.currency ?? 'INR';
+
+  /**
+   * Fields a formula can name — anything labelled, other than itself.
+   *
+   * A calculated field may reference another one, so those are included: the
+   * server evaluates them in document order, which means a subtotal above can
+   * feed a total below.
+   */
+  const referableFields = field
+    ? flattenFields(allFields).filter(
+        (candidate) =>
+          candidate.id !== field.id &&
+          candidate.type !== 'grid' &&
+          !staticTypes.includes(candidate.type) &&
+          Boolean(candidate.label?.trim())
+      )
+    : [];
+
+  /*
+   * The formula's own error, checked as it is typed.
+   *
+   * Run against an empty value set: what is being validated is the expression's
+   * *shape*, not what it currently works out to, and every reference resolves
+   * to zero regardless.
+   */
+  const formulaError =
+    field?.type === 'calculated' && field.formula?.trim()
+      ? (() => {
+          const result = evaluateFormula(field.formula, new Map());
+          return result.ok ? undefined : result.reason;
+        })()
+      : undefined;
 
   const paymentProblem =
     field?.type === 'payment' ? paymentFieldProblem(field, allFields) : null;
@@ -574,6 +608,122 @@ export function PropertiesDrawer({
                       {paymentStepIssue}
                     </Text>
                   )}
+                </Section>
+              )}
+
+              {field.type === 'calculated' && (
+                <Section label="Formula">
+                  <Textarea
+                    label="Expression"
+                    description="Refer to other questions by name, e.g. {{Quantity}} * {{Unit price}}. Supports + - * / % and brackets."
+                    placeholder="{{Quantity}} * {{Unit price}}"
+                    autosize
+                    minRows={2}
+                    value={field.formula ?? ''}
+                    onChange={(e) => set({ formula: e.target.value || undefined })}
+                    // Checked as it is typed, against the same parser the server
+                    // uses — a formula that will not compile is worth saying so
+                    // here rather than silently storing nothing on every
+                    // response.
+                    error={formulaError}
+                  />
+
+                  {referableFields.length > 0 && (
+                    <div>
+                      <Text size="xs" c="dimmed" mb={6}>
+                        Click to insert
+                      </Text>
+                      <Group gap={6}>
+                        {referableFields.map((f) => (
+                          <Button
+                            key={f.id}
+                            size="compact-xs"
+                            variant="light"
+                            color="gray"
+                            onClick={() =>
+                              set({ formula: `${field.formula ?? ''}{{${f.label}}}` })
+                            }
+                          >
+                            {f.label}
+                          </Button>
+                        ))}
+                      </Group>
+                    </div>
+                  )}
+
+                  <SegmentedControl
+                    fullWidth
+                    value={field.formulaFormat ?? 'number'}
+                    onChange={(value) =>
+                      set({ formulaFormat: value as 'number' | 'currency' })
+                    }
+                    data={[
+                      { value: 'number', label: 'Number' },
+                      { value: 'currency', label: 'Currency' },
+                    ]}
+                  />
+
+                  {field.formulaFormat === 'currency' && (
+                    <TextInput
+                      label="Currency symbol"
+                      placeholder="₹"
+                      value={field.formulaCurrency ?? ''}
+                      onChange={(e) => set({ formulaCurrency: e.target.value || undefined })}
+                    />
+                  )}
+
+                  <NumberInput
+                    label="Decimal places"
+                    min={0}
+                    max={6}
+                    value={field.formulaPrecision ?? (field.formulaFormat === 'currency' ? 2 : 0)}
+                    onChange={(value) =>
+                      set({ formulaPrecision: typeof value === 'number' ? value : undefined })
+                    }
+                  />
+                </Section>
+              )}
+
+              {optionTypes.includes(field.type) && (field.options?.length ?? 0) > 0 && (
+                <Section label="Scoring & answer key">
+                  <Text size="xs" c="dimmed" mt={-6}>
+                    Give an option a value to use it in a formula, or tick it as correct to make
+                    this a scored question. Both are optional.
+                  </Text>
+                  {(field.options ?? []).map((option) => (
+                    <Group key={option} gap="sm" wrap="nowrap" align="center">
+                      <Checkbox
+                        // The key is the option's own text, so renaming an
+                        // option detaches it — same trade the email
+                        // placeholders make, for the same reason: an author can
+                        // read and reason about the text, not an internal id.
+                        checked={field.correctOptions?.includes(option) ?? false}
+                        onChange={(e) => {
+                          const current = field.correctOptions ?? [];
+                          const next = e.currentTarget.checked
+                            ? [...current, option]
+                            : current.filter((o) => o !== option);
+                          set({ correctOptions: next.length ? next : undefined });
+                        }}
+                        aria-label={`${option} is correct`}
+                      />
+                      <Text size="sm" style={{ flex: 1, minWidth: 0 }} truncate>
+                        {option}
+                      </Text>
+                      <NumberInput
+                        w={90}
+                        size="xs"
+                        placeholder="0"
+                        value={field.optionValues?.[option] ?? ''}
+                        onChange={(value) => {
+                          const next = { ...(field.optionValues ?? {}) };
+                          if (typeof value === 'number') next[option] = value;
+                          else delete next[option];
+                          set({ optionValues: Object.keys(next).length ? next : undefined });
+                        }}
+                      />
+                    </Group>
+                  ))}
                 </Section>
               )}
 

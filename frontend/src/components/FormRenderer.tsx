@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Paper, Title, Text, Button, Stack, SimpleGrid, Group } from '@mantine/core';
+import {
+  Paper,
+  Title,
+  Text,
+  Button,
+  Stack,
+  SimpleGrid,
+  Group,
+  Anchor,
+  TextInput,
+} from '@mantine/core';
 import type {
   FormField,
   FormStep,
@@ -62,6 +72,16 @@ interface Props {
   collectPartials?: boolean;
   /** Renders a Turnstile challenge before the submit button. */
   requireCaptcha?: boolean;
+  /**
+   * Offers a "save and finish later" link under the form.
+   *
+   * Only useful where drafts are already being kept — there is nothing to come
+   * back to otherwise — so the page passes the same flag that turns autosave
+   * on.
+   */
+  allowResume?: boolean;
+  /** Emails the respondent a link back to their draft. */
+  onSaveForLater?: (email: string, partialKey: string) => Promise<void>;
   /**
    * Opens on answers already sent, when the respondent arrived by an edit link.
    * Applied once, in place of the usual URL-and-default prefill.
@@ -174,6 +194,8 @@ export function FormRenderer({
   submitting,
   collectPartials,
   requireCaptcha,
+  allowResume,
+  onSaveForLater,
   initialData,
   onSubmit,
 }: Props) {
@@ -186,6 +208,13 @@ export function FormRenderer({
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [honeypot, setHoneypot] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // The "finish later" affordance, which is a link until it is asked for and an
+  // email box afterwards.
+  const [savingForLater, setSavingForLater] = useState(false);
+  const [savedForLater, setSavedForLater] = useState(false);
+  const [sendingResume, setSendingResume] = useState(false);
+  const [resumeEmail, setResumeEmail] = useState('');
+  const [resumeError, setResumeError] = useState<string | undefined>();
   const [pageIndex, setPageIndex] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -429,6 +458,9 @@ export function FormRenderer({
         // A payment field prices itself off other answers, so it needs the
         // whole set rather than just its own.
         allValues={values}
+        // The whole form, not this page's fields: a total on the last step is
+        // usually adding up answers given on the first.
+        siblingFields={valueFields(fields)}
         error={showErrors ? errors[field.id] : undefined}
         onChange={(v) => {
           setValues((prev) => ({ ...prev, [field.id]: v }));
@@ -643,6 +675,71 @@ export function FormRenderer({
                   {isUploading ? 'Uploading…' : isMultiPage && !isLastPage ? 'Next' : submitLabel || 'Submit'}
                 </Button>
               </Group>
+
+              {/* Under the button rather than beside it: finishing later is the
+                  lesser path, and a form offering two equal-weight actions
+                  makes people stop to choose between them. */}
+              {allowResume && onSaveForLater && !savedForLater && (
+                <Stack gap="xs" mt="xs" align="center">
+                  {!savingForLater ? (
+                    <Anchor
+                      component="button"
+                      type="button"
+                      size="sm"
+                      c="dimmed"
+                      onClick={() => setSavingForLater(true)}
+                    >
+                      Save and finish later
+                    </Anchor>
+                  ) : (
+                    <Group gap="xs" wrap="nowrap" style={{ width: '100%', maxWidth: 380 }}>
+                      <TextInput
+                        type="email"
+                        placeholder="you@example.com"
+                        size="sm"
+                        style={{ flex: 1 }}
+                        value={resumeEmail}
+                        onChange={(e) => setResumeEmail(e.target.value)}
+                        error={resumeError}
+                        aria-label="Email to send your draft link to"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="default"
+                        loading={sendingResume}
+                        onClick={async () => {
+                          const key = partial.submitKey();
+                          if (!key) {
+                            setResumeError('Answer at least one question first.');
+                            return;
+                          }
+                          setResumeError(undefined);
+                          setSendingResume(true);
+                          try {
+                            await onSaveForLater(resumeEmail, key);
+                            setSavedForLater(true);
+                          } catch (e) {
+                            setResumeError(
+                              e instanceof Error ? e.message : 'Could not send the link.'
+                            );
+                          } finally {
+                            setSendingResume(false);
+                          }
+                        }}
+                      >
+                        Send link
+                      </Button>
+                    </Group>
+                  )}
+                </Stack>
+              )}
+
+              {savedForLater && (
+                <Text size="sm" c="dimmed" ta="center" mt="xs">
+                  Link sent — check your inbox. You can close this page.
+                </Text>
+              )}
             </>
           )}
         </Stack>

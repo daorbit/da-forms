@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { Box } from '@mantine/core';
+import {
+  Box,
+  Group,
+  TextInput,
+  Button,
+  ActionIcon,
+  Modal,
+  Stack,
+  Text,
+  Anchor,
+} from '@mantine/core';
+import { IconSearch, IconX, IconPaperclip } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import {
   getForm,
@@ -13,6 +24,8 @@ import {
   publicFormUrl,
   getAnalytics,
   type Analytics,
+  listUploadedFiles,
+  type UploadedFile,
 } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { Form, Submission } from '@/types';
@@ -58,6 +71,16 @@ export function EntriesPage() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [savingName, setSavingName] = useState(false);
+  const [search, setSearch] = useState('');
+  /**
+   * What the loader actually queries on.
+   *
+   * Held back from `search` so typing does not fetch a page per keystroke —
+   * every one of those is a regex scan across every response on the form.
+   */
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filesOpen, setFilesOpen] = useState(false);
+  const [files, setFiles] = useState<UploadedFile[] | null>(null);
 
   const loadSubmissions = useCallback(() => {
     if (!id) return;
@@ -66,6 +89,7 @@ export function EntriesPage() {
       page: view === 'kanban' ? 1 : page,
       limit: view === 'kanban' ? 200 : PAGE_SIZE,
       status: view === 'kanban' ? 'all' : status,
+      q: debouncedSearch,
       ...dayFilterToRange(day, customRange),
     })
       .then((res) => {
@@ -73,7 +97,16 @@ export function EntriesPage() {
         setTotal(res.total);
       })
       .finally(() => setLoading(false));
-  }, [id, workspaceId, page, status, day, customRange, view]);
+  }, [id, workspaceId, page, status, day, customRange, view, debouncedSearch]);
+
+  // Nothing to offer on a form that collects no files, so the button is absent
+  // rather than opening an empty modal.
+  const hasUploadFields = Boolean(
+    form?.fields &&
+      valueFields(form.fields).some(
+        (f) => f.type === 'file' || f.type === 'imageUpload' || f.type === 'mediaUpload'
+      )
+  );
 
   const loadAnalytics = useCallback(() => {
     if (!id) return;
@@ -89,6 +122,17 @@ export function EntriesPage() {
       .catch(() => notifications.show({ message: 'Could not load this form', color: 'red' }));
     loadAnalytics();
   }, [id, workspaceId, loadAnalytics]);
+
+  // Long enough that a typed word is one request, short enough that the list
+  // still feels live. Paging resets with it: page 4 of the old results is not
+  // page 4 of the new ones.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     loadSubmissions();
@@ -266,6 +310,24 @@ export function EntriesPage() {
       <AnalyticsBar analytics={analytics} fields={form?.fields ?? []} />
 
       <EntriesFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        onOpenFiles={
+          hasUploadFields
+            ? () => {
+                setFilesOpen(true);
+                // Fetched on open rather than with the page: building this walks
+                // every response on the form, and most visits never ask for it.
+                if (!files && id) {
+                  listUploadedFiles(id, workspaceId)
+                    .then((res) => setFiles(res.files))
+                    .catch(() =>
+                      notifications.show({ message: 'Could not load files', color: 'red' })
+                    );
+                }
+              }
+            : undefined
+        }
         status={status}
         day={day}
         customRange={customRange}
@@ -356,6 +418,54 @@ export function EntriesPage() {
       />
 
       <AttachmentModal attachment={attachment} onClose={() => setAttachment(null)} />
+
+      <Modal
+        opened={filesOpen}
+        onClose={() => setFilesOpen(false)}
+        title={`Uploaded files${files ? ` (${files.length})` : ''}`}
+        size="lg"
+        centered
+        radius="lg"
+        overlayProps={{ backgroundOpacity: 0.65, blur: 2 }}
+      >
+        {!files ? (
+          <Text size="sm" c="dimmed" py="md" ta="center">
+            Loading…
+          </Text>
+        ) : files.length === 0 ? (
+          <Text size="sm" c="dimmed" py="md" ta="center">
+            Nobody has uploaded anything yet.
+          </Text>
+        ) : (
+          <Stack gap="xs">
+            <Text size="xs" c="dimmed">
+              Files open in a new tab. Your browser downloads them from where they are stored,
+              so nothing is routed through this page.
+            </Text>
+            {files.map((file) => (
+              <Group key={file.url} justify="space-between" wrap="nowrap" gap="sm">
+                <div style={{ minWidth: 0 }}>
+                  <Anchor
+                    href={file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    size="sm"
+                    truncate
+                    style={{ display: 'block' }}
+                  >
+                    {/* The stored name, which Cloudinary keeps as the last path
+                        segment — more use than the full URL in a narrow row. */}
+                    {decodeURIComponent(file.url.split('/').pop() ?? file.url)}
+                  </Anchor>
+                  <Text size="xs" c="dimmed" truncate>
+                    {file.fieldLabel} · {new Date(file.submittedAt).toLocaleDateString()}
+                  </Text>
+                </div>
+              </Group>
+            ))}
+          </Stack>
+        )}
+      </Modal>
     </Box>
   );
 }

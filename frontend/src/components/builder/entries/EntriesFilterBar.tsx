@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Group, Menu, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Button, Group, Menu, Text, TextInput, Tooltip } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import {
   IconChevronDown,
@@ -10,6 +10,9 @@ import {
   IconCheck,
   IconRefresh,
   IconCalendar,
+  IconSearch,
+  IconX,
+  IconPaperclip,
 } from '@tabler/icons-react';
 import { DAY_LABEL, STATUS_LABEL, type CustomRange, type DayFilter, type StatusFilter } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
@@ -36,6 +39,9 @@ export function EntriesFilterBar({
   onCopyShareLink,
   onRefresh,
   onExportCsv,
+  search,
+  onSearchChange,
+  onOpenFiles,
 }: {
   status: StatusFilter;
   day: DayFilter;
@@ -48,10 +54,39 @@ export function EntriesFilterBar({
   onCopyShareLink: () => void;
   onRefresh: () => void;
   onExportCsv: () => void;
+  /** Free text across every answer. Debounced by the page, not here. */
+  search: string;
+  onSearchChange: (value: string) => void;
+  /** Absent on a form with no upload fields, which hides the button. */
+  onOpenFiles?: () => void;
 }) {
   return (
     <Group justify="space-between" px="md" py="xs" className={classes.filterbar} wrap="wrap">
       <Group gap="lg">
+        {/* First in the row, and deliberately narrow: it sits alongside the
+            category filters rather than above them, and a full-width box would
+            read as the bar's main control instead of one of four. */}
+        <TextInput
+          size="xs"
+          w={200}
+          placeholder="Search answers…"
+          leftSection={<IconSearch size={14} />}
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          rightSection={
+            search ? (
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="sm"
+                onClick={() => onSearchChange('')}
+                aria-label="Clear search"
+              >
+                <IconX size={12} />
+              </ActionIcon>
+            ) : null
+          }
+        />
         <Menu shadow="md" width={160}>
           <Menu.Target>
             <Group gap={4} className={classes.filterItem}>
@@ -200,6 +235,15 @@ export function EntriesFilterBar({
             ))}
           </Menu.Dropdown>
         </Menu>
+        {/* Absent on a form that collects no files, rather than opening an
+            empty list. */}
+        {onOpenFiles && (
+          <Tooltip label="Uploaded files" withArrow>
+            <ActionIcon variant="subtle" color="gray" onClick={onOpenFiles}>
+              <IconPaperclip size={17} />
+            </ActionIcon>
+          </Tooltip>
+        )}
         <Tooltip label="Export CSV" withArrow>
           <ActionIcon variant="subtle" color="gray" onClick={onExportCsv}>
             <IconFileExport size={17} />

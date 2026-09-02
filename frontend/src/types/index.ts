@@ -53,6 +53,7 @@ export type FieldType =
   // Survey
   | 'matrix'
   // Collected without being shown — a UTM tag, a passed-in id
+  | 'calculated'
   | 'hidden'
   // Identifier
   | 'uniqueId'
@@ -197,6 +198,22 @@ export interface FormField {
   showIf?: ShowIfRule;
   /** Payment fields only: what this field charges. */
   pay?: PaymentConfig;
+  /**
+   * Calculated fields only: arithmetic over other fields, by their labels —
+   * `{{Quantity}} * {{Unit price}}`.
+   *
+   * What the respondent sees is computed in the browser for immediacy; what is
+   * stored is recomputed on the server, so the displayed figure is never the
+   * one that counts.
+   */
+  formula?: string;
+  formulaFormat?: 'number' | 'currency';
+  formulaCurrency?: string;
+  formulaPrecision?: number;
+  /** What each option is worth, keyed by the option's own text. */
+  optionValues?: Record<string, number>;
+  /** Which options are correct, by their own text. Presence makes it a question. */
+  correctOptions?: string[];
   /** Pixel width, overriding the size preset outright. */
   customWidth?: number;
   /** Pixel height for this field's input, e.g. a taller text area. */
@@ -374,6 +391,11 @@ export interface Submission {
   /** Anything the Entries page can see is 'complete' — pending rows are filtered server-side. */
   status?: 'complete' | 'pending_payment';
   payment?: SubmissionPayment;
+  /**
+   * What this response scored, on a form with an answer key. Absent on forms
+   * that have none, and on responses submitted before one was added.
+   */
+  quiz?: { score: number; total: number; correct: number; questions: number };
   read: boolean;
   starred: boolean;
   createdAt: string;

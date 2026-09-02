@@ -77,6 +77,14 @@ export interface SubmissionDocument {
   /** Bumped on every autosave, so the sweep can age rows out by inactivity. */
   updatedAt?: Date;
   payment?: SubmissionPayment;
+  /**
+   * What this response scored, on a form that has an answer key.
+   *
+   * Stored rather than recomputed on read: an owner who corrects the key
+   * afterwards has not changed what someone scored at the time, and a quiz
+   * whose past results move underneath it is not a quiz.
+   */
+  quiz?: { score: number; total: number; correct: number; questions: number };
   read: boolean;
   starred: boolean;
   createdAt: Date;
@@ -115,6 +123,7 @@ const submissionSchema = new Schema<SubmissionDocument>(
         { _id: false }
       ),
     },
+    quiz: { type: Schema.Types.Mixed },
     read: { type: Boolean, default: false },
     starred: { type: Boolean, default: false },
   },

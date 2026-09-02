@@ -3,11 +3,11 @@ import { createHash } from 'node:crypto';
 import * as formService from '../services/form.service.js';
 import * as paymentService from '../services/payment.service.js';
 import * as workspaceSettingsService from '../services/workspaceSettings.service.js';
-import { sendSubmissionNotifications } from '../services/notification.service.js';
+import { sendSubmissionNotifications, sendResumeLink } from '../services/notification.service.js';
 import { getFormLimits, recordSubmission, generateForm as quantalogGenerate } from '../lib/quantalog.js';
 import { planLimit } from '../lib/plan-limit.js';
 import { turnstileConfigured, verifyTurnstileToken } from '../lib/turnstile.js';
-import { readEditToken } from '../lib/edit-token.js';
+import { readEditToken, mintResumeToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
 
 /**
@@ -171,13 +171,34 @@ export const listSubmissions: RequestHandler = async (req, res) => {
   if (!form || form.workspaceId !== workspaceIdOf(req)) {
     return res.status(404).json({ error: 'not_found', message: 'Form not found' });
   }
-  const { page, limit, status, from, to } = req.query as Record<string, string | undefined>;
+  const { page, limit, status, from, to, q } = req.query as Record<string, string | undefined>;
+
+  /*
+   * Per-field filters arrive as `f_<fieldId>=value`.
+   *
+   * A prefix rather than a nested object, because the query string is built by
+   * a browser and `qs`-style bracket syntax is where an attacker gets to hand
+   * Express an object of their own shaping. Each id is checked against the
+   * form's real fields, so nothing outside it reaches the query.
+   */
+  const validIds = new Set(
+    formService.flattenFieldsPublic(form.fields).map((f) => f.id)
+  );
+  const fieldFilters: Record<string, string> = {};
+  for (const [key, value] of Object.entries(req.query)) {
+    if (!key.startsWith('f_') || typeof value !== 'string') continue;
+    const fieldId = key.slice(2);
+    if (validIds.has(fieldId)) fieldFilters[fieldId] = value;
+  }
+
   const result = await formService.listSubmissions(req.params.id, {
     page: page ? Number(page) : undefined,
     limit: limit ? Number(limit) : undefined,
     status: status as never,
     from,
     to,
+    q,
+    fieldFilters,
   });
   res.json(result);
 };
@@ -247,6 +268,15 @@ export const bulkDeleteSubmissions: RequestHandler = async (req, res) => {
   if (!validateBulkIds(ids, res)) return;
   const { deletedCount } = await formService.bulkDeleteSubmissions(ids, req.params.id);
   res.json({ deletedCount });
+};
+
+/** Every file this form has collected, for a bulk download. */
+export const listUploadedFiles: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form || form.workspaceId !== workspaceIdOf(req)) {
+    return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  }
+  res.json({ files: await formService.uploadedFiles(req.params.id, form.fields) });
 };
 
 export const getAnalytics: RequestHandler = async (req, res) => {
@@ -457,6 +487,90 @@ export const updateSubmissionByToken: RequestHandler = async (req, res) => {
     }
     throw err;
   }
+};
+
+/**
+ * Email the respondent a link back to the draft they are part-way through.
+ *
+ * Asked for explicitly — a "save and finish later" button — rather than sent
+ * automatically on every autosave, which would mean mailing someone the moment
+ * they typed their address into a form they were still filling in.
+ *
+ * Requires the same `collectPartials` switch as the autosave itself: there is
+ * no draft to return to unless the owner turned drafts on.
+ */
+export const emailResumeLink: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  if (!form.collectPartials || !env.editTokenSecret || !env.publicFormBaseUrl) {
+    return res.status(403).json({
+      error: 'resume_disabled',
+      message: 'This form cannot be saved for later.',
+    });
+  }
+
+  const state = await formService.availability(form);
+  if (!state.open) {
+    return res.status(403).json({ error: 'form_closed', message: state.message });
+  }
+
+  const { _partialKey, email } = req.body;
+  if (typeof _partialKey !== 'string' || !_partialKey.trim()) {
+    return res.status(400).json({ error: 'missing_key', message: 'Nothing to save yet' });
+  }
+  // Validated here rather than trusted: this address is what the link is sent
+  // to, so a malformed one is a mail that bounces and a draft the respondent
+  // never hears about again.
+  if (typeof email !== 'string' || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
+    return res.status(400).json({ error: 'invalid_email', message: 'Enter a valid email address' });
+  }
+
+  // The row the autosave has been writing. Absent when someone hits save before
+  // the first debounce landed — nothing has been stored, so there is nothing to
+  // come back to.
+  const draft = await formService.getPartialByKey(req.params.id, _partialKey);
+  if (!draft) {
+    return res.status(404).json({
+      error: 'no_draft',
+      message: 'Fill in at least one answer before saving.',
+    });
+  }
+
+  const link = `${env.publicFormBaseUrl}/form/${form._id}/view?resume=${mintResumeToken(
+    String(draft._id)
+  )}`;
+
+  await sendResumeLink(email.trim(), form, link);
+  res.status(204).send();
+};
+
+/** The answers behind a resume link, so the form reopens where it was left. */
+export const getPartialForResume: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+
+  const read = readEditToken(req.query.token, 'resume');
+  if (!read.ok) {
+    return res.status(read.reason === 'expired' ? 410 : 403).json({
+      error: read.reason === 'expired' ? 'link_expired' : 'invalid_link',
+      message:
+        read.reason === 'expired'
+          ? 'This link has expired.'
+          : 'This link is not valid.',
+    });
+  }
+
+  const draft = await formService.getPartialById(read.submissionId);
+  // A draft that has since been submitted or swept is gone rather than
+  // forbidden, but both are told the same thing: there is nothing here now.
+  if (!draft || String(draft.formId) !== req.params.id) {
+    return res.status(410).json({
+      error: 'link_expired',
+      message: 'This draft is no longer available.',
+    });
+  }
+
+  res.json({ data: draft.data, partialKey: draft.partialKey });
 };
 
 export const recordView: RequestHandler = async (req, res) => {

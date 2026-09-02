@@ -116,6 +116,7 @@ workspaceFormRouter.delete('/:id/submissions/:subId', asyncHandler(formControlle
 // proxies/clients, and a bulk action already needs a list in the body anyway.
 workspaceFormRouter.post('/:id/submissions/bulk-delete', asyncHandler(formController.bulkDeleteSubmissions));
 workspaceFormRouter.get('/:id/analytics', asyncHandler(formController.getAnalytics));
+workspaceFormRouter.get('/:id/files', asyncHandler(formController.listUploadedFiles));
 // Editor-facing: theme background images. Same 15MB multer cap as respondent uploads.
 workspaceFormRouter.post(
   '/backgrounds',
@@ -189,6 +190,11 @@ publicFormRouter.put('/:id/partial', partialLimiter, asyncHandler(formController
 // Reopening a response from the link in a confirmation email. Rate limited like
 // a submission rather than like a draft save: the token is the only credential,
 // so this is the surface a forged-link guess would be tried against.
+// Sends mail to an address the caller supplies, so it is capped like a
+// submission rather than like a draft save — without that it is a relay for
+// mailing arbitrary people a link to this form.
+publicFormRouter.post('/:id/resume', submitLimiter, asyncHandler(formController.emailResumeLink));
+publicFormRouter.get('/:id/resume', submitLimiter, asyncHandler(formController.getPartialForResume));
 publicFormRouter.get('/:id/edit', submitLimiter, asyncHandler(formController.getSubmissionForEdit));
 publicFormRouter.put('/:id/edit', submitLimiter, asyncHandler(formController.updateSubmissionByToken));
 publicFormRouter.post('/:id/view', asyncHandler(formController.recordView));

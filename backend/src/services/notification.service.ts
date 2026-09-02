@@ -7,6 +7,42 @@ import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
 
 
+/**
+ * The "finish this later" email.
+ *
+ * Its own function rather than a layout on `sendSubmissionNotifications`: that
+ * one reports something that happened and is governed by the owner's
+ * notification settings, while this is a link the respondent asked for. An
+ * owner who has confirmation emails switched off has not thereby refused to let
+ * people save their place.
+ *
+ * Sent with the 'nextSteps' layout — a line of text and a button — because that
+ * is exactly what this message is, and it carries no answers: the draft may
+ * hold half a form's worth of personal detail, and mailing it back adds a copy
+ * of that to an inbox for no benefit the link does not already give.
+ */
+export async function sendResumeLink(
+  to: string,
+  form: Pick<FormDocument, 'title' | 'theme'>,
+  link: string
+): Promise<void> {
+  if (!mailConfigured()) return;
+
+  const body = `You can pick up where you left off on ${form.title}. Your answers are saved.`;
+  const html = renderEmail({
+    layout: 'nextSteps',
+    formName: form.title,
+    body,
+    cta: { label: 'Continue where you left off', href: link },
+    accent: form.theme?.accentColor,
+  });
+
+  // Awaited, unlike the submission notifications: this one was requested by
+  // someone watching a button, and whether it sent is the answer to what they
+  // just clicked.
+  await sendMail(to, `Finish your response to ${form.title}`, html, `${body}\n\n${link}`);
+}
+
 /** Minor units to a readable figure — 50000 paise reads as ₹500.00. */
 function formatPaid(payment: SubmissionPayment): string {
   const major = (payment.amount / 100).toFixed(2);

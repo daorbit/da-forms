@@ -4,6 +4,7 @@ import { Types } from 'mongoose';
 import { FormModel } from '../models/form.model.js';
 import { SubmissionModel, type SubmissionPayment } from '../models/submission.model.js';
 import { FormViewModel } from '../models/formView.model.js';
+import { evaluateFormula, numericValues } from '../lib/formula.js';
 import {
   claimUploads,
   destroyFormBackground,
@@ -355,6 +356,16 @@ export async function recordView(id: string, fingerprint: string) {
   await FormModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
 }
 
+/**
+ * Every field in document order, grids included.
+ *
+ * Exported as well, for callers that need to check an id against the form's
+ * real fields before it reaches a query.
+ */
+export function flattenFieldsPublic(fields: FormField[]): FormField[] {
+  return flattenFields(fields);
+}
+
 /** Every field in document order, grids included — mirrors the frontend's `flattenFields`. */
 function flattenFields(fields: FormField[]): FormField[] {
   return fields.flatMap((field) =>
@@ -414,7 +425,8 @@ async function promotePartial(
   data: Record<string, string>,
   sourceUrl?: string,
   payment?: SubmissionPayment,
-  fileMeta?: Record<string, { bytes: number }>
+  fileMeta?: Record<string, { bytes: number }>,
+  quiz?: QuizScore
 ) {
   return SubmissionModel.findOneAndUpdate(
     { formId, partialKey, status: 'partial' },
@@ -425,6 +437,7 @@ async function promotePartial(
         sourceUrl,
         status: payment ? 'pending_payment' : 'complete',
         ...(payment ? { payment } : {}),
+        ...(quiz ? { quiz } : {}),
         // The drop-off point described where they stopped. They did not stop.
         lastFieldId: undefined,
         lastFieldIndex: undefined,
@@ -458,6 +471,22 @@ export async function sweepAbandonedPartials(retentionDays: number) {
   await destroyUploadsForSubmissions(ids);
   const { deletedCount } = await SubmissionModel.deleteMany({ _id: { $in: ids } });
   return deletedCount ?? 0;
+}
+
+/**
+ * The draft behind a resume link.
+ *
+ * Restricted to 'partial' on purpose: a link emailed while someone was halfway
+ * through must stop working once they finish, or it would reopen a submitted
+ * response as an editable draft and let them fork it into a second one.
+ */
+export function getPartialById(id: string) {
+  return SubmissionModel.findOne({ _id: id, status: 'partial' });
+}
+
+/** This attempt's draft row, by the key the browser has been autosaving under. */
+export function getPartialByKey(formId: string, partialKey: string) {
+  return SubmissionModel.findOne({ formId, partialKey, status: 'partial' });
 }
 
 export interface DropOffEntry {
@@ -497,6 +526,113 @@ export async function dropOffBreakdown(formId: string): Promise<DropOffEntry[]> 
   }));
 }
 
+/**
+ * Fill in every calculated field from the answers around it.
+ *
+ * Recomputed here rather than taken from the submitted body, for the same
+ * reason a payment amount is derived from the stored form: the browser's copy
+ * is a display convenience, and a respondent who edits the request must not be
+ * able to name their own total. A form whose calculated field feeds a payment
+ * would otherwise be a price the customer sets.
+ *
+ * Mutates the answers in place so everything downstream — storage, the emailed
+ * receipt, the CSV — sees one set of numbers rather than each recomputing.
+ */
+export function applyCalculatedFields(
+  fields: FormField[],
+  data: Record<string, string>
+): void {
+  const all = flattenFields(fields);
+  const calculated = all.filter((f) => f.type === 'calculated' && f.formula);
+  if (!calculated.length) return;
+
+  const optionValues: Record<string, Record<string, number>> = {};
+  for (const field of all) {
+    if (field.optionValues) optionValues[field.id] = field.optionValues;
+  }
+
+  const values = numericValues(all, data, optionValues);
+
+  for (const field of calculated) {
+    const result = evaluateFormula(field.formula!, values);
+    // A formula that does not compile stores nothing rather than an error
+    // string: the answers are what the owner reads, and "unexpected symbol"
+    // sitting in a totals column is worse than a blank the author can spot.
+    if (!result.ok) continue;
+
+    const precision = field.formulaPrecision ?? (field.formulaFormat === 'currency' ? 2 : 0);
+    data[field.id] = result.value.toFixed(precision);
+
+    // Available to any formula that references this one, so a subtotal can feed
+    // a total. Order matters and is document order — a field referring to one
+    // below it reads the value from before this pass, which is zero.
+    if (field.label?.trim()) values.set(field.label.trim(), result.value);
+  }
+}
+
+export interface QuizScore {
+  /** Marks earned. */
+  score: number;
+  /** Marks available — the sum of each scored question's best possible answer. */
+  total: number;
+  /** How many scored questions were answered correctly. */
+  correct: number;
+  /** How many questions carried marks at all. */
+  questions: number;
+}
+
+/**
+ * Mark a submission against the form's answer key.
+ *
+ * A question counts toward the total when it has `correctOptions` — that is
+ * what makes it a question rather than a field. Its worth is the highest
+ * `optionValues` entry it has, defaulting to one mark, so a form can mix
+ * one-mark questions with weighted ones without declaring a scheme.
+ *
+ * Marked server-side and stored, not recomputed on read: an owner who fixes a
+ * typo in the answer key afterwards has not thereby changed what a respondent
+ * scored on the day.
+ */
+export function scoreSubmission(
+  fields: FormField[],
+  data: Record<string, string>
+): QuizScore | undefined {
+  const scored = flattenFields(fields).filter((f) => f.correctOptions?.length);
+  if (!scored.length) return undefined;
+
+  let score = 0;
+  let total = 0;
+  let correct = 0;
+
+  for (const field of scored) {
+    const worth = field.optionValues
+      ? Math.max(...Object.values(field.optionValues), 1)
+      : 1;
+    total += worth;
+
+    const answer = data[field.id];
+    if (!answer) continue;
+
+    // Checkboxes submit several options; every selected one must be in the key
+    // and every key option must be selected. A partially-right multi-answer is
+    // wrong rather than half-right — awarding partial credit is a scheme the
+    // author has not been asked to choose.
+    const chosen = String(answer).split(',').map((s) => s.trim()).filter(Boolean);
+    const key = field.correctOptions!;
+    const right =
+      chosen.length === key.length && chosen.every((option) => key.includes(option));
+
+    if (right) {
+      correct++;
+      score += field.optionValues
+        ? chosen.reduce((sum, option) => sum + (field.optionValues![option] ?? 0), 0) || worth
+        : worth;
+    }
+  }
+
+  return { score, total, correct, questions: scored.length };
+}
+
 export class DuplicateValueError extends Error {
   constructor(public field: FormField) {
     super(`${field.label || 'This field'} must be unique`);
@@ -513,6 +649,11 @@ export async function submitForm(
   /** This attempt's autosave row, promoted in place rather than duplicated. */
   partialKey?: string
 ) {
+  // Before anything reads the answers: a calculated field is one of them, and
+  // the uniqueness check below, the stored row, the emailed receipt and the CSV
+  // must all see the same number.
+  applyCalculatedFields(fields, data);
+
   const uniqueFields = flattenFields(fields).filter((field) => field.unique);
   for (const field of uniqueFields) {
     const value = data[field.id];
@@ -527,12 +668,14 @@ export async function submitForm(
     });
     if (existing) throw new DuplicateValueError(field);
   }
+
+  const quiz = scoreSubmission(fields, data);
   // Promotion first, insert as the fallback: a form with autosave on already
   // has this attempt's row, and creating a second one would leave the abandoned
   // half of the same visit sitting next to the finished response.
   const submission =
     (partialKey
-      ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta)
+      ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta, quiz)
       : null) ??
     (await SubmissionModel.create({
       formId,
@@ -541,6 +684,7 @@ export async function submitForm(
       sourceUrl,
       status: payment ? 'pending_payment' : 'complete',
       payment,
+      quiz,
     }));
 
   // Attach whatever this answer uploaded, so the abandoned-upload sweep stops
@@ -652,6 +796,63 @@ export function submissionCount(formId: string) {
   return SubmissionModel.countDocuments({ formId, status: 'complete' });
 }
 
+export interface UploadedFile {
+  url: string;
+  /** Which question it answered, for naming the file on disk. */
+  fieldLabel: string;
+  /** Which response it came from, so two people's CVs do not collide. */
+  submissionId: string;
+  submittedAt: Date;
+}
+
+/**
+ * Every file uploaded to a form, newest response first.
+ *
+ * A manifest rather than a zip. Building the archive here would mean pulling
+ * every file back out of Cloudinary through this process and holding it in
+ * memory — on a serverless function with a fixed timeout and a fixed memory
+ * budget, which a form collecting three hundred CVs would exhaust. The browser
+ * fetches from Cloudinary directly instead, which is where the files already
+ * are and what its CDN is for.
+ *
+ * Reads from the answers rather than the upload rows because only the answers
+ * know which question a file belonged to — the upload row has the id, not the
+ * label.
+ */
+export async function uploadedFiles(
+  formId: string,
+  fields: FormField[]
+): Promise<UploadedFile[]> {
+  const uploadFieldIds = new Map(
+    flattenFields(fields)
+      .filter((f) => f.type === 'file' || f.type === 'imageUpload' || f.type === 'mediaUpload')
+      .map((f) => [f.id, f.label || 'Untitled question'])
+  );
+  if (!uploadFieldIds.size) return [];
+
+  const submissions = await SubmissionModel.find(
+    { formId, status: 'complete' },
+    { data: 1, createdAt: 1 }
+  ).sort({ createdAt: -1 });
+
+  const files: UploadedFile[] = [];
+  for (const submission of submissions) {
+    for (const [fieldId, label] of uploadFieldIds) {
+      const value = submission.data?.[fieldId];
+      // An unanswered upload field is absent; anything not a URL is a stale
+      // answer from before the field became an upload.
+      if (typeof value !== 'string' || !value.startsWith('http')) continue;
+      files.push({
+        url: value,
+        fieldLabel: label,
+        submissionId: String(submission._id),
+        submittedAt: submission.createdAt,
+      });
+    }
+  }
+  return files;
+}
+
 export interface SourceBreakdownEntry {
   /** The referring page's hostname, or 'direct' when no referrer was sent. */
   source: string;
@@ -687,6 +888,10 @@ export async function listSubmissions(
     status?: 'all' | 'read' | 'unread' | 'starred';
     from?: string;
     to?: string;
+    /** Free text, matched across every answer. */
+    q?: string;
+    /** Exact-match filters, keyed by field id — "everyone who picked Large". */
+    fieldFilters?: Record<string, string>;
   } = {}
 ): Promise<Paginated<InstanceType<typeof SubmissionModel>>> {
   const page = Math.max(1, options.page ?? 1);
@@ -698,6 +903,41 @@ export async function listSubmissions(
   if (options.status === 'read') filter.read = true;
   else if (options.status === 'unread') filter.read = false;
   else if (options.status === 'starred') filter.starred = true;
+
+  /*
+   * Free-text search across the answers.
+   *
+   * `$regex` over `data` as a whole is not possible — the field ids differ per
+   * form — so this matches the serialised object with `$where`-free operators
+   * by way of an aggregation-free trick: Mongo can regex a Mixed subdocument's
+   * values only via `$expr`, so the search is done over the stringified
+   * document. Restricted to a bounded, escaped needle: the input is a
+   * respondent-visible box, and an unescaped one both breaks on a stray `(` and
+   * hands the server a regex someone else wrote.
+   */
+  if (options.q?.trim()) {
+    const needle = options.q.trim().slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.$expr = {
+      $regexMatch: {
+        input: { $reduce: {
+          input: { $objectToArray: '$data' },
+          initialValue: '',
+          in: { $concat: ['$$value', ' ', { $toString: '$$this.v' }] },
+        } },
+        regex: needle,
+        options: 'i',
+      },
+    };
+  }
+
+  // Exact match on one field's stored answer. Keyed by field id, which comes
+  // from the form the caller already loaded — not free text, so it cannot name
+  // a path outside `data`.
+  for (const [fieldId, value] of Object.entries(options.fieldFilters ?? {})) {
+    if (!value) continue;
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(fieldId)) continue;
+    filter[`data.${fieldId}`] = value;
+  }
 
   if (options.from || options.to) {
     const createdAt: Record<string, Date> = {};
@@ -750,6 +990,11 @@ export async function editSubmission(
   const target = await SubmissionModel.findById(id, { formId: 1 });
   if (!target) return null;
 
+  // The same derivation the original submit did. A respondent who changes the
+  // quantity has changed the total, and leaving the old one would store a row
+  // whose own numbers disagree.
+  applyCalculatedFields(fields, data);
+
   const uniqueFields = flattenFields(fields).filter((field) => field.unique);
   for (const field of uniqueFields) {
     const value = data[field.id];
@@ -766,9 +1011,11 @@ export async function editSubmission(
     if (existing) throw new DuplicateValueError(field);
   }
 
+  const quiz = scoreSubmission(fields, data);
+
   const updated = await SubmissionModel.findOneAndUpdate(
     { _id: id, status: 'complete' },
-    { $set: { data, fileMeta, read: false } },
+    { $set: { data, fileMeta, read: false, ...(quiz ? { quiz } : {}) } },
     { new: true }
   );
 

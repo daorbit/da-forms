@@ -34,6 +34,7 @@ export type FieldType =
   | 'signature'
   | 'payment'
   | 'matrix'
+  | 'calculated'
   | 'hidden'
   | 'uniqueId'
   | 'randomId'
@@ -86,6 +87,38 @@ export interface FormField {
   showIf?: ShowIfRule;
   /** Payment fields only: what this field charges. */
   pay?: PaymentConfig;
+  /**
+   * Calculated fields only: the arithmetic, written over other fields by their
+   * labels — `{{Quantity}} * {{Unit price}}`.
+   *
+   * Recomputed server-side on submit rather than stored from what the browser
+   * sent. The displayed value is a convenience; the stored one has to be
+   * derived, for the same reason a payment amount is — a respondent who edits
+   * the request must not be able to name their own total.
+   */
+  formula?: string;
+  /** How the result is shown: a bare number, or money with the currency below. */
+  formulaFormat?: 'number' | 'currency';
+  formulaCurrency?: string;
+  /** Decimal places in the displayed result. Defaults to 2 for currency, 0 otherwise. */
+  formulaPrecision?: number;
+  /**
+   * What each option of a choice field is worth, keyed by the option's own
+   * text.
+   *
+   * Shared by two features that turned out to want the same thing: a price
+   * formula that treats "Large" as 500, and a quiz that treats it as 1 mark.
+   * An option missing from here is worth nothing.
+   */
+  optionValues?: Record<string, number>;
+  /**
+   * Quiz fields only: which options are correct, by their own text.
+   *
+   * Separate from `optionValues` because "worth 5 marks" and "is the right
+   * answer" are different claims — a partial-credit question has several
+   * options worth something and only one that is right.
+   */
+  correctOptions?: string[];
   /** Pixel width, overriding the size preset outright. */
   customWidth?: number;
   /** Pixel height for this field's input, e.g. a taller text area. */
@@ -354,6 +387,12 @@ const fieldSchema = new Schema<FormField>(
     paramName: { type: String },
     showIf: { type: Schema.Types.Mixed },
     pay: { type: Schema.Types.Mixed },
+    formula: { type: String },
+    formulaFormat: { type: String, enum: ['number', 'currency'] },
+    formulaCurrency: { type: String },
+    formulaPrecision: { type: Number, min: 0, max: 6 },
+    optionValues: { type: Schema.Types.Mixed },
+    correctOptions: { type: [String], default: undefined },
     customWidth: { type: Number },
     customHeight: { type: Number },
     cssClass: { type: String },

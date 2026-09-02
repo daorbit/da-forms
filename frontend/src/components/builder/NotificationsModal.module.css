@@ -5,7 +5,13 @@
 /* ---- Left panel: tabs and settings ---- */
 
 .panel {
-  width: 380px;
+  /*
+   * Wide enough for two layout thumbnails plus their labels without either
+   * being clipped. At 380px the grid and the controls above it were fighting
+   * for the same room, and the hint text under each thumbnail wrapped to three
+   * lines.
+   */
+  width: 440px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -206,18 +212,35 @@
   border-bottom: none;
 }
 
+/*
+ * One per row rather than a 2-up grid of thumbnails.
+ *
+ * The grid put each layout's description in a tooltip, which then opened over
+ * the controls above it — the hint was unreadable at exactly the moment it was
+ * needed. A row has space for the name and the hint beside the picture, so
+ * nothing has to be hovered to be understood.
+ */
 .layoutGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .layoutOption {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
   padding: 8px;
   border: 1px solid var(--mantine-color-default-border);
   border-radius: var(--mantine-radius-md);
   background-color: var(--mantine-color-body);
+  text-align: left;
+}
+
+.layoutMeta {
+  min-width: 0;
+  flex: 1;
 }
 
 .layoutOption:hover:not(:disabled) {
@@ -236,15 +259,22 @@
 
 .layoutName {
   display: block;
-  margin-top: 7px;
-  text-align: center;
+}
+
+.layoutHint {
+  display: block;
+  margin-top: 2px;
+  line-height: 1.35;
 }
 
 /* ---- The miniature of a layout ---- */
 
 .thumb {
   display: block;
-  height: 74px;
+  /* Fixed width now that it sits beside the text rather than above it. */
+  width: 84px;
+  flex-shrink: 0;
+  height: 60px;
   padding: 6px;
   border-radius: 4px;
   overflow: hidden;
@@ -338,6 +368,49 @@
   border-radius: var(--mantine-radius-md);
   overflow: hidden;
   background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * The From/Subject strip above the message.
+ *
+ * The preview showed the body alone, which is the part the author is already
+ * editing — the subject line was the one thing they had written and could not
+ * see. Framing it as an inbox row also makes an otherwise floating white card
+ * read as an email.
+ */
+.previewChrome {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+}
+
+.previewChromeRow {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 12px;
+  line-height: 1.6;
+  min-width: 0;
+}
+
+.previewChromeLabel {
+  color: #868e96;
+  flex-shrink: 0;
+  width: 48px;
+}
+
+.previewChromeValue {
+  color: #212529;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previewChromeSubject {
+  font-weight: 600;
 }
 
 .previewFrame {

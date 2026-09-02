@@ -15,7 +15,6 @@ import {
   SegmentedControl,
   Menu,
   UnstyledButton,
-  Tooltip,
 } from '@mantine/core';
 import { IconX, IconMail, IconBellRinging, IconChevronDown, IconPlus } from '@tabler/icons-react';
 import type { Editor } from '@tiptap/react';
@@ -316,28 +315,34 @@ export function NotificationsModal({
                   <div className={classes.layoutGrid}>
                     {EMAIL_LAYOUTS.map((option) => {
                       const on = (notifications.respondentLayout ?? 'plain') === option.id;
-                      // Tooltip sits above rather than beside: `right` opened
-                      // the hint over the next tile in the grid.
                       return (
-                        <Tooltip key={option.id} label={option.hint} withArrow position="top" multiline w={200}>
-                          <UnstyledButton
-                            className={classes.layoutOption}
-                            data-active={on || undefined}
-                            disabled={!notifications.respondentEnabled}
-                            onClick={() => onChange({ respondentLayout: option.id as EmailLayout })}
-                          >
-                            <LayoutThumb id={option.id} accent={theme?.accentColor ?? '#059669'} />
-                            <Text size="xs" fw={on ? 600 : 500} className={classes.layoutName}>
+                        <UnstyledButton
+                          key={option.id}
+                          className={classes.layoutOption}
+                          data-active={on || undefined}
+                          disabled={!notifications.respondentEnabled}
+                          onClick={() => onChange({ respondentLayout: option.id as EmailLayout })}
+                        >
+                          <LayoutThumb id={option.id} accent={theme?.accentColor ?? '#059669'} />
+                          <div className={classes.layoutMeta}>
+                            <Text size="sm" fw={on ? 600 : 500} className={classes.layoutName}>
                               {option.label}
                             </Text>
-                          </UnstyledButton>
-                        </Tooltip>
+                            <Text size="xs" c="dimmed" className={classes.layoutHint}>
+                              {option.hint}
+                            </Text>
+                          </div>
+                        </UnstyledButton>
                       );
                     })}
                   </div>
                 </div>
 
-                {notifications.respondentLayout === 'nextSteps' && (
+                {/* Both layouts that render a button. Previously only
+                    'nextSteps' offered these fields, so a 'confirmation' email
+                    had a button slot with no way to fill it. */}
+                {(notifications.respondentLayout === 'nextSteps' ||
+                  notifications.respondentLayout === 'confirmation') && (
                   <>
                     <Divider />
                     <TextInput
@@ -424,6 +429,41 @@ export function NotificationsModal({
 
           {previewing ? (
             <Box className={classes.previewFrameWrap}>
+              {/* The envelope around the message. The body below is what the
+                  author is already editing; the subject was the one thing they
+                  had written and could not see. */}
+              <div className={classes.previewChrome}>
+                <div className={classes.previewChromeRow}>
+                  <span className={classes.previewChromeLabel}>From</span>
+                  <span className={classes.previewChromeValue}>
+                    {formTitle || 'Your form'}
+                  </span>
+                </div>
+                <div className={classes.previewChromeRow}>
+                  <span className={classes.previewChromeLabel}>To</span>
+                  <span className={classes.previewChromeValue}>
+                    {isRespondent
+                      ? 'ada@example.com'
+                      : notifications.ownerEmails?.[0] || 'you@example.com'}
+                  </span>
+                </div>
+                <div className={classes.previewChromeRow}>
+                  <span className={classes.previewChromeLabel}>Subject</span>
+                  <span
+                    className={`${classes.previewChromeValue} ${classes.previewChromeSubject}`}
+                  >
+                    {/* Through the same substitution the send path uses, so a
+                        `{{Name}}` in the subject previews as a real answer. */}
+                    {fillPlaceholders(
+                      isRespondent
+                        ? notifications.respondentSubject || 'Thanks for your submission'
+                        : notifications.ownerSubject ||
+                            `New submission: ${formTitle || 'your form'}`,
+                      fields
+                    )}
+                  </span>
+                </div>
+              </div>
               {/* An iframe, so the email's own table markup and inline styles
                   render exactly as a mail client would show them, without the
                   app's stylesheet reaching in.
@@ -438,6 +478,9 @@ export function NotificationsModal({
                   notifications.respondentBody ?? '',
                   notifications.respondentCtaLabel ?? '',
                   notifications.respondentCtaHref ?? '',
+                  // The accent follows the form's theme, so a palette change
+                  // while this is open would otherwise leave the old colour.
+                  theme?.accentColor ?? '',
                 ].join('|')}
                 title="Email preview"
                 className={classes.previewFrame}

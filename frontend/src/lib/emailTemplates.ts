@@ -50,16 +50,25 @@ export interface LayoutOption {
   hint: string;
 }
 
-/** What the composer offers. Kept here so the picker and the renderer cannot drift. */
+/**
+ * What the composer offers.
+ *
+ * Five rather than the eight the renderer supports. The other three —
+ * `banner`, `hero`, `minimal` — differ from `plain` only in chrome, and asking
+ * someone to tell eight grey thumbnails apart to choose between "a card" and "a
+ * card with a coloured band" was a decision the picker invented rather than one
+ * the author had.
+ *
+ * `renderEmail` still handles all eight, so a form saved with one of the
+ * retired layouts keeps sending exactly what it always did — this list is what
+ * can be newly chosen, not what can be rendered.
+ */
 export const EMAIL_LAYOUTS: LayoutOption[] = [
+  { id: 'confirmation', label: 'Confirmation', hint: 'Tick, your message, their answers, and a button.' },
   { id: 'thankYou', label: 'Thank you', hint: 'A confirmation tick above your message.' },
   { id: 'receipt', label: 'Receipt', hint: 'Your message, then a copy of what they submitted.' },
   { id: 'nextSteps', label: 'Next steps', hint: 'Your message, then a button to somewhere.' },
-  { id: 'confirmation', label: 'Confirmation', hint: 'Tick, message, their answers, and a button.' },
-  { id: 'banner', label: 'Banner', hint: 'A coloured header band across the top of the card.' },
-  { id: 'hero', label: 'Hero', hint: 'Your first line set large, as a headline.' },
-  { id: 'plain', label: 'Plain', hint: 'Your text, lightly styled. No heading or extras.' },
-  { id: 'minimal', label: 'Minimal', hint: 'No card, no chrome — text on a plain background.' },
+  { id: 'plain', label: 'Plain', hint: 'Your text, lightly styled. No tick, answers or button.' },
 ];
 
 export function escapeHtml(s: string): string {

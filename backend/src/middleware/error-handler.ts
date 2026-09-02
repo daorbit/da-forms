@@ -12,9 +12,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return;
   }
 
+
   const body: ApiError = {
     error: 'internal_error',
-    message: err instanceof Error ? err.message : 'Unknown error',
+    message: 'Something went wrong. Please try again.',
   };
   res.status(500).json(body);
 };

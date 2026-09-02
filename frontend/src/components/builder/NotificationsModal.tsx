@@ -484,6 +484,8 @@ export function NotificationsModal({
                 ].join('|')}
                 title="Email preview"
                 className={classes.previewFrame}
+
+                sandbox=""
                 srcDoc={previewHtml}
               />
             </Box>

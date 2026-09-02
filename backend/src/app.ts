@@ -25,7 +25,16 @@ export function createApp() {
     '/api/public/workspaces/:workspaceId/payments/webhook',
     express.raw({ type: 'application/json', limit: '1mb' })
   );
-  app.use(express.json());
+  /*
+   * Stated rather than left at the 100kb default.
+   *
+   * A submission is text, but a signature field is a base64 PNG and a long form
+   * may carry several — enough to exceed the default and fail a genuine
+   * response with a parser error nobody can act on. 2mb clears that with room
+   * to spare while still being a bound: uploads go to Cloudinary through their
+   * own multipart route, so nothing legitimate needs more than this.
+   */
+  app.use(express.json({ limit: '2mb' }));
 
   // Serverless has no startup phase to connect in, so every request makes sure
   // the connection is up. After the first one this resolves immediately — see

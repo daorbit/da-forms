@@ -281,11 +281,74 @@ export const getAnalytics: RequestHandler = async (req, res) => {
 export const getPublicForm: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+
+  const doc = form.toObject();
+
+  /*
+   * An allow-list, not the whole document.
+   *
+   * A share link is opened by strangers, and everything this route returns is
+   * readable in their network tab. Sending the stored form outright published
+   * `notifications.ownerEmails` — the owner's own address, and any colleague
+   * they had alerts going to — to every respondent who ever opened the form.
+   *
+   * Listing the fields the renderer actually uses means a future setting is
+   * private until someone deliberately adds it here, rather than public the
+   * moment it is saved.
+   */
+  const {
+    _id,
+    title,
+    description,
+    fields,
+    status,
+    redirectUrl,
+    thankYouMessage,
+    hideHeader,
+    headerAlign,
+    labelPlacement,
+    submitLabel,
+    submitButtonSize,
+    submitButtonWidth,
+    submitButtonAlign,
+    theme,
+    steps,
+    stepIndicator,
+    showStepHeadings,
+    requireCaptcha,
+    collectPartials,
+    allowEdit,
+  } = doc;
+
   // Sent alongside the form rather than in place of it: the page still needs
   // the title and theme to render a closed notice that looks like the form it
   // belongs to, instead of a bare error on a white page.
-  const state = await formService.availability(form);
-  res.json({ ...form.toObject(), availability: state });
+  const availability = await formService.availability(form);
+
+  res.json({
+    _id,
+    title,
+    description,
+    fields,
+    status,
+    redirectUrl,
+    thankYouMessage,
+    hideHeader,
+    headerAlign,
+    labelPlacement,
+    submitLabel,
+    submitButtonSize,
+    submitButtonWidth,
+    submitButtonAlign,
+    theme,
+    steps,
+    stepIndicator,
+    showStepHeadings,
+    requireCaptcha,
+    collectPartials,
+    allowEdit,
+    availability,
+  });
 };
 
 /**

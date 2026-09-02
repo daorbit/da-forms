@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type ErrorRequestHandler } from 'express';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import * as formController from '../controllers/form.controller.js';
@@ -8,10 +8,42 @@ import { asyncHandler } from '../middleware/async-handler.js';
 import { blockDemoWorkspaceWrites } from '../middleware/demo-workspace.js';
 import { requireWorkspaceToken } from '../middleware/require-workspace-token.js';
 
+/**
+ * The hard ceiling, above which nothing is read into memory at all.
+ *
+ * Uploads are buffered (`memoryStorage`) before they reach Cloudinary, so this
+ * is a memory bound on the process as much as a product decision — a serverless
+ * function has a fixed budget and a handful of concurrent large uploads is
+ * enough to exhaust it.
+ *
+ * A form may set something lower for its own respondents; nothing may raise it.
+ */
+export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 },
+  limits: { fileSize: MAX_UPLOAD_BYTES },
 });
+
+/**
+ * Turns multer's own rejection into the same shape every other refusal uses.
+ *
+ * Without this the limit is still enforced, but it surfaces as an unhandled
+ * error — a 500 telling the respondent nothing, for the one upload problem
+ * they can actually fix themselves.
+ */
+const uploadErrors: ErrorRequestHandler = (err, _req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        error: 'file_too_large',
+        message: `Files must be under ${Math.floor(MAX_UPLOAD_BYTES / (1024 * 1024))}MB`,
+      });
+    }
+    return res.status(400).json({ error: 'upload_rejected', message: err.message });
+  }
+  return next(err);
+};
 
 // Same shape as submitLimiter below — a respondent uploads at most a
 // handful of files filling out one form, never a sustained stream.
@@ -74,6 +106,7 @@ workspaceFormRouter.get('/', asyncHandler(formController.listForms));
 workspaceFormRouter.post('/', asyncHandler(formController.createForm));
 workspaceFormRouter.get('/:id', asyncHandler(formController.getForm));
 workspaceFormRouter.patch('/:id', asyncHandler(formController.updateForm));
+workspaceFormRouter.post('/:id/duplicate', asyncHandler(formController.duplicateForm));
 workspaceFormRouter.delete('/:id', asyncHandler(formController.deleteForm));
 workspaceFormRouter.get('/:id/submissions', asyncHandler(formController.listSubmissions));
 workspaceFormRouter.patch('/:id/submissions/:subId', asyncHandler(formController.updateSubmission));
@@ -88,6 +121,7 @@ workspaceFormRouter.post(
   '/backgrounds',
   uploadLimiter,
   upload.single('file'),
+  uploadErrors,
   asyncHandler(uploadBackgroundImage)
 );
 
@@ -130,7 +164,33 @@ export const publicFormRouter = Router();
 
 publicFormRouter.get('/:id', asyncHandler(formController.getPublicForm));
 publicFormRouter.post('/:id/submissions', submitLimiter, asyncHandler(formController.submitForm));
-publicFormRouter.post('/:id/upload', uploadLimiter, upload.single('file'), asyncHandler(uploadFormFile));
+publicFormRouter.post(
+  '/:id/upload',
+  uploadLimiter,
+  upload.single('file'),
+  // Directly after the multer middleware whose errors it translates — Express
+  // only routes an error to the next error handler in the same stack, so this
+  // has to sit here rather than at the app level.
+  uploadErrors,
+  asyncHandler(uploadFormFile)
+);
+// Fired on a timer while someone fills the form in, so it is capped far above
+// the submit route — that one is once per visitor, this one is once every few
+// seconds for as long as they are typing.
+const partialLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited', message: 'Too many draft saves.' },
+});
+
+publicFormRouter.put('/:id/partial', partialLimiter, asyncHandler(formController.savePartial));
+// Reopening a response from the link in a confirmation email. Rate limited like
+// a submission rather than like a draft save: the token is the only credential,
+// so this is the surface a forged-link guess would be tried against.
+publicFormRouter.get('/:id/edit', submitLimiter, asyncHandler(formController.getSubmissionForEdit));
+publicFormRouter.put('/:id/edit', submitLimiter, asyncHandler(formController.updateSubmissionByToken));
 publicFormRouter.post('/:id/view', asyncHandler(formController.recordView));
 publicFormRouter.get('/:id/payments/:orderId', asyncHandler(formController.getPaymentStatus));
 

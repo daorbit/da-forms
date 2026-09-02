@@ -1,4 +1,6 @@
-import type { Types } from 'mongoose';
+// A value, not just a type: `dropOffBreakdown` casts a string id for its
+// aggregation, which the query builder does not do on its own.
+import { Types } from 'mongoose';
 import { FormModel } from '../models/form.model.js';
 import { SubmissionModel, type SubmissionPayment } from '../models/submission.model.js';
 import { FormViewModel } from '../models/formView.model.js';
@@ -16,6 +18,7 @@ import type {
   FormStep,
   StepIndicator,
   NotificationSettings,
+  FormSchedule,
 } from '../models/form.model.js';
 
 export interface Paginated<T> {
@@ -129,6 +132,10 @@ export function createForm(input: {
   showStepHeadings?: boolean;
   collectIp?: boolean;
   notifications?: NotificationSettings;
+  requireCaptcha?: boolean;
+  collectPartials?: boolean;
+  allowEdit?: boolean;
+  schedule?: FormSchedule;
 }) {
   return FormModel.create(input);
 }
@@ -157,9 +164,152 @@ export function updateForm(
     showStepHeadings: boolean;
     collectIp: boolean;
     notifications: NotificationSettings;
+    requireCaptcha: boolean;
+    collectPartials: boolean;
+    allowEdit: boolean;
+    schedule: FormSchedule;
   }>
 ) {
   return FormModel.findOneAndUpdate({ _id: id, workspaceId }, input, { new: true });
+}
+
+/* ------------------------------ availability ------------------------------ */
+
+/**
+ * Why a form is not taking answers, or null when it is.
+ *
+ * `notYetOpen` and `closed` are told apart because they need different words in
+ * front of a respondent: one is "come back later", the other is "you missed
+ * it", and showing the wrong one wastes the visit either way.
+ */
+export type ClosedReason = 'notPublished' | 'notYetOpen' | 'closed' | 'full';
+
+export interface Availability {
+  open: boolean;
+  reason?: ClosedReason;
+  /** The owner's own wording, when they set one. */
+  message?: string;
+}
+
+/** What a respondent is told when the owner has not written their own message. */
+const CLOSED_TEXT: Record<ClosedReason, string> = {
+  notPublished: 'This form is not accepting responses yet',
+  notYetOpen: 'This form is not open for responses yet',
+  closed: 'This form is no longer accepting responses',
+  full: 'This form has reached its response limit',
+};
+
+/**
+ * Whether a form is currently accepting answers.
+ *
+ * The single source of truth for that question: the public page asks it to
+ * decide what to render, and the submit route asks it again to decide what to
+ * accept. Two implementations would eventually disagree, and the one that
+ * disagreed in the respondent's favour would be a closed form still taking
+ * responses.
+ *
+ * Counting is left until last because it costs a query, and a form closed by
+ * date needs no count to know it is shut.
+ */
+export async function availability(
+  form: Pick<FormDocumentLike, '_id' | 'status' | 'schedule'>,
+  now: Date = new Date()
+): Promise<Availability> {
+  const closed = (reason: ClosedReason): Availability => ({
+    open: false,
+    reason,
+    message: form.schedule?.closedMessage || CLOSED_TEXT[reason],
+  });
+
+  if (form.status !== 'published') {
+    // Deliberately not the owner's `closedMessage`: an unpublished form is a
+    // draft nobody was invited to, not a window that has shut.
+    return { open: false, reason: 'notPublished', message: CLOSED_TEXT.notPublished };
+  }
+
+  const schedule = form.schedule;
+  if (!schedule) return { open: true };
+
+  if (schedule.opensAt && now < schedule.opensAt) return closed('notYetOpen');
+  if (schedule.closesAt && now >= schedule.closesAt) return closed('closed');
+
+  if (schedule.maxSubmissions) {
+    // 'complete' only, matching every other place responses are counted: a
+    // checkout someone abandoned has not taken one of the seats.
+    const count = await SubmissionModel.countDocuments({
+      formId: form._id,
+      status: 'complete',
+    });
+    if (count >= schedule.maxSubmissions) return closed('full');
+  }
+
+  return { open: true };
+}
+
+/** The parts of a form `availability` reads. Keeps it callable with a lean projection. */
+type FormDocumentLike = {
+  _id: Types.ObjectId;
+  status: 'draft' | 'published';
+  schedule?: FormSchedule;
+};
+
+/**
+ * Copy a form, without its responses.
+ *
+ * A duplicate is a starting point, so it comes back as a draft no matter what
+ * the original was: publishing is a deliberate act, and a copy that went live
+ * the moment it was made would put an unreviewed form on the original's
+ * audience.
+ *
+ * Responses, view counts and the schedule are all left behind for the same
+ * reason — they describe the original's run, and carrying them over would mean
+ * a brand-new form that reports other people's answers and may already be
+ * "full".
+ */
+/**
+ * A theme with its uploaded images removed, colours and everything else kept.
+ *
+ * Mirrors the URLs `destroyFormBackground` looks for — if a new background slot
+ * is added there, it belongs here too, or a duplicate starts sharing a file
+ * again.
+ */
+function stripBackgrounds(theme: FormTheme | undefined): FormTheme | undefined {
+  if (!theme) return theme;
+  const next: FormTheme = { ...theme };
+  // A gradient or a plain colour is a string with no file behind it; only an
+  // uploaded image is shared storage.
+  if (typeof next.pageBg === 'string' && next.pageBg.startsWith('http')) delete next.pageBg;
+  if (next.pageBackground?.image) next.pageBackground = { ...next.pageBackground, image: undefined };
+  if (next.cardBackground?.image) next.cardBackground = { ...next.cardBackground, image: undefined };
+  return next;
+}
+
+export async function duplicateForm(id: string, workspaceId: string) {
+  const source = await FormModel.findOne({ _id: id, workspaceId });
+  if (!source) return null;
+
+  const copy = source.toObject();
+  delete (copy as { _id?: unknown })._id;
+  delete (copy as { createdAt?: unknown }).createdAt;
+  delete (copy as { updatedAt?: unknown }).updatedAt;
+  delete (copy as { schedule?: unknown }).schedule;
+
+  return FormModel.create({
+    ...copy,
+    // Background images are dropped rather than shared.
+    //
+    // `destroyFormBackground` deletes by URL with no notion of which form owns
+    // the file, so two forms pointing at one image means deleting either takes
+    // the other's background with it. Re-uploading the file for the copy would
+    // avoid that, but a duplicate is usually about to be edited anyway — the
+    // cost of losing a background someone re-picks in a click is far below the
+    // cost of a form silently losing its design when an unrelated one is
+    // deleted.
+    theme: stripBackgrounds(copy.theme),
+    name: `${source.name ?? source.title} (copy)`,
+    status: 'draft',
+    viewCount: 0,
+  });
 }
 
 /**
@@ -214,6 +364,139 @@ function flattenFields(fields: FormField[]): FormField[] {
   );
 }
 
+/* --------------------------- partial submissions --------------------------- */
+
+/**
+ * Record what someone has typed so far.
+ *
+ * Upserted against `(formId, partialKey)` rather than inserted, so a form
+ * autosaving every few seconds leaves one row per attempt instead of one per
+ * keystroke. The unique index is what enforces that under a race; this query
+ * merely expresses the intent.
+ *
+ * Never touches a row that is not `partial`. Someone whose submission has
+ * already completed may still have a tab open firing one last autosave, and
+ * without that guard it would overwrite the real response with a half-filled
+ * copy of itself.
+ */
+export async function savePartial(
+  formId: string,
+  partialKey: string,
+  data: Record<string, string>,
+  lastFieldId?: string,
+  lastFieldIndex?: number,
+  sourceUrl?: string
+) {
+  return SubmissionModel.findOneAndUpdate(
+    { formId, partialKey, status: 'partial' },
+    {
+      $set: { data, lastFieldId, lastFieldIndex, sourceUrl },
+      $setOnInsert: { formId, partialKey, status: 'partial' },
+    },
+    { upsert: true, new: true }
+  );
+}
+
+/**
+ * Turn this attempt's partial row into the real submission, if one exists.
+ *
+ * Promotion in place rather than insert-then-delete: the row already holds the
+ * uploads this attempt claimed, and a new row would strand them. It also means
+ * a respondent who finishes leaves exactly one row behind, which is what stops
+ * "started" and "completed" from double-counting the same person.
+ *
+ * Returns null when there is nothing to promote — a form with autosave off, or
+ * a submit that arrived before the first save.
+ */
+async function promotePartial(
+  formId: string,
+  partialKey: string,
+  data: Record<string, string>,
+  sourceUrl?: string,
+  payment?: SubmissionPayment,
+  fileMeta?: Record<string, { bytes: number }>
+) {
+  return SubmissionModel.findOneAndUpdate(
+    { formId, partialKey, status: 'partial' },
+    {
+      $set: {
+        data,
+        fileMeta,
+        sourceUrl,
+        status: payment ? 'pending_payment' : 'complete',
+        ...(payment ? { payment } : {}),
+        // The drop-off point described where they stopped. They did not stop.
+        lastFieldId: undefined,
+        lastFieldIndex: undefined,
+      },
+    },
+    { new: true }
+  );
+}
+
+/**
+ * Delete partials nobody came back to finish.
+ *
+ * These are the rows with the weakest claim to exist — text someone typed and
+ * chose not to send — so they are kept only as long as the drop-off report
+ * needs them and then removed. Aged by `updatedAt`, so a respondent who left a
+ * tab open for a week is measured from when they last typed, not when they
+ * arrived.
+ *
+ * Uploads go with them: a file attached to an abandoned attempt is exactly the
+ * orphan the media sweep exists to prevent.
+ */
+export async function sweepAbandonedPartials(retentionDays: number) {
+  const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+  const stale = await SubmissionModel.find(
+    { status: 'partial', updatedAt: { $lt: cutoff } },
+    { _id: 1 }
+  );
+  if (!stale.length) return 0;
+
+  const ids = stale.map((row) => row._id);
+  await destroyUploadsForSubmissions(ids);
+  const { deletedCount } = await SubmissionModel.deleteMany({ _id: { $in: ids } });
+  return deletedCount ?? 0;
+}
+
+export interface DropOffEntry {
+  fieldId: string;
+  /** Where this field sits in document order, as recorded when the row was written. */
+  index: number;
+  /** How many people stopped here without sending. */
+  abandoned: number;
+}
+
+/**
+ * Where a form loses people, worst first.
+ *
+ * Only answers anything for forms with autosave on — without partial rows there
+ * is no record of where anyone stopped, and the honest answer is an empty list
+ * rather than a guess derived from view counts.
+ */
+export async function dropOffBreakdown(formId: string): Promise<DropOffEntry[]> {
+  const rows = await SubmissionModel.aggregate<{
+    _id: { fieldId: string; index: number };
+    abandoned: number;
+  }>([
+    { $match: { formId: new Types.ObjectId(formId), status: 'partial', lastFieldId: { $ne: null } } },
+    {
+      $group: {
+        _id: { fieldId: '$lastFieldId', index: '$lastFieldIndex' },
+        abandoned: { $sum: 1 },
+      },
+    },
+    { $sort: { abandoned: -1 } },
+  ]);
+
+  return rows.map((row) => ({
+    fieldId: row._id.fieldId,
+    index: row._id.index ?? 0,
+    abandoned: row.abandoned,
+  }));
+}
+
 export class DuplicateValueError extends Error {
   constructor(public field: FormField) {
     super(`${field.label || 'This field'} must be unique`);
@@ -226,7 +509,9 @@ export async function submitForm(
   data: Record<string, string>,
   sourceUrl?: string,
   payment?: SubmissionPayment,
-  fileMeta?: Record<string, { bytes: number }>
+  fileMeta?: Record<string, { bytes: number }>,
+  /** This attempt's autosave row, promoted in place rather than duplicated. */
+  partialKey?: string
 ) {
   const uniqueFields = flattenFields(fields).filter((field) => field.unique);
   for (const field of uniqueFields) {
@@ -242,14 +527,21 @@ export async function submitForm(
     });
     if (existing) throw new DuplicateValueError(field);
   }
-  const submission = await SubmissionModel.create({
-    formId,
-    data,
-    fileMeta,
-    sourceUrl,
-    status: payment ? 'pending_payment' : 'complete',
-    payment,
-  });
+  // Promotion first, insert as the fallback: a form with autosave on already
+  // has this attempt's row, and creating a second one would leave the abandoned
+  // half of the same visit sitting next to the finished response.
+  const submission =
+    (partialKey
+      ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta)
+      : null) ??
+    (await SubmissionModel.create({
+      formId,
+      data,
+      fileMeta,
+      sourceUrl,
+      status: payment ? 'pending_payment' : 'complete',
+      payment,
+    }));
 
   // Attach whatever this answer uploaded, so the abandoned-upload sweep stops
   // considering those files fair game. Done after the insert because the claim
@@ -425,12 +717,63 @@ export async function listSubmissions(
   return { items, total, page, limit };
 }
 
+/** One response by id, however it is reached — currently only an edit link. */
+export function getSubmissionById(id: string) {
+  return SubmissionModel.findById(id);
+}
+
 export function updateSubmission(
   id: string,
   formId: string,
   patch: Partial<{ read: boolean; starred: boolean }>
 ) {
   return SubmissionModel.findOneAndUpdate({ _id: id, formId }, patch, { new: true });
+}
+
+/**
+ * Replace a respondent's own answers, from a signed edit link.
+ *
+ * Restricted to 'complete' rows: a checkout still in flight has an amount
+ * derived from the answers it was created with, and letting those answers move
+ * underneath it would mean a respondent editing their way to a different price
+ * than the one Razorpay is holding.
+ *
+ * Marked unread again, because from the owner's side this is new information
+ * about a response they may have already read and acted on.
+ */
+export async function editSubmission(
+  id: string,
+  fields: FormField[],
+  data: Record<string, string>,
+  fileMeta?: Record<string, { bytes: number }>
+) {
+  const target = await SubmissionModel.findById(id, { formId: 1 });
+  if (!target) return null;
+
+  const uniqueFields = flattenFields(fields).filter((field) => field.unique);
+  for (const field of uniqueFields) {
+    const value = data[field.id];
+    if (!value) continue;
+    // `$ne: id` is what makes an edit that leaves a unique field alone still
+    // valid — without it the row would collide with itself and no edit could
+    // ever be saved.
+    const existing = await SubmissionModel.exists({
+      _id: { $ne: id },
+      formId: target.formId,
+      status: 'complete',
+      [`data.${field.id}`]: value,
+    });
+    if (existing) throw new DuplicateValueError(field);
+  }
+
+  const updated = await SubmissionModel.findOneAndUpdate(
+    { _id: id, status: 'complete' },
+    { $set: { data, fileMeta, read: false } },
+    { new: true }
+  );
+
+  if (updated) await claimUploads(updated._id, data);
+  return updated;
 }
 
 /** Same as `updateSubmission`, for a batch of ids — scoped to `formId` the

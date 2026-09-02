@@ -40,4 +40,44 @@ export const env = {
    * never complete; without this they accumulate forever.
    */
   paymentGraceMinutes: Number(process.env.PAYMENT_GRACE_MINUTES ?? 30),
+  /**
+   * How long a half-filled form is kept before the sweep deletes it.
+   *
+   * Short by default. A drop-off report is about the shape of the form, and
+   * that question is answered by last month's abandonments as well as last
+   * year's — holding the text longer would keep data at rest for no extra
+   * insight.
+   */
+  partialRetentionDays: Number(process.env.PARTIAL_RETENTION_DAYS ?? 30),
+  /**
+   * Signs the links that let a respondent reopen their own submission.
+   *
+   * No default, and deliberately not derived from anything else: an empty
+   * secret makes every edit token forgeable, so the feature refuses to mint or
+   * accept one rather than running on a guessable key. Generate with
+   * `openssl rand -hex 32`.
+   */
+  editTokenSecret: process.env.EDIT_TOKEN_SECRET ?? '',
+  /**
+   * How long an edit link stays usable.
+   *
+   * A window rather than forever: the link sits in an inbox, and an inbox is
+   * forwarded, shared and breached. Long enough to fix a typo you noticed the
+   * next day, short enough that a year-old email is not a live credential.
+   */
+  editWindowDays: Number(process.env.EDIT_WINDOW_DAYS ?? 7),
+  /**
+   * Where a public form lives, so an email can link back to one.
+   *
+   * The backend has never had to know this before — every other route is
+   * reached by a browser that was already on the right page. An edit link is
+   * the first thing it has to construct rather than receive, and there is no
+   * request to infer it from: the confirmation is sent after the response has
+   * gone out.
+   *
+   * The site's origin, with no trailing slash and no path — the form's own
+   * route (`/form/:id/view`) is appended where the link is built, so that this
+   * stays correct if the route ever moves.
+   */
+  publicFormBaseUrl: (process.env.PUBLIC_FORM_BASE_URL ?? '').replace(/\/+$/, ''),
 };

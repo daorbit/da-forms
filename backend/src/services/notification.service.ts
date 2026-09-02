@@ -2,33 +2,10 @@ import { sendMail, mailConfigured } from '../lib/mailer.js';
 import { renderEmail } from '../lib/emailTemplates.js';
 import type { FormDocument, FormField } from '../models/form.model.js';
 import type { SubmissionPayment } from '../models/submission.model.js';
+import { flattenFields, fillPlaceholders } from '../lib/pipe.js';
+import { mintEditToken } from '../lib/edit-token.js';
+import { env } from '../config/env.js';
 
-/** Every field in document order, grids included — mirrors `flattenFields` in form.service. */
-function flattenFields(fields: FormField[]): FormField[] {
-  return fields.flatMap((field) =>
-    field.type === 'grid'
-      ? [field, ...(field.columns ?? []).flatMap(flattenFields)]
-      : [field]
-  );
-}
-
-/**
- * Replaces `{{Field Label}}` with that field's submitted answer, blank if
- * unanswered or if no field has that exact label.
- *
- * Matched by label rather than id: the composer inserts the name someone
- * typed for the field, not its internal id, so this is what has to resolve at
- * send time. A field renamed after the template was written silently stops
- * matching — accepted as the cost of a placeholder a human can actually read
- * and type.
- */
-function fillPlaceholders(template: string, fields: FormField[], data: Record<string, string>): string {
-  const byLabel = new Map(flattenFields(fields).map((f) => [f.label?.trim(), f.id]));
-  return template.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (match, label: string) => {
-    const fieldId = byLabel.get(label.trim());
-    return fieldId !== undefined ? data[fieldId] ?? '' : match;
-  });
-}
 
 /** Minor units to a readable figure — 50000 paise reads as ₹500.00. */
 function formatPaid(payment: SubmissionPayment): string {
@@ -69,7 +46,21 @@ export async function sendSubmissionNotifications(
   form: FormDocument,
   data: Record<string, string>,
   /** Present for a paid form — shown as a line in the emailed summary. */
-  payment?: SubmissionPayment
+  payment?: SubmissionPayment,
+  /**
+   * The response this email is about, when the form lets people change what
+   * they sent. Only used to build the edit link — the confirmation is
+   * otherwise identical.
+   */
+  submissionId?: string,
+  /**
+   * The form's own id, for the edit link's URL.
+   *
+   * Passed rather than read off `form`, because the typed `FormDocument` is the
+   * shape of the document's fields and carries no `_id` — the caller has the
+   * Mongoose model and can supply it.
+   */
+  formId?: string
 ): Promise<void> {
   const notifications = form.notifications;
   if (!notifications || !mailConfigured()) return;
@@ -93,6 +84,15 @@ export async function sendSubmissionNotifications(
         form.fields,
         data
       );
+      // The edit link takes the CTA slot when there is one to give: this email
+      // has room for one button, and a respondent who can change their answer
+      // is better served by that than by a generic "Continue" the owner left at
+      // its default. An owner who set their own CTA keeps it.
+      const editHref =
+        form.allowEdit && submissionId && formId && env.editTokenSecret && env.publicFormBaseUrl
+          ? `${env.publicFormBaseUrl}/form/${formId}/view?edit=${mintEditToken(submissionId)}`
+          : undefined;
+
       const html = renderEmail({
         layout: notifications.respondentLayout,
         formName: form.title,
@@ -100,7 +100,9 @@ export async function sendSubmissionNotifications(
         answers: answersOf(form.fields, data, payment),
         cta: notifications.respondentCtaHref
           ? { label: notifications.respondentCtaLabel || 'Continue', href: notifications.respondentCtaHref }
-          : undefined,
+          : editHref
+            ? { label: 'Edit your response', href: editHref }
+            : undefined,
         accent: form.theme?.accentColor,
       });
       jobs.push(sendMail(to, subject, html, body));

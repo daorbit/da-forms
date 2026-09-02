@@ -46,8 +46,36 @@ export interface SubmissionDocument {
    * 'pending_payment' rows are invisible everywhere a customer looks — they
    * are a checkout in progress, not a response. Only the webhook promotes one
    * to 'complete'. Forms without a payment field write 'complete' directly.
+   *
+   * 'partial' is a form someone started and did not send: written by the
+   * autosave route while they type, promoted to 'complete' in place if they
+   * eventually submit, and swept away after a retention window if they never
+   * do. Counted nowhere a response is counted — it is evidence about the form,
+   * not an answer to it.
    */
-  status: 'complete' | 'pending_payment';
+  status: 'complete' | 'pending_payment' | 'partial';
+  /**
+   * The browser-generated id for one person's attempt at one form.
+   *
+   * What makes autosave idempotent: every save from the same tab updates the
+   * same row rather than leaving a trail of one row per keystroke. Random and
+   * client-side because there is no session here — a public form has no login
+   * — and it identifies an attempt, never a person.
+   */
+  partialKey?: string;
+  /**
+   * The last field the respondent had reached when they stopped, and its
+   * position in document order.
+   *
+   * The position is stored rather than derived at read time because the form it
+   * refers to keeps changing: an owner who adds a question at the top would
+   * otherwise shift every historical drop-off point down by one, silently
+   * rewriting what the data said.
+   */
+  lastFieldId?: string;
+  lastFieldIndex?: number;
+  /** Bumped on every autosave, so the sweep can age rows out by inactivity. */
+  updatedAt?: Date;
   payment?: SubmissionPayment;
   read: boolean;
   starred: boolean;
@@ -62,10 +90,13 @@ const submissionSchema = new Schema<SubmissionDocument>(
     sourceUrl: { type: String },
     status: {
       type: String,
-      enum: ['complete', 'pending_payment'],
+      enum: ['complete', 'pending_payment', 'partial'],
       default: 'complete',
       index: true,
     },
+    partialKey: { type: String },
+    lastFieldId: { type: String },
+    lastFieldIndex: { type: Number },
     payment: {
       type: new Schema<SubmissionPayment>(
         {
@@ -87,7 +118,17 @@ const submissionSchema = new Schema<SubmissionDocument>(
     read: { type: Boolean, default: false },
     starred: { type: Boolean, default: false },
   },
-  { timestamps: { createdAt: true, updatedAt: false } }
+  // `updatedAt` was off while every row was written once and never touched
+  // again. Partials are the exception — they are rewritten on every autosave,
+  // and the sweep that ages them out needs to know when someone last typed
+  // rather than when they first arrived.
+  { timestamps: { createdAt: true, updatedAt: true } }
 );
+
+// One partial row per attempt: the autosave upserts against this, so two saves
+// racing from the same tab cannot both insert. Sparse because only partials
+// carry the key, and a unique index over hundreds of thousands of nulls would
+// reject every completed submission after the first.
+submissionSchema.index({ formId: 1, partialKey: 1 }, { unique: true, sparse: true });
 
 export const SubmissionModel = model<SubmissionDocument>('Submission', submissionSchema);

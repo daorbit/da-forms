@@ -100,6 +100,16 @@ function initialValues(fields: FormField[]) {
       if (resolved) values[field.id] = resolved;
       continue;
     }
+    // Any field with a `paramName` may be filled from the link, not just a
+    // hidden one — the difference between the two is whether the respondent can
+    // see and correct what arrived, which is a reason to allow this on visible
+    // fields rather than to withhold it. The URL wins over `initialValue` for
+    // the same reason it does above: it is the more specific instruction.
+    const fromUrl = field.paramName ? params.get(field.paramName) : null;
+    if (fromUrl) {
+      values[field.id] = fromUrl;
+      continue;
+    }
     if (!field.initialValue) continue;
     values[field.id] =
       field.initialValue === '__today__' || field.initialValue === '__now__'

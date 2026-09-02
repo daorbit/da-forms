@@ -226,6 +226,36 @@ export interface NotificationSettings {
   ownerSubject?: string;
 }
 
+/**
+ * When a published form actually accepts responses.
+ *
+ * Separate from `status` because the two answer different questions: `status`
+ * is whether the owner has finished building it, this is whether the window is
+ * open. A registration that closes on Friday is published the whole time — it
+ * just stops taking answers — and collapsing that into `status: 'draft'` would
+ * mean the owner's own list showed it as unfinished work.
+ *
+ * Every bound is optional and absent means "no bound", so a form with no
+ * schedule behaves exactly as it did before this existed.
+ */
+export interface FormSchedule {
+  /** Nothing is accepted before this instant. */
+  opensAt?: Date;
+  /** Nothing is accepted from this instant on. */
+  closesAt?: Date;
+  /**
+   * Stops accepting once this many complete responses exist.
+   *
+   * Counted server-side at submit time rather than tracked as a running total:
+   * a counter and the rows it claims to count drift apart the first time a
+   * response is deleted, and the owner deleting spam should get their slots
+   * back.
+   */
+  maxSubmissions?: number;
+  /** Shown in place of the form once any bound above has closed it. */
+  closedMessage?: string;
+}
+
 export interface FormDocument {
   /** Set once at creation; shown in the forms list. Independent of the canvas header text below. */
   name: string;
@@ -251,6 +281,40 @@ export interface FormDocument {
   showStepHeadings?: boolean;
   collectIp?: boolean;
   notifications?: NotificationSettings;
+  /**
+   * Puts a Turnstile challenge in front of this form's submit.
+   *
+   * Per-form rather than global because the challenge costs a real respondent
+   * something — a widget to wait on, and a hard failure for anyone whose
+   * browser Cloudflare dislikes. A low-traffic contact form does not need that;
+   * a public form that charges money does.
+   */
+  requireCaptcha?: boolean;
+  /**
+   * Saves answers as they are typed, so a form abandoned halfway still says
+   * where it lost people.
+   *
+   * Off unless the owner turns it on, and deliberately not defaulted on for
+   * existing forms: this stores what someone typed and then chose not to send,
+   * which is a different promise from the one their respondents were made when
+   * the form was published. Whether that is acceptable depends on what the form
+   * asks for and what the owner told people — so it is their decision, not a
+   * default.
+   */
+  collectPartials?: boolean;
+  /**
+   * Lets a respondent reopen and change what they sent, via a signed link in
+   * their confirmation email.
+   *
+   * Off by default, because for a good number of forms an answer that can
+   * change afterwards is worse than one that cannot — an application, a vote, a
+   * signed agreement. The forms that want it (a booking, a profile, a long
+   * survey someone got halfway through) want it badly, so it is a switch rather
+   * than a policy.
+   */
+  allowEdit?: boolean;
+  /** When this form accepts responses. Absent means always, once published. */
+  schedule?: FormSchedule;
   /** Total public-page loads — the denominator for completion rate. */
   viewCount: number;
   createdAt: Date;
@@ -379,6 +443,20 @@ const formSchema = new Schema<FormDocument>(
           ownerEnabled: { type: Boolean },
           ownerEmails: { type: [String], default: undefined },
           ownerSubject: { type: String },
+        },
+        { _id: false }
+      ),
+    },
+    requireCaptcha: { type: Boolean },
+    collectPartials: { type: Boolean },
+    allowEdit: { type: Boolean },
+    schedule: {
+      type: new Schema<FormSchedule>(
+        {
+          opensAt: { type: Date },
+          closesAt: { type: Date },
+          maxSubmissions: { type: Number, min: 1 },
+          closedMessage: { type: String },
         },
         { _id: false }
       ),

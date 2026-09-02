@@ -6,6 +6,9 @@ import * as workspaceSettingsService from '../services/workspaceSettings.service
 import { sendSubmissionNotifications } from '../services/notification.service.js';
 import { getFormLimits, recordSubmission, generateForm as quantalogGenerate } from '../lib/quantalog.js';
 import { planLimit } from '../lib/plan-limit.js';
+import { turnstileConfigured, verifyTurnstileToken } from '../lib/turnstile.js';
+import { readEditToken } from '../lib/edit-token.js';
+import { env } from '../config/env.js';
 
 /**
  * IP + user-agent, hashed. Not identity-grade — just enough to tell "same
@@ -125,6 +128,38 @@ export const updateForm: RequestHandler = async (req, res) => {
   res.json(form);
 };
 
+/**
+ * Copy a form into the same workspace.
+ *
+ * Counted against the plan's form cap exactly as a create is — a duplicate is
+ * a new form, and a cap that can be stepped around by copying instead of
+ * creating is not a cap.
+ */
+export const duplicateForm: RequestHandler = async (req, res) => {
+  const workspaceId = workspaceIdOf(req);
+  const limits = await getFormLimits(workspaceId);
+  if (limits) {
+    const count = await formService.countForms(workspaceId);
+    if (count >= limits.maxForms) {
+      return planLimit(
+        res,
+        `Your plan includes ${limits.maxForms} form${limits.maxForms === 1 ? '' : 's'} — upgrade to build more.`,
+        {
+          kind: 'forms',
+          label: 'Forms',
+          used: count,
+          quota: limits.maxForms,
+          plan: limits.planName ?? limits.plan,
+        }
+      );
+    }
+  }
+
+  const copy = await formService.duplicateForm(req.params.id, workspaceId);
+  if (!copy) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  res.status(201).json(copy);
+};
+
 export const deleteForm: RequestHandler = async (req, res) => {
   const form = await formService.deleteForm(req.params.id, workspaceIdOf(req));
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
@@ -219,13 +254,25 @@ export const getAnalytics: RequestHandler = async (req, res) => {
   if (!form || form.workspaceId !== workspaceIdOf(req)) {
     return res.status(404).json({ error: 'not_found', message: 'Form not found' });
   }
-  const [submissionCount, sources] = await Promise.all([
+  const [submissionCount, sources, dropOff] = await Promise.all([
     formService.submissionCount(req.params.id),
     formService.sourceBreakdown(req.params.id),
+    // Empty for a form with autosave off — there is no record of where anyone
+    // stopped, and an empty list says that more honestly than a zero would.
+    formService.dropOffBreakdown(req.params.id),
   ]);
   const viewCount = form.viewCount ?? 0;
   const completionRate = viewCount > 0 ? submissionCount / viewCount : 0;
-  res.json({ viewCount, submissionCount, completionRate, sources });
+  res.json({
+    viewCount,
+    submissionCount,
+    completionRate,
+    sources,
+    dropOff,
+    // So the page can tell "nobody abandoned this form" from "we were never
+    // watching", which are the same empty list otherwise.
+    partialsEnabled: Boolean(form.collectPartials),
+  });
 };
 
 /* ---- Public routes: no workspace in the path ---- */
@@ -234,7 +281,119 @@ export const getAnalytics: RequestHandler = async (req, res) => {
 export const getPublicForm: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
-  res.json(form);
+  // Sent alongside the form rather than in place of it: the page still needs
+  // the title and theme to render a closed notice that looks like the form it
+  // belongs to, instead of a bare error on a white page.
+  const state = await formService.availability(form);
+  res.json({ ...form.toObject(), availability: state });
+};
+
+/**
+ * Resolve an edit link to the submission it names, or say why not.
+ *
+ * The token is the whole credential — there is no session behind a link in an
+ * email — so every refusal is deliberately the same shape and gives away
+ * nothing about whether the submission exists.
+ */
+async function resolveEditToken(token: unknown, formId: string) {
+  const read = readEditToken(token);
+  if (!read.ok) return { error: read.reason } as const;
+
+  const submission = await formService.getSubmissionById(read.submissionId);
+  // Belongs to this form, and is a real response rather than a checkout in
+  // flight. A token for another form's submission is refused even though it
+  // carries a valid signature.
+  if (!submission || String(submission.formId) !== formId || submission.status !== 'complete') {
+    return { error: 'invalid' } as const;
+  }
+  return { submission } as const;
+}
+
+/** The answers behind an edit link, so the form can open pre-filled. */
+export const getSubmissionForEdit: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  if (!form.allowEdit || !env.editTokenSecret) {
+    return res.status(403).json({ error: 'edit_disabled', message: 'This form cannot be edited after sending' });
+  }
+
+  const found = await resolveEditToken(req.query.token, req.params.id);
+  if ('error' in found) {
+    return res.status(found.error === 'expired' ? 410 : 403).json({
+      error: found.error === 'expired' ? 'link_expired' : 'invalid_link',
+      message:
+        found.error === 'expired'
+          ? 'This edit link has expired.'
+          : 'This edit link is not valid.',
+    });
+  }
+
+  res.json({ data: found.submission.data, fileMeta: found.submission.fileMeta });
+};
+
+/**
+ * Save a respondent's changes to their own submission.
+ *
+ * Payment fields are refused rather than re-charged: an edit that changes what
+ * someone owes is a second transaction, and quietly taking more money — or
+ * silently keeping the old amount for new answers — are both wrong. Those forms
+ * keep `allowEdit` off.
+ */
+export const updateSubmissionByToken: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+  if (!form.allowEdit || !env.editTokenSecret) {
+    return res.status(403).json({ error: 'edit_disabled', message: 'This form cannot be edited after sending' });
+  }
+
+  const { _token, _fileMeta, ...data } = req.body;
+
+  const found = await resolveEditToken(_token, req.params.id);
+  if ('error' in found) {
+    return res.status(found.error === 'expired' ? 410 : 403).json({
+      error: found.error === 'expired' ? 'link_expired' : 'invalid_link',
+      message:
+        found.error === 'expired'
+          ? 'This edit link has expired.'
+          : 'This edit link is not valid.',
+    });
+  }
+
+  if (paymentService.activePaymentField(form.fields, data)) {
+    return res.status(409).json({
+      error: 'edit_unsupported',
+      message: 'Responses that include a payment cannot be edited.',
+    });
+  }
+
+  let fileMeta: Record<string, { bytes: number }> | undefined;
+  if (typeof _fileMeta === 'string') {
+    try {
+      fileMeta = JSON.parse(_fileMeta);
+    } catch {
+      // Cosmetic, as on submit — the edit still saves without it.
+    }
+  }
+
+  try {
+    const updated = await formService.editSubmission(
+      String(found.submission._id),
+      form.fields,
+      data,
+      fileMeta
+    );
+    if (!updated) return res.status(404).json({ error: 'not_found', message: 'Response not found' });
+    res.json({ ok: true });
+  } catch (err) {
+    if (err instanceof formService.DuplicateValueError) {
+      return res.status(409).json({
+        error: 'duplicate_value',
+        message: err.message,
+        fieldId: err.field.id,
+      });
+    }
+    throw err;
+  }
 };
 
 export const recordView: RequestHandler = async (req, res) => {
@@ -244,11 +403,57 @@ export const recordView: RequestHandler = async (req, res) => {
   res.status(204).send();
 };
 
+/**
+ * Autosave: what this respondent has typed so far.
+ *
+ * Answers 204 in every non-error case, including when the form has autosave
+ * off. The browser is firing this on a timer behind someone who is still
+ * typing, and an error it cannot act on would only produce console noise on a
+ * form that is working exactly as configured.
+ *
+ * Deliberately outside the plan's submission quota: a partial is not a
+ * response, and metering the act of typing would charge a customer for people
+ * who never sent anything.
+ */
+export const savePartial: RequestHandler = async (req, res) => {
+  const form = await formService.getForm(req.params.id);
+  if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
+
+  // The owner has to have asked for this. Without the flag the route stores
+  // nothing, whatever the browser sends.
+  if (!form.collectPartials) return res.status(204).send();
+
+  const state = await formService.availability(form);
+  if (!state.open) return res.status(204).send();
+
+  const { _partialKey, _lastFieldId, _lastFieldIndex, ...data } = req.body;
+  if (typeof _partialKey !== 'string' || !_partialKey.trim()) {
+    return res.status(400).json({ error: 'missing_key', message: 'No draft key' });
+  }
+
+  await formService.savePartial(
+    req.params.id,
+    _partialKey,
+    data,
+    typeof _lastFieldId === 'string' ? _lastFieldId : undefined,
+    typeof _lastFieldIndex === 'number' ? _lastFieldIndex : undefined,
+    req.get('referer')
+  );
+  res.status(204).send();
+};
+
 export const submitForm: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
-  if (form.status !== 'published') {
-    return res.status(403).json({ error: 'not_published', message: 'This form is not accepting responses yet' });
+  // The same check the public page ran to decide what to render. Repeated here
+  // because that one is advisory — a closed form still has a reachable submit
+  // endpoint, and this is what actually refuses.
+  const state = await formService.availability(form);
+  if (!state.open) {
+    return res.status(403).json({
+      error: state.reason === 'notPublished' ? 'not_published' : 'form_closed',
+      message: state.message,
+    });
   }
 
   // `_hp` is a field real respondents never see or fill — a bot filling
@@ -259,9 +464,39 @@ export const submitForm: RequestHandler = async (req, res) => {
   // `_fileMeta` is metadata about the upload answers (currently just byte
   // size, read off Cloudinary's own upload response client-side) rather than
   // an answer itself, so it is split off the same way.
-  const { _hp, _retryOrderId: _ignoredRetry, _fileMeta, ...data } = req.body;
+  // `_captcha` is the Turnstile token, stripped for the same reason as the
+  // rest: it proves something about the request, it is not an answer.
+  // `_partialKey` names this attempt's autosave row so it is promoted rather
+  // than duplicated. Stripped like the rest: it identifies the attempt, it is
+  // not an answer.
+  const {
+    _hp,
+    _retryOrderId: _ignoredRetry,
+    _fileMeta,
+    _captcha,
+    _partialKey,
+    ...data
+  } = req.body;
   if (_hp) {
     return res.status(400).json({ error: 'spam_detected', message: 'Submission rejected' });
+  }
+
+  // Only when the owner asked for it and the deployment can actually verify.
+  // An unconfigured secret means no challenge was rendered either, so failing
+  // here would close the form to everyone over a missing env var.
+  if (form.requireCaptcha && turnstileConfigured()) {
+    const verdict = await verifyTurnstileToken(_captcha, req.ip);
+    if (!verdict.ok && verdict.reason === 'invalid') {
+      return res.status(400).json({
+        error: 'captcha_failed',
+        message: 'Could not verify you are human. Please try again.',
+      });
+    }
+    // `unavailable` deliberately falls through and accepts the response.
+    // Cloudflare being unreachable is our outage, and the cost of guessing
+    // wrong is some spam; the cost of the other guess is every real
+    // respondent turned away for the duration — the same trade the quota
+    // check below already makes.
   }
   // Sent as a JSON string, not a nested object: the submit payload's own
   // type is `Record<string, string>`, matching every other field, so this
@@ -331,7 +566,8 @@ export const submitForm: RequestHandler = async (req, res) => {
           currency,
           status: 'created',
         },
-        fileMeta
+        fileMeta,
+        typeof _partialKey === 'string' ? _partialKey : undefined
       );
 
       const order = await paymentService.createOrder(credentials, {
@@ -354,7 +590,15 @@ export const submitForm: RequestHandler = async (req, res) => {
       });
     }
 
-    const submission = await formService.submitForm(req.params.id, form.fields, data, sourceUrl, undefined, fileMeta);
+    const submission = await formService.submitForm(
+      req.params.id,
+      form.fields,
+      data,
+      sourceUrl,
+      undefined,
+      fileMeta,
+      typeof _partialKey === 'string' ? _partialKey : undefined
+    );
     res.status(201).json(submission);
     // After responding: the respondent's own confirmation should not make
     // them wait on an SMTP round trip, and a slow or failing mail server must
@@ -363,7 +607,15 @@ export const submitForm: RequestHandler = async (req, res) => {
     // Notification emails are a paid feature, so a plan without them sends
     // nothing — checked here rather than inside the mailer so an unreachable
     // Quantalog (null limits) still lets a paying customer's mail go out.
-    if (!limits || limits.notificationEmails) void sendSubmissionNotifications(form, data);
+    if (!limits || limits.notificationEmails) {
+      void sendSubmissionNotifications(
+        form,
+        data,
+        undefined,
+        String(submission._id),
+        String(form._id)
+      );
+    }
   } catch (err) {
     if (err instanceof formService.DuplicateValueError) {
       return res.status(409).json({

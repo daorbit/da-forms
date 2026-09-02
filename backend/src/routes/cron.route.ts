@@ -3,7 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { env } from '../config/env.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import { sweepAbandonedUploads } from '../services/media.service.js';
-import { sweepAbandonedPayments } from '../services/form.service.js';
+import { sweepAbandonedPayments, sweepAbandonedPartials } from '../services/form.service.js';
 
 /**
  * Only the scheduler may run these.
@@ -65,5 +65,22 @@ cronRouter.all(
   asyncHandler(async (_req, res) => {
     const result = await sweepAbandonedPayments(env.paymentGraceMinutes);
     res.json({ ok: true, ...result });
+  })
+);
+
+/**
+ * Delete half-filled forms nobody came back to.
+ *
+ * These have the weakest claim of anything stored here — text a respondent
+ * typed and deliberately did not send — so they are kept only as long as the
+ * drop-off report needs them. Running this on a schedule is what keeps the
+ * feature's promise: the data answers "where do people give up", not "what did
+ * this person nearly tell us".
+ */
+cronRouter.all(
+  '/sweep-partials',
+  asyncHandler(async (_req, res) => {
+    const deletedCount = await sweepAbandonedPartials(env.partialRetentionDays);
+    res.json({ ok: true, deletedCount });
   })
 );

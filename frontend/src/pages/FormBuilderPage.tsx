@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { AppShell, Group, TextInput, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text, Stack, Skeleton, Burger, Badge, Divider } from '@mantine/core';
+import { AppShell, Group, Button, ThemeIcon, ActionIcon, Tooltip, Modal, Text, Stack, Skeleton, Burger, Badge, Divider } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconFileText, IconEye, IconEyeOff, IconWorld, IconArrowLeft, IconArrowBackUp, IconArrowForwardUp } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -92,6 +92,8 @@ export function FormBuilderPage() {
       }
     | null;
   const initialTitle = locationState?.title ?? 'Untitled form';
+  // The form name is set at creation and shown here read-only — renaming is
+  // done from the Entries page. `setName` still fires when a saved form loads.
   const [name, setName] = useState(initialTitle);
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(locationState?.templateDescription ?? '');
@@ -752,16 +754,11 @@ export function FormBuilderPage() {
                 <IconFileText size={18} />
               </ThemeIcon>
             )}
-            <TextInput
-              variant="unstyled"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              fw={600}
-              size="sm"
-              className={classes.nameInput}
-              // Grows with the name instead of holding a fixed block of header.
-              style={{ width: `${Math.min(Math.max(name.length, 8) + 2, 34)}ch` }}
-            />
+            {/* Read-only here — the name is set at creation and renamed from
+                the Entries page, not the editor. */}
+            <Text fw={600} size="sm" className={classes.nameText}>
+              {name}
+            </Text>
             {/* Publish state belongs next to the name it describes, not inferred
                 from which way the button in the corner is pointing. */}
             {savedForm && (

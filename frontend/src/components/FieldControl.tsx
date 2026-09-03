@@ -527,6 +527,21 @@ export function FieldControl({
       const selected = multiple ? (value ? value.split(', ') : []) : value;
       const isOn = (opt: string) =>
         multiple ? (selected as string[]).includes(opt) : selected === opt;
+
+      const fill = accentColor ?? '#228be6';
+      const restBg = inputBg ?? 'transparent';
+      const restBorder = inputBorder ?? 'var(--mantine-color-gray-4)';
+      const restText = labelColor ?? 'var(--mantine-color-gray-8)';
+      const chipStyles = (opt: string) => ({
+        root: { '--chip-bg': fill, '--chip-hover': fill } as React.CSSProperties,
+        label: {
+          backgroundColor: isOn(opt) ? fill : restBg,
+          borderColor: isOn(opt) ? fill : restBorder,
+          color: isOn(opt) ? contrastOn(fill) : restText,
+        },
+        iconWrapper: { color: contrastOn(fill) },
+      });
+
       return (
         <div style={base.style}>
           {label && (
@@ -548,18 +563,9 @@ export function FieldControl({
                   key={opt}
                   value={opt}
                   readOnly={readOnly}
-                  color={accentColor}
-                  styles={
-                    accentColor
-                      ? {
-                          label: {
-                            color: isOn(opt) ? contrastOn(accentColor) : labelColor,
-                            borderColor: accentColor,
-                          },
-                          iconWrapper: { color: contrastOn(accentColor) },
-                        }
-                      : undefined
-                  }
+                  color={fill}
+                  variant={isOn(opt) ? 'filled' : 'outline'}
+                  styles={chipStyles(opt)}
                 >
                   {opt}
                 </Chip>

@@ -46,6 +46,15 @@
   outline: 1px solid var(--mantine-color-default-border) !important;
 }
 
+/* Static rendering of the form name — the editor shows it as a title, and a
+   pencil beside it opens the input above. */
+.nameText {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .historyGroup {
   padding: 2px;
   border-radius: 8px;

@@ -15,6 +15,7 @@ import {
   IconCircleDot,
   IconCheckbox,
   IconListCheck,
+  IconTags,
   IconCalendar,
   IconClock,
   IconCalendarTime,
@@ -106,6 +107,7 @@ export const fieldPalette: PaletteGroup[] = [
       { type: 'radio', label: 'Radio', icon: IconCircleDot, color: 'cyan' },
       { type: 'checkbox', label: 'Checkbox', icon: IconCheckbox, color: 'cyan' },
       { type: 'multipleChoice', label: 'Multi Choice', icon: IconListCheck, color: 'cyan' },
+      { type: 'chips', label: 'Chips', icon: IconTags, color: 'cyan' },
       { type: 'country', label: 'Country', icon: IconFlag, color: 'cyan' },
       { type: 'ranking', label: 'Ranking', icon: IconSortAscending, color: 'cyan' },
     ],
@@ -206,7 +208,7 @@ export const staticTypes: FieldType[] = [
 ];
 
 export const optionTypes: FieldType[] = [
-  'select', 'radio', 'checkbox', 'multipleChoice', 'matrix', 'ranking',
+  'select', 'radio', 'checkbox', 'multipleChoice', 'chips', 'matrix', 'ranking',
 ];
 
 export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slider', 'numberRange'];
@@ -264,6 +266,7 @@ export function makeField(type: FieldType, columns?: number): FormField {
   }
   // Before the matrix defaults below, which replace these with answer columns.
   if (optionTypes.includes(type)) field.options = ['Option 1', 'Option 2'];
+  if (type === 'chips') field.allowMultiple = false;
   if (type === 'rating') field.maxRating = 5;
   if (type === 'slider') {
     field.min = 0;

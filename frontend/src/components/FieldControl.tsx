@@ -294,7 +294,7 @@ export function FieldControl({
   // build their own markup — name, address, rating, slider, the chip group —
   // have nowhere for it to land, so the message is rendered here instead.
   const ownsErrorDisplay: FormField['type'][] = [
-    'name', 'address', 'rating', 'slider', 'multipleChoice', 'decisionBox', 'terms',
+    'name', 'address', 'rating', 'slider', 'multipleChoice', 'chips', 'decisionBox', 'terms',
     'signature', 'matrix', 'ranking', 'numberRange',
   ];
 
@@ -522,6 +522,54 @@ export function FieldControl({
         </div>
       );
     }
+    case 'chips': {
+      const multiple = field.allowMultiple ?? false;
+      const selected = multiple ? (value ? value.split(', ') : []) : value;
+      const isOn = (opt: string) =>
+        multiple ? (selected as string[]).includes(opt) : selected === opt;
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          <Chip.Group
+            multiple={multiple}
+            value={selected}
+            onChange={(v) => {
+              if (readOnly) return;
+              onChange(Array.isArray(v) ? v.join(', ') : v ?? '');
+            }}
+          >
+            <Group gap="xs">
+              {(field.options ?? []).map((opt) => (
+                <Chip
+                  key={opt}
+                  value={opt}
+                  readOnly={readOnly}
+                  color={accentColor}
+                  styles={
+                    accentColor
+                      ? {
+                          label: {
+                            color: isOn(opt) ? contrastOn(accentColor) : labelColor,
+                            borderColor: accentColor,
+                          },
+                          iconWrapper: { color: contrastOn(accentColor) },
+                        }
+                      : undefined
+                  }
+                >
+                  {opt}
+                </Chip>
+              ))}
+            </Group>
+          </Chip.Group>
+        </div>
+      );
+    }
+
     case 'date':
       return (
         <DateInput

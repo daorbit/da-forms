@@ -17,6 +17,7 @@ export type FieldType =
   | 'radio'
   | 'checkbox'
   | 'multipleChoice'
+  | 'chips'
   | 'country'
   | 'ranking'
   | 'date'
@@ -64,6 +65,8 @@ export interface FormField {
   /** Rejects a submission whose answer for this field matches an existing one for the same form. */
   unique?: boolean;
   hideLabel?: boolean;
+  /** Chip fields only: lets the respondent pick more than one option. */
+  allowMultiple?: boolean;
   instructions?: string;
   size?: FieldSize;
   placeholder?: string;
@@ -362,6 +365,7 @@ const fieldSchema = new Schema<FormField>(
     required: { type: Boolean, default: false },
     unique: { type: Boolean },
     hideLabel: { type: Boolean },
+    allowMultiple: { type: Boolean },
     instructions: { type: String },
     size: { type: String, enum: ['small', 'medium', 'large'] },
     placeholder: { type: String },

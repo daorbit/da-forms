@@ -21,7 +21,7 @@ export const MIN_AMOUNT = 100;
  * Their answer is one comma-joined string, so a price read from them is the
  * sum of what was ticked rather than a single lookup.
  */
-const MULTI_SELECT_TYPES = ['checkbox', 'multipleChoice'];
+const MULTI_SELECT_TYPES = ['checkbox', 'multipleChoice', 'chips'];
 
 /** The payment field on a form, if it has one. Grids included — a payment field may sit in a column. */
 export function findPaymentField(fields: FormField[]): FormField | undefined {

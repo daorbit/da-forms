@@ -90,6 +90,10 @@ function sampleValue(field: FormField): string {
       return firstOption ?? 'First choice';
     case 'checkbox':
       return field.options?.slice(0, 2).join(', ') ?? 'First choice, Second choice';
+    case 'chips':
+      return field.allowMultiple
+        ? field.options?.slice(0, 2).join(', ') ?? 'First choice, Second choice'
+        : firstOption ?? 'First choice';
     case 'rating':
       return `${field.maxRating ?? 5} out of ${field.maxRating ?? 5}`;
     case 'slider':

@@ -29,6 +29,7 @@ export type FieldType =
   | 'radio'
   | 'checkbox'
   | 'multipleChoice'
+  | 'chips'
   | 'country'
   | 'ranking'
   // Date & Time
@@ -164,6 +165,8 @@ export interface FormField {
   /** Rejects a submission whose answer for this field matches an existing one for the same form. */
   unique?: boolean;
   hideLabel?: boolean;
+  /** Chip fields only: lets the respondent pick more than one option. Off means single-select. */
+  allowMultiple?: boolean;
   instructions?: string;
   size?: FieldSize;
   placeholder?: string;

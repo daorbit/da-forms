@@ -382,6 +382,14 @@ export function PropertiesDrawer({
                     options={field.options ?? []}
                     onChange={(options) => set({ options })}
                   />
+                  {field.type === 'chips' && (
+                    <Switch
+                      label="Allow multiple selections"
+                      description="Respondents can pick more than one chip."
+                      checked={field.allowMultiple ?? false}
+                      onChange={(e) => set({ allowMultiple: e.target.checked })}
+                    />
+                  )}
                 </Section>
               )}
 

@@ -248,12 +248,38 @@ html[data-mantine-color-scheme='dark'] .mantine-Menu-item[data-color='red']:hove
   background-color: transparent;
 }
 
-.da-forms-light-surface .mantine-Rating-symbol {
-  color: #adb5bd;
+
+.da-forms-light-surface .mantine-Rating-starSymbol:not([data-filled]) {
+  fill: var(--da-forms-rating-empty, #ced4da);
+  stroke: var(--da-forms-rating-empty, #ced4da);
 }
 
-.da-forms-light-surface .mantine-Rating-symbol[data-filled] {
-  color: var(--mantine-color-emerald-6);
+/* A Select's dropdown renders in a portal on <body>, outside
+   `.da-forms-light-surface`, so a dark host theme paints it: near-black
+   panel, dark option text, app-primary highlight. FieldControl marks it
+   `da-forms-select-dropdown` and passes the form's own colours as custom
+   properties on the dropdown element; repaint from those here. */
+.da-forms-select-dropdown {
+  background-color: var(--da-forms-select-bg, #fff) !important;
+  border-color: var(--da-forms-select-border, #dee2e6) !important;
+}
+
+.da-forms-select-dropdown .mantine-Select-option,
+.da-forms-select-dropdown .mantine-Combobox-option {
+  color: var(--da-forms-select-fg, #1a1b1e);
+}
+
+.da-forms-select-dropdown
+  :is(.mantine-Select-option, .mantine-Combobox-option):hover:not(
+    [data-combobox-selected]
+  ) {
+  background-color: var(--da-forms-select-hover, #f1f3f5);
+}
+
+.da-forms-select-dropdown
+  :is(.mantine-Select-option, .mantine-Combobox-option)[data-combobox-selected] {
+  background-color: var(--da-forms-select-accent, var(--mantine-color-emerald-6));
+  color: #fff;
 }
 
 html,

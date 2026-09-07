@@ -446,6 +446,29 @@ export function FieldControl({
           data={field.options ?? []}
           value={value || null}
           onChange={(v) => !readOnly && onChange(v ?? '')}
+          // The dropdown renders in a portal, outside `.da-forms-light-surface`,
+          // so a dark host theme leaks in: black panel, dark option text,
+          // app-primary highlight. Mark it and let global.css repaint it from
+          // the form's own colours, passed here as custom properties.
+          comboboxProps={
+            inputBg || inputTextColor || inputBorder || accentColor
+              ? {
+                  classNames: { dropdown: 'da-forms-select-dropdown' },
+                  styles: {
+                    dropdown: {
+                      '--da-forms-select-bg': inputBg ?? '#fff',
+                      '--da-forms-select-fg': inputTextColor ?? labelColor ?? '#1a1b1e',
+                      '--da-forms-select-border': inputBorder ?? '#dee2e6',
+                      '--da-forms-select-accent':
+                        accentColor ?? 'var(--mantine-color-emerald-6)',
+                      '--da-forms-select-hover': accentColor
+                        ? `color-mix(in srgb, ${accentColor} 14%, transparent)`
+                        : '#f1f3f5',
+                    } as React.CSSProperties,
+                  },
+                }
+              : undefined
+          }
         />
       );
     case 'radio':
@@ -664,9 +687,23 @@ export function FieldControl({
             </Text>
           )}
           {/* The form's own accent, not the app's. Left to Mantine this takes
-              the builder's theme — yellow stars that turn near-black against a
-              form whose palette knows nothing about dark mode. */}
+              the builder's theme — filled stars in the app accent, and empty
+              ones colored from the app's color scheme (near-black in dark
+              mode) against a light form card. `color` fixes the filled ones;
+              the empty stars are an SVG `fill`/`stroke` and can't be reached
+              through `styles` without also hitting the filled ones, so their
+              rule lives in global.css keyed off `.da-forms-rating-empty`. */}
           <Rating
+            className={labelColor || inputBorder ? 'da-forms-rating-empty' : undefined}
+            style={
+              labelColor || inputBorder
+                ? ({
+                    '--da-forms-rating-empty': `color-mix(in srgb, ${
+                      labelColor ?? inputBorder
+                    } 32%, transparent)`,
+                  } as React.CSSProperties)
+                : undefined
+            }
             count={field.maxRating ?? 5}
             value={Number(value) || 0}
             readOnly={readOnly}

@@ -389,7 +389,9 @@ export function PublicFormPage() {
       </Center>
     );
 
-  if (submitted)
+  if (submitted) {
+
+    const accent = form?.theme?.accentColor;
     return (
       // Respondents see the form's own colours, never a host app's theme — the
       // share link and the embed are public pages, not part of anyone's dashboard.
@@ -406,7 +408,13 @@ export function PublicFormPage() {
           style={{ width: "100%", textAlign: "center" }}
         >
           <Center>
-            <ThemeIcon size={64} radius="xl" color="green" variant="filled">
+            <ThemeIcon
+              size={64}
+              radius="xl"
+              color={accent ? undefined : "green"}
+              variant="filled"
+              style={accent ? { backgroundColor: accent } : undefined}
+            >
               <IconCheck size={30} stroke={3} />
             </ThemeIcon>
           </Center>
@@ -435,7 +443,8 @@ export function PublicFormPage() {
               file, and the button would invite them to file a second one. */}
           {!editToken && (
             <Button
-              color="emerald"
+              color={accent ? undefined : "emerald"}
+              style={accent ? { backgroundColor: accent } : undefined}
               radius="md"
               mt="xl"
               onClick={() => setSubmitted(false)}
@@ -446,6 +455,7 @@ export function PublicFormPage() {
         </Container>
       </Center>
     );
+  }
 
   return (
     <FormPage theme={form.theme}>

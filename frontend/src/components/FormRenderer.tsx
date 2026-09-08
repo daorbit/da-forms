@@ -30,22 +30,12 @@ import { isFieldVisible } from '@/utils/conditionalLogic';
 import { uploadFormFile } from '@/lib/api';
 import { fileTypes, acceptFor } from '@/lib/fieldPalette';
 import { validateField, validateFields, type FieldErrors } from '@/lib/formValidation';
-import { useFormDraft } from '@/hooks/useFormDraft';
 import { usePartialSave } from '@/hooks/usePartialSave';
 import { TurnstileGate } from '@/components/TurnstileGate';
 
-/**
- * Cloudflare's public site key, the half that belongs in the browser.
- *
- * Absent in a checkout with no captcha configured, which is why every use is
- * guarded — a form with `requireCaptcha` on and no key here renders no
- * challenge, and the server accepts the submission rather than trapping the
- * respondent behind a widget that was never going to appear.
- */
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 interface Props {
-  /** The form's id — present only on the respondent-facing render, enabling real file uploads. */
   formId?: string;
   title: string;
   description?: string;
@@ -58,45 +48,15 @@ interface Props {
   submitButtonWidth?: SubmitButtonWidth;
   submitButtonAlign?: SubmitButtonAlign;
   theme?: FormTheme;
-  /** Per-page names, indexed by page. */
   steps?: FormStep[];
-  /** Which progress indicator a multi-step form shows. Defaults to 'progress'. */
   stepIndicator?: StepIndicator;
-  /** Renders each step's title/description above its fields. */
   showStepHeadings?: boolean;
   submitting?: boolean;
-  /**
-   * Mirrors answers to the server as they are typed, so the owner can see where
-   * this form loses people. Off unless the owner asked for it.
-   */
   collectPartials?: boolean;
-  /** Renders a Turnstile challenge before the submit button. */
   requireCaptcha?: boolean;
-  /**
-   * Offers a "save and finish later" link under the form.
-   *
-   * Only useful where drafts are already being kept — there is nothing to come
-   * back to otherwise — so the page passes the same flag that turns autosave
-   * on.
-   */
   allowResume?: boolean;
-  /** Emails the respondent a link back to their draft. */
   onSaveForLater?: (email: string, partialKey: string) => Promise<void>;
-  /**
-   * Opens on answers already sent, when the respondent arrived by an edit link.
-   * Applied once, in place of the usual URL-and-default prefill.
-   */
   initialData?: Record<string, string>;
-  /** Omitted in preview, where nothing is recorded and there is no spam to guard against. */
-  /**
-   * Returning `false` means the submission did not land — a cancelled payment,
-   * most often — and the respondent's draft is kept so they can try again
-   * without retyping. Anything else counts as accepted.
-   *
-   * The second argument names this attempt's autosaved row, so the server
-   * promotes it rather than storing the finished answers beside the abandoned
-   * half of the same visit.
-   */
   onSubmit?: (
     values: Record<string, string>,
     partialKey?: string | null
@@ -109,8 +69,7 @@ const buttonSize: Record<SubmitButtonSize, string> = {
   large: 'md',
 };
 
-// Resolved fresh on every mount rather than stored literally, or a form
-// saved today would keep prefilling today's date on every future visit.
+ 
 function resolveDateSentinel(sentinel: string, type: FormField['type']): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -121,13 +80,6 @@ function resolveDateSentinel(sentinel: string, type: FormField['type']): string 
   return sentinel;
 }
 
-/**
- * Turns a canvas data URL into a file the upload endpoint accepts.
- *
- * `fetch(dataUrl)` would be shorter, but it is an async round trip through the
- * network stack for bytes already in memory, and some CSP configurations refuse
- * a `data:` fetch outright.
- */
 function dataUrlToFile(dataUrl: string, name: string): File {
   const [header, encoded] = dataUrl.split(',');
   const mime = /:(.*?);/.exec(header)?.[1] ?? 'image/png';
@@ -139,11 +91,8 @@ function dataUrlToFile(dataUrl: string, name: string): File {
 
 function initialValues(fields: FormField[]) {
   const values: Record<string, string> = {};
-  // Read once: a hidden field's whole job is to carry what the link arrived
-  // with, so a later navigation should not change an answer in progress.
   const params = new URLSearchParams(window.location.search);
 
-  // Walks into grids: a prefilled field inside a column is still prefilled.
   for (const field of valueFields(fields)) {
     if (field.type === 'hidden') {
       const fromUrl = field.paramName ? params.get(field.paramName) : null;
@@ -151,11 +100,6 @@ function initialValues(fields: FormField[]) {
       if (resolved) values[field.id] = resolved;
       continue;
     }
-    // Any field with a `paramName` may be filled from the link, not just a
-    // hidden one — the difference between the two is whether the respondent can
-    // see and correct what arrived, which is a reason to allow this on visible
-    // fields rather than to withhold it. The URL wins over `initialValue` for
-    // the same reason it does above: it is the more specific instruction.
     const fromUrl = field.paramName ? params.get(field.paramName) : null;
     if (fromUrl) {
       values[field.id] = fromUrl;
@@ -199,17 +143,14 @@ export function FormRenderer({
   initialData,
   onSubmit,
 }: Props) {
-  // An edit link opens on what was actually sent. The URL params and default
-  // values that seed a fresh form would be wrong here — they describe how the
-  // form starts, not what this person answered.
+
   const [values, setValues] = useState<Record<string, string>>(
     () => initialData ?? initialValues(fields)
   );
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [honeypot, setHoneypot] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  // The "finish later" affordance, which is a link until it is asked for and an
-  // email box afterwards.
+
   const [savingForLater, setSavingForLater] = useState(false);
   const [savedForLater, setSavedForLater] = useState(false);
   const [sendingResume, setSendingResume] = useState(false);
@@ -234,69 +175,11 @@ export function FormRenderer({
   const isMultiPage = pages.length > 1;
   const isLastPage = pageIndex === pages.length - 1;
   const currentPageFields = pages[pageIndex] ?? [];
-  // Scoped to this page: an error left on a later step is not something the
-  // respondent can act on from here.
-  const errorCount = valueFields(currentPageFields).filter((f) => errors[f.id]).length;
 
-  // "3 of 8 answered" over the whole form — the required fields it will not
-  // submit without. Only shown when there are enough of them to be worth a
-  // count, and only counts what is visible right now.
-  const requiredProgress = useMemo(() => {
-    const required = valueFields(fields).filter(
-      (f) => f.required && f.type !== 'payment' && isFieldVisible(f, values)
-    );
-    const done = required.filter((f) => (values[f.id] ?? '').trim()).length;
-    return { done, total: required.length };
-  }, [fields, values]);
 
-  /**
-   * Moves focus to the new step when a page changes.
-   *
-   * A stepper that swaps its content without moving focus leaves a keyboard or
-   * screen reader user parked on a button that now belongs to a page they can
-   * no longer see, with no announcement that anything happened.
-   */
-  // Only on the respondent-facing render: the builder preview is throwaway, and
-  // saving from it would hand a real respondent the author's test answers.
-  const draft = useFormDraft(formId, Boolean(formId && onSubmit));
-
-  /**
-   * Writes on a pause in typing rather than on every keystroke.
-   *
-   * Held while a restore is still on offer: saving the empty form underneath
-   * the banner would overwrite the very draft being offered.
-   */
-  useEffect(() => {
-    if (!formId || !draft.checked || draft.restored) return;
-    const timer = window.setTimeout(() => {
-      // A signature is a base64 image — a few hundred KB of a 5MB storage
-      // budget, for the one answer easiest to redo. Everything else is kept.
-      const signatureIds = new Set(
-        valueFields(fields).filter((f) => f.type === 'signature').map((f) => f.id)
-      );
-      const saveable = Object.fromEntries(
-        Object.entries(values).filter(([id]) => !signatureIds.has(id))
-      );
-      draft.save(saveable, pageIndex);
-    }, 600);
-    return () => window.clearTimeout(timer);
-  }, [values, pageIndex, formId, draft, fields]);
-
-  /**
-   * The same answers, mirrored to the server for the owner's drop-off report.
-   *
-   * Editing an existing response is excluded: those answers are already stored,
-   * and saving them again as a "partial" would report the respondent as having
-   * abandoned a form they submitted weeks ago.
-   */
   const partial = usePartialSave(formId, Boolean(formId && onSubmit && collectPartials && !initialData));
 
   useEffect(() => {
-    if (!draft.checked || draft.restored) return;
-    // Where they had got to: the last field on this page carrying an answer.
-    // Read from the visible page rather than the whole form so a multi-step
-    // form reports the step someone stopped on, not the furthest field they
-    // ever filled.
     const answered = valueFields(currentPageFields).filter((f) => (values[f.id] ?? '').trim());
     const last = answered[answered.length - 1];
     const all = valueFields(fields);
@@ -305,7 +188,7 @@ export function FormRenderer({
       last?.id,
       last ? all.findIndex((f) => f.id === last.id) : undefined
     );
-  }, [values, currentPageFields, fields, draft.checked, draft.restored, partial]);
+  }, [values, currentPageFields, fields, partial]);
 
   useEffect(() => {
     if (!isMultiPage) return;
@@ -316,37 +199,26 @@ export function FormRenderer({
     stepHeadingRef.current?.focus();
   }, [pageIndex, isMultiPage]);
 
-  // Drop the cursor into the first real input on load, so a respondent can
-  // start typing without reaching for the mouse. Respondent render only —
-  // stealing focus in the builder preview would fight the canvas — and only
-  // when nothing has been restored, which would move focus itself.
+
   useEffect(() => {
-    if (!formId || !onSubmit || initialData || draft.restored) return;
+    if (!formId || !onSubmit || initialData) return;
     const first = formRef.current?.querySelector<HTMLElement>(
       'input:not([type="hidden"]):not([tabindex="-1"]), textarea, select'
     );
-    // A short delay lets the field's own mount settle first; without it Mantine
-    // date/select inputs occasionally reclaim focus straight back.
+
     const t = window.setTimeout(() => first?.focus({ preventScroll: true }), 80);
     return () => window.clearTimeout(t);
-  }, [formId, onSubmit, initialData, draft.restored]);
+  }, [formId, onSubmit, initialData]);
 
-  /** Every problem on a set of fields. A field hidden by showIf is excluded —
-   *  the same rule submission uses to drop hidden answers. */
+
   function errorsFor(pageFields: FormField[]): FieldErrors {
     return validateFields(valueFields(pageFields), values, (f) => isFieldVisible(f, values));
   }
 
-  /**
-   * Puts the respondent on the first thing they need to fix.
-   *
-   * Without this a long step scrolls back to the top on a failed submit and the
-   * one bad field can be a screen and a half below the message.
-   */
+ 
   function focusFirstError(found: FieldErrors) {
     const firstId = valueFields(currentPageFields).find((f) => found[f.id])?.id;
     if (!firstId) return;
-    // After paint, so the field is carrying its error state when it is reached.
     requestAnimationFrame(() => {
       const node = formRef.current?.querySelector<HTMLElement>(`[data-field-id="${firstId}"]`);
       if (!node) return;
@@ -378,18 +250,9 @@ export function FormRenderer({
     for (const [id, v] of Object.entries(values)) {
       if (visibleIds.has(id)) submitValues[id] = v;
     }
-    // Byte size of each upload, read off the upload response — carried
-    // alongside `submitValues` rather than folded into it, since an answer's
-    // value stays a bare URL everywhere else it's read.
+
     const fileMeta: Record<string, { bytes: number }> = {};
 
-    // Files are only picked up to now — uploaded here, all at once, so a
-    // respondent who abandons the form never leaves an orphaned asset behind.
-    //
-    // A signature joins them: it is drawn as a data URL, but storing that
-    // inline would put a base64 blob in the submission and print it as raw
-    // text everywhere an answer is shown. Uploaded, it is a URL like any
-    // other image.
     if (formId) {
       const files = visibleFields.filter((f) => fileTypes.includes(f.type) && pendingFiles[f.id]);
       const signatures = visibleFields.filter(
@@ -445,19 +308,11 @@ export function FormRenderer({
       partial.submitKey()
     );
     if (accepted !== false) {
-      draft.clear();
       // Only once it landed. A cancelled checkout leaves the attempt open, and
       // dropping the key would make the retry write a second partial row beside
       // the first.
       partial.clear();
     }
-  }
-
-  function restoreDraft() {
-    if (!draft.restored) return;
-    setValues(draft.restored.values);
-    setPageIndex(Math.min(draft.restored.pageIndex, pages.length - 1));
-    draft.clear();
   }
 
   /** Grids lay their columns out; everything else is a control. */
@@ -614,49 +469,6 @@ export function FormRenderer({
           </Stack>
         )}
 
-        {draft.restored && (
-          <Group
-            justify="space-between"
-            wrap="nowrap"
-            gap="sm"
-            mt="md"
-            p="xs"
-            style={{
-              border: `1px solid ${accent ?? 'var(--mantine-color-emerald-6)'}`,
-              borderRadius: 8,
-            }}
-          >
-            <Text size="xs" c={textColor}>
-              You started filling this in earlier.
-            </Text>
-            <Group gap={6} wrap="nowrap">
-              <Button size="compact-xs" variant="subtle" color="gray" onClick={() => draft.clear()}>
-                Start fresh
-              </Button>
-              <Button
-                size="compact-xs"
-                onClick={restoreDraft}
-                color={accent ? undefined : 'emerald'}
-                style={accent ? { backgroundColor: accent } : undefined}
-              >
-                Restore
-              </Button>
-            </Group>
-          </Group>
-        )}
-
-        {/* Announced rather than merely shown: a screen reader user who submits
-            gets no other signal that the page did not advance. */}
-        <div role="alert" aria-live="assertive">
-          {showErrors && errorCount > 0 && (
-            <Text size="sm" c="red" mt="xs">
-              {errorCount === 1
-                ? 'One answer needs fixing before you can continue.'
-                : `${errorCount} answers need fixing before you can continue.`}
-            </Text>
-          )}
-        </div>
-
         <Stack gap="md" mt="lg">
           {fields.length === 0 ? (
             <Text c="dimmed" size="sm" ta="center" py="xl">
@@ -685,18 +497,6 @@ export function FormRenderer({
               )}
 
           
-              {requiredProgress.total >= 3 && requiredProgress.done < requiredProgress.total && (
-                <Text
-                  size="xs"
-                  ta="center"
-                  aria-live="polite"
-                  c={textColor ? undefined : 'dimmed'}
-                  style={textColor ? { color: textColor, opacity: 0.7 } : undefined}
-                >
-                  {requiredProgress.done} of {requiredProgress.total} required answers filled in
-                </Text>
-              )}
-
               <Group
                 gap="sm"
                 mt="sm"

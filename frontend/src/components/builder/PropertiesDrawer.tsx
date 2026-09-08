@@ -41,6 +41,7 @@ import {
   PRICEABLE_TYPES,
 } from '@/lib/payment';
 import { ChoiceEditor } from '@/components/builder/ChoiceEditor';
+import { RepeaterFieldsEditor } from '@/components/builder/RepeaterFieldsEditor';
 import { EmailBodyEditor } from '@/components/builder/EmailBodyEditor';
 import classes from './PropertiesDrawer.module.css';
 
@@ -104,7 +105,7 @@ export function PropertiesDrawer({
   // Any other value-bearing field, so a grid can't target itself or a static block.
   const showIfCandidates = field
     ? flattenFields(allFields).filter(
-        (candidate) => candidate.id !== field.id && candidate.type !== 'grid' && !staticTypes.includes(candidate.type)
+        (candidate) => candidate.id !== field.id && candidate.type !== 'grid' && candidate.type !== 'repeater' && !staticTypes.includes(candidate.type)
       )
     : [];
   // Patches the nested `pay` block without dropping the keys the patch does
@@ -142,6 +143,7 @@ export function PropertiesDrawer({
         (candidate) =>
           candidate.id !== field.id &&
           candidate.type !== 'grid' &&
+          candidate.type !== 'repeater' &&
           !staticTypes.includes(candidate.type) &&
           Boolean(candidate.label?.trim())
       )
@@ -265,12 +267,14 @@ export function PropertiesDrawer({
                   onChange={(e) => set({ required: e.target.checked })}
                 />
 
-                <Switch
-                  label="Must be unique"
-                  description="Rejects a submission whose answer matches an earlier one."
-                  checked={field.unique ?? false}
-                  onChange={(e) => set({ unique: e.target.checked })}
-                />
+                {field.type !== 'repeater' && (
+                  <Switch
+                    label="Must be unique"
+                    description="Rejects a submission whose answer matches an earlier one."
+                    checked={field.unique ?? false}
+                    onChange={(e) => set({ unique: e.target.checked })}
+                  />
+                )}
               </Section>
 
               <Section label="Conditional logic">
@@ -401,11 +405,36 @@ export function PropertiesDrawer({
                 </Section>
               )}
 
+              {field.type === 'repeater' && (
+                <>
+                  <Section label="Fields in each row">
+                    <RepeaterFieldsEditor
+                      subFields={field.subFields ?? []}
+                      onChange={(subFields) => set({ subFields })}
+                    />
+                  </Section>
+                  <Section label="Rows">
+                    <Group grow>
+                      <NumberInput
+                        label="Minimum rows"
+                        min={0}
+                        value={field.minRows ?? ''}
+                        onChange={(v) => set({ minRows: v === '' ? undefined : Number(v) })}
+                      />
+                      <NumberInput
+                        label="Maximum rows"
+                        min={1}
+                        value={field.maxRows ?? ''}
+                        onChange={(v) => set({ maxRows: v === '' ? undefined : Number(v) })}
+                      />
+                    </Group>
+                  </Section>
+                </>
+              )}
+
               {field.type === 'payment' && (
                 <Section label="Payment">
-                  {/* Which account this charges into, and a way to get there.
-                      A plain row rather than a boxed alert: it is standing
-                      status, not something that just went wrong. */}
+ 
                   <Group justify="space-between" wrap="nowrap" gap="xs">
                     <Group gap={8} wrap="nowrap">
                       <Box

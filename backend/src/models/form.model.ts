@@ -45,7 +45,8 @@ export type FieldType =
   | 'divider'
   | 'spacer'
   | 'pageBreak'
-  | 'grid';
+  | 'grid'
+  | 'repeater';
 
 export type FieldSize = 'small' | 'medium' | 'large';
 
@@ -83,6 +84,9 @@ export interface FormField {
   content?: string;
   /** A grid's columns, each holding its own fields. */
   columns?: FormField[][];
+  subFields?: FormField[];
+  minRows?: number;
+  maxRows?: number;
   /** A matrix's statements, one per row; the answer columns are `options`. */
   rows?: string[];
   /** The URL query parameter a hidden field takes its value from. */
@@ -387,6 +391,9 @@ const fieldSchema = new Schema<FormField>(
      * nesting into every query that reads a form.
      */
     columns: { type: Schema.Types.Mixed },
+    subFields: { type: Schema.Types.Mixed },
+    minRows: { type: Number, min: 0 },
+    maxRows: { type: Number, min: 1 },
     rows: { type: [String], default: undefined },
     paramName: { type: String },
     showIf: { type: Schema.Types.Mixed },

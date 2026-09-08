@@ -102,7 +102,7 @@ export function useFieldOps({
     if (!field) return;
 
     const overColumn = parseColumnDroppableId(String(over.id));
-    if ((field.type === 'grid' || field.type === 'pageBreak') && overColumn) return;
+    if ((field.type === 'grid' || field.type === 'repeater' || field.type === 'pageBreak') && overColumn) return;
 
     setFields((prev) => {
       const without = data.kind === 'field' ? removeFromTree(prev, field.id) : prev;

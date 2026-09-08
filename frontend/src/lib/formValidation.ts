@@ -18,8 +18,48 @@ const URL_LIKE = /^(https?:\/\/)?[^\s.]+\.[^\s]{2,}$/i;
 /** Digits, with the separators people actually type between them. */
 const PHONE = /^\+?[\d\s().-]{6,}$/;
 
+/** Reads a repeater's stored JSON answer back into rows, tolerating any shape
+ *  that isn't the array-of-objects it writes. */
+export function parseRepeaterRows(raw: string | undefined): Record<string, string>[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (row): row is Record<string, unknown> =>
+          !!row && typeof row === 'object' && !Array.isArray(row)
+      )
+      .map((row) => {
+        const clean: Record<string, string> = {};
+        for (const [k, v] of Object.entries(row)) clean[k] = v == null ? '' : String(v);
+        return clean;
+      });
+  } catch {
+    return [];
+  }
+}
+
 /** The message for one field, or '' when the answer is acceptable. */
 export function validateField(field: FormField, raw: string): string {
+  if (field.type === 'repeater') {
+    const subFields = field.subFields ?? [];
+    const rows = parseRepeaterRows(raw);
+    const min = Math.max(field.minRows ?? (field.required ? 1 : 0), 0);
+    if (rows.length < min) {
+      return min === 1
+        ? `Add at least one ${field.label || 'entry'}.`
+        : `Add at least ${min} entries.`;
+    }
+    for (let i = 0; i < rows.length; i += 1) {
+      for (const sf of subFields) {
+        const message = validateField(sf, rows[i][sf.id] ?? '');
+        if (message) return `Row ${i + 1}: ${message}`;
+      }
+    }
+    return '';
+  }
+
   const value = (raw ?? '').trim();
 
   // A consent box stores 'true'/'false' rather than filled/empty, so an

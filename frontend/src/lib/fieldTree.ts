@@ -94,6 +94,9 @@ export function cloneWithNewIds(field: FormField): FormField {
   if (field.type === 'grid' && field.columns) {
     copy.columns = field.columns.map((column) => column.map(cloneWithNewIds));
   }
+  if (field.type === 'repeater' && field.subFields) {
+    copy.subFields = field.subFields.map(cloneWithNewIds);
+  }
   return copy;
 }
 

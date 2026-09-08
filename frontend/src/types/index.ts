@@ -67,7 +67,8 @@ export type FieldType =
   | 'spacer'
   | 'pageBreak'
   // Layout — these hold other fields rather than collecting a value
-  | 'grid';
+  | 'grid'
+  | 'repeater';
 
 export type FieldSize = 'small' | 'medium' | 'large';
 
@@ -188,6 +189,9 @@ export interface FormField {
    * the drop site rather than by the type, which keeps the shape simple.
    */
   columns?: FormField[][];
+  subFields?: FormField[];
+  minRows?: number;
+  maxRows?: number;
   /**
    * A matrix's statements, one per row. The shared answer choices live in
    * `options`, so a matrix is rows × options.

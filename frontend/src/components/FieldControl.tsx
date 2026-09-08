@@ -43,6 +43,7 @@ import { contrastOn } from '@/lib/formTheme';
 import { SignaturePad } from '@/components/SignaturePad';
 import { MatrixInput } from '@/components/MatrixInput';
 import { RankingInput } from '@/components/RankingInput';
+import { RepeaterInput } from '@/components/RepeaterInput';
 import { countryOptions } from '@/lib/countries';
 import { sanitizeRichText } from '@/lib/richText';
 import richTextClasses from '@/components/RichTextBlock.module.css';
@@ -295,7 +296,7 @@ export function FieldControl({
   // have nowhere for it to land, so the message is rendered here instead.
   const ownsErrorDisplay: FormField['type'][] = [
     'name', 'address', 'rating', 'slider', 'multipleChoice', 'chips', 'decisionBox', 'terms',
-    'signature', 'matrix', 'ranking', 'numberRange',
+    'signature', 'matrix', 'ranking', 'numberRange', 'repeater',
   ];
 
   if (noLabelTypes.includes(field.type)) return renderControl();
@@ -979,6 +980,30 @@ export function FieldControl({
             readOnly={readOnly}
             labelColor={labelColor}
             inputBorder={inputBorder}
+            accentColor={accentColor}
+          />
+        </div>
+      );
+
+    case 'repeater':
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={6} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          <RepeaterInput
+            field={field}
+            value={value}
+            onChange={onChange}
+            readOnly={readOnly}
+            showErrors={Boolean(error)}
+            labelPlacement={labelPlacement}
+            labelColor={labelColor}
+            inputBg={inputBg}
+            inputBorder={inputBorder}
+            inputTextColor={inputTextColor}
             accentColor={accentColor}
           />
         </div>

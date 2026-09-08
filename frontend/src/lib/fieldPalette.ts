@@ -47,6 +47,7 @@ import {
   IconColumns3,
   IconBook2,
   IconCreditCard,
+  IconListDetails,
   type Icon,
 } from '@tabler/icons-react';
 
@@ -154,6 +155,10 @@ export const fieldPalette: PaletteGroup[] = [
     items: [{ type: 'matrix', label: 'Matrix', icon: IconTable, color: 'cyan' }],
   },
   {
+    group: 'Repeating',
+    items: [{ type: 'repeater', label: 'Repeating Group', icon: IconListDetails, color: 'orange' }],
+  },
+  {
     group: 'Calculation',
     items: [
       { type: 'calculated', label: 'Calculated', icon: IconMathFunction, color: 'violet' },
@@ -180,12 +185,7 @@ export const fieldPalette: PaletteGroup[] = [
   },
 ];
 
-/**
- * Every tile keyed for drag payloads.
- *
- * Keyed by type *and* column count because the three grid tiles share one
- * type and would otherwise collide with each other.
- */
+ 
 export function paletteKey(item: PaletteItem): string {
   return item.columns ? `${item.type}-${item.columns}` : item.type;
 }
@@ -210,6 +210,11 @@ export const staticTypes: FieldType[] = [
 export const optionTypes: FieldType[] = [
   'select', 'radio', 'checkbox', 'multipleChoice', 'chips', 'matrix', 'ranking',
 ];
+ 
+export const repeaterSubTypes: FieldType[] = [
+  'text', 'textarea', 'number', 'decimal', 'currency',
+  'email', 'phone', 'website', 'date', 'select', 'radio', 'checkbox', 'yesNo',
+];
 
 export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slider', 'numberRange'];
 
@@ -217,9 +222,7 @@ export const fileTypes: FieldType[] = ['file', 'imageUpload', 'mediaUpload'];
  
 export const uploadedTypes: FieldType[] = [...fileTypes, 'signature'];
 
-// The generic "file" field is for documents — pdf/doc/xls/etc — not images or
-// video, which have their own dedicated field types. Kept as actual MIME types
-// (not extensions) so the same list also drives server-side validation.
+ 
 const fileMimeTypes = [
   'application/pdf',
   'application/msword',
@@ -262,6 +265,13 @@ export function makeField(type: FieldType, columns?: number): FormField {
   if (type === 'grid') {
     field.columns = Array.from({ length: columns ?? 2 }, () => []);
     field.label = '';
+    return field;
+  }
+  if (type === 'repeater') {
+    field.label = 'Items';
+    field.subFields = [makeField('text')];
+    field.subFields[0].label = 'Item';
+    field.minRows = 1;
     return field;
   }
   // Before the matrix defaults below, which replace these with answer columns.

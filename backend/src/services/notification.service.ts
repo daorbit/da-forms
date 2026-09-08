@@ -2,25 +2,12 @@ import { sendMail, mailConfigured } from '../lib/mailer.js';
 import { renderEmail } from '../lib/emailTemplates.js';
 import type { FormDocument, FormField } from '../models/form.model.js';
 import type { SubmissionPayment } from '../models/submission.model.js';
-import { flattenFields, fillPlaceholders } from '../lib/pipe.js';
+import { flattenFields, fillPlaceholders, repeaterText } from '../lib/pipe.js';
 import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
 
 
-/**
- * The "finish this later" email.
- *
- * Its own function rather than a layout on `sendSubmissionNotifications`: that
- * one reports something that happened and is governed by the owner's
- * notification settings, while this is a link the respondent asked for. An
- * owner who has confirmation emails switched off has not thereby refused to let
- * people save their place.
- *
- * Sent with the 'nextSteps' layout — a line of text and a button — because that
- * is exactly what this message is, and it carries no answers: the draft may
- * hold half a form's worth of personal detail, and mailing it back adds a copy
- * of that to an inbox for no benefit the link does not already give.
- */
+ 
 export async function sendResumeLink(
   to: string,
   form: Pick<FormDocument, 'title' | 'theme'>,
@@ -66,36 +53,24 @@ function answersOf(
     })
     .map((f) => ({
       label: f.label,
-      value: f.type === 'payment' && payment ? formatPaid(payment) : data[f.id],
+      value:
+        f.type === 'payment' && payment
+          ? formatPaid(payment)
+          : f.type === 'repeater'
+            ? repeaterText(f, data[f.id])
+            : data[f.id],
     }));
 }
 
-/**
- * Sends the confirmation and/or owner-alert emails configured on a form, for
- * one submission.
- *
- * Called after the submission is already stored, and never lets a mail
- * failure surface as a submit failure — the respondent's data is saved either
- * way, so the caller only logs, it doesn't rethrow.
- */
+ 
 export async function sendSubmissionNotifications(
   form: FormDocument,
   data: Record<string, string>,
   /** Present for a paid form — shown as a line in the emailed summary. */
   payment?: SubmissionPayment,
-  /**
-   * The response this email is about, when the form lets people change what
-   * they sent. Only used to build the edit link — the confirmation is
-   * otherwise identical.
-   */
+ 
   submissionId?: string,
-  /**
-   * The form's own id, for the edit link's URL.
-   *
-   * Passed rather than read off `form`, because the typed `FormDocument` is the
-   * shape of the document's fields and carries no `_id` — the caller has the
-   * Mongoose model and can supply it.
-   */
+ 
   formId?: string
 ): Promise<void> {
   const notifications = form.notifications;
@@ -120,10 +95,7 @@ export async function sendSubmissionNotifications(
         form.fields,
         data
       );
-      // The edit link takes the CTA slot when there is one to give: this email
-      // has room for one button, and a respondent who can change their answer
-      // is better served by that than by a generic "Continue" the owner left at
-      // its default. An owner who set their own CTA keeps it.
+ 
       const editHref =
         form.allowEdit && submissionId && formId && env.editTokenSecret && env.publicFormBaseUrl
           ? `${env.publicFormBaseUrl}/form/${formId}/view?edit=${mintEditToken(submissionId)}`

@@ -115,19 +115,18 @@ function sampleValue(field: FormField): string {
       return 'ZF1-8842';
     case 'textarea':
       return 'A couple of sentences of their own, written in the box on the form.';
+    case 'repeater': {
+      const subs = field.subFields ?? [];
+      if (subs.length === 0) return 'Sample answer';
+      const row = subs.map((sf) => `${sf.label}: ${sampleValue(sf)}`).join(', ');
+      return `1. ${row}\n2. ${row}`;
+    }
     default:
       return 'Sample answer';
   }
 }
 
-/**
- * A miniature of what a layout produces.
- *
- * Drawn as bars and blocks rather than rendering the real email at 1/8 scale:
- * at thumbnail size the actual text is unreadable anyway, and what someone is
- * choosing between here is the *shape* — where the tick sits, whether there is
- * a band across the top, whether answers and a button follow the text.
- */
+ 
 function LayoutThumb({ id, accent }: { id: EmailLayout; accent: string }) {
   const line = (width: string, key: number) => (
     <span key={key} className={classes.thumbLine} style={{ width }} />
@@ -468,13 +467,7 @@ export function NotificationsModal({
                   </span>
                 </div>
               </div>
-              {/* An iframe, so the email's own table markup and inline styles
-                  render exactly as a mail client would show them, without the
-                  app's stylesheet reaching in.
-
-                  Keyed on what the message is built from: a reused iframe does
-                  not re-parse a changed `srcDoc`, so switching layout left the
-                  previous one on screen. */}
+ 
               <iframe
                 key={[
                   tab,
@@ -482,8 +475,7 @@ export function NotificationsModal({
                   notifications.respondentBody ?? '',
                   notifications.respondentCtaLabel ?? '',
                   notifications.respondentCtaHref ?? '',
-                  // The accent follows the form's theme, so a palette change
-                  // while this is open would otherwise leave the old colour.
+ 
                   theme?.accentColor ?? '',
                 ].join('|')}
                 title="Email preview"

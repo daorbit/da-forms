@@ -80,6 +80,9 @@ export interface GeneratedField {
   maxRating?: number;
   min?: number;
   max?: number;
+  subFields?: GeneratedField[];
+  minRows?: number;
+  maxRows?: number;
 }
 
 export interface GeneratedForm {

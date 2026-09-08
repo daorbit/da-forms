@@ -9,6 +9,7 @@ import { BOOT_SEARCH } from '@/lib/bootParams';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@mantine/dates/styles.css';
+import 'da-frame-set/styles.css';
 import '@/styles/global.css';
 
 // Read once at boot: a host app sets the theme when it opens the iframe, and

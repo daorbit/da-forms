@@ -1,5 +1,5 @@
 import type { FormTemplate } from './types';
-import { field, pageBreak, row } from './types';
+import { field, pageBreak, repeater, row } from './types';
 
 /** Forms for schools, courses, and anything with a syllabus behind it. */
 export const educationTemplates: FormTemplate[] = [
@@ -28,16 +28,22 @@ export const educationTemplates: FormTemplate[] = [
         [field('date', { label: 'Date of birth' })]
       ),
       pageBreak(),
-      field('select', {
-        label: 'Course',
-        required: true,
-        options: ['Introduction to Design', 'Web Development', 'Data Analysis', 'Project Management'],
-      }),
-      field('radio', {
-        label: 'Preferred schedule',
-        required: true,
-        options: ['Weekday mornings', 'Weekday evenings', 'Weekends', 'Self-paced'],
-      }),
+      repeater(
+        'Courses',
+        [
+          field('select', {
+            label: 'Course',
+            required: true,
+            options: ['Introduction to Design', 'Web Development', 'Data Analysis', 'Project Management'],
+          }),
+          field('radio', {
+            label: 'Preferred schedule',
+            required: true,
+            options: ['Weekday mornings', 'Weekday evenings', 'Weekends', 'Self-paced'],
+          }),
+        ],
+        { required: true, minRows: 1 }
+      ),
       field('select', {
         label: 'How would you like to pay?',
         options: ['In full', 'Two instalments', 'Monthly', 'My employer is paying'],

@@ -1,5 +1,5 @@
 import type { FormTemplate } from './types';
-import { field, pageBreak, row } from './types';
+import { field, pageBreak, repeater, row } from './types';
 
 /** Longer, multi-step intake forms for hiring, sales, and onboarding. */
 export const businessTemplates: FormTemplate[] = [
@@ -38,12 +38,28 @@ export const businessTemplates: FormTemplate[] = [
         required: true,
         placeholder: 'What it was, what you did, and how it turned out.',
       }),
+      repeater(
+        'Employment history',
+        [
+          field('text', { label: 'Employer', required: true }),
+          field('text', { label: 'Job title', required: true }),
+          field('text', { label: 'From', placeholder: 'MM/YYYY' }),
+          field('text', { label: 'To', placeholder: 'MM/YYYY or Present' }),
+        ],
+        { minRows: 1 }
+      ),
       field('select', {
         label: 'Earliest start date',
         options: ['Immediately', 'Within 2 weeks', 'Within a month', 'More than a month'],
       }),
       pageBreak(),
       field('file', { label: 'CV / resume', required: true }),
+      repeater('References', [
+        field('name', { label: 'Name', required: true }),
+        field('text', { label: 'Relationship', placeholder: 'e.g. former manager' }),
+        field('email', { label: 'Email', required: true }),
+        field('phone', { label: 'Phone' }),
+      ]),
       field('textarea', { label: 'Anything else we should know?', placeholder: 'Optional' }),
       field('terms', { label: 'I agree to the processing of my application data', required: true }),
     ],
@@ -226,6 +242,11 @@ export const businessTemplates: FormTemplate[] = [
         label: 'Included in scope',
         options: ['Discovery workshop', 'Branding', 'Website', 'Mobile app', 'Integrations', 'Maintenance'],
       }),
+      repeater('Deliverables', [
+        field('text', { label: 'Item', required: true }),
+        field('textarea', { label: 'Details' }),
+        field('number', { label: 'Estimated quantity', min: 1 }),
+      ]),
       field('textarea', {
         label: 'Anything unusual about this project?',
         placeholder: 'Constraints, deadlines, existing systems.',

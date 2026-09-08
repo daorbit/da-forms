@@ -46,8 +46,12 @@ export function RepeaterInput({
 
   const rows = useMemo(() => {
     const parsed = parseRepeaterRows(value);
-    if (parsed.length < min && !readOnly) {
-      return [...parsed, ...Array.from({ length: min - parsed.length }, () => emptyRow(subFields))];
+    // Fill up to the minimum on the live form; on a read-only render (the
+    // builder canvas) still show one empty row so the field's shape is visible
+    // rather than just its label.
+    const floor = readOnly ? (parsed.length === 0 ? 1 : parsed.length) : Math.max(min, 0);
+    if (parsed.length < floor) {
+      return [...parsed, ...Array.from({ length: floor - parsed.length }, () => emptyRow(subFields))];
     }
     return parsed;
   }, [value, min, readOnly, subFields]);

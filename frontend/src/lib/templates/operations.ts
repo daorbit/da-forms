@@ -1,5 +1,5 @@
 import type { FormTemplate } from './types';
-import { field, pageBreak, row } from './types';
+import { field, pageBreak, repeater, row } from './types';
  
 export const operationsTemplates: FormTemplate[] = [
   {
@@ -261,23 +261,27 @@ export const operationsTemplates: FormTemplate[] = [
         label: 'Note',
         content: 'Record hours in decimals — an hour and a half is 1.5, not 1.30.',
       }),
-      row(
-        [field('decimal', { label: 'Hours worked', required: true, min: 0, max: 80 })],
-        [field('decimal', { label: 'Hours on call', min: 0, max: 80 })]
+      repeater(
+        'Daily hours',
+        [
+          field('select', {
+            label: 'Day',
+            required: true,
+            options: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          }),
+          field('decimal', { label: 'Hours worked', required: true, min: 0, max: 24 }),
+          field('decimal', { label: 'Hours on call', min: 0, max: 24 }),
+          field('text', { label: 'Work done', required: true }),
+        ],
+        { required: true, minRows: 1, maxRows: 7 }
       ),
-      row(
-        [field('currency', { label: 'Day rate', required: true, min: 0 })],
-        [field('number', { label: 'Days on site', min: 0, max: 7 })]
-      ),
-      field('multipleChoice', {
-        label: 'Which days did you work?',
-        required: true,
-        options: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      }),
-      field('textarea', { label: 'Summary of work done', required: true }),
+      field('currency', { label: 'Day rate', required: true, min: 0 }),
       field('spacer', { label: '' }),
       field('heading', { label: 'Expenses', content: 'Anything to reclaim' }),
-      field('currency', { label: 'Expenses claimed', min: 0 }),
+      repeater('Expenses claimed', [
+        field('text', { label: 'Description', required: true }),
+        field('currency', { label: 'Amount', required: true, min: 0 }),
+      ]),
       field('file', { label: 'Receipts' }),
       field('divider', { label: '' }),
       field('terms', {

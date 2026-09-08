@@ -55,3 +55,11 @@ export function row(...columns: FormField[][]): FormField {
 export function pageBreak(): FormField {
   return field('pageBreak');
 }
+
+export function repeater(
+  label: string,
+  subFields: FormField[],
+  overrides: Partial<FormField> = {}
+): FormField {
+  return { ...makeField('repeater'), label, subFields, ...overrides };
+}

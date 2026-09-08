@@ -1,14 +1,7 @@
 import type { FormTemplate } from './types';
-import { field, pageBreak, row } from './types';
+import { field, pageBreak, repeater, row } from './types';
 
-/**
- * Templates built around the newer blocks — signature, matrix, ranking,
- * country, number range, rich text, and hidden tracking fields.
- *
- * These are the forms that were awkward to build before: a contract that ends
- * in a real signature rather than a tick, a survey that needs a rating grid,
- * a shortlist someone has to put in order.
- */
+ 
 export const advancedTemplates: FormTemplate[] = [
   {
     id: 'engagementLetter',
@@ -319,6 +312,15 @@ export const advancedTemplates: FormTemplate[] = [
         ],
       }),
       field('number', { label: 'People directly reached', required: true, min: 1 }),
+      repeater(
+        'Budget breakdown',
+        [
+          field('text', { label: 'Cost item', required: true }),
+          field('currency', { label: 'Amount', required: true, min: 0 }),
+          field('text', { label: 'Notes' }),
+        ],
+        { required: true, minRows: 1 }
+      ),
       field('file', { label: 'Latest annual accounts', required: true }),
       pageBreak(),
       row(

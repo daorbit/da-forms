@@ -1,7 +1,6 @@
 import type { FormTemplate } from './types';
-import { field, pageBreak, row } from './types';
+import { field, pageBreak, repeater, row } from './types';
 
-/** Forms that end in a transaction: an order, a seat, a slot, a gift. */
 export const commerceTemplates: FormTemplate[] = [
   {
     id: 'orderForm',
@@ -14,21 +13,23 @@ export const commerceTemplates: FormTemplate[] = [
     stepIndicator: 'dots',
     steps: [{ title: 'Order' }, { title: 'Shipping' }],
     fields: [
-      field('select', {
-        label: 'Product',
-        required: true,
-        options: ['Starter kit', 'Pro bundle', 'Enterprise pack', 'Replacement parts'],
-      }),
-      row(
-        [field('number', { label: 'Quantity', required: true, min: 1, max: 999, initialValue: '1' })],
+      repeater(
+        'Items',
         [
           field('select', {
-            label: 'Delivery speed',
+            label: 'Product',
             required: true,
-            options: ['Standard (5–7 days)', 'Express (2 days)', 'Next day'],
+            options: ['Starter kit', 'Pro bundle', 'Enterprise pack', 'Replacement parts'],
           }),
-        ]
+          field('number', { label: 'Quantity', required: true, min: 1, max: 999 }),
+        ],
+        { required: true, minRows: 1 }
       ),
+      field('select', {
+        label: 'Delivery speed',
+        required: true,
+        options: ['Standard (5–7 days)', 'Express (2 days)', 'Next day'],
+      }),
       field('textarea', { label: 'Order notes', placeholder: 'Anything we should know before we ship?' }),
       pageBreak(),
       row(
@@ -87,7 +88,11 @@ export const commerceTemplates: FormTemplate[] = [
         label: 'Sessions you plan to attend',
         options: ['Opening keynote', 'Product deep dive', 'Panel discussion', 'Evening reception'],
       }),
-      field('textarea', { label: 'Dietary requirements', placeholder: 'e.g. vegetarian, nut allergy' }),
+      repeater('Additional attendees', [
+        field('name', { label: 'Name', required: true }),
+        field('email', { label: 'Email', required: true }),
+        field('text', { label: 'Dietary requirements', placeholder: 'e.g. vegetarian, nut allergy' }),
+      ]),
     ],
     theme: {
       scope: 'page',

@@ -1,5 +1,5 @@
 import type { FormTemplate } from './types';
-import { field, pageBreak, row } from './types';
+import { field, pageBreak, repeater, row } from './types';
 
 /** Internal people forms — the ones staff fill in, not customers. */
 export const hrTemplates: FormTemplate[] = [
@@ -113,17 +113,20 @@ export const hrTemplates: FormTemplate[] = [
         [field('name', { label: 'Your name', required: true })],
         [field('date', { label: 'Date of expense', required: true })]
       ),
-      field('select', {
-        label: 'Category',
-        required: true,
-        options: ['Travel', 'Accommodation', 'Meals', 'Software', 'Equipment', 'Other'],
-      }),
-      row(
-        [field('currency', { label: 'Amount', required: true, min: 0 })],
-        [field('text', { label: 'Currency', initialValue: 'USD' })]
+      repeater(
+        'Line items',
+        [
+          field('select', {
+            label: 'Category',
+            required: true,
+            options: ['Travel', 'Accommodation', 'Meals', 'Software', 'Equipment', 'Other'],
+          }),
+          field('text', { label: 'What was it for?', required: true }),
+          field('currency', { label: 'Amount', required: true, min: 0 }),
+        ],
+        { required: true, minRows: 1 }
       ),
-      field('textarea', { label: 'What was it for?', required: true }),
-      field('file', { label: 'Receipt', required: true }),
+      field('file', { label: 'Receipts', required: true }),
       field('terms', { label: 'This claim is accurate and unreimbursed elsewhere', required: true }),
     ],
     theme: {

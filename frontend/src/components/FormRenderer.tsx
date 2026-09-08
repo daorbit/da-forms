@@ -29,7 +29,7 @@ import { resolveSteps, splitIntoPages } from '@/lib/formSteps';
 import { isFieldVisible } from '@/utils/conditionalLogic';
 import { uploadFormFile } from '@/lib/api';
 import { fileTypes, acceptFor } from '@/lib/fieldPalette';
-import { validateFields, type FieldErrors } from '@/lib/formValidation';
+import { validateField, validateFields, type FieldErrors } from '@/lib/formValidation';
 import { useFormDraft } from '@/hooks/useFormDraft';
 import { usePartialSave } from '@/hooks/usePartialSave';
 import { TurnstileGate } from '@/components/TurnstileGate';
@@ -238,6 +238,17 @@ export function FormRenderer({
   // respondent can act on from here.
   const errorCount = valueFields(currentPageFields).filter((f) => errors[f.id]).length;
 
+  // "3 of 8 answered" over the whole form — the required fields it will not
+  // submit without. Only shown when there are enough of them to be worth a
+  // count, and only counts what is visible right now.
+  const requiredProgress = useMemo(() => {
+    const required = valueFields(fields).filter(
+      (f) => f.required && f.type !== 'payment' && isFieldVisible(f, values)
+    );
+    const done = required.filter((f) => (values[f.id] ?? '').trim()).length;
+    return { done, total: required.length };
+  }, [fields, values]);
+
   /**
    * Moves focus to the new step when a page changes.
    *
@@ -304,6 +315,21 @@ export function FormRenderer({
     }
     stepHeadingRef.current?.focus();
   }, [pageIndex, isMultiPage]);
+
+  // Drop the cursor into the first real input on load, so a respondent can
+  // start typing without reaching for the mouse. Respondent render only —
+  // stealing focus in the builder preview would fight the canvas — and only
+  // when nothing has been restored, which would move focus itself.
+  useEffect(() => {
+    if (!formId || !onSubmit || initialData || draft.restored) return;
+    const first = formRef.current?.querySelector<HTMLElement>(
+      'input:not([type="hidden"]):not([tabindex="-1"]), textarea, select'
+    );
+    // A short delay lets the field's own mount settle first; without it Mantine
+    // date/select inputs occasionally reclaim focus straight back.
+    const t = window.setTimeout(() => first?.focus({ preventScroll: true }), 80);
+    return () => window.clearTimeout(t);
+  }, [formId, onSubmit, initialData, draft.restored]);
 
   /** Every problem on a set of fields. A field hidden by showIf is excluded —
    *  the same rule submission uses to drop hidden answers. */
@@ -451,8 +477,26 @@ export function FormRenderer({
     }
 
     return (
-      <FieldControl
+      <div
         key={field.id}
+        // Validate on the way out of the field, not only on submit: a bad email
+        // flagged the moment focus leaves is fixed there and then, rather than
+        // after a failed submit sends the respondent back up the form.
+        onBlur={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+          if (!isFieldVisible(field, values)) return;
+          const message = validateField(field, values[field.id] ?? '');
+          setErrors((prev) => {
+            if (message) return { ...prev, [field.id]: message };
+            if (!prev[field.id]) return prev;
+            const next = { ...prev };
+            delete next[field.id];
+            return next;
+          });
+          setShowErrors(true);
+        }}
+      >
+      <FieldControl
         field={field}
         value={values[field.id] ?? ''}
         // A payment field prices itself off other answers, so it needs the
@@ -489,6 +533,7 @@ export function FormRenderer({
         inputTextColor={theme?.inputTextColor}
         accentColor={accent}
       />
+      </div>
     );
   }
 
@@ -634,11 +679,22 @@ export function FormRenderer({
                 style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
               />
 
-              {/* Only on the last page: the challenge's token is short-lived,
-                  and issuing it at the top of a five-minute form would leave it
-                  expired by the time the form is sent. */}
+         
               {requireCaptcha && turnstileSiteKey && isLastPage && (
                 <TurnstileGate siteKey={turnstileSiteKey} onToken={setCaptchaToken} />
+              )}
+
+          
+              {requiredProgress.total >= 3 && requiredProgress.done < requiredProgress.total && (
+                <Text
+                  size="xs"
+                  ta="center"
+                  aria-live="polite"
+                  c={textColor ? undefined : 'dimmed'}
+                  style={textColor ? { color: textColor, opacity: 0.7 } : undefined}
+                >
+                  {requiredProgress.done} of {requiredProgress.total} required answers filled in
+                </Text>
               )}
 
               <Group

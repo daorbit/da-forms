@@ -548,6 +548,49 @@ export function FieldControl({
         </div>
       );
     }
+    case 'likert': {
+      // A single-select scale. Built from plain buttons with explicit theme
+      // colours rather than Mantine's Chip, whose default surface renders dark
+      // on a themed card.
+      const opts = field.options ?? [];
+      const fill = accentColor ?? 'var(--mantine-color-emerald-6)';
+      const rest = inputBg ?? 'transparent';
+      const restBorder = inputBorder ?? 'var(--mantine-color-gray-4)';
+      const restText = inputTextColor ?? labelColor ?? 'inherit';
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={6} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          <Group gap={8} wrap="wrap">
+            {opts.map((opt) => {
+              const on = value === opt;
+              return (
+                <UnstyledButton
+                  key={opt}
+                  onClick={() => !readOnly && onChange(on ? '' : opt)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    lineHeight: 1.4,
+                    border: `1px solid ${on ? fill : restBorder}`,
+                    background: on ? fill : rest,
+                    color: on ? contrastOn(accentColor ?? '#059669') : restText,
+                    cursor: readOnly ? 'default' : 'pointer',
+                  }}
+                >
+                  {opt}
+                </UnstyledButton>
+              );
+            })}
+          </Group>
+        </div>
+      );
+    }
     case 'chips': {
       const multiple = field.allowMultiple ?? false;
       const selected = multiple ? (value ? value.split(', ') : []) : value;
@@ -843,32 +886,6 @@ export function FieldControl({
           <Group justify="space-between" mt={4}>
             <Text size="xs" {...captionProps}>Not likely</Text>
             <Text size="xs" {...captionProps}>Very likely</Text>
-          </Group>
-        </div>
-      );
-    }
-    case 'likert': {
-      const opts = field.options ?? [];
-      return (
-        <div style={base.style}>
-          {label && (
-            <Text size="sm" fw={500} mb={6} style={labelColor ? { color: labelColor } : undefined}>
-              {label}
-            </Text>
-          )}
-          <Group gap="xs" wrap="wrap">
-            {opts.map((opt) => (
-              <Chip
-                key={opt}
-                checked={value === opt}
-                onChange={() => !readOnly && onChange(value === opt ? '' : opt)}
-                color={accentColor}
-                variant={value === opt ? 'filled' : 'outline'}
-                readOnly={readOnly}
-              >
-                {opt}
-              </Chip>
-            ))}
           </Group>
         </div>
       );

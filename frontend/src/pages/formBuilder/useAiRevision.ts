@@ -29,7 +29,11 @@ export function useAiRevision(state: FormBuilderState) {
 
 
   function applyAiRevision(form: GeneratedForm) {
-    const template = generatedToTemplate(form);
+    // Pass the live fields so a field the AI kept keeps its id — otherwise it is
+    // rebuilt with a fresh one and every stored answer keyed on the old id
+    // (`submission.data[field.id]`) stops resolving, blanking that column on the
+    // entries page.
+    const template = generatedToTemplate(form, state.fields);
     state.setTitle(template.title);
     state.setDescription(template.formDescription ?? '');
     if (template.submitLabel !== undefined) state.setSubmitLabel(template.submitLabel);

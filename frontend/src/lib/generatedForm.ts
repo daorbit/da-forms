@@ -30,32 +30,34 @@ export interface GeneratedForm {
   theme?: Record<string, unknown>;
 }
 
-/**
- * A generated form as a template the picker and the editor already understand.
- *
- * Built through `makeField` rather than by hand so every field arrives with the
- * same defaults a field dragged from the palette would have — an id, a size,
- * and whatever else its type needs. The generator sends what it decided; this
- * fills in everything it was never asked about.
- *
- * The server validates the field types before they get here, but this runs on
- * the client and cannot assume that held: an unknown type is dropped rather
- * than passed to `makeField`, which would throw on a palette lookup that misses.
- */
-export function generatedToTemplate(generated: GeneratedForm): FormTemplate {
+ 
+export function generatedToTemplate(
+  generated: GeneratedForm,
+  prev: FormField[] = []
+): FormTemplate {
   const fields: FormField[] = [];
+  const claimed = new Set<string>();
 
-  for (const raw of generated.fields) {
+  generated.fields.forEach((raw, i) => {
     const type = raw.type as FieldType;
     let base: FormField;
     try {
       base = makeField(type);
     } catch {
-      continue; // a type this build's palette does not have
+      return; // a type this build's palette does not have
     }
+
+    const carry =
+      prev[i] && prev[i].type === type && !claimed.has(prev[i].id)
+        ? prev[i]
+        : prev.find(
+            (p) => p.type === type && p.label === (raw.label || base.label) && !claimed.has(p.id)
+          );
+    if (carry) claimed.add(carry.id);
 
     const field: FormField = {
       ...base,
+      ...(carry ? { id: carry.id } : {}),
       label: raw.label || base.label,
       required: raw.required === true,
     };
@@ -73,7 +75,7 @@ export function generatedToTemplate(generated: GeneratedForm): FormTemplate {
     if (typeof raw.max === 'number') field.max = raw.max;
 
     fields.push(field);
-  }
+  });
 
   return {
     // Not a real template id — nothing looks this up, and the picker keys its

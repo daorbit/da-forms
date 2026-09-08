@@ -7,7 +7,7 @@ import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
 import { FileSizeBadge } from './FileSizeBadge';
-import { formatDateTime, isImageUrl } from './entriesTypes';
+import { formatAnswer, formatDateTime, isImageUrl } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
 export function ResponseModal({
@@ -160,7 +160,7 @@ export function ResponseModal({
                       </Group>
                     </Anchor>
                   ) : (
-                    <Text size="sm">{raw || '—'}</Text>
+                    <Text size="sm">{raw ? formatAnswer(field.type, raw) : '—'}</Text>
                   )}
                 </div>
               );

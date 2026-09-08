@@ -33,7 +33,7 @@ import { DeleteResponseModal } from '@/components/builder/entries/DeleteResponse
 import { BulkActionBar } from '@/components/builder/entries/BulkActionBar';
 import { AttachmentModal, type AttachmentState } from '@/components/builder/entries/AttachmentModal';
 import {
-  dayFilterToRange, formatDateTime, PAGE_SIZE,
+  dayFilterToRange, formatAnswer, formatDateTime, PAGE_SIZE,
   type CustomRange, type DayFilter, type StatusFilter,
 } from '@/components/builder/entries/entriesTypes';
 import classes from './EntriesPage.module.css';
@@ -266,7 +266,7 @@ export function EntriesPage() {
             ? paymentCellText(s.payment)
             : f.type === 'repeater'
               ? repeaterSummaryText(f, s.data[f.id] ?? '')
-              : (s.data[f.id] ?? '')
+              : formatAnswer(f.type, s.data[f.id] ?? '')
         )
       ),
       JSON.stringify(formatDateTime(s.createdAt)),

@@ -1,5 +1,6 @@
 import type { FormField } from '@/types';
 import { parseRepeaterRows } from '@/lib/formValidation';
+import { formatAnswer } from '@/components/builder/entries/entriesTypes';
 
 export { parseRepeaterRows };
 
@@ -15,7 +16,7 @@ export function repeaterSummaryText(field: FormField, raw: string): string {
   return rows
     .map((row) =>
       subFields
-        .map((sf) => `${sf.label}: ${row[sf.id] ?? ''}`)
+        .map((sf) => `${sf.label}: ${formatAnswer(sf.type, row[sf.id] ?? '')}`)
         .join(', ')
     )
     .join(' | ');
@@ -29,6 +30,9 @@ export interface RepeaterDisplayRow {
 export function repeaterDisplayRows(field: FormField, raw: string): RepeaterDisplayRow[] {
   const subFields = field.subFields ?? [];
   return parseRepeaterRows(raw).map((row) => ({
-    cells: subFields.map((sf) => ({ label: sf.label, value: row[sf.id] ?? '' })),
+    cells: subFields.map((sf) => ({
+      label: sf.label,
+      value: formatAnswer(sf.type, row[sf.id] ?? ''),
+    })),
   }));
 }

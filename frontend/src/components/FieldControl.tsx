@@ -15,6 +15,7 @@ import {
   Title,
   Box,
   Chip,
+  UnstyledButton,
 } from '@mantine/core';
 import { DateInput, TimeInput, DateTimePicker, MonthPickerInput } from '@mantine/dates';
 import { evaluateFormula, numericValues } from '@/lib/formula';
@@ -297,6 +298,7 @@ export function FieldControl({
   const ownsErrorDisplay: FormField['type'][] = [
     'name', 'address', 'rating', 'slider', 'multipleChoice', 'chips', 'decisionBox', 'terms',
     'signature', 'matrix', 'ranking', 'numberRange', 'repeater',
+    'nps', 'likert', 'dateRange', 'timeRange',
   ];
 
   if (noLabelTypes.includes(field.type)) return renderControl();
@@ -639,6 +641,75 @@ export function FieldControl({
           onChange={(v) => !readOnly && onChange(v ?? '')}
         />
       );
+    case 'dateRange': {
+      // Stored "start to end" so the pair stays one answer and one export column.
+      const [start = '', end = ''] = value.split(' to ');
+      const push = (s: string, e: string) =>
+        !readOnly && onChange(s || e ? `${s} to ${e}` : '');
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          <Group grow gap="sm" align="flex-start">
+            <DateInput
+              styles={base.styles}
+              leftSection={<IconCalendar size={16} />}
+              valueFormat="DD/MM/YYYY"
+              placeholder="Start"
+              value={start || null}
+              readOnly={readOnly}
+              error={Boolean(error)}
+              onChange={(v) => push(v ?? '', end)}
+            />
+            <DateInput
+              styles={base.styles}
+              leftSection={<IconCalendar size={16} />}
+              valueFormat="DD/MM/YYYY"
+              placeholder="End"
+              value={end || null}
+              readOnly={readOnly}
+              error={Boolean(error)}
+              onChange={(v) => push(start, v ?? '')}
+            />
+          </Group>
+        </div>
+      );
+    }
+    case 'timeRange': {
+      const [start = '', end = ''] = value.split(' to ');
+      const push = (s: string, e: string) =>
+        !readOnly && onChange(s || e ? `${s} to ${e}` : '');
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          <Group grow gap="sm" align="flex-start">
+            <TimeInput
+              styles={base.styles}
+              leftSection={<IconClock size={16} />}
+              value={start}
+              readOnly={readOnly}
+              error={Boolean(error)}
+              onChange={(e) => push(e.currentTarget.value, end)}
+            />
+            <TimeInput
+              styles={base.styles}
+              leftSection={<IconClock size={16} />}
+              value={end}
+              readOnly={readOnly}
+              error={Boolean(error)}
+              onChange={(e) => push(start, e.currentTarget.value)}
+            />
+          </Group>
+        </div>
+      );
+    }
     case 'file':
     case 'imageUpload':
     case 'mediaUpload': {
@@ -733,6 +804,75 @@ export function FieldControl({
           />
         </div>
       );
+    case 'nps': {
+      const lo = field.min ?? 0;
+      const hi = field.max ?? 10;
+      const scale = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+      const selected = value === '' ? null : Number(value);
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={6} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          <Group gap={6} wrap="wrap">
+            {scale.map((n) => (
+              <UnstyledButton
+                key={n}
+                onClick={() => !readOnly && onChange(String(n))}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  border: `1px solid ${inputBorder ?? 'var(--mantine-color-gray-4)'}`,
+                  background: selected === n ? (accentColor ?? 'var(--mantine-color-emerald-6)') : (inputBg ?? 'transparent'),
+                  color: selected === n ? contrastOn(accentColor ?? '#059669') : (inputTextColor ?? labelColor ?? 'inherit'),
+                  fontSize: 13,
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: readOnly ? 'default' : 'pointer',
+                }}
+              >
+                {n}
+              </UnstyledButton>
+            ))}
+          </Group>
+          <Group justify="space-between" mt={4}>
+            <Text size="xs" {...captionProps}>Not likely</Text>
+            <Text size="xs" {...captionProps}>Very likely</Text>
+          </Group>
+        </div>
+      );
+    }
+    case 'likert': {
+      const opts = field.options ?? [];
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={6} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          <Group gap="xs" wrap="wrap">
+            {opts.map((opt) => (
+              <Chip
+                key={opt}
+                checked={value === opt}
+                onChange={() => !readOnly && onChange(value === opt ? '' : opt)}
+                color={accentColor}
+                variant={value === opt ? 'filled' : 'outline'}
+                readOnly={readOnly}
+              >
+                {opt}
+              </Chip>
+            ))}
+          </Group>
+        </div>
+      );
+    }
     case 'terms':
       return (
         <Stack gap="xs">

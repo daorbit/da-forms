@@ -37,36 +37,32 @@ export type FieldType =
   | 'time'
   | 'datetime'
   | 'monthYear'
+  | 'dateRange'
+  | 'timeRange'
   // Uploads
   | 'file'
   | 'imageUpload'
   | 'mediaUpload'
-  // Rating scales
   | 'rating'
   | 'slider'
-  // Legal & consent
+  | 'nps'
+  | 'likert'
   | 'terms'
   | 'decisionBox'
   | 'yesNo'
   | 'signature'
-  // Payment — collects money rather than an answer
   | 'payment'
-  // Survey
   | 'matrix'
-  // Collected without being shown — a UTM tag, a passed-in id
   | 'calculated'
   | 'hidden'
-  // Identifier
   | 'uniqueId'
   | 'randomId'
-  // Page elements
   | 'heading'
   | 'description'
   | 'richText'
   | 'divider'
   | 'spacer'
   | 'pageBreak'
-  // Layout — these hold other fields rather than collecting a value
   | 'grid'
   | 'repeater';
 

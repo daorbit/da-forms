@@ -129,6 +129,25 @@ export function validateField(field: FormField, raw: string): string {
       if (field.max !== undefined && to > field.max) return `End at ${field.max} or less.`;
       break;
     }
+    case 'dateRange':
+    case 'timeRange': {
+      const [start = '', end = ''] = value.split(' to ');
+      if (!start.trim() || !end.trim()) return 'Enter both a start and an end.';
+      if (end < start) return 'The end must not be before the start.';
+      break;
+    }
+    case 'nps': {
+      const n = Number(value);
+      const lo = field.min ?? 0;
+      const hi = field.max ?? 10;
+      if (Number.isNaN(n) || n < lo || n > hi) return `Pick a number from ${lo} to ${hi}.`;
+      break;
+    }
+    case 'likert':
+      if (field.options?.length && !field.options.includes(value)) {
+        return 'Pick one of the options.';
+      }
+      break;
     case 'ranking':
       // The order is always complete — the input seeds it from the options —
       // so there is nothing a respondent can get wrong here.

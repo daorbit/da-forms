@@ -3,6 +3,7 @@ import type { FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
 import { repeaterDisplayRows } from '@/lib/repeater';
 import { paymentCellText } from '@/lib/payment';
+import { formatAnswer } from '@/components/builder/entries/entriesTypes';
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
@@ -80,11 +81,12 @@ export function downloadSubmissionPdf(formTitle: string, columns: FormField[], s
     }
     // A payment column has no answer in `data` — its value lives on the
     // submission, written by the webhook once Razorpay confirmed it.
+    const stored = submission.data[field.id] ?? '';
     const raw =
       field.type === 'payment'
         ? paymentCellText(submission.payment)
-        : (submission.data[field.id] ?? '');
-    const isFile = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
+        : formatAnswer(field.type, stored);
+    const isFile = uploadedTypes.includes(field.type) && /^https?:\/\//.test(stored);
 
     ensureSpace(34);
     doc.setFontSize(9);

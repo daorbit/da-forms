@@ -56,6 +56,42 @@ export function formatDateTime(iso: string) {
   });
 }
 
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-GB');
+}
+
+function fmtMonth(iso: string) {
+  const d = new Date(iso.length === 7 ? `${iso}-01` : iso);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
+/** A stored answer as it should read in the entries table, modal, CSV and PDF.
+ *  Only date/time-shaped types are reshaped; everything else is returned as-is. */
+export function formatAnswer(type: string, raw: string): string {
+  if (!raw) return raw;
+  switch (type) {
+    case 'date':
+      return fmtDate(raw);
+    case 'datetime':
+      return formatDateTime(raw);
+    case 'monthYear':
+      return fmtMonth(raw);
+    case 'dateRange': {
+      const [a = '', b = ''] = raw.split(' to ');
+      return `${fmtDate(a)} – ${fmtDate(b)}`;
+    }
+    case 'timeRange': {
+      const [a = '', b = ''] = raw.split(' to ');
+      return `${a} – ${b}`;
+    }
+    default:
+      return raw;
+  }
+}
+
 export function isImageUrl(url: string) {
   return /\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#]|$)/i.test(url);
 }

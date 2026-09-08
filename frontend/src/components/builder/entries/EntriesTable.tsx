@@ -12,7 +12,7 @@ import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
 import { FileSizeBadge } from './FileSizeBadge';
-import { formatDateTime, isImageUrl, PAGE_SIZE } from './entriesTypes';
+import { formatAnswer, formatDateTime, isImageUrl, PAGE_SIZE } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
 export function EntriesTable({
@@ -212,7 +212,7 @@ export function EntriesTable({
                           </Anchor>
                         ) : (
                           <Text size="sm" className={classes.cellText} title={raw}>
-                            {raw}
+                            {formatAnswer(field.type, raw)}
                           </Text>
                         )}
                       </Table.Td>

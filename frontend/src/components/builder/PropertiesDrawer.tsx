@@ -839,15 +839,15 @@ export function PropertiesDrawer({
                   />
                 )}
 
-                {numericTypes.includes(field.type) && (
+                {(numericTypes.includes(field.type) || field.type === 'nps') && (
                   <Group grow>
                     <NumberInput
-                      label="Minimum"
+                      label={field.type === 'nps' ? 'Scale from' : 'Minimum'}
                       value={field.min ?? ''}
                       onChange={(value) => set({ min: value === '' ? undefined : Number(value) })}
                     />
                     <NumberInput
-                      label="Maximum"
+                      label={field.type === 'nps' ? 'Scale to' : 'Maximum'}
                       value={field.max ?? ''}
                       onChange={(value) => set({ max: value === '' ? undefined : Number(value) })}
                     />

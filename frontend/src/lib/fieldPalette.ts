@@ -48,6 +48,10 @@ import {
   IconBook2,
   IconCreditCard,
   IconListDetails,
+  IconCalendarStats,
+  IconClockHour4,
+  IconGauge,
+  IconMoodSmile,
   type Icon,
 } from '@tabler/icons-react';
 
@@ -120,6 +124,8 @@ export const fieldPalette: PaletteGroup[] = [
       { type: 'time', label: 'Time', icon: IconClock, color: 'orange' },
       { type: 'datetime', label: 'Date-Time', icon: IconCalendarTime, color: 'orange' },
       { type: 'monthYear', label: 'Month-Year', icon: IconCalendarMonth, color: 'orange' },
+      { type: 'dateRange', label: 'Date Range', icon: IconCalendarStats, color: 'orange' },
+      { type: 'timeRange', label: 'Time Range', icon: IconClockHour4, color: 'orange' },
     ],
   },
   {
@@ -135,6 +141,8 @@ export const fieldPalette: PaletteGroup[] = [
     items: [
       { type: 'rating', label: 'Rating', icon: IconStar, color: 'pink' },
       { type: 'slider', label: 'Slider', icon: IconAdjustmentsHorizontal, color: 'pink' },
+      { type: 'nps', label: 'NPS', icon: IconGauge, color: 'pink' },
+      { type: 'likert', label: 'Likert', icon: IconMoodSmile, color: 'pink' },
     ],
   },
   {
@@ -208,12 +216,12 @@ export const staticTypes: FieldType[] = [
 ];
 
 export const optionTypes: FieldType[] = [
-  'select', 'radio', 'checkbox', 'multipleChoice', 'chips', 'matrix', 'ranking',
+  'select', 'radio', 'checkbox', 'multipleChoice', 'chips', 'matrix', 'ranking', 'likert',
 ];
  
 export const repeaterSubTypes: FieldType[] = [
   'text', 'textarea', 'number', 'decimal', 'currency',
-  'email', 'phone', 'website', 'date', 'select', 'radio', 'checkbox', 'yesNo',
+  'email', 'phone', 'website', 'date', 'dateRange', 'select', 'radio', 'checkbox', 'yesNo',
 ];
 
 export const numericTypes: FieldType[] = ['number', 'decimal', 'currency', 'slider', 'numberRange'];
@@ -295,6 +303,15 @@ export function makeField(type: FieldType, columns?: number): FormField {
   if (type === 'matrix') {
     field.rows = ['First statement', 'Second statement'];
     field.options = ['Disagree', 'Neutral', 'Agree'];
+  }
+  if (type === 'likert') {
+    field.label = 'How much do you agree?';
+    field.options = ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'];
+  }
+  if (type === 'nps') {
+    field.label = 'How likely are you to recommend us?';
+    field.min = 0;
+    field.max = 10;
   }
   if (type === 'payment') {
     // Zero until the author sets a price — a payment field that silently

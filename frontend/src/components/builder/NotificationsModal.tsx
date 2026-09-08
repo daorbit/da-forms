@@ -84,6 +84,14 @@ function sampleValue(field: FormField): string {
       return '12 March 2026, 14:30';
     case 'monthYear':
       return 'March 2026';
+    case 'dateRange':
+      return '05/03/2026 to 12/03/2026';
+    case 'timeRange':
+      return '09:00 to 17:00';
+    case 'nps':
+      return `${field.max ?? 10} out of ${field.max ?? 10}`;
+    case 'likert':
+      return field.options?.[Math.floor((field.options.length - 1) / 2)] ?? 'Neutral';
     case 'select':
     case 'radio':
     case 'multipleChoice':

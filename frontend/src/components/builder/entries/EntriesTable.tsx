@@ -7,6 +7,7 @@ import {
 } from '@tabler/icons-react';
 import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
+import { parseRepeaterRows } from '@/lib/repeater';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
@@ -137,6 +138,25 @@ export function EntriesTable({
                       return (
                         <Table.Td key={field.id}>
                           <PaymentCell payment={submission.payment} />
+                        </Table.Td>
+                      );
+                    }
+                    if (field.type === 'repeater') {
+                      const rowCount = parseRepeaterRows(submission.data[field.id]).length;
+                      return (
+                        <Table.Td key={field.id}>
+                          <Button
+                            variant="subtle"
+                            size="compact-xs"
+                            color="gray"
+                            disabled={rowCount === 0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onView(submission);
+                            }}
+                          >
+                            {rowCount === 0 ? '—' : `${rowCount} ${rowCount === 1 ? 'entry' : 'entries'}`}
+                          </Button>
                         </Table.Td>
                       );
                     }

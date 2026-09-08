@@ -1,7 +1,8 @@
-import { ActionIcon, Anchor, Button, Group, Image, Modal, Stack, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Anchor, Button, Group, Image, Modal, Paper, Stack, Table, Text, Tooltip } from '@mantine/core';
 import { IconTrash, IconMailOpened } from '@tabler/icons-react';
 import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
+import { repeaterDisplayRows } from '@/lib/repeater';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
@@ -73,6 +74,43 @@ export function ResponseModal({
                       {field.label}
                     </Text>
                     <PaymentCell payment={viewing.payment} />
+                  </div>
+                );
+              }
+              if (field.type === 'repeater') {
+                const rows = repeaterDisplayRows(field, viewing.data[field.id] ?? '');
+                const subFields = field.subFields ?? [];
+                return (
+                  <div key={field.id} className={classes.responseField} style={{ gridColumn: '1 / -1' }}>
+                    <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
+                      {field.label}
+                    </Text>
+                    {rows.length === 0 ? (
+                      <Text size="sm">—</Text>
+                    ) : (
+                      <Paper withBorder radius="sm">
+                        <Table striped withColumnBorders>
+                          <Table.Thead>
+                            <Table.Tr>
+                              <Table.Th style={{ width: 32 }}>#</Table.Th>
+                              {subFields.map((sf) => (
+                                <Table.Th key={sf.id}>{sf.label}</Table.Th>
+                              ))}
+                            </Table.Tr>
+                          </Table.Thead>
+                          <Table.Tbody>
+                            {rows.map((row, i) => (
+                              <Table.Tr key={i}>
+                                <Table.Td>{i + 1}</Table.Td>
+                                {row.cells.map((cell, j) => (
+                                  <Table.Td key={j}>{cell.value || '—'}</Table.Td>
+                                ))}
+                              </Table.Tr>
+                            ))}
+                          </Table.Tbody>
+                        </Table>
+                      </Paper>
+                    )}
                   </div>
                 );
               }

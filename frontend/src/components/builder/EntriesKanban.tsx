@@ -5,6 +5,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Badge, Box, Group, Paper, ScrollArea, Stack, Text } from '@mantine/core';
 import { IconGripVertical } from '@tabler/icons-react';
 import type { FormField, Submission } from '@/types';
+import { parseRepeaterRows } from '@/lib/repeater';
 
 type Column = 'unread' | 'read';
 
@@ -51,7 +52,11 @@ function Card({ submission, primaryField }: { submission: Submission; primaryFie
     >
       <Group justify="space-between" wrap="nowrap" mb={4}>
         <Text size="sm" fw={600} truncate>
-          {primaryField ? submission.data[primaryField.id] || 'Untitled entry' : 'Entry'}
+          {primaryField
+            ? primaryField.type === 'repeater'
+              ? `${parseRepeaterRows(submission.data[primaryField.id]).length} entries`
+              : submission.data[primaryField.id] || 'Untitled entry'
+            : 'Entry'}
         </Text>
         <IconGripVertical size={14} color="var(--mantine-color-gray-5)" />
       </Group>

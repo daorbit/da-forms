@@ -23,6 +23,7 @@ import { valueFields } from '@/lib/fieldTree';
 import { EntriesKanban } from '@/components/builder/EntriesKanban';
 import { AnalyticsBar } from '@/components/builder/AnalyticsBar';
 import { paymentCellText } from '@/lib/payment';
+import { repeaterSummaryText } from '@/lib/repeater';
 import { EntriesTopbar } from '@/components/builder/entries/EntriesTopbar';
 import { EntriesFilterBar } from '@/components/builder/entries/EntriesFilterBar';
 import { EntriesTableSkeleton } from '@/components/builder/entries/EntriesTableSkeleton';
@@ -261,7 +262,11 @@ export function EntriesPage() {
         JSON.stringify(
           // A payment column has no answer in `data` — its value is on the
           // submission, written by the webhook.
-          f.type === 'payment' ? paymentCellText(s.payment) : (s.data[f.id] ?? '')
+          f.type === 'payment'
+            ? paymentCellText(s.payment)
+            : f.type === 'repeater'
+              ? repeaterSummaryText(f, s.data[f.id] ?? '')
+              : (s.data[f.id] ?? '')
         )
       ),
       JSON.stringify(formatDateTime(s.createdAt)),

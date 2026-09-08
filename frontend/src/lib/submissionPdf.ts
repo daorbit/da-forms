@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import type { FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
+import { repeaterDisplayRows } from '@/lib/repeater';
 import { paymentCellText } from '@/lib/payment';
 
 function formatDateTime(iso: string) {
@@ -42,6 +43,41 @@ export function downloadSubmissionPdf(formTitle: string, columns: FormField[], s
   y += 28;
 
   for (const field of columns) {
+    if (field.type === 'repeater') {
+      const rows = repeaterDisplayRows(field, submission.data[field.id] ?? '');
+      ensureSpace(34);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(120);
+      doc.text(field.label.toUpperCase(), marginX, y);
+      doc.setTextColor(0);
+      y += 14;
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      if (rows.length === 0) {
+        ensureSpace(16);
+        doc.text('—', marginX, y);
+        y += 16;
+      }
+      rows.forEach((row, i) => {
+        ensureSpace(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${i + 1}.`, marginX, y);
+        doc.setFont('helvetica', 'normal');
+        y += 16;
+        for (const cell of row.cells) {
+          const lines = doc.splitTextToSize(`${cell.label}: ${cell.value || '—'}`, maxWidth - 16);
+          for (const line of lines as string[]) {
+            ensureSpace(15);
+            doc.text(line, marginX + 16, y);
+            y += 15;
+          }
+        }
+        y += 4;
+      });
+      y += 8;
+      continue;
+    }
     // A payment column has no answer in `data` — its value lives on the
     // submission, written by the webhook once Razorpay confirmed it.
     const raw =

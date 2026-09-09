@@ -4,8 +4,8 @@ import { Schema, model, Types } from 'mongoose';
 export type PaymentStatus = 'created' | 'paid' | 'failed';
 
 export interface SubmissionPayment {
-  provider: 'razorpay';
-  /** Razorpay order id — what the webhook looks the submission up by. */
+  provider: 'razorpay' | 'cashfree';
+  /** The gateway's order id — what the webhook looks the submission up by. */
   orderId: string;
   /** Set on capture. Absent until then. */
   paymentId?: string;
@@ -108,7 +108,7 @@ const submissionSchema = new Schema<SubmissionDocument>(
     payment: {
       type: new Schema<SubmissionPayment>(
         {
-          provider: { type: String, enum: ['razorpay'], required: true },
+          provider: { type: String, enum: ['razorpay', 'cashfree'], required: true },
           // Indexed because the webhook has nothing else to find the row by.
           orderId: { type: String, required: true, index: true },
           paymentId: { type: String },

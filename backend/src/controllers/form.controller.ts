@@ -2,6 +2,7 @@ import type { RequestHandler, Request, Response } from 'express';
 import { createHash } from 'node:crypto';
 import * as formService from '../services/form.service.js';
 import * as paymentService from '../services/payment.service.js';
+import type { PaymentProvider } from '../models/workspaceSettings.model.js';
 import * as workspaceSettingsService from '../services/workspaceSettings.service.js';
 import { sendSubmissionNotifications, sendResumeLink } from '../services/notification.service.js';
 import { getFormLimits, recordSubmission, generateForm as quantalogGenerate } from '../lib/quantalog.js';
@@ -718,7 +719,10 @@ export const submitForm: RequestHandler = async (req, res) => {
     if (payField) {
       const amount = paymentService.resolveAmount(payField, data, form.fields);
       const currency = payField.pay?.currency ?? 'INR';
-      const credentials = await paymentService.getCredentials(form.workspaceId);
+      const defaultProvider = await paymentService.getWorkspaceDefaultProvider(form.workspaceId);
+      const provider = paymentService.resolveProvider(payField, defaultProvider);
+      const credentials = await paymentService.getCredentials(form.workspaceId, provider);
+      const customer = paymentService.findCustomerDetails(form.fields, data);
 
       // Someone retrying after a cancelled checkout leaves a pending row
       // behind on every attempt. Dropped here rather than left for the sweep,
@@ -734,9 +738,9 @@ export const submitForm: RequestHandler = async (req, res) => {
         data,
         sourceUrl,
         {
-          provider: 'razorpay',
+          provider,
           // Replaced with the real order id immediately below. Written first
-          // because the receipt Razorpay stores is this submission's id, and
+          // because the receipt the gateway stores is this submission's id, and
           // that only exists once the row does.
           orderId: `pending_${Date.now()}`,
           amount,
@@ -747,22 +751,28 @@ export const submitForm: RequestHandler = async (req, res) => {
         typeof _partialKey === 'string' ? _partialKey : undefined
       );
 
-      const order = await paymentService.createOrder(credentials, {
+      const order = await paymentService.createCheckout(credentials, {
         amount,
         currency,
         receipt: String(submission._id),
         notes: { formId: String(form._id), workspaceId: form.workspaceId },
+        customerPhone: customer.phone,
+        customerEmail: customer.email,
+        customerName: customer.name,
       });
 
-      await formService.attachOrderId(submission._id, order.id);
+      await formService.attachOrderId(submission._id, order.orderId);
 
       return res.status(202).json({
         paymentRequired: true,
+        provider,
+        mode: credentials.mode,
         submissionId: submission._id,
-        orderId: order.id,
+        orderId: order.orderId,
         amount: order.amount,
         currency: order.currency,
-        keyId: credentials.keyId,
+        keyId: order.keyId,
+        paymentSessionId: order.paymentSessionId,
         description: payField.pay?.description ?? form.title,
       });
     }
@@ -830,101 +840,92 @@ export const submitForm: RequestHandler = async (req, res) => {
  * a payment belongs to is discovered from the submission the order id points
  * at, so it does not need to be in the URL.
  */
-export const razorpayWebhook: RequestHandler = async (req, res) => {
-  const { workspaceId } = req.params;
+const paymentWebhook =
+  (provider: PaymentProvider): RequestHandler =>
+  async (req, res) => {
+    const { workspaceId } = req.params;
 
-  const signature = req.get('x-razorpay-signature') ?? '';
-  // `express.raw` is mounted on this path, so the body is the exact bytes
-  // Razorpay signed. Re-serialised JSON would not match.
-  const rawBody = req.body as Buffer;
-  if (!Buffer.isBuffer(rawBody)) {
-    console.error('[payments] webhook body was parsed — raw parser is not mounted');
-    return res.status(500).json({ error: 'server_error', message: 'Webhook misconfigured' });
-  }
+    // `express.raw` is mounted on this path, so the body is the exact bytes
+    // the gateway signed. Re-serialised JSON would not match.
+    const rawBody = req.body as Buffer;
+    if (!Buffer.isBuffer(rawBody)) {
+      console.error('[payments] webhook body was parsed — raw parser is not mounted');
+      return res.status(500).json({ error: 'server_error', message: 'Webhook misconfigured' });
+    }
 
-  let credentials;
-  try {
-    credentials = await paymentService.getCredentials(workspaceId);
-  } catch {
-    return res.status(400).json({ error: 'not_configured', message: 'No Razorpay account' });
-  }
+    let credentials;
+    try {
+      credentials = await paymentService.getCredentials(workspaceId, provider);
+    } catch {
+      return res.status(400).json({ error: 'not_configured', message: `No ${provider} account` });
+    }
 
-  if (!credentials.webhookSecret) {
-    console.error('[payments] no webhook secret saved for workspace', workspaceId);
-    return res.status(400).json({ error: 'not_configured', message: 'No webhook secret' });
-  }
-  if (!paymentService.verifyWebhookSignature(rawBody, signature, credentials.webhookSecret)) {
-    return res.status(401).json({ error: 'bad_signature', message: 'Signature did not verify' });
-  }
+    if (!credentials.webhookSecret) {
+      console.error('[payments] no webhook secret saved for workspace', workspaceId, provider);
+      return res.status(400).json({ error: 'not_configured', message: 'No webhook secret' });
+    }
 
-  const event = JSON.parse(rawBody.toString('utf8')) as {
-    event: string;
-    payload?: {
-      payment?: {
-        entity?: {
-          id?: string;
-          order_id?: string;
-          email?: string;
-          contact?: string;
-          method?: string;
-        };
-      };
-    };
+    const event = paymentService.parseWebhook(provider, {
+      rawBody,
+      headers: req.headers as Record<string, string | undefined>,
+      secret: credentials.webhookSecret,
+    });
+    if (!event) {
+      return res.status(401).json({ error: 'bad_signature', message: 'Signature did not verify' });
+    }
+
+    const { orderId, paymentId } = event;
+    if (event.kind === 'ignored') {
+      return res.status(200).json({ ok: true, ignored: event.reason });
+    }
+    if (!orderId) return res.status(200).json({ ok: true, ignored: 'no order id' });
+
+    if (event.kind === 'failed') {
+      await formService.markSubmissionFailed(orderId);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (!paymentId) return res.status(200).json({ ok: true, ignored: 'no payment id' });
+
+    // Which form this belongs to comes from the pending submission the order id
+    // points at — the webhook is registered once per workspace and serves them
+    // all, so it cannot know the form up front.
+    const pending = await formService.getSubmissionByOrderId(orderId);
+    if (!pending) return res.status(200).json({ ok: true, ignored: 'unknown order' });
+
+    const form = await formService.getForm(String(pending.formId));
+    // A signature verified against this workspace's secret should never resolve
+    // to another workspace's form. If it does, something is wrong enough that
+    // completing the submission would be the wrong move.
+    if (!form || form.workspaceId !== workspaceId) {
+      console.error('[payments] order', orderId, 'does not belong to workspace', workspaceId);
+      return res.status(200).json({ ok: true, ignored: 'workspace mismatch' });
+    }
+
+    const submission = await formService.markSubmissionPaid(orderId, paymentId, {
+      payerEmail: event.payerEmail,
+      payerContact: event.payerContact,
+      method: event.method,
+    });
+    // Null means a retry of an event already handled. Acknowledged, but nothing
+    // runs again — otherwise a redelivery would send a second set of
+    // confirmation emails for one payment.
+    if (!submission) return res.status(200).json({ ok: true, alreadyHandled: true });
+
+    void workspaceSettingsService.markCharged(workspaceId, provider);
+    void recordSubmission(workspaceId);
+    const limits = await getFormLimits(workspaceId);
+    if (!limits || limits.notificationEmails) {
+      // The payment rides along so the confirmation actually says what was
+      // paid — a receipt that omits the amount is not much of a receipt.
+      void sendSubmissionNotifications(form, submission.data, submission.payment);
+    }
+
+    res.status(200).json({ ok: true });
   };
-  const entity = event.payload?.payment?.entity;
-  const orderId = entity?.order_id;
-  const paymentId = entity?.id;
 
-  if (!orderId || !paymentId) return res.status(200).json({ ok: true, ignored: 'no order id' });
-
-  if (event.event === 'payment.failed') {
-    await formService.markSubmissionFailed(orderId);
-    return res.status(200).json({ ok: true });
-  }
-
-  if (event.event !== 'payment.captured' && event.event !== 'order.paid') {
-    return res.status(200).json({ ok: true, ignored: event.event });
-  }
-
-  // Razorpay always collects a contact number, and usually an email. Kept so a
-  // form that asked for neither still leaves the owner able to identify who
-  // paid.
-  // Which form this belongs to comes from the pending submission the order id
-  // points at — the webhook is registered once per workspace and serves them
-  // all, so it cannot know the form up front.
-  const pending = await formService.getSubmissionByOrderId(orderId);
-  if (!pending) return res.status(200).json({ ok: true, ignored: 'unknown order' });
-
-  const form = await formService.getForm(String(pending.formId));
-  // A signature verified against this workspace's secret should never resolve
-  // to another workspace's form. If it does, something is wrong enough that
-  // completing the submission would be the wrong move.
-  if (!form || form.workspaceId !== workspaceId) {
-    console.error('[payments] order', orderId, 'does not belong to workspace', workspaceId);
-    return res.status(200).json({ ok: true, ignored: 'workspace mismatch' });
-  }
-
-  const submission = await formService.markSubmissionPaid(orderId, paymentId, {
-    payerEmail: entity?.email,
-    payerContact: entity?.contact,
-    method: entity?.method,
-  });
-  // Null means a retry of an event already handled. Acknowledged, but nothing
-  // runs again — otherwise Razorpay's redelivery would send a second set of
-  // confirmation emails for one payment.
-  if (!submission) return res.status(200).json({ ok: true, alreadyHandled: true });
-
-  void workspaceSettingsService.markCharged(workspaceId);
-  void recordSubmission(workspaceId);
-  const limits = await getFormLimits(workspaceId);
-  if (!limits || limits.notificationEmails) {
-    // The payment rides along so the confirmation actually says what was
-    // paid — a receipt that omits the amount is not much of a receipt.
-    void sendSubmissionNotifications(form, submission.data, submission.payment);
-  }
-
-  res.status(200).json({ ok: true });
-};
+export const razorpayWebhook = paymentWebhook('razorpay');
+export const cashfreeWebhook = paymentWebhook('cashfree');
 
 /**
  * Where the respondent's page checks whether its payment landed.

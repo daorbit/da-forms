@@ -19,6 +19,7 @@ import type {
   FieldSize,
   ShowIfOperator,
   PaymentMode,
+  PaymentProvider,
   PaymentSettings,
 } from '@/types';
 import {
@@ -169,13 +170,20 @@ export function PropertiesDrawer({
 
   // Ready means keys are saved and switched on — a connected account that is
   // turned off still cannot charge anyone.
+  // Which gateway this field charges through: its own choice, or the
+  // workspace's default when it has not made one.
+  const fieldProvider: PaymentProvider =
+    field?.pay?.provider ?? paymentSettings?.defaultProvider ?? 'razorpay';
+  const providerSettings = paymentSettings?.providers?.[fieldProvider];
+  const providerLabel = providerSettings?.label ?? 'Razorpay';
+
   const paymentReady = Boolean(
-    paymentSettings?.enabled &&
-      (paymentSettings.mode === 'live'
-        ? paymentSettings.live.keyId
-        : paymentSettings.test.keyId)
+    providerSettings?.enabled &&
+      (providerSettings.mode === 'live'
+        ? providerSettings.live.keyId
+        : providerSettings.test.keyId)
   );
-  const paymentLive = paymentSettings?.mode === 'live';
+  const paymentLive = providerSettings?.mode === 'live';
 
   const paymentStepIssue =
     field?.type === 'payment' ? paymentStepProblem(allFields) : null;
@@ -454,9 +462,9 @@ export function PropertiesDrawer({
                       />
                       <Text size="xs" c={paymentReady || !paymentSettings ? 'dimmed' : 'orange'}>
                         {!paymentSettings
-                          ? 'Checking Razorpay…'
+                          ? `Checking ${providerLabel}…`
                           : !paymentReady
-                            ? 'Razorpay not connected'
+                            ? `${providerLabel} not connected`
                             : paymentLive
                               ? 'Live — charging real payments'
                               : 'Test mode — no real money'}
@@ -474,6 +482,34 @@ export function PropertiesDrawer({
                       </Anchor>
                     )}
                   </Group>
+
+                  <Select
+                    label="Gateway"
+                    description={
+                      field.pay?.provider
+                        ? 'This form charges through the gateway picked here.'
+                        : 'Follows the workspace default. Change it to pin one gateway to this form.'
+                    }
+                    data={[
+                      {
+                        value: '',
+                        label: `Workspace default${
+                          paymentSettings
+                            ? ` (${paymentSettings.providers[paymentSettings.defaultProvider].label})`
+                            : ''
+                        }`,
+                      },
+                      ...Object.values(paymentSettings?.providers ?? {}).map((p) => ({
+                        value: p.provider,
+                        label: p.enabled ? p.label : `${p.label} — not connected`,
+                      })),
+                    ]}
+                    value={field.pay?.provider ?? ''}
+                    onChange={(v) =>
+                      setPay({ provider: (v || undefined) as PaymentProvider | undefined })
+                    }
+                    allowDeselect={false}
+                  />
 
                   <SegmentedControl
                     fullWidth
@@ -620,7 +656,7 @@ export function PropertiesDrawer({
                     label="Currency"
                     description={
                       payCurrency !== 'INR'
-                        ? 'Your Razorpay account must be enabled for this currency, or checkout will fail.'
+                        ? `Your ${providerLabel} account must be enabled for this currency, or checkout will fail.`
                         : undefined
                     }
                     value={field.pay?.currency ?? 'INR'}

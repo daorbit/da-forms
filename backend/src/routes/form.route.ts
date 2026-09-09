@@ -217,3 +217,13 @@ publicPaymentRouter.post(
   '/:workspaceId/payments/webhook',
   asyncHandler(formController.razorpayWebhook)
 );
+
+publicPaymentRouter.post(
+  '/:workspaceId/payments/webhook/razorpay',
+  asyncHandler(formController.razorpayWebhook)
+);
+
+publicPaymentRouter.post(
+  '/:workspaceId/payments/webhook/cashfree',
+  asyncHandler(formController.cashfreeWebhook)
+);

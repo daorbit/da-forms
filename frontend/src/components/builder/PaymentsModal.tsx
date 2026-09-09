@@ -39,7 +39,7 @@ import {
   IconRocket,
   IconFlask,
 } from '@tabler/icons-react';
-import type { PaymentSettings, RazorpayMode } from '@/types';
+import type { PaymentSettings, RazorpayMode, PaymentProvider } from '@/types';
 import {
   getPaymentSettings,
   savePaymentSettings,
@@ -60,10 +60,50 @@ interface Props {
 type StepId = 'keys' | 'webhook' | 'golive';
 
 const STEPS: { id: StepId; label: string; hint: string; icon: typeof IconKey }[] = [
-  { id: 'keys', label: 'API keys', hint: 'Connect your Razorpay account', icon: IconKey },
+  { id: 'keys', label: 'API keys', hint: 'Connect your gateway account', icon: IconKey },
   { id: 'webhook', label: 'Webhook', hint: 'So payments get confirmed', icon: IconWebhook },
   { id: 'golive', label: 'Go live', hint: 'Switch on and start charging', icon: IconRocket },
 ];
+
+ 
+const PROVIDER_COPY: Record<
+  PaymentProvider,
+  {
+    keyIdLabel: string;
+    secretLabel: string;
+    keyIdPlaceholder: (mode: RazorpayMode) => string;
+    keyIdHint: (mode: RazorpayMode) => string;
+    dashboardUrl: string;
+    dashboardName: string;
+    keysPath: string;
+    webhookEvents: string;
+    webhookPath: string;
+  }
+> = {
+  razorpay: {
+    keyIdLabel: 'Key ID',
+    secretLabel: 'Key Secret',
+    keyIdPlaceholder: (mode) => `rzp_${mode}_...`,
+    keyIdHint: (mode) => `${mode === 'live' ? 'Live' : 'Test'} keys start with rzp_${mode}_`,
+    dashboardUrl: 'https://dashboard.razorpay.com',
+    dashboardName: 'Razorpay dashboard',
+    keysPath: 'Settings → API Keys',
+    webhookEvents: 'payment.captured and payment.failed',
+    webhookPath: 'Settings → Webhooks',
+  },
+  cashfree: {
+    keyIdLabel: 'App ID',
+    secretLabel: 'Secret Key',
+    keyIdPlaceholder: () => 'Your App ID',
+    keyIdHint: (mode) =>
+      `From the ${mode === 'live' ? 'production' : 'sandbox'} environment. Cashfree keys look alike in both, so test the connection after saving.`,
+    dashboardUrl: 'https://merchant.cashfree.com',
+    dashboardName: 'Cashfree merchant dashboard',
+    keysPath: 'Developers → API Keys',
+    webhookEvents: 'PAYMENT_SUCCESS_WEBHOOK and PAYMENT_FAILED_WEBHOOK',
+    webhookPath: 'Developers → Webhooks',
+  },
+};
 
 /**
  * Where a workspace connects its Razorpay account.
@@ -85,6 +125,8 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
   /** Why this session cannot manage payments, when it cannot. */
   const [denied, setDenied] = useState<string | null>(null);
 
+  /** Which gateway is being set up. Both can be connected at once. */
+  const [provider, setProvider] = useState<PaymentProvider>('razorpay');
   /** Which key set is being edited — not necessarily the one being charged through. */
   const [tab, setTab] = useState<RazorpayMode>('test');
   const [keyId, setKeyId] = useState('');
@@ -94,9 +136,12 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
   const [keySecret, setKeySecret] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('');
 
-  const pair = settings ? settings[tab] : undefined;
+  const current = settings?.providers?.[provider];
+  const copy = PROVIDER_COPY[provider];
+  const pair = current ? current[tab] : undefined;
+  const providerWebhookUrl = `${webhookUrl}/${provider}`;
   const done = (id: PaymentSettings['checklist'][number]['id']) =>
-    Boolean(settings?.checklist.find((c) => c.id === id)?.done);
+    Boolean(current?.checklist.find((c) => c.id === id)?.done);
 
   const stepDone: Record<StepId, boolean> = {
     keys: done('keys') && done('verified'),
@@ -119,11 +164,16 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
     getPaymentSettings(workspaceId)
       .then((s) => {
         setSettings(s);
-        setTab(s.mode);
-        loadTab(s, s.mode);
+        // Opens on whichever gateway the workspace charges through by default,
+        // which is the one most likely to need attention.
+        const active = s.defaultProvider ?? 'razorpay';
+        setProvider(active);
+        const view = s.providers?.[active];
+        setTab(view?.mode ?? s.mode);
+        loadTab(s, view?.mode ?? s.mode);
         // Opens on the first thing still outstanding, so someone returning to
         // finish setup lands where they left off.
-        const first = s.checklist.find((c) => !c.done);
+        const first = (view?.checklist ?? s.checklist).find((c) => !c.done);
         setStep(
           first?.id === 'webhook' ? 'webhook' : first?.id === 'enabled' ? 'golive' : 'keys'
         );
@@ -152,11 +202,24 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
     if (settings) loadTab(settings, next);
   }
 
+  function switchProvider(next: PaymentProvider) {
+    setProvider(next);
+    const view = settings?.providers?.[next];
+    const nextMode = view?.mode ?? 'test';
+    setTab(nextMode);
+    // Every input is cleared: a secret typed for one gateway must never be
+    // submitted against the other's credentials.
+    if (settings) loadTab(settings, nextMode);
+    const first = view?.checklist.find((c) => !c.done);
+    setStep(first?.id === 'webhook' ? 'webhook' : first?.id === 'enabled' ? 'golive' : 'keys');
+  }
+
   async function save(patch: Partial<Parameters<typeof savePaymentSettings>[0]> = {}) {
     setSaving(true);
     try {
       const saved = await savePaymentSettings(
         {
+          provider,
           target: tab,
           keyId: keyId.trim() || undefined,
           // Omitted when blank, so saving without retyping keeps what is stored.
@@ -183,12 +246,12 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
   async function handleTest() {
     setTesting(true);
     try {
-      const result = await testPaymentConnection(tab, workspaceId);
+      const result = await testPaymentConnection(tab, workspaceId, provider);
       setSettings(result.settings);
       notifications.show({
         message: result.ok
           ? `${tab === 'live' ? 'Live' : 'Test'} keys work.`
-          : (result.message ?? 'Razorpay rejected these keys.'),
+          : (result.message ?? `${current?.label ?? 'The gateway'} rejected these keys.`),
         color: result.ok ? 'teal' : 'red',
       });
     } catch {
@@ -201,7 +264,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
   async function handleDisconnect() {
     setSaving(true);
     try {
-      const saved = await disconnectPayments(tab, workspaceId);
+      const saved = await disconnectPayments(tab, workspaceId, provider);
       setSettings(saved);
       loadTab(saved, tab);
       notifications.show({ message: `${tab === 'live' ? 'Live' : 'Test'} keys removed.` });
@@ -271,12 +334,41 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
               <Box style={{ flex: 1, minWidth: 0 }}>
                 <Text fw={600}>Payments</Text>
                 <Text size="xs" c="dimmed">
-                  Razorpay, for this whole workspace
+                  For this whole workspace
                 </Text>
               </Box>
             </Group>
 
             <Box className={classes.panelBody}>
+              <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb="xs">
+                Gateway
+              </Text>
+              <SegmentedControl
+                fullWidth
+                mb="md"
+                value={provider}
+                onChange={(v) => switchProvider(v as PaymentProvider)}
+                data={Object.values(settings.providers).map((p) => ({
+                  value: p.provider,
+                  label: p.label,
+                }))}
+              />
+              {settings.defaultProvider === provider ? (
+                <Text size="xs" c="dimmed" mb="md">
+                  Forms that do not pick a gateway use this one.
+                </Text>
+              ) : (
+                <Button
+                  size="compact-xs"
+                  variant="subtle"
+                  mb="md"
+                  onClick={() => save({ defaultProvider: provider })}
+                  disabled={saving || !current?.enabled}
+                >
+                  Make default for new forms
+                </Button>
+              )}
+
               <Stack gap="xs">
                 {STEPS.map((s, index) => (
                   <button
@@ -314,7 +406,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                 Status
               </Text>
               <List spacing={8} size="sm" center>
-                {settings.checklist.map((item) => (
+                {(current?.checklist ?? []).map((item) => (
                   <List.Item
                     key={item.id}
                     icon={
@@ -348,7 +440,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
             <Group justify="space-between" px={28} className={classes.paneHeader}>
               <Group gap="sm">
                 <Title order={4}>{STEPS.find((s) => s.id === step)?.label}</Title>
-                {settings.mode === 'live' ? (
+                {(current?.mode ?? "test") === 'live' ? (
                   <Badge color="emerald" variant="filled">
                     Live mode
                   </Badge>
@@ -381,15 +473,10 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                 {step === 'keys' && (
                   <Stack gap="lg">
                     <Text size="sm" c="dimmed">
-                      Payments are charged straight into your own Razorpay account — nothing
-                      routes through us. Find these under Settings → API Keys in the{' '}
-                      <Anchor
-                        href="https://dashboard.razorpay.com"
-                        target="_blank"
-                        rel="noreferrer"
-                        size="sm"
-                      >
-                        Razorpay dashboard
+                      Payments are charged straight into your own {current?.label} account —
+                      nothing routes through us. Find these under {copy.keysPath} in the{' '}
+                      <Anchor href={copy.dashboardUrl} target="_blank" rel="noreferrer" size="sm">
+                        {copy.dashboardName}
                       </Anchor>
                       .
                     </Text>
@@ -410,7 +497,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                           <Text size="sm" fw={600}>
                             {tab === 'live' ? 'Live' : 'Test'} credentials
                           </Text>
-                          {settings.mode === tab && (
+                          {(current?.mode ?? "test") === tab && (
                             <Badge size="sm" variant="filled" color="emerald">
                               Currently in use
                             </Badge>
@@ -418,25 +505,29 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                         </Group>
 
                         <TextInput
-                          label="Key ID"
-                          placeholder={pair?.hasKeyId ? '••••••••' : `rzp_${tab}_...`}
+                          label={copy.keyIdLabel}
+                          placeholder={
+                            pair?.hasKeyId ? '••••••••' : copy.keyIdPlaceholder(tab)
+                          }
                           description={
                             pair?.hasKeyId
                               ? `Saved: ${pair.keyId}. Leave blank to keep it.`
-                              : `${tab === 'live' ? 'Live' : 'Test'} keys start with rzp_${tab}_`
+                              : copy.keyIdHint(tab)
                           }
                           value={keyId}
                           onChange={(e) => setKeyId(e.target.value)}
                         />
 
                         <PasswordInput
-                          label="Key Secret"
+                          label={copy.secretLabel}
                           description={
                             pair?.keySecretMask
                               ? `Saved: ${pair.keySecretMask}. Leave blank to keep it.`
                               : 'Stored encrypted. Never shown again once saved.'
                           }
-                          placeholder={pair?.keySecretMask ? '••••••••' : 'Your key secret'}
+                          placeholder={
+                            pair?.keySecretMask ? '••••••••' : `Your ${copy.secretLabel.toLowerCase()}`
+                          }
                           value={keySecret}
                           onChange={(e) => setKeySecret(e.target.value)}
                         />
@@ -495,8 +586,8 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                 {step === 'webhook' && (
                   <Stack gap="lg">
                     <Text size="sm" c="dimmed">
-                      Razorpay tells us a payment succeeded through this URL. Without it, a
-                      response sits unconfirmed forever and no confirmation email goes out —
+                      {current?.label} tells us a payment succeeded through this URL. Without it,
+                      a response sits unconfirmed forever and no confirmation email goes out —
                       even though the respondent was charged.
                     </Text>
 
@@ -507,22 +598,22 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                             <Text size="sm" fw={600}>
                               Webhook URL
                             </Text>
-                            <CopyButton value={webhookUrl}>
-                              {({ copied, copy }) => (
+                            <CopyButton value={providerWebhookUrl}>
+                              {({ copied, copy: doCopy }) => (
                                 <Tooltip label={copied ? 'Copied' : 'Copy'}>
-                                  <ActionIcon variant="subtle" onClick={copy}>
+                                  <ActionIcon variant="subtle" onClick={doCopy}>
                                     {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
                                   </ActionIcon>
                                 </Tooltip>
                               )}
                             </CopyButton>
                           </Group>
-                          <Code block>{webhookUrl}</Code>
+                          <Code block>{providerWebhookUrl}</Code>
                           <Text size="xs" c="dimmed" mt={6}>
-                            Add this <strong>once</strong> in Razorpay under Settings → Webhooks.
-                            It covers every paid form in this workspace — you do not add one per
-                            form. Subscribe it to <Code>payment.captured</Code> and{' '}
-                            <Code>payment.failed</Code>.
+                            Add this <strong>once</strong> in {current?.label} under{' '}
+                            {copy.webhookPath}. It covers every paid form in this workspace — you
+                            do not add one per form. Subscribe it to{' '}
+                            <Code>{copy.webhookEvents}</Code>. Each gateway needs its own URL.
                           </Text>
                         </Box>
 
@@ -533,7 +624,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                           description={
                             pair?.webhookSecretMask
                               ? `Saved: ${pair.webhookSecretMask}. Leave blank to keep it.`
-                              : 'The secret you set when creating the webhook in Razorpay.'
+                              : `The secret you set when creating the webhook in ${current?.label}.`
                           }
                           placeholder={pair?.webhookSecretMask ? '••••••••' : 'Your webhook secret'}
                           value={webhookSecret}
@@ -567,26 +658,26 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                     <Alert
                       variant="light"
                       radius="md"
-                      color={settings.mode === 'live' ? 'emerald' : 'gray'}
+                      color={(current?.mode ?? "test") === 'live' ? 'emerald' : 'gray'}
                       icon={
-                        settings.mode === 'live' ? (
+                        (current?.mode ?? "test") === 'live' ? (
                           <IconCircleCheck size={16} />
                         ) : (
                           <IconFlask size={16} />
                         )
                       }
-                      title={settings.mode === 'live' ? 'Charging for real' : 'Test mode'}
+                      title={(current?.mode ?? "test") === 'live' ? 'Charging for real' : 'Test mode'}
                     >
                       <Text size="xs">
-                        {settings.mode === 'test'
-                          ? 'No real money moves. Use Razorpay’s test cards to try the whole flow end to end.'
+                        {(current?.mode ?? 'test') === 'test'
+                          ? `No real money moves. Use ${current?.label}’s test cards to try the whole flow end to end.`
                           : 'Every submission charges the respondent for real, using your live keys.'}
                       </Text>
                     </Alert>
 
                     <SegmentedControl
                       fullWidth
-                      value={settings.mode}
+                      value={(current?.mode ?? "test")}
                       onChange={(mode) =>
                         save({ mode: mode as RazorpayMode, target: undefined })
                       }
@@ -598,9 +689,9 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
 
                     <Box className={classes.keyCard}>
                       <Switch
-                        label="Accept payments"
-                        description="Turn off to stop every paid form in this workspace from charging."
-                        checked={settings.enabled}
+                        label={`Accept ${current?.label} payments`}
+                        description={`Turn off to stop every form charging through ${current?.label}.`}
+                        checked={Boolean(current?.enabled)}
                         onChange={(e) =>
                           save({ enabled: e.currentTarget.checked, target: undefined })
                         }
@@ -609,7 +700,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
 
                     {/* The remaining gaps, spelled out — someone on this step
                         is about to take money and should see what is missing. */}
-                    {settings.checklist.some((c) => !c.done) && (
+                    {(current?.checklist ?? []).some((c) => !c.done) && (
                       <Alert
                         variant="light"
                         color="gray"
@@ -618,7 +709,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                         title="Still to do"
                       >
                         <Stack gap={4}>
-                          {settings.checklist
+                          {(current?.checklist ?? [])
                             .filter((c) => !c.done)
                             .map((c) => (
                               <Text size="sm" key={c.id}>
@@ -630,11 +721,11 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                       </Alert>
                     )}
 
-                    {settings.lastChargeAt && (
+                    {current?.lastChargeAt && (
                       <Group gap={6}>
                         <IconCircleCheck size={15} color="var(--mantine-color-teal-6)" />
                         <Text size="xs" c="dimmed">
-                          Last payment received {new Date(settings.lastChargeAt).toLocaleString()}
+                          Last payment received {new Date(current?.lastChargeAt).toLocaleString()}
                         </Text>
                       </Group>
                     )}

@@ -18,11 +18,14 @@ export function createApp() {
   // builder. Nothing here is authorised by origin.
   app.use(cors());
 
-  // Before the JSON parser, and deliberately so: Razorpay signs the exact
-  // bytes it sent, and a parsed-then-re-serialised body would produce a
-  // different string that never verifies. This path alone keeps its raw body.
+  // Before the JSON parser, and deliberately so: both gateways sign the exact
+  // bytes they sent, and a parsed-then-re-serialised body would produce a
+  // different string that never verifies. These paths alone keep their raw body.
   app.use(
-    '/api/public/workspaces/:workspaceId/payments/webhook',
+    [
+      '/api/public/workspaces/:workspaceId/payments/webhook',
+      '/api/public/workspaces/:workspaceId/payments/webhook/:provider',
+    ],
     express.raw({ type: 'application/json', limit: '1mb' })
   );
   /*

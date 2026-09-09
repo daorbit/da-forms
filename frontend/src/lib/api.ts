@@ -7,6 +7,7 @@ import type {
   PaymentRequired,
   PaymentSettings,
   RazorpayMode,
+  PaymentProvider,
   ConnectionTestResult,
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
@@ -437,6 +438,10 @@ export function getPaymentSettings(workspaceId = DEFAULT_WORKSPACE) {
 
 export function savePaymentSettings(
   input: {
+    /** Which gateway this save is about. Defaults to the workspace default. */
+    provider?: PaymentProvider;
+    /** Which gateway new forms should use when they do not name one. */
+    defaultProvider?: PaymentProvider;
     enabled?: boolean;
     mode?: RazorpayMode;
     /** Which key set is being edited. Defaults to the active mode. */
@@ -453,17 +458,24 @@ export function savePaymentSettings(
   );
 }
 
-/** Asks Razorpay whether the saved keys work, so a wrong one is caught here. */
-export function testPaymentConnection(mode: RazorpayMode, workspaceId = DEFAULT_WORKSPACE) {
+export function testPaymentConnection(
+  mode: RazorpayMode,
+  workspaceId = DEFAULT_WORKSPACE,
+  provider: PaymentProvider = 'razorpay'
+) {
   return authedRequest<ConnectionTestResult>(
     `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments/test`,
-    { method: 'POST', body: JSON.stringify({ mode }) }
+    { method: 'POST', body: JSON.stringify({ mode, provider }) }
   );
 }
 
-export function disconnectPayments(mode: RazorpayMode, workspaceId = DEFAULT_WORKSPACE) {
+export function disconnectPayments(
+  mode: RazorpayMode,
+  workspaceId = DEFAULT_WORKSPACE,
+  provider: PaymentProvider = 'razorpay'
+) {
   return authedRequest<PaymentSettings>(
-    `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments?mode=${mode}`,
+    `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments?mode=${mode}&provider=${provider}`,
     { method: 'DELETE' }
   );
 }

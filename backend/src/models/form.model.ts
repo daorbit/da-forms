@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import type { PaymentProvider } from './workspaceSettings.model.js';
 
 export type FieldType =
   | 'name'
@@ -156,24 +157,19 @@ export interface PaymentConfig {
    *   Donations and pay-what-you-want.
    */
   mode: PaymentMode;
+  provider?: PaymentProvider;
   /** Minor units — paise, not rupees. Integers only, so nothing rounds twice. */
   amount?: number;
   currency: string;
   /** mode='field': the field whose answer is the price. */
   amountFieldId?: string;
-  /**
-   * mode='field' against a choice field: what each option is worth, in minor
-   * units, keyed by the option's own text. An option missing from here is
-   * worth nothing, which is a configuration mistake rather than a free item —
-   * the builder flags it.
-   */
   optionPrices?: Record<string, number>;
   /** mode='modifiable': the range the respondent may choose within. Minor units. */
   minAmount?: number;
   maxAmount?: number;
   /** mode='modifiable': what the box starts at. Minor units. */
   defaultAmount?: number;
-  /** Shown on the Razorpay checkout. Falls back to the form's title. */
+  /** Shown on the gateway's checkout. Falls back to the form's title. */
   description?: string;
   buttonLabel?: string;
 }

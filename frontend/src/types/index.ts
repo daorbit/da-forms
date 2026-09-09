@@ -242,6 +242,8 @@ export interface PaymentConfig {
    * - 'modifiable': the respondent names their own price, within min/max.
    */
   mode: PaymentMode;
+  /** Which gateway charges this form. Unset means the workspace default. */
+  provider?: PaymentProvider;
   /** Minor units — paise, not rupees. */
   amount?: number;
   currency: string;
@@ -411,15 +413,24 @@ export interface Submission {
  */
 export interface PaymentRequired {
   paymentRequired: true;
+  provider: PaymentProvider;
+  mode: RazorpayMode;
   submissionId: string;
   orderId: string;
   amount: number;
   currency: string;
-  keyId: string;
+  /** Razorpay only — its checkout opens with the publishable key id. */
+  keyId?: string;
+  /** Cashfree only — its checkout opens with a server-minted session token. */
+  paymentSessionId?: string;
   description: string;
 }
 
+export type PaymentProvider = 'razorpay' | 'cashfree';
+
 export type RazorpayMode = 'test' | 'live';
+
+export type PaymentGatewayMode = RazorpayMode;
 
 /** One mode's credentials, with secrets reduced to masks. */
 export interface KeyPairView {
@@ -441,8 +452,22 @@ export interface ChecklistItem {
   hint?: string;
 }
 
-/** The workspace's Razorpay connection. Test and live keys are kept separately. */
+/** One gateway's connection. Test and live keys are kept separately. */
+export interface ProviderSettings {
+  provider: PaymentProvider;
+  label: string;
+  enabled: boolean;
+  mode: RazorpayMode;
+  test: KeyPairView;
+  live: KeyPairView;
+  lastChargeAt?: string;
+  checklist: ChecklistItem[];
+}
+
+ 
 export interface PaymentSettings {
+  defaultProvider: PaymentProvider;
+  providers: Record<PaymentProvider, ProviderSettings>;
   enabled: boolean;
   mode: RazorpayMode;
   test: KeyPairView;

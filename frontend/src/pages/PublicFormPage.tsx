@@ -22,7 +22,8 @@ import {
   getPartialForResume,
   emailResumeLink,
 } from '@/lib/api';
-import { openCheckout, waitForPayment } from '@/lib/razorpay';
+import { waitForPayment } from '@/lib/razorpay';
+import { openGatewayCheckout } from '@/lib/payment';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
@@ -217,7 +218,7 @@ export function PublicFormPage() {
       // the payment actually lands.
       if (isPaymentRequired(result)) {
         lastOrderId.current = result.orderId;
-        const outcome = await openCheckout(result, prefillFrom(form, values));
+        const outcome = await openGatewayCheckout(result, prefillFrom(form, values));
         if (!outcome.ok) {
           setSubmitting(false);
           notifications.show({

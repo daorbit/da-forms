@@ -1,12 +1,28 @@
-import type { FormField, PaymentConfig, SubmissionPayment } from '@/types';
+import type {
+  FormField,
+  PaymentConfig,
+  PaymentProvider,
+  PaymentRequired,
+  SubmissionPayment,
+} from '@/types';
+import { openCheckout, type CheckoutOutcome } from './razorpay';
+import { openCashfreeCheckout } from './cashfree';
 
-/**
- * Currencies a form can charge in.
- *
- * Short on purpose: a Razorpay account only accepts what it has been enabled
- * for, and INR is the one every account has. Offering the full list would mean
- * authors picking a currency their account will reject at checkout.
- */
+export const PROVIDER_LABELS: Record<PaymentProvider, string> = {
+  razorpay: 'Razorpay',
+  cashfree: 'Cashfree',
+};
+ 
+export function openGatewayCheckout(
+  payment: PaymentRequired,
+  prefill: { name?: string; email?: string; contact?: string } = {}
+): Promise<CheckoutOutcome> {
+  return payment.provider === 'cashfree'
+    ? openCashfreeCheckout(payment)
+    : openCheckout(payment, prefill);
+}
+
+ 
 export const CURRENCIES = [
   { value: 'INR', label: 'INR — Indian Rupee', symbol: '₹' },
   { value: 'USD', label: 'USD — US Dollar', symbol: '$' },

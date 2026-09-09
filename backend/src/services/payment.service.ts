@@ -1,9 +1,17 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
-import { WorkspaceSettingsModel, type RazorpayMode } from '../models/workspaceSettings.model.js';
+import {
+  WorkspaceSettingsModel,
+  type PaymentMode,
+  type PaymentProvider,
+} from '../models/workspaceSettings.model.js';
 import { decrypt } from '../lib/crypto.js';
 import type { FormField } from '../models/form.model.js';
-
-const RAZORPAY_API = 'https://api.razorpay.com/v1';
+import { gatewayFor, PROVIDER_LABELS } from './gateways/index.js';
+import type {
+  GatewayCredentials,
+  CheckoutSession,
+  OrderInput,
+  WebhookEvent,
+} from './gateways/types.js';
 
 export class PaymentConfigError extends Error {}
 export class InvalidAmountError extends Error {}
@@ -173,34 +181,94 @@ function formatMinor(minor: number, currency: string): string {
   return currency === 'INR' ? `₹${major}` : `${major} ${currency}`;
 }
 
-export interface RazorpayCredentials {
-  keyId: string;
-  keySecret: string;
-  webhookSecret?: string;
-  mode: RazorpayMode;
+
+export type { GatewayCredentials, CheckoutSession, WebhookEvent };
+
+export type PaymentCredentials = GatewayCredentials;
+export type RazorpayCredentials = GatewayCredentials;
+
+const PHONE_TYPES = ['phone', 'tel', 'mobile'];
+const EMAIL_TYPES = ['email'];
+const NAME_HINTS = ['name', 'full name', 'your name'];
+const PHONE_HINTS = ['phone', 'mobile', 'contact', 'whatsapp'];
+const INDIAN_PHONE = /^[6-9]\d{9}$/;
+
+function normalisePhone(raw: string): string | undefined {
+  const digits = raw.replace(/\D/g, '');
+  const local = digits.length > 10 ? digits.slice(-10) : digits;
+  return INDIAN_PHONE.test(local) ? local : undefined;
 }
 
-/**
- * A workspace's Razorpay credentials for whichever mode it is set to.
- *
- * Kept in one place so the plaintext secret has exactly one path out of the
- * database, and switching modes cannot accidentally charge through the other
- * account's keys.
- */
-export async function getCredentials(workspaceId: string): Promise<RazorpayCredentials> {
-  const settings = await WorkspaceSettingsModel.findOne({ workspaceId });
-  const razorpay = settings?.razorpay;
-  if (!razorpay?.enabled) {
-    throw new PaymentConfigError('This workspace is not accepting payments');
+export function findCustomerDetails(
+  fields: FormField[],
+  values: Record<string, string>
+): { phone?: string; email?: string; name?: string } {
+  const all = flatten(fields);
+  let phone: string | undefined;
+  let email: string | undefined;
+  let name: string | undefined;
+
+  for (const field of all) {
+    const answer = values[field.id];
+    if (!answer || typeof answer !== 'string' || !answer.trim()) continue;
+    const label = (field.label ?? '').toLowerCase();
+
+    if (!phone) {
+      if (PHONE_TYPES.includes(field.type)) {
+        phone = normalisePhone(answer);
+      } else if (PHONE_HINTS.some((hint) => label.includes(hint))) {
+        phone = normalisePhone(answer);
+      }
+    }
+
+    if (!email && (EMAIL_TYPES.includes(field.type) || label.includes('email'))) {
+      if (answer.includes('@')) email = answer.trim();
+    }
+
+    if (!name && NAME_HINTS.some((hint) => label.includes(hint))) {
+      name = answer.trim().slice(0, 100);
+    }
   }
 
-  const mode = razorpay.mode ?? 'test';
-  const pair = mode === 'live' ? razorpay.live : razorpay.test;
+  return { phone, email, name };
+}
+
+export function resolveProvider(
+  field: FormField | undefined,
+  defaultProvider: PaymentProvider
+): PaymentProvider {
+  const chosen = field?.pay?.provider;
+  return chosen ?? defaultProvider;
+}
+
+export async function getWorkspaceDefaultProvider(
+  workspaceId: string
+): Promise<PaymentProvider> {
+  const settings = await WorkspaceSettingsModel.findOne({ workspaceId });
+  return settings?.defaultProvider ?? 'razorpay';
+}
+
+export async function getCredentials(
+  workspaceId: string,
+  provider?: PaymentProvider
+): Promise<GatewayCredentials> {
+  const settings = await WorkspaceSettingsModel.findOne({ workspaceId });
+  const resolved = provider ?? settings?.defaultProvider ?? 'razorpay';
+  const stored = settings?.[resolved];
+  const name = PROVIDER_LABELS[resolved];
+
+  if (!stored?.enabled) {
+    throw new PaymentConfigError(`This workspace is not accepting ${name} payments`);
+  }
+
+  const mode: PaymentMode = stored.mode ?? 'test';
+  const pair = mode === 'live' ? stored.live : stored.test;
   if (!pair?.keyId || !pair.keySecretEnc) {
-    throw new PaymentConfigError(`No ${mode} Razorpay keys are saved for this workspace`);
+    throw new PaymentConfigError(`No ${mode} ${name} keys are saved for this workspace`);
   }
 
   return {
+    provider: resolved,
     keyId: pair.keyId,
     keySecret: decrypt(pair.keySecretEnc),
     webhookSecret: pair.webhookSecretEnc ? decrypt(pair.webhookSecretEnc) : undefined,
@@ -208,136 +276,51 @@ export async function getCredentials(workspaceId: string): Promise<RazorpayCrede
   };
 }
 
-function authHeader(creds: { keyId: string; keySecret: string }) {
-  return `Basic ${Buffer.from(`${creds.keyId}:${creds.keySecret}`).toString('base64')}`;
+export function keyMatchesMode(
+  keyId: string,
+  mode: PaymentMode,
+  provider: PaymentProvider = 'razorpay'
+): boolean {
+  return gatewayFor(provider).keyMatchesMode(keyId, mode);
 }
 
-/**
- * A key's prefix says which mode it belongs to.
- *
- * Checked when saving rather than at charge time: pasting live keys into the
- * test slot would otherwise mean the first "test" payment takes real money.
- */
-export function keyMatchesMode(keyId: string, mode: RazorpayMode): boolean {
-  return mode === 'live' ? keyId.startsWith('rzp_live_') : keyId.startsWith('rzp_test_');
-}
-
-export interface ConnectionCheck {
-  ok: boolean;
-  merchantId?: string;
-  businessName?: string;
-  message?: string;
-}
-
-/**
- * Prove a key pair works, and find out whose account it is.
- *
- * Razorpay has no "who am I" endpoint on the standard API, so this asks for a
- * single order — the smallest authenticated call that exists. A 401 means the
- * keys are wrong; anything else means they are right, whatever the payload.
- */
-export async function testConnection(creds: {
+export function testConnection(creds: {
   keyId: string;
   keySecret: string;
-}): Promise<ConnectionCheck> {
-  try {
-    const res = await fetch(`${RAZORPAY_API}/orders?count=1`, {
-      headers: { authorization: authHeader(creds) },
-      signal: AbortSignal.timeout(10_000),
-    });
-
-    if (res.status === 401) {
-      return { ok: false, message: 'Razorpay rejected these keys. Check the Key ID and Secret.' };
-    }
-    if (!res.ok) {
-      const body = (await res.json().catch(() => null)) as
-        | { error?: { description?: string } }
-        | null;
-      return { ok: false, message: body?.error?.description ?? `Razorpay returned ${res.status}` };
-    }
-
-    // The account's own id rides along on any order it has. A brand-new
-    // account with no orders yet still authenticates, which is the thing
-    // being tested — the name is a bonus, not the point.
-    const body = (await res.json()) as { items?: { id?: string }[] };
-    return {
-      ok: true,
-      merchantId: creds.keyId.replace(/^rzp_(test|live)_/, ''),
-      businessName: body.items?.length ? undefined : undefined,
-    };
-  } catch {
-    return { ok: false, message: 'Could not reach Razorpay. Check your connection and try again.' };
-  }
-}
-
-export interface RazorpayOrder {
-  id: string;
-  amount: number;
-  currency: string;
-}
-
-/**
- * Open an order with Razorpay. The returned id is what the browser hands to
- * checkout, and what the webhook later arrives quoting.
- *
- * `receipt` carries our submission id so a payment can be traced back from the
- * Razorpay dashboard without a lookup table.
- */
-export async function createOrder(
-  creds: RazorpayCredentials,
-  input: { amount: number; currency: string; receipt: string; notes?: Record<string, string> }
-): Promise<RazorpayOrder> {
-  const res = await fetch(`${RAZORPAY_API}/orders`, {
-    method: 'POST',
-    headers: { authorization: authHeader(creds), 'content-type': 'application/json' },
-    body: JSON.stringify({
-      amount: input.amount,
-      currency: input.currency,
-      receipt: input.receipt,
-      notes: input.notes,
-    }),
-    signal: AbortSignal.timeout(10_000),
+  mode?: PaymentMode;
+  provider?: PaymentProvider;
+}) {
+  const provider = creds.provider ?? 'razorpay';
+  return gatewayFor(provider).testConnection({
+    keyId: creds.keyId,
+    keySecret: creds.keySecret,
+    mode: creds.mode ?? 'test',
   });
+}
 
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { error?: { description?: string } } | null;
-    throw new PaymentConfigError(body?.error?.description ?? `Razorpay refused the order (${res.status})`);
+export async function createCheckout(
+  creds: GatewayCredentials,
+  input: OrderInput
+): Promise<CheckoutSession> {
+  try {
+    return await gatewayFor(creds.provider).createCheckout(creds, input);
+  } catch (err) {
+    throw new PaymentConfigError(
+      err instanceof Error ? err.message : `${PROVIDER_LABELS[creds.provider]} refused the order`
+    );
   }
-  return (await res.json()) as RazorpayOrder;
 }
 
-/** Constant-time compare, so a mismatch leaks nothing about how far it matched. */
-function safeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
+export async function createOrder(
+  creds: GatewayCredentials,
+  input: OrderInput
+): Promise<CheckoutSession> {
+  return createCheckout(creds, input);
 }
 
-/**
- * Verifies a webhook really came from Razorpay.
- *
- * Signed over the raw request bytes — re-serialising the parsed JSON would
- * produce different bytes and fail every time, which is why the webhook route
- * is mounted with a raw body parser.
- */
-export function verifyWebhookSignature(rawBody: Buffer, signature: string, secret: string): boolean {
-  const expected = createHmac('sha256', secret).update(rawBody).digest('hex');
-  return safeEqual(expected, signature);
-}
-
-/**
- * Verifies the handshake the browser reports after checkout closes.
- *
- * This is a convenience only — it lets the page show a result immediately
- * instead of waiting on the webhook. The webhook remains what actually marks a
- * submission paid, because anything the browser says can be fabricated.
- */
-export function verifyCheckoutSignature(
-  orderId: string,
-  paymentId: string,
-  signature: string,
-  keySecret: string
-): boolean {
-  const expected = createHmac('sha256', keySecret).update(`${orderId}|${paymentId}`).digest('hex');
-  return safeEqual(expected, signature);
+export function parseWebhook(
+  provider: PaymentProvider,
+  request: { rawBody: Buffer; headers: Record<string, string | undefined>; secret: string }
+): WebhookEvent | null {
+  return gatewayFor(provider).parseWebhook(request);
 }

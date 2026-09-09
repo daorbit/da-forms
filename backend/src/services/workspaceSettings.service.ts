@@ -1,21 +1,13 @@
 import {
   WorkspaceSettingsModel,
-  type RazorpayMode,
+  type PaymentMode,
+  type PaymentProvider,
 } from '../models/workspaceSettings.model.js';
 import { encrypt, decrypt, maskTail, isEncryptionConfigured } from '../lib/crypto.js';
-import { testConnection, keyMatchesMode } from './payment.service.js';
+import { gatewayFor, PROVIDERS, PROVIDER_LABELS } from './gateways/index.js';
 
-/** One mode's credentials as the settings screen is allowed to see them. */
 export interface KeyPairView {
-  /**
-   * Masked, not the real value. A Key ID is publishable — it reaches the
-   * browser at checkout anyway — but that is at checkout, for a payment
-   * actually being made. Handing the whole id back from a settings read tells
-   * anyone who gets at this response which Razorpay account a workspace uses,
-   * for nothing in return: the screen only needs enough to recognise the key.
-   */
   keyId?: string;
-  /** Whether a key is saved at all, since the id above is only a tail. */
   hasKeyId?: boolean;
   keySecretMask?: string;
   webhookSecretMask?: string;
@@ -24,63 +16,72 @@ export interface KeyPairView {
   verifiedAt?: Date;
 }
 
-/**
- * What the settings screen is allowed to see.
- *
- * The secrets are reduced to "something is saved, ending in these four
- * characters". Enough for someone to recognise which key they pasted; not
- * enough to use it, and not enough to leak one through the management API.
- */
-export interface RazorpaySettingsView {
-  enabled: boolean;
-  mode: RazorpayMode;
-  test: KeyPairView;
-  live: KeyPairView;
-  lastChargeAt?: Date;
-  /** False when ENCRYPTION_KEY is missing — the UI explains rather than failing on save. */
-  configurable: boolean;
-  /** What is still outstanding before this workspace can take a payment. */
-  checklist: ChecklistItem[];
-}
-
 export interface ChecklistItem {
   id: 'keys' | 'verified' | 'webhook' | 'enabled' | 'charged';
   label: string;
   done: boolean;
-  /** Shown when not done — what to actually do about it. */
   hint?: string;
 }
 
+export interface ProviderSettingsView {
+  provider: PaymentProvider;
+  label: string;
+  enabled: boolean;
+  mode: PaymentMode;
+  test: KeyPairView;
+  live: KeyPairView;
+  lastChargeAt?: Date;
+  checklist: ChecklistItem[];
+}
+
+export interface PaymentSettingsView {
+  defaultProvider: PaymentProvider;
+  configurable: boolean;
+  providers: Record<PaymentProvider, ProviderSettingsView>;
+  enabled: boolean;
+  mode: PaymentMode;
+  test: KeyPairView;
+  live: KeyPairView;
+  lastChargeAt?: Date;
+  checklist: ChecklistItem[];
+}
+
 function decryptMask(value?: string): string | undefined {
-  // Decrypting only to mask looks wasteful, but the tail has to come from the
-  // real value, and storing it separately would mean a second place that can
-  // drift out of step with the secret it describes.
   return value ? maskTail(decrypt(value)) : undefined;
 }
 
-/**
- * The steps between an empty settings screen and a working payment.
- *
- * Spelled out because every one of them fails silently otherwise: keys that
- * were never verified look identical to working keys, and a missing webhook
- * shows up only as responses that never leave 'pending'.
- */
+const KEY_LABELS: Record<PaymentProvider, { id: string; secret: string; dashboard: string }> = {
+  razorpay: {
+    id: 'Key ID',
+    secret: 'Key Secret',
+    dashboard: 'Razorpay dashboard',
+  },
+  cashfree: {
+    id: 'App ID',
+    secret: 'Secret Key',
+    dashboard: 'Cashfree merchant dashboard',
+  },
+};
+
 function buildChecklist(
+  provider: PaymentProvider,
   pair: KeyPairView,
   enabled: boolean,
   lastChargeAt?: Date
 ): ChecklistItem[] {
+  const labels = KEY_LABELS[provider];
+  const name = PROVIDER_LABELS[provider];
   const hasKeys = Boolean(pair.hasKeyId && pair.keySecretMask);
   return [
     {
       id: 'keys',
       label: 'API keys saved',
       done: hasKeys,
-      hint: 'Paste the Key ID and Key Secret from your Razorpay dashboard.',
+      hint: `Paste the ${labels.id} and ${labels.secret} from your ${labels.dashboard}.`,
     },
     {
       id: 'verified',
-      label: 'Keys verified with Razorpay',
+      label: `Keys verified with ${name}`,
       done: Boolean(pair.verifiedAt),
       hint: 'Press "Test connection" to check the keys actually work.',
     },
@@ -88,10 +89,7 @@ function buildChecklist(
       id: 'webhook',
       label: 'Webhook secret saved',
       done: Boolean(pair.webhookSecretMask),
-      // Not optional despite sounding like it: the webhook is the only thing
-      // that marks a payment complete, so without it every response stays
-      // pending forever and no confirmation email is ever sent.
-      hint: 'Create a webhook in Razorpay and paste its secret here. Payments are not confirmed without it.',
+      hint: `Create a webhook in ${name} and paste its secret here. Payments are not confirmed without it.`,
     },
     {
       id: 'enabled',
@@ -108,90 +106,115 @@ function buildChecklist(
   ];
 }
 
-export async function getRazorpaySettings(workspaceId: string): Promise<RazorpaySettingsView> {
-  const settings = await WorkspaceSettingsModel.findOne({ workspaceId });
-  const razorpay = settings?.razorpay;
-  const mode = razorpay?.mode ?? 'test';
+function maskKeyId(provider: PaymentProvider, keyId?: string): string | undefined {
+  if (!keyId) return undefined;
+  return keyId.length > 12 ? `${keyId.slice(0, 8)}…${keyId.slice(-4)}` : `…${keyId.slice(-4)}`;
+}
 
-  const view = (which: 'test' | 'live'): KeyPairView => {
-    const pair = razorpay?.[which];
-    const account = which === 'live' ? razorpay?.liveAccount : razorpay?.testAccount;
+export async function getPaymentSettings(workspaceId: string): Promise<PaymentSettingsView> {
+  const settings = await WorkspaceSettingsModel.findOne({ workspaceId });
+
+  const buildProvider = (provider: PaymentProvider): ProviderSettingsView => {
+    const stored = settings?.[provider];
+    const mode = stored?.mode ?? 'test';
+
+    const view = (which: PaymentMode): KeyPairView => {
+      const pair = stored?.[which];
+      const account = which === 'live' ? stored?.liveAccount : stored?.testAccount;
+      return {
+        keyId: maskKeyId(provider, pair?.keyId),
+        hasKeyId: Boolean(pair?.keyId),
+        keySecretMask: decryptMask(pair?.keySecretEnc),
+        webhookSecretMask: decryptMask(pair?.webhookSecretEnc),
+        merchantId: account?.merchantId,
+        businessName: account?.businessName,
+        verifiedAt: account?.verifiedAt,
+      };
+    };
+
+    const test = view('test');
+    const live = view('live');
+    const enabled = Boolean(stored?.enabled);
+
     return {
-      // The prefix says which mode it belongs to and the tail identifies it —
-      // enough to recognise, not enough to name the account.
-      keyId: pair?.keyId ? `${pair.keyId.slice(0, 8)}…${pair.keyId.slice(-4)}` : undefined,
-      hasKeyId: Boolean(pair?.keyId),
-      keySecretMask: decryptMask(pair?.keySecretEnc),
-      webhookSecretMask: decryptMask(pair?.webhookSecretEnc),
-      merchantId: account?.merchantId,
-      businessName: account?.businessName,
-      verifiedAt: account?.verifiedAt,
+      provider,
+      label: PROVIDER_LABELS[provider],
+      enabled,
+      mode,
+      test,
+      live,
+      lastChargeAt: stored?.lastChargeAt,
+      checklist: buildChecklist(
+        provider,
+        mode === 'live' ? live : test,
+        enabled,
+        stored?.lastChargeAt
+      ),
     };
   };
 
-  const test = view('test');
-  const live = view('live');
-  const enabled = Boolean(razorpay?.enabled);
+  const providers = PROVIDERS.reduce(
+    (acc, provider) => {
+      acc[provider] = buildProvider(provider);
+      return acc;
+    },
+    {} as Record<PaymentProvider, ProviderSettingsView>
+  );
+
+  const defaultProvider = settings?.defaultProvider ?? 'razorpay';
+  const primary = providers[defaultProvider];
 
   return {
-    enabled,
-    mode,
-    test,
-    live,
-    lastChargeAt: razorpay?.lastChargeAt,
+    defaultProvider,
     configurable: isEncryptionConfigured(),
-    // Only the active mode's readiness matters — live keys sitting unverified
-    // are not a problem while the workspace is charging in test.
-    checklist: buildChecklist(mode === 'live' ? live : test, enabled, razorpay?.lastChargeAt),
+    providers,
+    enabled: primary.enabled,
+    mode: primary.mode,
+    test: primary.test,
+    live: primary.live,
+    lastChargeAt: primary.lastChargeAt,
+    checklist: primary.checklist,
   };
 }
 
-export interface RazorpaySettingsInput {
+
+export interface PaymentSettingsInput {
+  provider?: PaymentProvider;
+  defaultProvider?: PaymentProvider;
   enabled?: boolean;
-  mode?: RazorpayMode;
-  /** Which key set this save is editing. Defaults to the active mode. */
-  target?: RazorpayMode;
+  mode?: PaymentMode;
+  target?: PaymentMode;
   keyId?: string;
-  /** Omitted leaves the stored secret alone — the UI sends it only when replacing it. */
   keySecret?: string;
   webhookSecret?: string;
 }
 
 export class KeyModeMismatchError extends Error {}
 
-/**
- * Save credentials, encrypting anything new.
- *
- * An absent secret means "keep what is there", not "clear it": the settings
- * form shows a mask rather than the real value, so submitting it unchanged must
- * not wipe the key.
- */
-export async function saveRazorpaySettings(workspaceId: string, input: RazorpaySettingsInput) {
+export async function savePaymentSettings(workspaceId: string, input: PaymentSettingsInput) {
   const existing = await WorkspaceSettingsModel.findOne({ workspaceId });
-  const target = input.target ?? input.mode ?? existing?.razorpay?.mode ?? 'test';
+  const provider = input.provider ?? existing?.defaultProvider ?? 'razorpay';
+  const target = input.target ?? input.mode ?? existing?.[provider]?.mode ?? 'test';
 
-  // A live key in the test slot would mean the first "test" payment takes real
-  // money off a real card. Refused rather than warned about.
-  if (input.keyId && !keyMatchesMode(input.keyId.trim(), target)) {
+  if (input.keyId && !gatewayFor(provider).keyMatchesMode(input.keyId.trim(), target)) {
     throw new KeyModeMismatchError(
-      `That looks like a ${target === 'live' ? 'test' : 'live'} key. ${
+      `That looks like a ${target === 'live' ? 'test' : 'live'} ${PROVIDER_LABELS[provider]} key. ${
         target === 'live' ? 'Live' : 'Test'
       } keys start with rzp_${target}_.`
     );
   }
 
   const update: Record<string, unknown> = {};
-  if (input.enabled !== undefined) update['razorpay.enabled'] = input.enabled;
-  if (input.mode !== undefined) update['razorpay.mode'] = input.mode;
-  if (input.keyId !== undefined) update[`razorpay.${target}.keyId`] = input.keyId.trim();
+  if (input.defaultProvider !== undefined) update.defaultProvider = input.defaultProvider;
+  if (input.enabled !== undefined) update[`${provider}.enabled`] = input.enabled;
+  if (input.mode !== undefined) update[`${provider}.mode`] = input.mode;
+  if (input.keyId !== undefined) update[`${provider}.${target}.keyId`] = input.keyId.trim();
   if (input.keySecret) {
-    update[`razorpay.${target}.keySecretEnc`] = encrypt(input.keySecret.trim());
-    // The stored verification described the old key. Cleared so the checklist
-    // stops claiming a key nobody has tested is verified.
-    update[`razorpay.${target}Account.verifiedAt`] = null;
+    update[`${provider}.${target}.keySecretEnc`] = encrypt(input.keySecret.trim());
+    update[`${provider}.${target}Account.verifiedAt`] = null;
   }
   if (input.webhookSecret) {
-    update[`razorpay.${target}.webhookSecretEnc`] = encrypt(input.webhookSecret.trim());
+    update[`${provider}.${target}.webhookSecretEnc`] = encrypt(input.webhookSecret.trim());
   }
 
   await WorkspaceSettingsModel.findOneAndUpdate(
@@ -200,25 +223,25 @@ export async function saveRazorpaySettings(workspaceId: string, input: RazorpayS
     { upsert: true, new: true }
   );
 
-  return getRazorpaySettings(workspaceId);
+  return getPaymentSettings(workspaceId);
 }
 
-/**
- * Check a mode's saved keys against Razorpay, and remember the result.
- *
- * Run on demand from the settings screen, so a wrong key is caught by the
- * owner rather than by the first respondent who tries to pay.
- */
-export async function verifyRazorpayKeys(workspaceId: string, mode: RazorpayMode) {
+
+export async function verifyKeys(
+  workspaceId: string,
+  provider: PaymentProvider,
+  mode: PaymentMode
+) {
   const settings = await WorkspaceSettingsModel.findOne({ workspaceId });
-  const pair = settings?.razorpay?.[mode];
+  const pair = settings?.[provider]?.[mode];
   if (!pair?.keyId || !pair.keySecretEnc) {
     return { ok: false, message: `No ${mode} keys are saved yet.` };
   }
 
-  const result = await testConnection({
+  const result = await gatewayFor(provider).testConnection({
     keyId: pair.keyId,
     keySecret: decrypt(pair.keySecretEnc),
+    mode,
   });
 
   if (result.ok) {
@@ -226,10 +249,10 @@ export async function verifyRazorpayKeys(workspaceId: string, mode: RazorpayMode
       { workspaceId },
       {
         $set: {
-          [`razorpay.${mode}Account.verifiedAt`]: new Date(),
-          [`razorpay.${mode}Account.merchantId`]: result.merchantId,
+          [`${provider}.${mode}Account.verifiedAt`]: new Date(),
+          [`${provider}.${mode}Account.merchantId`]: result.merchantId,
           ...(result.businessName
-            ? { [`razorpay.${mode}Account.businessName`]: result.businessName }
+            ? { [`${provider}.${mode}Account.businessName`]: result.businessName }
             : {}),
         },
       }
@@ -239,24 +262,26 @@ export async function verifyRazorpayKeys(workspaceId: string, mode: RazorpayMode
   return result;
 }
 
-/** Forget one mode's credentials, leaving the other alone. */
-export async function disconnectRazorpay(workspaceId: string, mode: RazorpayMode) {
+
+export async function disconnectProvider(
+  workspaceId: string,
+  provider: PaymentProvider,
+  mode: PaymentMode
+) {
   await WorkspaceSettingsModel.findOneAndUpdate(
     { workspaceId },
     {
-      $unset: { [`razorpay.${mode}`]: '', [`razorpay.${mode}Account`]: '' },
-      // Disconnecting the mode being charged through must also stop the
-      // charging, or every submission would hit a configuration error.
-      $set: { 'razorpay.enabled': false },
+      $unset: { [`${provider}.${mode}`]: '', [`${provider}.${mode}Account`]: '' },
+      $set: { [`${provider}.enabled`]: false },
     }
   );
-  return getRazorpaySettings(workspaceId);
+  return getPaymentSettings(workspaceId);
 }
 
-/** Stamped when a charge settles, so the checklist's last step can complete. */
-export async function markCharged(workspaceId: string) {
+
+export async function markCharged(workspaceId: string, provider: PaymentProvider = 'razorpay') {
   await WorkspaceSettingsModel.updateOne(
     { workspaceId },
-    { $set: { 'razorpay.lastChargeAt': new Date() } }
+    { $set: { [`${provider}.lastChargeAt`]: new Date() } }
   );
 }

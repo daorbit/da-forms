@@ -184,6 +184,7 @@ const PROVIDER_COPY: Record<
       'PAYMENT_USER_DROPPED_WEBHOOK',
     ],
     webhookPath: 'Developers → Webhooks',
+    webhookSecretless: true,
     needsPhone: true,
     webhookConsoleUrl: 'https://merchant.cashfree.com/merchants/pg/developers/webhooks',
     webhookDocsUrl: 'https://www.cashfree.com/docs/payments/online/webhooks/overview',
@@ -725,14 +726,14 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
 
                 {step === 'keys' && (
                   <Stack gap="lg">
-                    <Text size="sm" c="dimmed">
+                    <Text size="xs" c="dimmed" style={{ lineHeight: 1.6 }}>
                       Payments are charged straight into your own {current?.label} account —
                       nothing routes through us. Find these under {copy.keysPath} in the{' '}
-                      <Anchor href={copy.dashboardUrl} target="_blank" rel="noreferrer" size="sm">
+                      <Anchor href={copy.dashboardUrl} target="_blank" rel="noreferrer" size="xs">
                         {copy.dashboardName}
                       </Anchor>
                       , or read{' '}
-                      <Anchor href={copy.keysDocsUrl} target="_blank" rel="noreferrer" size="sm">
+                      <Anchor href={copy.keysDocsUrl} target="_blank" rel="noreferrer" size="xs">
                         their guide to finding them ↗
                       </Anchor>
                       .
@@ -849,7 +850,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
 
                 {step === 'webhook' && (
                   <Stack gap="lg">
-                    <Text size="sm" c="dimmed">
+                    <Text size="xs" c="dimmed" style={{ lineHeight: 1.6 }}>
                       {current?.label} tells us a payment succeeded through this URL. Without it,
                       a response sits unconfirmed forever and no confirmation email goes out —
                       even though the respondent was charged.

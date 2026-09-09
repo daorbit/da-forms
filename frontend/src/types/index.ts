@@ -188,27 +188,10 @@ export interface FormField {
   subFields?: FormField[];
   minRows?: number;
   maxRows?: number;
-  /**
-   * A matrix's statements, one per row. The shared answer choices live in
-   * `options`, so a matrix is rows × options.
-   */
   rows?: string[];
-  /**
-   * Where a hidden field takes its value from: a URL query parameter of this
-   * name. Falls back to `initialValue` when the parameter is absent.
-   */
   paramName?: string;
   showIf?: ShowIfRule;
-  /** Payment fields only: what this field charges. */
   pay?: PaymentConfig;
-  /**
-   * Calculated fields only: arithmetic over other fields, by their labels —
-   * `{{Quantity}} * {{Unit price}}`.
-   *
-   * What the respondent sees is computed in the browser for immediacy; what is
-   * stored is recomputed on the server, so the displayed figure is never the
-   * one that counts.
-   */
   formula?: string;
   formulaFormat?: 'number' | 'currency';
   formulaCurrency?: string;
@@ -217,21 +200,13 @@ export interface FormField {
   optionValues?: Record<string, number>;
   /** Which options are correct, by their own text. Presence makes it a question. */
   correctOptions?: string[];
-  /** Pixel width, overriding the size preset outright. */
   customWidth?: number;
   /** Pixel height for this field's input, e.g. a taller text area. */
   customHeight?: number;
-  /** Extra class name applied to the field's own input, for power-user styling. */
   cssClass?: string;
 }
 
-/**
- * What a payment field charges.
- *
- * The amount here is what the builder shows and what the server re-derives at
- * submit time. The browser's copy is display only — the charge is computed
- * again from the stored form, so editing this client-side changes nothing.
- */
+ 
 export type PaymentMode = 'fixed' | 'field' | 'modifiable';
 
 export interface PaymentConfig {
@@ -371,7 +346,7 @@ export interface NotificationSettings {
 }
 
 export interface SubmissionPayment {
-  provider: 'razorpay';
+  provider: PaymentProvider;
   orderId: string;
   paymentId?: string;
   /** Minor units. */
@@ -393,30 +368,19 @@ export interface Submission {
   _id: string;
   formId: string;
   data: Record<string, string>;
-  /** Byte size of each uploaded file/image/media answer, keyed by field id.
-   *  Read off Cloudinary's own upload response, not always present (older
-   *  submissions predate this, or a value came from a link rather than
-   *  a real upload). */
+ 
   fileMeta?: Record<string, { bytes: number }>;
   sourceUrl?: string;
-  /** Anything the Entries page can see is 'complete' — pending rows are filtered server-side. */
   status?: 'complete' | 'pending_payment';
   payment?: SubmissionPayment;
-  /**
-   * What this response scored, on a form with an answer key. Absent on forms
-   * that have none, and on responses submitted before one was added.
-   */
+ 
   quiz?: { score: number; total: number; correct: number; questions: number };
   read: boolean;
   starred: boolean;
   createdAt: string;
 }
 
-/**
- * What a paid form answers with instead of a submission: everything the
- * browser needs to open Razorpay checkout. The amount is the server's figure,
- * not the one the page calculated.
- */
+ 
 export interface PaymentRequired {
   paymentRequired: true;
   provider: PaymentProvider;
@@ -425,9 +389,7 @@ export interface PaymentRequired {
   orderId: string;
   amount: number;
   currency: string;
-  /** Razorpay only — its checkout opens with the publishable key id. */
   keyId?: string;
-  /** Cashfree only — its checkout opens with a server-minted session token. */
   paymentSessionId?: string;
   description: string;
 }

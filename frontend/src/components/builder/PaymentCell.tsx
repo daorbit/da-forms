@@ -10,15 +10,25 @@ import {
   CopyButton,
   ActionIcon,
   Tooltip,
-  ThemeIcon,
   Box,
 } from '@mantine/core';
-import { IconCreditCard, IconCopy, IconCheck } from '@tabler/icons-react';
-import type { SubmissionPayment } from '@/types';
+import { IconCopy, IconCheck } from '@tabler/icons-react';
+import type { PaymentProvider, SubmissionPayment } from '@/types';
 import { formatAmount } from '@/lib/payment';
+import { GatewayLogo } from './GatewayLogos';
 
 interface Props {
   payment?: SubmissionPayment;
+}
+
+ 
+const GATEWAY_NAME: Record<PaymentProvider, string> = {
+  razorpay: 'Razorpay',
+  cashfree: 'Cashfree',
+};
+
+function gatewayOf(payment: SubmissionPayment): PaymentProvider {
+  return payment.provider ?? 'razorpay';
 }
 
 /** One label/value row in the details dialog. */
@@ -46,23 +56,10 @@ function Row({ label, value }: { label: string; value?: string }) {
     </Group>
   );
 }
-
-/**
- * A submission's payment, for the entries table.
- *
- * Reads from `submission.payment` rather than `data`, because a payment is not
- * an answer the respondent typed — it is written by the webhook once Razorpay
- * confirms the money arrived.
- *
- * The cell shows the amount and status; everything else — transaction id, who
- * paid, how — goes in a dialog, so the column stays scannable without losing
- * the detail someone needs when reconciling against Razorpay.
- */
+ 
 export function PaymentCell({ payment }: Props) {
   const [open, setOpen] = useState(false);
-
-  // A response with no payment at all: the field was added after this one came
-  // in, or its condition was not met so nothing was charged.
+ 
   if (!payment) {
     return (
       <Text size="sm" c="dimmed">
@@ -72,12 +69,15 @@ export function PaymentCell({ payment }: Props) {
   }
 
   const amount = formatAmount(payment.amount, payment.currency);
+  const gateway = gatewayOf(payment);
 
   if (payment.status !== 'paid') {
     return (
-      <Badge size="sm" variant="light" color={payment.status === 'failed' ? 'red' : 'gray'}>
-        {payment.status === 'failed' ? 'Failed' : 'Pending'}
-      </Badge>
+      <Tooltip label={`${amount} through ${GATEWAY_NAME[gateway]}`} withArrow>
+        <Badge size="sm" variant="light" color={payment.status === 'failed' ? 'red' : 'gray'}>
+          {payment.status === 'failed' ? 'Failed' : 'Pending'}
+        </Badge>
+      </Tooltip>
     );
   }
 
@@ -98,6 +98,12 @@ export function PaymentCell({ payment }: Props) {
           <Badge size="xs" variant="filled" color="emerald">
             Paid
           </Badge>
+
+          <Tooltip label={`Received through ${GATEWAY_NAME[gateway]}`} withArrow>
+            <Box style={{ display: 'flex', alignItems: 'center', opacity: 0.75 }}>
+              <GatewayLogo provider={gateway} height={11} />
+            </Box>
+          </Tooltip>
         </Group>
       </UnstyledButton>
 
@@ -110,10 +116,7 @@ export function PaymentCell({ payment }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <Stack gap="md">
-          <Group gap="sm">
-            <ThemeIcon variant="light" color="gray" size="lg" radius="md">
-              <IconCreditCard size={18} />
-            </ThemeIcon>
+          <Group gap="sm" justify="space-between" wrap="nowrap" align="flex-start">
             <Box>
               <Group gap={8}>
                 <Text fw={700} size="xl">
@@ -124,8 +127,22 @@ export function PaymentCell({ payment }: Props) {
                 </Badge>
               </Group>
               <Text size="xs" c="dimmed">
-                {payment.paidAt ? new Date(payment.paidAt).toLocaleString() : 'Razorpay'}
+                {payment.paidAt
+                  ? new Date(payment.paidAt).toLocaleString()
+                  : `Received through ${GATEWAY_NAME[gateway]}`}
               </Text>
+            </Box>
+            <Box
+              style={{
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                padding: '6px 10px',
+                borderRadius: 'var(--mantine-radius-md)',
+                border: '1px solid var(--mantine-color-default-border)',
+              }}
+            >
+              <GatewayLogo provider={gateway} height={16} />
             </Box>
           </Group>
 
@@ -140,7 +157,7 @@ export function PaymentCell({ payment }: Props) {
           </Stack>
 
           <Text size="xs" c="dimmed">
-            Look this up in your Razorpay dashboard by the payment ID.
+            Look this up in your {GATEWAY_NAME[gateway]} dashboard by the payment ID.
           </Text>
         </Stack>
       </Modal>

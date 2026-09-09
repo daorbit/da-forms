@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Modal,
   Group,
@@ -88,14 +88,6 @@ const PROVIDER_COPY: Record<
     /** The gateway's own documentation for this step. */
     webhookDocsUrl: string;
     keysDocsUrl: string;
-    /** What to do in the gateway's dashboard, in order. */
-    webhookSteps: string[];
-    /** Reference rows shown under the keys step. */
-    keyFacts: { label: string; body: ReactNode }[];
-    /** Reference rows shown under the webhook step. */
-    webhookFacts: { label: string; body: ReactNode }[];
-    /** Reference rows shown under the go-live step. */
-    liveFacts: { label: string; body: ReactNode }[];
   }
 > = {
   razorpay: {
@@ -111,63 +103,6 @@ const PROVIDER_COPY: Record<
     webhookConsoleUrl: 'https://dashboard.razorpay.com/app/website-app-settings/webhooks',
     webhookDocsUrl: 'https://razorpay.com/docs/webhooks/setup-edit-payments/',
     keysDocsUrl: 'https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/',
-    webhookSteps: [
-      'Open Account & Settings → Webhooks, then click "+ Add New Webhook".',
-      'Paste the URL above into the Webhook URL field.',
-      'Type any secret you like into the Secret field — you invent this, Razorpay does not generate it. Copy it.',
-      'Tick the two events listed below under Active Events, then click Create Webhook.',
-      'Come back here and paste that same secret into the box below, then save.',
-    ],
-    keyFacts: [
-      {
-        label: 'Test keys',
-        body: 'Start with rzp_test_. No real money moves and no settlement happens. Use Razorpay’s test cards — 4111 1111 1111 1111 with any future expiry and any CVV.',
-      },
-      {
-        label: 'Live keys',
-        body: 'Start with rzp_live_. Only issued once your Razorpay account has completed KYC and been activated. Every payment is real from the moment you switch modes.',
-      },
-      {
-        label: 'The secret',
-        body: 'Razorpay shows the Key Secret exactly once, when the key pair is generated. If you did not copy it, you cannot look it up — regenerate the pair and paste both halves again.',
-      },
-      {
-        label: 'Rotating',
-        body: 'Generating a new key pair does not disable the old one immediately, so save the new keys here first and only then delete the old pair in Razorpay.',
-      },
-    ],
-    webhookFacts: [
-      {
-        label: 'The secret',
-        body: 'You choose this value — Razorpay does not generate it. Any long random string works. It must match here exactly or every delivery is rejected as unverified.',
-      },
-      {
-        label: 'Test vs live',
-        body: 'Test and live mode keep separate webhooks. Register the URL in both if you intend to go live, or live payments will settle with nothing listening.',
-      },
-      {
-        label: 'Localhost',
-        body: 'Razorpay can only reach public URLs. A backend on localhost will never receive a delivery — expose it with a tunnel such as ngrok while testing.',
-      },
-      {
-        label: 'If it fails',
-        body: 'Razorpay retries a failed delivery for up to 24 hours. A payment that stayed pending usually means a wrong secret or an unreachable URL, not a lost payment.',
-      },
-    ],
-    liveFacts: [
-      {
-        label: 'Switching',
-        body: 'Changing mode here decides which saved key pair charges. It does not move money or migrate anything — test payments stay in the test dashboard.',
-      },
-      {
-        label: 'Before you switch',
-        body: 'Register the webhook in live mode, verify the live keys, and run one real low-value payment end to end. A live form with no live webhook takes money and confirms nothing.',
-      },
-      {
-        label: 'Refunds',
-        body: 'Issue refunds from the Razorpay dashboard. Refunding there does not change the response stored here — the submission stays marked paid.',
-      },
-    ],
   },
   cashfree: {
     keyIdLabel: 'App ID',
@@ -189,71 +124,6 @@ const PROVIDER_COPY: Record<
     webhookConsoleUrl: 'https://merchant.cashfree.com/merchants/pg/developers/webhooks',
     webhookDocsUrl: 'https://www.cashfree.com/docs/payments/online/webhooks/overview',
     keysDocsUrl: 'https://www.cashfree.com/docs/payments/online/resources/api-keys',
-    webhookSteps: [
-      'Switch the dashboard to the environment you are setting up — Sandbox or Production. The two keep separate webhooks.',
-      'Open Developers → Webhooks and click "Add Webhook Endpoint".',
-      'Paste the URL above into Endpoint URL.',
-      'Press Test if you like, but expect a warning — the test probe is unsigned, so this endpoint refuses it on purpose. Click Continue.',
-      'Select the events listed below, then save. There is no secret to copy — Cashfree signs with your Secret Key.',
-    ],
-    keyFacts: [
-      {
-        label: 'Sandbox keys',
-        body: 'Generated in the Sandbox environment and only valid against Cashfree’s sandbox servers. Nothing settles and no real money moves.',
-      },
-      {
-        label: 'Production keys',
-        body: 'Issued once your Cashfree account is KYC-verified and activated. Every payment is real from the moment you switch modes.',
-      },
-      {
-        label: 'They look alike',
-        body: 'Unlike Razorpay, Cashfree keys carry no test/live prefix, so nothing can catch a sandbox key pasted into the live slot on sight. Always press "Test connection" after saving — a mismatched key fails to authenticate, and that is the only warning you get.',
-      },
-      {
-        label: 'The secret',
-        body: 'The Secret Key is shown once, when generated. It also verifies your webhooks, so keep it — losing it means regenerating the pair and re-saving both halves here.',
-      },
-    ],
-    webhookFacts: [
-      {
-        label: 'No secret',
-        body: 'Cashfree has no per-webhook secret. Deliveries are signed with the Secret Key you saved in the previous step, so there is nothing extra to paste. If you went looking for one and found nothing, that is why.',
-      },
-      {
-        label: 'The test button',
-        body: 'Cashfree’s Test button sends an unsigned probe. This endpoint refuses unsigned requests by design, so the warning is expected — a webhook that answered it would accept forged payment notifications from anyone. Click Continue past it.',
-      },
-      {
-        label: 'Sandbox vs production',
-        body: 'The two environments keep separate webhooks and separate Secret Keys. Because the key verifies the signature, a sandbox webhook received while this workspace is set to live mode will not verify. Keep the mode aligned with the environment you are testing.',
-      },
-      {
-        label: 'Localhost',
-        body: 'Cashfree can only reach public URLs. A backend on localhost never receives a delivery — expose it with a tunnel such as ngrok while testing.',
-      },
-      {
-        label: 'Verifying it works',
-        body: 'The only conclusive test is a real sandbox payment. If the submission stays pending afterwards, the URL or the mode is wrong — the money is not lost.',
-      },
-    ],
-    liveFacts: [
-      {
-        label: 'Switching',
-        body: 'Changing mode here decides which saved keys charge, and which Secret Key verifies incoming webhooks. It moves no money and migrates nothing.',
-      },
-      {
-        label: 'Before you switch',
-        body: 'Register the webhook in production, save the production keys, verify them, and run one real low-value payment. Production keys against a sandbox webhook — or the reverse — fail silently.',
-      },
-      {
-        label: 'Phone numbers',
-        body: 'Cashfree requires the payer’s mobile number on every order. Forms with a phone field use that answer; forms without one ask for it above the pay button.',
-      },
-      {
-        label: 'Refunds',
-        body: 'Issue refunds from the Cashfree dashboard. Refunding there does not change the response stored here — the submission stays marked paid.',
-      },
-    ],
   },
 };
 
@@ -268,56 +138,6 @@ const PROVIDER_COPY: Record<
  * loudly on its own — keys that were never verified look identical to working
  * ones, and a missing webhook shows up only as responses stuck on pending.
  */
-/**
- * The reference block under each step.
- *
- * Payments are the one part of a form where a wrong guess costs real money and
- * the failure is usually silent, so what would otherwise be documentation
- * nobody opens sits directly under the step it belongs to.
- */
-function Reference({
-  title,
-  facts,
-  docsUrl,
-  docsLabel,
-}: {
-  title: string;
-  facts: { label: string; body: ReactNode }[];
-  docsUrl?: string;
-  docsLabel?: string;
-}) {
-  return (
-    <Box mt="xl">
-      <Group justify="space-between" mb="xs" wrap="nowrap">
-        <Text size="xs" fw={600} c="dimmed" tt="uppercase">
-          {title}
-        </Text>
-        {docsUrl && (
-          <Anchor
-            href={docsUrl}
-            target="_blank"
-            rel="noreferrer"
-            size="xs"
-            style={{ flexShrink: 0 }}
-          >
-            {docsLabel} ↗
-          </Anchor>
-        )}
-      </Group>
-      <Box className={classes.refCard}>
-        {facts.map((fact) => (
-          <Box key={fact.label} className={classes.refRow}>
-            <Text className={classes.refLabel}>{fact.label}</Text>
-            <Text size="xs" c="dimmed" style={{ lineHeight: 1.55 }}>
-              {fact.body}
-            </Text>
-          </Box>
-        ))}
-      </Box>
-    </Box>
-  );
-}
-
 export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Props) {
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
   const [loading, setLoading] = useState(false);
@@ -726,17 +546,13 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
 
                 {step === 'keys' && (
                   <Stack gap="lg">
-                    <Text size="xs" c="dimmed" style={{ lineHeight: 1.6 }}>
-                      Payments are charged straight into your own {current?.label} account —
-                      nothing routes through us. Find these under {copy.keysPath} in the{' '}
+                    {/* The one thing someone needs before they can fill this in:
+                        where the gateway keeps these keys. */}
+                    <Text size="xs" c="dimmed">
+                      {copy.keysPath} in the{' '}
                       <Anchor href={copy.dashboardUrl} target="_blank" rel="noreferrer" size="xs">
-                        {copy.dashboardName}
+                        {copy.dashboardName} ↗
                       </Anchor>
-                      , or read{' '}
-                      <Anchor href={copy.keysDocsUrl} target="_blank" rel="noreferrer" size="xs">
-                        their guide to finding them ↗
-                      </Anchor>
-                      .
                     </Text>
 
                     <SegmentedControl
@@ -839,22 +655,27 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                       </Group>
                     )}
 
-                    <Reference
-                      title={`About ${current?.label} keys`}
-                      facts={copy.keyFacts}
-                      docsUrl={copy.keysDocsUrl}
-                      docsLabel="Their key guide"
-                    />
                   </Stack>
                 )}
 
                 {step === 'webhook' && (
                   <Stack gap="lg">
-                    <Text size="xs" c="dimmed" style={{ lineHeight: 1.6 }}>
-                      {current?.label} tells us a payment succeeded through this URL. Without it,
-                      a response sits unconfirmed forever and no confirmation email goes out —
-                      even though the respondent was charged.
-                    </Text>
+                    {/* Where to register it. The instructions themselves are the
+                        gateway's own — link out rather than restate them. */}
+                    <Group justify="space-between" wrap="nowrap">
+                      <Text size="xs" c="dimmed">
+                        Register this URL once in {current?.label}.
+                      </Text>
+                      <Anchor
+                        href={copy.webhookConsoleUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        size="xs"
+                        style={{ flexShrink: 0 }}
+                      >
+                        Open {copy.webhookPath} ↗
+                      </Anchor>
+                    </Group>
 
                     <Box className={classes.keyCard}>
                       <Stack gap="md">
@@ -877,42 +698,14 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                             {providerWebhookUrl}
                           </Code>
                           <Text size="xs" c="dimmed" mt={6}>
-                            Add this <strong>once</strong> in {current?.label}. It covers every
-                            paid form in this workspace — you do not add one per form. Each
-                            gateway needs its own URL, so this one is only for {current?.label}.
+                            Covers every paid form in this workspace. Only for {current?.label}.
                           </Text>
                         </Box>
 
                         <Divider />
 
                         <Box>
-                          <Group justify="space-between" mb={8} wrap="nowrap">
-                            <Text size="sm" fw={600}>
-                              Where to paste it
-                            </Text>
-                            <Anchor
-                              href={copy.webhookConsoleUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              size="xs"
-                              style={{ flexShrink: 0 }}
-                            >
-                              Open {copy.webhookPath} ↗
-                            </Anchor>
-                          </Group>
-
-                          <Stack gap={6}>
-                            {copy.webhookSteps.map((instruction, index) => (
-                              <Group key={index} gap={8} wrap="nowrap" align="flex-start">
-                                <Box className={classes.stepNumber}>{index + 1}</Box>
-                                <Text size="xs" c="dimmed" style={{ lineHeight: 1.5 }}>
-                                  {instruction}
-                                </Text>
-                              </Group>
-                            ))}
-                          </Stack>
-
-                          <Text size="xs" fw={600} mt="md" mb={6}>
+                          <Text size="sm" fw={600} mb={6}>
                             Events to subscribe
                           </Text>
                           <Group gap={6}>
@@ -920,17 +713,6 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                               <Code key={event}>{event}</Code>
                             ))}
                           </Group>
-
-                          <Anchor
-                            href={copy.webhookDocsUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            size="xs"
-                            display="block"
-                            mt={10}
-                          >
-                            {current?.label} webhook documentation ↗
-                          </Anchor>
                         </Box>
 
                         <Divider />
@@ -939,10 +721,8 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                           <Alert variant="light" color="gray" radius="md" icon={<IconKey size={16} />}>
                             <Text size="xs">
                               <strong>No webhook secret to paste.</strong> {current?.label} signs
-                              its webhooks with the <strong>{copy.secretLabel}</strong> you saved
-                              in the previous step, so registering the URL above finishes this
-                              step. If you did not find a secret in their dashboard, that is
-                              why — there isn’t one.
+                              with the {copy.secretLabel} from the previous step, so registering
+                              the URL finishes this step.
                             </Text>
                           </Alert>
                         ) : (
@@ -983,12 +763,6 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                       </Group>
                     )}
 
-                    <Reference
-                      title="About webhooks"
-                      facts={copy.webhookFacts}
-                      docsUrl={copy.webhookDocsUrl}
-                      docsLabel="Their webhook guide"
-                    />
                   </Stack>
                 )}
 
@@ -1070,12 +844,9 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                         title={`${current?.label} needs a phone number`}
                       >
                         <Text size="xs">
-                          Every {current?.label} payment must carry the payer’s mobile number.
-                          Forms with a phone field use that answer. A form without one shows
-                          respondents an extra “Mobile number” box above the pay button — it
-                          reaches {current?.label} and the receipt, but is not stored as an
-                          answer, so add a phone field to any form where you want it in your
-                          responses.
+                          Forms without a phone field ask respondents for a mobile number above
+                          the pay button. That answer is not stored — add a phone field to keep
+                          it in your responses.
                         </Text>
                       </Alert>
                     )}
@@ -1123,12 +894,6 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                       </Group>
                     )}
 
-                    <Reference
-                      title="Going live safely"
-                      facts={copy.liveFacts}
-                      docsUrl={copy.dashboardUrl}
-                      docsLabel={`Open ${current?.label}`}
-                    />
                   </Stack>
                 )}
               </Box>

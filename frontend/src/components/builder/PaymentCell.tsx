@@ -25,6 +25,7 @@ interface Props {
 const GATEWAY_NAME: Record<PaymentProvider, string> = {
   razorpay: 'Razorpay',
   cashfree: 'Cashfree',
+  payu: 'PayU',
 };
 
 function gatewayOf(payment: SubmissionPayment): PaymentProvider {

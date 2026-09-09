@@ -217,7 +217,7 @@ export function normalisePhone(raw: string): string | undefined {
  * front, which is why a form charging through it has to have a number in hand
  * before the order can be created.
  */
-const PHONE_REQUIRED = new Set<PaymentProvider>(['cashfree']);
+const PHONE_REQUIRED = new Set<PaymentProvider>(['cashfree', 'payu']);
 
 export function providerNeedsPhone(provider: PaymentProvider): boolean {
   return PHONE_REQUIRED.has(provider);
@@ -287,7 +287,15 @@ export async function getWorkspaceDefaultProvider(
   return settings?.defaultProvider ?? 'razorpay';
 }
 
-const WEBHOOK_SIGNED_WITH_API_SECRET = new Set<PaymentProvider>(['cashfree']);
+/**
+ * Gateways whose webhooks are signed with the API secret itself.
+ *
+ * Cashfree signs with the secret key; PayU hashes with the merchant salt, which
+ * is the same value it uses for the payment request. Neither issues a separate
+ * webhook secret, so asking a workspace to save one would be asking for
+ * something that does not exist.
+ */
+const WEBHOOK_SIGNED_WITH_API_SECRET = new Set<PaymentProvider>(['cashfree', 'payu']);
 
 export async function getCredentials(
   workspaceId: string,
@@ -370,4 +378,20 @@ export function parseWebhook(
   request: { rawBody: Buffer; headers: Record<string, string | undefined>; secret: string }
 ): WebhookEvent | null {
   return gatewayFor(provider).parseWebhook(request);
+}
+
+/**
+ * Ask the gateway directly what became of an order.
+ *
+ * Only PayU implements this. Its webhook has to be switched on per merchant and
+ * can arrive late or never, so the respondent's return from the payment page
+ * asks PayU itself rather than believing the browser. Gateways whose webhook is
+ * dependable return null and the webhook stays the only word on a payment.
+ */
+export function verifyPayment(
+  creds: GatewayCredentials,
+  orderId: string
+): Promise<WebhookEvent | null> {
+  const gateway = gatewayFor(creds.provider);
+  return gateway.verifyPayment ? gateway.verifyPayment(creds, orderId) : Promise.resolve(null);
 }

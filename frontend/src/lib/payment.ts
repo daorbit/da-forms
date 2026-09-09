@@ -7,11 +7,26 @@ import type {
 } from '@/types';
 import { openCheckout, type CheckoutOutcome } from './razorpay';
 import { openCashfreeCheckout } from './cashfree';
+import { openPayuCheckout } from './payu';
 
 export const PROVIDER_LABELS: Record<PaymentProvider, string> = {
   razorpay: 'Razorpay',
   cashfree: 'Cashfree',
+  payu: 'PayU',
 };
+
+/**
+ * Gateways that take the respondent off this page to pay.
+ *
+ * The difference matters to the caller: a redirecting gateway never resolves
+ * its checkout promise, because the page is gone before it could. The outcome
+ * arrives on the way back instead.
+ */
+const REDIRECTS_AWAY: PaymentProvider[] = ['payu'];
+
+export function providerRedirectsAway(provider: PaymentProvider): boolean {
+  return REDIRECTS_AWAY.includes(provider);
+}
  
 /**
  * Gateways that will not open an order without a customer phone number.
@@ -20,7 +35,7 @@ export const PROVIDER_LABELS: Record<PaymentProvider, string> = {
  * for nothing still ends up with a contact on the payment. Cashfree wants it
  * before the order exists.
  */
-const PHONE_REQUIRED: PaymentProvider[] = ['cashfree'];
+const PHONE_REQUIRED: PaymentProvider[] = ['cashfree', 'payu'];
 
 export function providerNeedsPhone(provider: PaymentProvider): boolean {
   return PHONE_REQUIRED.includes(provider);
@@ -48,9 +63,9 @@ export function openGatewayCheckout(
   payment: PaymentRequired,
   prefill: { name?: string; email?: string; contact?: string } = {}
 ): Promise<CheckoutOutcome> {
-  return payment.provider === 'cashfree'
-    ? openCashfreeCheckout(payment)
-    : openCheckout(payment, prefill);
+  if (payment.provider === 'cashfree') return openCashfreeCheckout(payment);
+  if (payment.provider === 'payu') return openPayuCheckout(payment);
+  return openCheckout(payment, prefill);
 }
 
  

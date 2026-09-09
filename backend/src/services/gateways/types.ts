@@ -16,6 +16,8 @@ export interface CheckoutSession {
   currency: string;
   keyId?: string;
   paymentSessionId?: string;
+  redirectUrl?: string;
+  redirectFields?: Record<string, string>;
 }
 
 export interface OrderInput {
@@ -26,6 +28,8 @@ export interface OrderInput {
   customerPhone?: string;
   customerEmail?: string;
   customerName?: string;
+  description?: string;
+  returnUrl?: string;
 }
 
 export interface ConnectionCheck {
@@ -65,4 +69,5 @@ export interface PaymentGateway {
   keyMatchesMode(keyId: string, mode: PaymentMode): boolean;
 
   parseWebhook(request: WebhookRequest): WebhookEvent | null;
+  verifyPayment?(creds: GatewayCredentials, orderId: string): Promise<WebhookEvent | null>;
 }

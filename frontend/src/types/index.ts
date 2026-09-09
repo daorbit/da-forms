@@ -397,6 +397,13 @@ export interface PaymentRequired {
   currency: string;
   keyId?: string;
   paymentSessionId?: string;
+  /**
+   * Set only by a gateway with no checkout window of its own. PayU is reached
+   * by posting `redirectFields` to `redirectUrl`, which takes the respondent
+   * off this page and brings them back when the payment is done.
+   */
+  redirectUrl?: string;
+  redirectFields?: Record<string, string>;
   description: string;
   /**
    * Whose name and logo the payment window carries. Resolved by Quantalog
@@ -423,7 +430,7 @@ export interface FormBranding {
   poweredByLabel: string;
 }
 
-export type PaymentProvider = 'razorpay' | 'cashfree';
+export type PaymentProvider = 'razorpay' | 'cashfree' | 'payu';
 
 export type RazorpayMode = 'test' | 'live';
 

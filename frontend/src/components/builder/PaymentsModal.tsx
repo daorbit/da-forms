@@ -125,6 +125,26 @@ const PROVIDER_COPY: Record<
     webhookDocsUrl: 'https://www.cashfree.com/docs/payments/online/webhooks/overview',
     keysDocsUrl: 'https://www.cashfree.com/docs/payments/online/resources/api-keys',
   },
+  payu: {
+    keyIdLabel: 'Merchant Key',
+    secretLabel: 'Merchant Salt',
+    keyIdPlaceholder: () => 'Your merchant key',
+    keyIdHint: (mode) =>
+      `From your ${mode === 'live' ? 'production' : 'test'} PayU account. The key looks the same in both, so test the connection after saving.`,
+    dashboardUrl: 'https://onboarding.payu.in/app/account',
+    dashboardName: 'PayU dashboard',
+    keysPath: 'Payment Gateway → Key & Salt Details',
+    // PayU names its events by the transaction state rather than by an event
+    // string, so these read as the states to send rather than as literal names.
+    webhookEvents: ['Successful transactions', 'Failed transactions'],
+    webhookPath: 'Payment Gateway → Webhooks',
+    // The salt saved above signs the webhook, so there is no second secret.
+    webhookSecretless: true,
+    needsPhone: true,
+    webhookConsoleUrl: 'https://onboarding.payu.in/app/account',
+    webhookDocsUrl: 'https://docs.payu.in/docs/webhooks',
+    keysDocsUrl: 'https://docs.payu.in/docs/generate-hash-payu-hosted',
+  },
 };
 
 /**

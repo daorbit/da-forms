@@ -809,6 +809,13 @@ export const submitForm: RequestHandler = async (req, res) => {
         customerPhone: customer.phone,
         customerEmail: customer.email,
         customerName: customer.name,
+        description: payField.pay?.description ?? form.title,
+        // Only a redirecting gateway uses this. PayU sends the respondent to
+        // its own page and posts the outcome back here afterwards, so the URL
+        // has to be one PayU can reach — the API's own origin, worked out from
+        // the request rather than configured, so a preview deployment returns
+        // to itself.
+        returnUrl: paymentReturnUrl(req, form.workspaceId, provider),
       });
 
       await formService.attachOrderId(submission._id, order.orderId);
@@ -831,6 +838,10 @@ export const submitForm: RequestHandler = async (req, res) => {
         currency: order.currency,
         keyId: order.keyId,
         paymentSessionId: order.paymentSessionId,
+        // Present only for PayU: the page builds a hidden form from these and
+        // submits it, which is how the respondent reaches the payment page.
+        redirectUrl: order.redirectUrl,
+        redirectFields: order.redirectFields,
         description: payField.pay?.description ?? form.title,
       });
     }
@@ -898,6 +909,83 @@ export const submitForm: RequestHandler = async (req, res) => {
  * a payment belongs to is discovered from the submission the order id points
  * at, so it does not need to be in the URL.
  */
+/**
+ * Where a redirecting gateway posts its outcome, as an absolute URL.
+ *
+ * Built from the incoming request rather than configuration so a preview
+ * deployment returns to itself instead of to production. The proxy headers are
+ * trusted because `trust proxy` is set — behind Vercel the socket is plain HTTP
+ * and only `x-forwarded-proto` knows the request arrived over TLS.
+ */
+function paymentReturnUrl(
+  req: Parameters<RequestHandler>[0],
+  workspaceId: string,
+  provider: PaymentProvider
+): string {
+  const proto = req.get('x-forwarded-proto') ?? req.protocol;
+  const host = req.get('x-forwarded-host') ?? req.get('host');
+  return `${proto}://${host}/api/public/workspaces/${workspaceId}/payments/return/${provider}`;
+}
+
+/**
+ * Complete the submission an order belongs to, or mark it failed.
+ *
+ * Shared by the webhook and by PayU's return, which are two reports of the same
+ * event and must not produce two sets of confirmation emails. `markSubmissionPaid`
+ * is what makes that safe: it settles a submission once, so whichever arrives
+ * second gets null and does nothing.
+ */
+async function applyPaymentEvent(
+  workspaceId: string,
+  provider: PaymentProvider,
+  event: paymentService.WebhookEvent
+): Promise<'paid' | 'failed' | 'ignored' | 'already' | 'unknown'> {
+  const { orderId, paymentId } = event;
+  if (event.kind === 'ignored' || !orderId) return 'ignored';
+
+  if (event.kind === 'failed') {
+    await formService.markSubmissionFailed(orderId);
+    return 'failed';
+  }
+
+  if (!paymentId) return 'ignored';
+
+  // Which form this belongs to comes from the pending submission the order id
+  // points at — the webhook is registered once per workspace and serves them
+  // all, so it cannot know the form up front.
+  const pending = await formService.getSubmissionByOrderId(orderId);
+  if (!pending) return 'unknown';
+
+  const form = await formService.getForm(String(pending.formId));
+  // A signature verified against this workspace's secret should never resolve
+  // to another workspace's form. If it does, something is wrong enough that
+  // completing the submission would be the wrong move.
+  if (!form || form.workspaceId !== workspaceId) {
+    console.error('[payments] order', orderId, 'does not belong to workspace', workspaceId);
+    return 'unknown';
+  }
+
+  const submission = await formService.markSubmissionPaid(orderId, paymentId, {
+    payerEmail: event.payerEmail,
+    payerContact: event.payerContact,
+    method: event.method,
+  });
+  // Null means a retry of an event already handled. Acknowledged, but nothing
+  // runs again — otherwise a redelivery would send a second set of
+  // confirmation emails for one payment.
+  if (!submission) return 'already';
+
+  void workspaceSettingsService.markCharged(workspaceId, provider);
+  void recordSubmission(workspaceId);
+  const limits = await getFormLimits(workspaceId);
+  if (!limits || limits.notificationEmails) {
+    // The payment rides along so the confirmation actually says what was
+    // paid — a receipt that omits the amount is not much of a receipt.
+    void sendSubmissionNotifications(form, submission.data, submission.payment);
+  }
+  return 'paid';
+}
+
 const paymentWebhook =
   (provider: PaymentProvider): RequestHandler =>
   async (req, res) => {
@@ -932,58 +1020,117 @@ const paymentWebhook =
       return res.status(401).json({ error: 'bad_signature', message: 'Signature did not verify' });
     }
 
-    const { orderId, paymentId } = event;
-    if (event.kind === 'ignored') {
-      return res.status(200).json({ ok: true, ignored: event.reason });
+    const outcome = await applyPaymentEvent(workspaceId, provider, event);
+    if (outcome === 'ignored') {
+      return res.status(200).json({ ok: true, ignored: event.reason ?? 'nothing to do' });
     }
-    if (!orderId) return res.status(200).json({ ok: true, ignored: 'no order id' });
-
-    if (event.kind === 'failed') {
-      await formService.markSubmissionFailed(orderId);
-      return res.status(200).json({ ok: true });
-    }
-
-    if (!paymentId) return res.status(200).json({ ok: true, ignored: 'no payment id' });
-
-    // Which form this belongs to comes from the pending submission the order id
-    // points at — the webhook is registered once per workspace and serves them
-    // all, so it cannot know the form up front.
-    const pending = await formService.getSubmissionByOrderId(orderId);
-    if (!pending) return res.status(200).json({ ok: true, ignored: 'unknown order' });
-
-    const form = await formService.getForm(String(pending.formId));
-    // A signature verified against this workspace's secret should never resolve
-    // to another workspace's form. If it does, something is wrong enough that
-    // completing the submission would be the wrong move.
-    if (!form || form.workspaceId !== workspaceId) {
-      console.error('[payments] order', orderId, 'does not belong to workspace', workspaceId);
-      return res.status(200).json({ ok: true, ignored: 'workspace mismatch' });
-    }
-
-    const submission = await formService.markSubmissionPaid(orderId, paymentId, {
-      payerEmail: event.payerEmail,
-      payerContact: event.payerContact,
-      method: event.method,
-    });
-    // Null means a retry of an event already handled. Acknowledged, but nothing
-    // runs again — otherwise a redelivery would send a second set of
-    // confirmation emails for one payment.
-    if (!submission) return res.status(200).json({ ok: true, alreadyHandled: true });
-
-    void workspaceSettingsService.markCharged(workspaceId, provider);
-    void recordSubmission(workspaceId);
-    const limits = await getFormLimits(workspaceId);
-    if (!limits || limits.notificationEmails) {
-      // The payment rides along so the confirmation actually says what was
-      // paid — a receipt that omits the amount is not much of a receipt.
-      void sendSubmissionNotifications(form, submission.data, submission.payment);
-    }
+    if (outcome === 'unknown') return res.status(200).json({ ok: true, ignored: 'unknown order' });
+    if (outcome === 'already') return res.status(200).json({ ok: true, alreadyHandled: true });
 
     res.status(200).json({ ok: true });
   };
 
 export const razorpayWebhook = paymentWebhook('razorpay');
 export const cashfreeWebhook = paymentWebhook('cashfree');
+export const payuWebhook = paymentWebhook('payu');
+
+/**
+ * Where PayU sends the respondent back to.
+ *
+ * PayU has no checkout window of its own worth using — the respondent leaves
+ * for `secure.payu.in` and their browser posts the outcome here on the way
+ * back. So this is a page navigation, not an API call, and it answers with a
+ * redirect to the form rather than with JSON.
+ *
+ * What it does *not* do is take the browser's word for it. The posted fields
+ * are hashed with the merchant salt, which the browser does not have, and on
+ * top of that the payment is confirmed straight from PayU over a
+ * server-to-server call. The redirect only decides what the respondent sees;
+ * the submission is settled by what PayU itself said.
+ */
+export const payuReturn: RequestHandler = async (req, res) => {
+  const { workspaceId } = req.params;
+
+  const rawBody = req.body as Buffer;
+  const posted = Buffer.isBuffer(rawBody)
+    ? Object.fromEntries(new URLSearchParams(rawBody.toString('utf8')))
+    : ((req.body ?? {}) as Record<string, string>);
+
+  // PayU also allows a GET return on some accounts, where the fields arrive as
+  // query parameters instead.
+  const params: Record<string, string | undefined> = {
+    ...(req.query as Record<string, string>),
+    ...posted,
+  };
+
+  const orderId = params.txnid;
+  const submission = orderId ? await formService.getSubmissionByOrderId(orderId) : null;
+  const formId = submission ? String(submission.formId) : undefined;
+
+  let credentials;
+  try {
+    credentials = await paymentService.getCredentials(workspaceId, 'payu');
+  } catch {
+    return res.redirect(303, respondentReturnUrl(formId, orderId, 'error'));
+  }
+
+  // The hash proves the fields were not edited on their way through the
+  // browser. A failed check is not treated as a failed payment — it says
+  // nothing about the money, only that this report cannot be believed — so the
+  // verify call below still runs and decides.
+  const trusted = paymentService.parseWebhook('payu', {
+    rawBody: Buffer.from(new URLSearchParams(params as Record<string, string>).toString()),
+    headers: {},
+    secret: credentials.webhookSecret ?? credentials.keySecret,
+  });
+
+  if (!trusted) {
+    console.warn('[payments] payu return failed its hash check for order', orderId);
+  }
+
+  // The second, authoritative source. PayU's webhook is enabled per merchant
+  // and can lag or be switched off, so the return asks PayU directly rather
+  // than leaving the submission pending until a webhook that may never come.
+  const verified = orderId ? await paymentService.verifyPayment(credentials, orderId) : null;
+  const event = verified ?? trusted;
+
+  if (!event) {
+    return res.redirect(303, respondentReturnUrl(formId, orderId, 'pending'));
+  }
+
+  const outcome = await applyPaymentEvent(workspaceId, 'payu', event);
+  const status =
+    outcome === 'paid' || outcome === 'already'
+      ? 'paid'
+      : outcome === 'failed'
+        ? 'failed'
+        : 'pending';
+
+  res.redirect(303, respondentReturnUrl(formId, orderId, status));
+};
+
+/**
+ * The page the respondent lands on after PayU, as an absolute URL.
+ *
+ * `status` is a hint for what to show while the page confirms the payment for
+ * itself against `/payments/:orderId` — nothing is trusted from this URL, since
+ * the respondent can edit it.
+ */
+function respondentReturnUrl(
+  formId: string | undefined,
+  orderId: string | undefined,
+  status: 'paid' | 'failed' | 'pending' | 'error'
+): string {
+  const base = env.publicFormBaseUrl;
+  if (!base || !formId) {
+    // Nothing to send them back to. Better than a redirect to a URL that does
+    // not exist, which would look like the payment broke the site.
+    return `${base || ''}/`;
+  }
+  const query = new URLSearchParams({ payuStatus: status });
+  if (orderId) query.set('payuOrder', orderId);
+  return `${base}/form/${formId}/view?${query.toString()}`;
+}
 
 /**
  * Where the respondent's page checks whether its payment landed.

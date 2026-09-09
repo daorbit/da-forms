@@ -61,11 +61,19 @@ const KEY_LABELS: Record<PaymentProvider, { id: string; secret: string; dashboar
     secret: 'Secret Key',
     dashboard: 'Cashfree merchant dashboard',
   },
+  payu: {
+    id: 'Merchant Key',
+    secret: 'Merchant Salt',
+    dashboard: 'PayU dashboard',
+  },
 };
 
 const WEBHOOK_USES_API_SECRET: Record<PaymentProvider, boolean> = {
   razorpay: false,
   cashfree: true,
+  // PayU hashes its webhook with the merchant salt — the same value that signs
+  // the payment request — so there is no separate webhook secret to collect.
+  payu: true,
 };
 
 function buildChecklist(

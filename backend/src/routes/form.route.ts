@@ -227,3 +227,26 @@ publicPaymentRouter.post(
   '/:workspaceId/payments/webhook/cashfree',
   asyncHandler(formController.cashfreeWebhook)
 );
+
+publicPaymentRouter.post(
+  '/:workspaceId/payments/webhook/payu',
+  asyncHandler(formController.payuWebhook)
+);
+
+/**
+ * Where PayU sends the respondent's browser back to.
+ *
+ * Unlike the webhooks this is a page navigation, and it answers with a redirect
+ * to the form rather than JSON. PayU posts here for both outcomes — one URL is
+ * registered as `surl` and `furl` alike — and allows a GET on some accounts,
+ * which is why both verbs are taken.
+ */
+publicPaymentRouter.post(
+  '/:workspaceId/payments/return/payu',
+  asyncHandler(formController.payuReturn)
+);
+
+publicPaymentRouter.get(
+  '/:workspaceId/payments/return/payu',
+  asyncHandler(formController.payuReturn)
+);

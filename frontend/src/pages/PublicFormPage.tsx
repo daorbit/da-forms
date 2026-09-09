@@ -23,7 +23,8 @@ import {
   emailResumeLink,
 } from '@/lib/api';
 import { waitForPayment } from '@/lib/razorpay';
-import { openGatewayCheckout } from '@/lib/payment';
+import { openGatewayCheckout, providerRedirectsAway } from '@/lib/payment';
+import { rememberPayuPayment, takePayuPayment } from '@/lib/payu';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { PoweredBy } from '@/components/public/PoweredBy';
@@ -157,6 +158,58 @@ export function PublicFormPage() {
     recordView(id).catch(() => {});
   }, [id, isPreview]);
 
+  // Coming back from PayU. The respondent left this page to pay and has landed
+  // on a fresh one, so the answers, the spinner and the thank-you screen are
+  // all gone — this is what puts them back where they were.
+  //
+  // The status in the URL is a hint about what to show first, nothing more:
+  // the respondent can edit it, so what actually decides is the server's own
+  // answer about the order, asked for below.
+  useEffect(() => {
+    if (!id) return;
+    const hinted = searchParams.get("payuStatus");
+    if (!hinted) return;
+
+    const pending = takePayuPayment(id);
+    const orderId = pending?.orderId ?? searchParams.get("payuOrder");
+    if (!orderId) return;
+
+    if (hinted === "failed") {
+      notifications.show({
+        message: "The payment did not go through. Nothing was charged — you can try again.",
+        color: "red",
+      });
+      return;
+    }
+    if (hinted === "error") {
+      notifications.show({
+        message: "This form cannot take payments right now. Please try again later.",
+        color: "red",
+      });
+      return;
+    }
+
+    // Paid, as far as PayU told the server. The submission is only complete
+    // once the server says so, which may trail the redirect by a moment.
+    setSubmitting(true);
+    waitForPayment(() => getPaymentStatus(id, orderId))
+      .then((confirmed) => {
+        setSubmitting(false);
+        if (confirmed) {
+          setSubmitted(true);
+          return;
+        }
+        notifications.show({
+          message:
+            "Your payment went through, but confirming it is taking longer than usual. " +
+            "You'll get an email once it clears — no need to pay again.",
+          color: "yellow",
+          autoClose: false,
+        });
+      })
+      .catch(() => setSubmitting(false));
+  }, [id, searchParams]);
+
   /** Returns false when nothing was stored, so the renderer keeps the draft. */
   async function handleSubmit(
     values: Record<string, string>,
@@ -224,6 +277,12 @@ export function PublicFormPage() {
       // the payment actually lands.
       if (isPaymentRequired(result)) {
         lastOrderId.current = result.orderId;
+        // PayU is about to navigate away, taking this page's state with it.
+        // Noted first so the tab knows which payment to pick back up when the
+        // respondent returns.
+        if (providerRedirectsAway(result.provider)) {
+          rememberPayuPayment({ formId: id, orderId: result.orderId, startedAt: Date.now() });
+        }
         const outcome = await openGatewayCheckout(result, prefillFrom(form, values));
         if (!outcome.ok) {
           setSubmitting(false);

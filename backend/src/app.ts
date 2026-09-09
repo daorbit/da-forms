@@ -18,15 +18,28 @@ export function createApp() {
   // builder. Nothing here is authorised by origin.
   app.use(cors());
 
-  // Before the JSON parser, and deliberately so: both gateways sign the exact
+  // Before the JSON parser, and deliberately so: the gateways sign the exact
   // bytes they sent, and a parsed-then-re-serialised body would produce a
   // different string that never verifies. These paths alone keep their raw body.
+  //
+  // Every content type is taken, not just JSON: Razorpay and Cashfree post
+  // JSON, but PayU posts form-encoded fields — and a webhook that slipped past
+  // this into `express.json` would arrive parsed, with the exact bytes gone and
+  // no signature check possible.
   app.use(
     [
       '/api/public/workspaces/:workspaceId/payments/webhook',
       '/api/public/workspaces/:workspaceId/payments/webhook/:provider',
     ],
-    express.raw({ type: 'application/json', limit: '1mb' })
+    express.raw({ type: () => true, limit: '1mb' })
+  );
+
+  // PayU's return: the respondent's own browser, posting the outcome back as a
+  // form. Raw for the same reason — the hash covers these fields, and the
+  // handler verifies it before believing a word of it.
+  app.use(
+    '/api/public/workspaces/:workspaceId/payments/return/:provider',
+    express.raw({ type: () => true, limit: '1mb' })
   );
   /*
    * Stated rather than left at the 100kb default.

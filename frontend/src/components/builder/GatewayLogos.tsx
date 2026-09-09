@@ -80,17 +80,62 @@ export function CashfreeLogo({ height = 20 }: LogoProps) {
 }
 
 /**
- * The two logos at a matched optical size.
+ * PayU, set as a wordmark rather than traced from their artwork.
+ *
+ * The other two are the vendors' own SVGs; PayU's is not redistributable in the
+ * same way, and an approximation of a brand mark is worse than an honest piece
+ * of type — it looks like the real thing while being subtly wrong. The green
+ * "U" carries what recognition there is, and the rest follows the theme's text
+ * colour like its neighbours do.
+ */
+export function PayuLogo({ height = 20 }: LogoProps) {
+  return (
+    <svg
+      height={height}
+      viewBox="0 0 84 26"
+      role="img"
+      aria-label="PayU"
+      style={{ display: 'block' }}
+    >
+      <text
+        x="0"
+        y="20"
+        fill="currentColor"
+        fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
+        fontSize="22"
+        fontWeight="700"
+        letterSpacing="-0.5"
+      >
+        Pay
+      </text>
+      <text
+        x="42"
+        y="20"
+        fill="#A2D045"
+        fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
+        fontSize="22"
+        fontWeight="700"
+      >
+        U
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * The logos at a matched optical size.
  *
  * Their artboards are not comparable: Razorpay's is 122.88×26.53 and
  * Cashfree's 258×75.2, so rendering both at one height leaves Cashfree's
  * lettering noticeably smaller than Razorpay's. The scale below corrects for
- * that, so a caller can ask for one height and get two marks that look the
- * same weight side by side.
+ * that, so a caller can ask for one height and get marks that look the same
+ * weight side by side.
  */
 const OPTICAL_SCALE: Record<PaymentProvider, number> = {
   razorpay: 1,
   cashfree: 1.5,
+  // Drawn at Razorpay's proportions to begin with, so it needs no correction.
+  payu: 1,
 };
 
 export function GatewayLogo({
@@ -101,9 +146,7 @@ export function GatewayLogo({
   height?: number;
 }) {
   const scaled = Math.round(height * OPTICAL_SCALE[provider]);
-  return provider === 'cashfree' ? (
-    <CashfreeLogo height={scaled} />
-  ) : (
-    <RazorpayLogo height={scaled} />
-  );
+  if (provider === 'cashfree') return <CashfreeLogo height={scaled} />;
+  if (provider === 'payu') return <PayuLogo height={scaled} />;
+  return <RazorpayLogo height={scaled} />;
 }

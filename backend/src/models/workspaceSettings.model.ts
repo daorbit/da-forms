@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 
-export type PaymentProvider = 'razorpay' | 'cashfree';
+export type PaymentProvider = 'razorpay' | 'cashfree' | 'payu';
 
 export type RazorpayMode = 'test' | 'live';
 export type PaymentMode = RazorpayMode;
@@ -37,6 +37,7 @@ export interface WorkspaceSettingsDocument {
   workspaceId: string;
   razorpay?: ProviderSettings;
   cashfree?: ProviderSettings;
+  payu?: ProviderSettings;
   defaultProvider?: PaymentProvider;
   createdAt: Date;
   updatedAt: Date;
@@ -79,9 +80,10 @@ const workspaceSettingsSchema = new Schema<WorkspaceSettingsDocument>(
     workspaceId: { type: String, required: true, unique: true, index: true },
     razorpay: { type: providerSchema() },
     cashfree: { type: providerSchema() },
+    payu: { type: providerSchema() },
     defaultProvider: {
       type: String,
-      enum: ['razorpay', 'cashfree'],
+      enum: ['razorpay', 'cashfree', 'payu'],
       default: 'razorpay',
     },
   },

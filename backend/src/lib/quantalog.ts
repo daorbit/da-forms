@@ -67,6 +67,70 @@ export async function getFormLimits(workspaceId: string): Promise<FormLimits | n
   }
 }
 
+/**
+ * How a workspace presents itself, as Quantalog resolves it.
+ *
+ * Already reconciled against the plan on that side — a workspace whose plan
+ * does not include branding comes back with ours. This service renders what it
+ * is given and does not re-decide.
+ */
+export interface Branding {
+  name: string;
+  logoUrl?: string;
+  accentColor?: string;
+  /** Whether "Powered by …" is shown on forms, receipts and emails. */
+  showPoweredBy: boolean;
+  poweredByLabel: string;
+  editable: boolean;
+}
+
+/** Used when Quantalog cannot be reached, and for unconfigured installs. */
+const FALLBACK_BRANDING: Branding = {
+  name: process.env.BRAND_NAME?.trim() || 'Quantalog',
+  logoUrl: process.env.BRAND_LOGO_URL?.trim() || undefined,
+  showPoweredBy: true,
+  poweredByLabel: process.env.BRAND_POWERED_BY?.trim() || 'Powered by Quantalog Forms',
+  editable: false,
+};
+
+const brandingCache = new Map<string, { at: number; branding: Branding }>();
+
+/**
+ * This workspace's branding, never null.
+ *
+ * Unlike limits, an unknown answer here has an obvious safe default — our own
+ * name — so callers are spared a null check on a value they need to render
+ * inline. A workspace that pays to remove the caption briefly gets it back
+ * during an outage; the alternative is a form that renders with no branding at
+ * all, which looks broken rather than merely generic.
+ */
+export async function getBranding(workspaceId: string): Promise<Branding> {
+  if (!isConfigured()) return FALLBACK_BRANDING;
+
+  const hit = brandingCache.get(workspaceId);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.branding;
+
+  try {
+    const res = await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/branding/${encodeURIComponent(workspaceId)}`,
+      {
+        headers: { authorization: `Bearer ${env.formsServiceSecret}` },
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+    if (!res.ok) {
+      console.error(`[quantalog] branding lookup failed: ${res.status}`);
+      return FALLBACK_BRANDING;
+    }
+    const branding = { ...FALLBACK_BRANDING, ...((await res.json()) as Partial<Branding>) };
+    brandingCache.set(workspaceId, { at: Date.now(), branding });
+    return branding;
+  } catch (err) {
+    console.error('[quantalog] branding lookup failed:', err);
+    return FALLBACK_BRANDING;
+  }
+}
+
 /** A field as Quantalog's generator describes it — no ids yet, no layout. */
 export interface GeneratedField {
   type: string;

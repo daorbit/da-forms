@@ -5,6 +5,7 @@ import type { SubmissionPayment } from '../models/submission.model.js';
 import { flattenFields, fillPlaceholders, repeaterText } from '../lib/pipe.js';
 import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
+import { getBranding } from '../lib/quantalog.js';
 
 
  
@@ -76,6 +77,12 @@ export async function sendSubmissionNotifications(
   const notifications = form.notifications;
   if (!notifications || !mailConfigured()) return;
 
+  // Only the respondent's copy carries it. The owner's alert goes to the
+  // person who already pays for the product — telling them what powers their
+  // own dashboard is noise.
+  const brand = await getBranding(form.workspaceId);
+  const poweredBy = brand.showPoweredBy ? brand.poweredByLabel : undefined;
+
   const jobs: Promise<void>[] = [];
 
   if (notifications.respondentEnabled && notifications.respondentEmailFieldId) {
@@ -112,6 +119,7 @@ export async function sendSubmissionNotifications(
             ? { label: 'Edit your response', href: editHref }
             : undefined,
         accent: form.theme?.accentColor,
+        poweredBy,
       });
       jobs.push(sendMail(to, subject, html, body));
     }

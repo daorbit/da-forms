@@ -85,13 +85,24 @@ type Chrome = 'card' | 'banner' | 'bare';
  * the card altogether, for the layout that wants to look like a message
  * someone typed rather than a designed notification.
  */
-function shell(formName: string, inner: string, accent: string, chrome: Chrome = 'card'): string {
+function shell(
+  formName: string,
+  inner: string,
+  accent: string,
+  chrome: Chrome = 'card',
+  /** Caption under the message. Absent for workspaces whose plan removed it. */
+  poweredBy?: string
+): string {
+  const footer = poweredBy
+    ? `<p style="margin:16px 0 0;font-size:11px;color:${C.faint};text-align:center">${escapeHtml(poweredBy)}</p>`
+    : '';
   if (chrome === 'bare') {
     return `<div style="background:${C.card};padding:40px 16px;font-family:${FONT}">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:520px;margin:0 auto">
     <tr><td>
       ${inner}
       <p style="margin:${S.major}px 0 0;font-size:12px;color:${C.faint}">Sent from ${escapeHtml(formName)}</p>
+      ${footer}
     </td></tr>
   </table>
 </div>`;
@@ -126,6 +137,7 @@ function shell(formName: string, inner: string, accent: string, chrome: Chrome =
       ${nameLine}
       ${inner}
     </td></tr>
+    <tr><td>${footer}</td></tr>
   </table>
 </div>`;
 }
@@ -294,6 +306,11 @@ export interface RenderOptions {
   cta?: { label: string; href: string };
   /** The form's own accent colour, so its mail matches its page. */
   accent?: string;
+  /**
+   * Caption under the message — "Powered by Quantalog Forms". Omitted for a
+   * workspace whose plan lets it take ours off.
+   */
+  poweredBy?: string;
 }
 
 const DEFAULT_ACCENT = '#059669';
@@ -312,6 +329,7 @@ export function renderEmail({
   answers = [],
   cta,
   accent = DEFAULT_ACCENT,
+  poweredBy,
 }: RenderOptions): string {
   const centered = layout === 'thankYou' || layout === 'confirmation';
   const showsTick = layout === 'thankYou' || layout === 'confirmation';
@@ -344,5 +362,5 @@ export function renderEmail({
     parts.push(button(cta.label || 'Continue', cta.href, accent));
   }
 
-  return shell(formName, parts.join(''), accent, chrome);
+  return shell(formName, parts.join(''), accent, chrome, poweredBy);
 }

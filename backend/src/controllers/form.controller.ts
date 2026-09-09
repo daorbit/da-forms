@@ -5,7 +5,12 @@ import * as paymentService from '../services/payment.service.js';
 import type { PaymentProvider } from '../models/workspaceSettings.model.js';
 import * as workspaceSettingsService from '../services/workspaceSettings.service.js';
 import { sendSubmissionNotifications, sendResumeLink } from '../services/notification.service.js';
-import { getFormLimits, recordSubmission, generateForm as quantalogGenerate } from '../lib/quantalog.js';
+import {
+  getFormLimits,
+  recordSubmission,
+  generateForm as quantalogGenerate,
+  getBranding,
+} from '../lib/quantalog.js';
 import { planLimit } from '../lib/plan-limit.js';
 import { turnstileConfigured, verifyTurnstileToken } from '../lib/turnstile.js';
 import { readEditToken, mintResumeToken } from '../lib/edit-token.js';
@@ -393,6 +398,10 @@ export const getPublicForm: RequestHandler = async (req, res) => {
     allowEdit,
     availability,
     needsPayerPhone,
+    // Who the respondent is dealing with — the caption under the form, and the
+    // same name the payment window will carry. Sent with the form so the
+    // footer renders on first paint rather than appearing a moment later.
+    branding: await getBranding(form.workspaceId),
   });
 };
 
@@ -804,8 +813,16 @@ export const submitForm: RequestHandler = async (req, res) => {
 
       await formService.attachOrderId(submission._id, order.orderId);
 
+      // Whose name goes on the payment window. Razorpay renders it from these
+      // options; Cashfree's hosted window takes branding from their dashboard
+      // and ignores what we send, which is why only one gateway reads it.
+      const brand = await getBranding(form.workspaceId);
+
       return res.status(202).json({
         paymentRequired: true,
+        brandName: brand.name,
+        brandLogo: brand.logoUrl,
+        brandAccent: brand.accentColor,
         provider,
         mode: credentials.mode,
         submissionId: submission._id,

@@ -1,81 +1,101 @@
-
+/*
+ * One way of starting, as a tall card.
+ *
+ * A tinted head over a plain body, rather than an icon floating on a grey
+ * rectangle: the head gives each option its own colour, which is what lets the
+ * three be told apart before any of the text is read.
+ */
 .methodCard {
   display: flex !important;
   flex-direction: column;
-  padding: 18px !important;
+  overflow: hidden;
+  padding: 0 !important;
   border-radius: 12px !important;
   border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4)) !important;
   background-color: var(--mantine-color-body);
   text-align: left;
   height: 100%;
   transition:
-    border-color 120ms ease,
-    transform 120ms ease,
-    box-shadow 120ms ease,
-    background-color 120ms ease;
+    border-color 130ms ease,
+    box-shadow 130ms ease;
 }
 
 .methodCard:hover:not(:disabled) {
   border-color: var(--mantine-color-emerald-6) !important;
-  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
-  box-shadow: 0 6px 18px light-dark(rgba(15, 23, 42, 0.08), rgba(0, 0, 0, 0.35));
-  transform: translateY(-1px);
+  box-shadow: 0 8px 20px light-dark(rgba(15, 23, 42, 0.1), rgba(0, 0, 0, 0.4));
 }
- 
+
+/* Keyboard parity: `UnstyledButton` strips the default ring, so without this a
+   card is reachable by tab with nothing to show it is focused. */
 .methodCard:focus-visible {
   outline: 2px solid var(--mantine-color-emerald-6);
   outline-offset: 2px;
 }
- 
+
+/*
+ * While the blank form is being created. Without this the other two cards
+ * still invite a click that would start a second form.
+ */
 .methodCard:disabled {
   opacity: 0.55;
   cursor: default;
 }
 
+/*
+ * The coloured band at the top of each card.
+ *
+ * Tall enough to be a field of colour rather than a stripe — at strip height it
+ * read as a decorative rule instead of the thing that distinguishes the cards.
+ */
 .cardHead {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  padding: 16px;
+  min-height: 74px;
+  border-bottom: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
 }
 
- 
-.iconTile {
+.headIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  color: var(--mantine-color-emerald-6);
-  background-color: light-dark(var(--mantine-color-emerald-0), var(--mantine-color-emerald-9));
-  transition: background-color 120ms ease;
+  color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-gray-1));
 }
 
-.methodCard:hover:not(:disabled) .iconTile {
-  background-color: light-dark(var(--mantine-color-emerald-1), var(--mantine-color-emerald-8));
+/*
+ * One tint per option.
+ *
+ * Distinct hues rather than three shades of the accent: the point is telling
+ * them apart, which three greens at different lightness does poorly. Kept pale
+ * so the head stays a backdrop for the icon rather than competing with it.
+ */
+.toneOrbit {
+  background: light-dark(
+    linear-gradient(135deg, var(--mantine-color-violet-1), var(--mantine-color-violet-0)),
+    linear-gradient(135deg, var(--mantine-color-violet-9), var(--mantine-color-dark-6))
+  );
 }
 
- 
+.toneTemplate {
+  background: light-dark(
+    linear-gradient(135deg, var(--mantine-color-blue-1), var(--mantine-color-blue-0)),
+    linear-gradient(135deg, var(--mantine-color-blue-9), var(--mantine-color-dark-6))
+  );
+}
+
+.toneBlank {
+  background: light-dark(
+    linear-gradient(135deg, var(--mantine-color-gray-2), var(--mantine-color-gray-0)),
+    linear-gradient(135deg, var(--mantine-color-dark-5), var(--mantine-color-dark-6))
+  );
+}
+
+/* Takes the remaining height so the three bodies align even when one
+   description wraps to a second line and the others do not. */
 .cardBody {
+  display: block;
   flex: 1;
-}
-
-.cardAction {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 14px;
-  font-size: var(--mantine-font-size-xs);
-  font-weight: 600;
-  color: var(--mantine-color-emerald-6);
-}
-
- 
-.cardArrow {
-  transition: transform 120ms ease;
-}
-
-.methodCard:hover:not(:disabled) .cardArrow {
-  transform: translateX(3px);
+  padding: 14px 16px 16px;
 }

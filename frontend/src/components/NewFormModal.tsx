@@ -160,14 +160,14 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
         step === 3
           ? 'min(1180px, 94vw)'
           : step === 2
-            ? 'min(880px, 94vw)'
+            ? 'min(860px, 94vw)'
             : 'min(820px, 94vw)'
       }
       radius="lg"
       styles={step === 3 ? { body: { overflow: 'hidden' } } : undefined}
     >
       {step === 2 ? (
-        <Stack gap="lg">
+        <Stack gap="md">
           {/* Repeats the title's question only to name the form: the title has
               to stand on its own, and this is where what was typed comes back
               so the step is clearly about that form and not forms in general. */}

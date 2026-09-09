@@ -87,7 +87,9 @@ export interface Branding {
 /** Used when Quantalog cannot be reached, and for unconfigured installs. */
 const FALLBACK_BRANDING: Branding = {
   name: process.env.BRAND_NAME?.trim() || 'Quantalog',
-  logoUrl: process.env.BRAND_LOGO_URL?.trim() || undefined,
+  logoUrl:
+    process.env.BRAND_LOGO_URL?.trim() ||
+    'https://studio-quantalog.daorbit.in/favicon.png',
   showPoweredBy: true,
   poweredByLabel: process.env.BRAND_POWERED_BY?.trim() || 'Powered by Quantalog Forms',
   editable: false,

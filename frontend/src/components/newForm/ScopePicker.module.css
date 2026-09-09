@@ -1,0 +1,144 @@
+/* Tighter at the foot than the head: the label sits directly under the preview
+   with nothing after it, so matching padding all round left it adrift. */
+.card {
+  display: block;
+  padding: 10px 10px 12px !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--mantine-color-gray-3) !important;
+  background-color: var(--mantine-color-body);
+  text-align: left;
+  height: 100%;
+  transition:
+    border-color 100ms ease,
+    background-color 100ms ease;
+}
+
+.card:hover {
+  border-color: var(--mantine-color-gray-5) !important;
+}
+
+.cardActive,
+.cardActive:hover {
+  border-color: var(--mantine-color-emerald-6) !important;
+  background-color: light-dark(var(--mantine-color-emerald-0), var(--mantine-color-emerald-9));
+}
+
+/*
+ * Where the preview is measured and clipped.
+ *
+ * The form inside is rendered at a real browser width and scaled down to
+ * whatever this leaves, so the layout shown is the one a respondent gets rather
+ * than a narrow column that only appears at thumbnail widths. The aspect ratio
+ * matches the render size, so the scaled result fills it exactly.
+ */
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 900 / 580;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+  /* A picture, not a form: a click anywhere on it picks this placement rather
+     than focusing a field that will never be submitted. */
+  pointer-events: none;
+}
+
+.scaler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+
+/*
+ * A stand-in host site, staged around the embedded preview.
+ *
+ * An embedded form has no page of its own — that absence is the whole
+ * difference being shown, and against a blank backdrop the two previews would
+ * look nearly the same. Deliberately generic and grey: it represents somebody
+ * else's site, and anything more designed would read as part of what this
+ * product produces.
+ *
+ * It follows the dashboard's theme because the embed template shown inside it
+ * does too — a light mock site around the dark lead-capture card would look
+ * like a mistake rather than a host page.
+ */
+.hostPage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: light-dark(#ffffff, #0d0d12);
+}
+
+.hostBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 40px;
+  border-bottom: 1px solid light-dark(#e9edf3, #1e1e26);
+}
+
+.hostLogo {
+  width: 104px;
+  height: 18px;
+  border-radius: 5px;
+  background-color: light-dark(#cdd5e0, #2c2c36);
+}
+
+.hostNav {
+  display: flex;
+  gap: 22px;
+}
+
+.hostNav span {
+  display: block;
+  width: 56px;
+  height: 11px;
+  border-radius: 4px;
+  background-color: light-dark(#e4e9f0, #21212a);
+}
+
+.hostBody {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  padding: 0 40px;
+}
+
+.hostCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hostHeading {
+  width: 78%;
+  height: 26px;
+  border-radius: 6px;
+  background-color: light-dark(#c4cdd9, #32323e);
+}
+
+.hostLine,
+.hostLineShort {
+  height: 11px;
+  border-radius: 4px;
+  background-color: light-dark(#e4e9f0, #21212a);
+}
+
+.hostLine {
+  width: 100%;
+}
+
+.hostLineShort {
+  width: 62%;
+}
+
+/* The form's own column. It brings its card and nothing else — no background,
+   no page padding — which is exactly what "embedded" means. */
+.hostSlot {
+  min-width: 0;
+}

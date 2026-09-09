@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, UnstyledButton, Loader, Chip, ScrollArea, CloseButton } from '@mantine/core';
+import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, UnstyledButton, Chip, ScrollArea, CloseButton } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconLayoutGrid, IconPlus, IconSearch } from '@tabler/icons-react';
+import { IconArrowLeft, IconSearch } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
 import { formTemplates, templateCategories, type TemplateCategory } from '@/lib/templates';
@@ -13,8 +13,9 @@ import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/Devi
 import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
 import { useFitScale } from '@/hooks/useFitScale';
 import { createForm } from '@/lib/api';
-import { OrbitMark } from '@/components/OrbitMark';
 import { isPlanLimit } from '@/lib/planLimit';
+import { ScopePicker } from './newForm/ScopePicker';
+import { StartMethodCards } from './newForm/StartMethodCards';
 import classes from './NewFormModal.module.css';
 
 interface Props {
@@ -152,7 +153,16 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
       // on a small one. The picker step tracks the viewport with a ceiling, so
       // a long template (RSVP, feedback survey) is readable without scrolling
       // the modal itself.
-      size={step === 3 ? 'min(1180px, 94vw)' : step === 2 ? 'lg' : 'md'}
+      // Step two holds three cards side by side, which 'lg' squeezed to the
+      // point that each description wrapped to five lines. Step one holds two
+      // diagrams, which need width of their own to stay readable.
+      size={
+        step === 3
+          ? 'min(1180px, 94vw)'
+          : step === 2
+            ? 'min(880px, 94vw)'
+            : 'min(820px, 94vw)'
+      }
       radius="lg"
       styles={step === 3 ? { body: { overflow: 'hidden' } } : undefined}
     >
@@ -162,29 +172,17 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
             How would you like to start “{name.trim()}”?
           </Text>
 
-          <Group grow align="stretch" gap="md">
-            <UnstyledButton className={classes.methodCard} onClick={() => setStep(3)}>
-              <IconLayoutGrid size={26} className={classes.methodIcon} />
-              <Text fw={600} size="sm" mt={10}>
-                Start from a template
-              </Text>
-              <Text size="xs" c="dimmed" mt={4}>
-                {formTemplates.length - 1} ready-made forms — contact, feedback, RSVP, intake and
-                more. Preview each before you pick.
-              </Text>
-            </UnstyledButton>
-
-            <UnstyledButton className={classes.methodCard} onClick={() => onUseAi(name.trim(), scope)}>
-              <OrbitMark size={26} />
-              <Text fw={600} size="sm" mt={10}>
-                Build with Orbit
-              </Text>
-              <Text size="xs" c="dimmed" mt={4}>
-                Describe what you need and Orbit drafts the fields, wording and colours. Refine it
-                by asking for changes.
-              </Text>
-            </UnstyledButton>
-          </Group>
+          <StartMethodCards
+            creating={creating}
+            creatingBlank={creating && templateId === blank?.id}
+            onBlank={() => {
+              if (!blank) return;
+              setTemplateId(blank.id);
+              handleCreate(blank);
+            }}
+            onTemplate={() => setStep(3)}
+            onOrbit={() => onUseAi(name.trim(), scope)}
+          />
 
           <Group justify="space-between">
             <Button
@@ -202,7 +200,7 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
         </Stack>
       ) : step === 1 ? (
         <form onSubmit={handleContinue}>
-          <Stack gap="md">
+          <Stack gap="xl">
             <TextInput
               label="Form name"
               placeholder="Client Details"
@@ -216,19 +214,11 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
               <Text size="sm" fw={500} mb={4}>
                 Where will this form live?
               </Text>
-              <Text size="xs" c="dimmed" mb={8}>
+              <Text size="xs" c="dimmed" mb={10}>
                 Changes what theming applies to later — the page background only matters for a
                 standalone share link.
               </Text>
-              <SegmentedControl
-                fullWidth
-                value={scope}
-                onChange={(value) => setScope(value as NonNullable<FormTheme['scope']>)}
-                data={[
-                  { value: 'page', label: 'Standalone link' },
-                  { value: 'card', label: 'Embedded on a site' },
-                ]}
-              />
+              <ScopePicker value={scope} onChange={setScope} />
             </div>
 
             <Group justify="flex-end">
@@ -269,27 +259,9 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
               />
 
               <div className={classes.templateList}>
-                {blank && (
-                  <UnstyledButton
-                    onClick={() => {
-                      setTemplateId(blank.id);
-                      handleCreate(blank);
-                    }}
-                    disabled={creating}
-                    className={`${classes.templateItem} ${classes.blankItem} ${blank.id === templateId ? classes.templateItemActive : ''}`}
-                    style={{ width: '100%', boxSizing: 'border-box' }}
-                  >
-                    {creating && templateId === blank.id ? (
-                      <Loader size="sm" color="emerald" />
-                    ) : (
-                      <IconPlus size={20} color="var(--mantine-color-emerald-6)" />
-                    )}
-                    <Text size="sm" fw={600}>
-                      {blank.name}
-                    </Text>
-                  </UnstyledButton>
-                )}
-
+                {/* No blank card here: starting from scratch is its own choice
+                    on the previous step, and repeating it at the top of the
+                    template list made it read as a template. */}
                 {results.map((tpl) => (
                   <UnstyledButton
                     key={tpl.id}
@@ -313,7 +285,8 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
 
                 {results.length === 0 && (
                   <Text size="xs" c="dimmed" ta="center" py="lg">
-                    No templates match that. Try a different word, or start from a blank form.
+                    No templates match that. Try a different word, or go back and start from
+                    scratch.
                   </Text>
                 )}
               </div>

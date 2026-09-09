@@ -78,6 +78,8 @@ const PROVIDER_COPY: Record<
     keysPath: string;
     webhookEvents: string;
     webhookPath: string;
+    /** True when the gateway signs webhooks with the API secret already saved. */
+    webhookSecretless?: boolean;
   }
 > = {
   razorpay: {
@@ -100,8 +102,9 @@ const PROVIDER_COPY: Record<
     dashboardUrl: 'https://merchant.cashfree.com',
     dashboardName: 'Cashfree merchant dashboard',
     keysPath: 'Developers → API Keys',
-    webhookEvents: 'PAYMENT_SUCCESS_WEBHOOK and PAYMENT_FAILED_WEBHOOK',
+    webhookEvents: 'PAYMENT_SUCCESS_WEBHOOK, PAYMENT_FAILED_WEBHOOK and PAYMENT_USER_DROPPED_WEBHOOK',
     webhookPath: 'Developers → Webhooks',
+    webhookSecretless: true,
   },
 };
 
@@ -619,27 +622,42 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
 
                         <Divider />
 
-                        <PasswordInput
-                          label="Webhook Secret"
-                          description={
-                            pair?.webhookSecretMask
-                              ? `Saved: ${pair.webhookSecretMask}. Leave blank to keep it.`
-                              : `The secret you set when creating the webhook in ${current?.label}.`
-                          }
-                          placeholder={pair?.webhookSecretMask ? '••••••••' : 'Your webhook secret'}
-                          value={webhookSecret}
-                          onChange={(e) => setWebhookSecret(e.target.value)}
-                        />
+                        {copy.webhookSecretless ? (
+                          <Alert variant="light" color="gray" radius="md" icon={<IconKey size={16} />}>
+                            <Text size="xs">
+                              {current?.label} signs its webhooks with the{' '}
+                              <strong>{copy.secretLabel}</strong> you already saved, so there is no
+                              separate webhook secret to paste. Registering the URL above is the
+                              whole step.
+                            </Text>
+                          </Alert>
+                        ) : (
+                          <>
+                            <PasswordInput
+                              label="Webhook Secret"
+                              description={
+                                pair?.webhookSecretMask
+                                  ? `Saved: ${pair.webhookSecretMask}. Leave blank to keep it.`
+                                  : `The secret you set when creating the webhook in ${current?.label}.`
+                              }
+                              placeholder={
+                                pair?.webhookSecretMask ? '••••••••' : 'Your webhook secret'
+                              }
+                              value={webhookSecret}
+                              onChange={(e) => setWebhookSecret(e.target.value)}
+                            />
 
-                        <Group>
-                          <Button
-                            onClick={() => save()}
-                            loading={saving}
-                            disabled={!settings.configurable}
-                          >
-                            Save webhook secret
-                          </Button>
-                        </Group>
+                            <Group>
+                              <Button
+                                onClick={() => save()}
+                                loading={saving}
+                                disabled={!settings.configurable}
+                              >
+                                Save webhook secret
+                              </Button>
+                            </Group>
+                          </>
+                        )}
                       </Stack>
                     </Box>
 

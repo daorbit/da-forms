@@ -248,6 +248,8 @@ export async function getWorkspaceDefaultProvider(
   return settings?.defaultProvider ?? 'razorpay';
 }
 
+const WEBHOOK_SIGNED_WITH_API_SECRET = new Set<PaymentProvider>(['cashfree']);
+
 export async function getCredentials(
   workspaceId: string,
   provider?: PaymentProvider
@@ -267,11 +269,17 @@ export async function getCredentials(
     throw new PaymentConfigError(`No ${mode} ${name} keys are saved for this workspace`);
   }
 
+  const keySecret = decrypt(pair.keySecretEnc);
+
   return {
     provider: resolved,
     keyId: pair.keyId,
-    keySecret: decrypt(pair.keySecretEnc),
-    webhookSecret: pair.webhookSecretEnc ? decrypt(pair.webhookSecretEnc) : undefined,
+    keySecret,
+    webhookSecret: pair.webhookSecretEnc
+      ? decrypt(pair.webhookSecretEnc)
+      : WEBHOOK_SIGNED_WITH_API_SECRET.has(resolved)
+        ? keySecret
+        : undefined,
     mode,
   };
 }

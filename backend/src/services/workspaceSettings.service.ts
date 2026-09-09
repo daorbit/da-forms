@@ -63,6 +63,11 @@ const KEY_LABELS: Record<PaymentProvider, { id: string; secret: string; dashboar
   },
 };
 
+const WEBHOOK_USES_API_SECRET: Record<PaymentProvider, boolean> = {
+  razorpay: false,
+  cashfree: true,
+};
+
 function buildChecklist(
   provider: PaymentProvider,
   pair: KeyPairView,
@@ -87,9 +92,14 @@ function buildChecklist(
     },
     {
       id: 'webhook',
-      label: 'Webhook secret saved',
-      done: Boolean(pair.webhookSecretMask),
-      hint: `Create a webhook in ${name} and paste its secret here. Payments are not confirmed without it.`,
+      label: WEBHOOK_USES_API_SECRET[provider] ? 'Webhook registered' : 'Webhook secret saved',
+      // Cashfree signs webhooks with the API secret already saved above, so
+      // there is no second secret to collect — having keys is having the
+      // webhook credential. Razorpay mints a separate one per webhook.
+      done: WEBHOOK_USES_API_SECRET[provider] ? hasKeys : Boolean(pair.webhookSecretMask),
+      hint: WEBHOOK_USES_API_SECRET[provider]
+        ? `Add the webhook URL in ${name}. It is signed with your Secret Key, so there is nothing else to paste here.`
+        : `Create a webhook in ${name} and paste its secret here. Payments are not confirmed without it.`,
     },
     {
       id: 'enabled',

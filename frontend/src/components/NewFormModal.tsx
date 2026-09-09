@@ -167,8 +167,11 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
       styles={step === 3 ? { body: { overflow: 'hidden' } } : undefined}
     >
       {step === 2 ? (
-        <Stack gap="md">
-          <Text size="sm" c="dimmed">
+        <Stack gap="lg">
+          {/* Repeats the title's question only to name the form: the title has
+              to stand on its own, and this is where what was typed comes back
+              so the step is clearly about that form and not forms in general. */}
+          <Text size="sm" c="dimmed" mt={-4}>
             How would you like to start “{name.trim()}”?
           </Text>
 

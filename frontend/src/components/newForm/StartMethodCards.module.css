@@ -1,48 +1,81 @@
-/*
- * The ways of starting, on the step between naming a form and building it.
- *
- * Taller and calmer than a template row: this is a choice between paths, not
- * one item among forty, so each gets room to explain itself rather than a
- * one-line description.
- */
+
 .methodCard {
-  display: block;
-  padding: 20px !important;
+  display: flex !important;
+  flex-direction: column;
+  padding: 18px !important;
   border-radius: 12px !important;
-  border: 1px solid var(--mantine-color-gray-3) !important;
+  border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4)) !important;
   background-color: var(--mantine-color-body);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   text-align: left;
   height: 100%;
   transition:
-    border-color 100ms ease,
-    box-shadow 100ms ease,
-    background-color 100ms ease;
+    border-color 120ms ease,
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
 }
 
-.methodCard:hover {
+.methodCard:hover:not(:disabled) {
   border-color: var(--mantine-color-emerald-6) !important;
-  background-color: var(--mantine-color-default-hover);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+  box-shadow: 0 6px 18px light-dark(rgba(15, 23, 42, 0.08), rgba(0, 0, 0, 0.35));
+  transform: translateY(-1px);
 }
-
-/*
- * While the blank form is being created. Without this the other two cards
- * still invite a click that would start a second form.
- */
+ 
+.methodCard:focus-visible {
+  outline: 2px solid var(--mantine-color-emerald-6);
+  outline-offset: 2px;
+}
+ 
 .methodCard:disabled {
   opacity: 0.55;
   cursor: default;
-  box-shadow: none;
 }
 
-.methodCard:disabled:hover {
-  border-color: var(--mantine-color-gray-3) !important;
-  background-color: var(--mantine-color-body);
-  box-shadow: none;
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.methodIcon {
+ 
+.iconTile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   color: var(--mantine-color-emerald-6);
-  display: block;
+  background-color: light-dark(var(--mantine-color-emerald-0), var(--mantine-color-emerald-9));
+  transition: background-color 120ms ease;
+}
+
+.methodCard:hover:not(:disabled) .iconTile {
+  background-color: light-dark(var(--mantine-color-emerald-1), var(--mantine-color-emerald-8));
+}
+
+ 
+.cardBody {
+  flex: 1;
+}
+
+.cardAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 14px;
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+  color: var(--mantine-color-emerald-6);
+}
+
+ 
+.cardArrow {
+  transition: transform 120ms ease;
+}
+
+.methodCard:hover:not(:disabled) .cardArrow {
+  transform: translateX(3px);
 }

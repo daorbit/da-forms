@@ -26,6 +26,7 @@ import { waitForPayment } from '@/lib/razorpay';
 import { openGatewayCheckout } from '@/lib/payment';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
+import { PoweredBy } from '@/components/public/PoweredBy';
 import { FormPage } from '@/components/FormPage';
 import { FormLoader } from '@/components/FormLoader';
 
@@ -466,6 +467,7 @@ export function PublicFormPage() {
               Submit another response
             </Button>
           )}
+          <PoweredBy branding={form.branding} />
         </Container>
       </Center>
     );
@@ -491,17 +493,14 @@ export function PublicFormPage() {
         showStepHeadings={form.showStepHeadings}
         submitting={submitting}
         collectPartials={form.collectPartials}
-        // Never in preview: an author checking their own form is not the
-        // traffic this guards against, and nothing they send is stored anyway.
         requireCaptcha={form.requireCaptcha && !isPreview}
-        // Drafts have to be being kept for there to be anything to return to,
-        // and there is no point offering it to someone already finishing one.
         allowResume={Boolean(form.collectPartials) && !isPreview && !editToken}
         onSaveForLater={(email, partialKey) => emailResumeLink(id!, partialKey, email)}
         initialData={editData ?? undefined}
         needsPayerPhone={form.needsPayerPhone}
         onSubmit={handleSubmit}
       />
+      <PoweredBy branding={form.branding} />
     </FormPage>
   );
 }

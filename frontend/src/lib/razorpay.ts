@@ -93,8 +93,14 @@ export async function openCheckout(
       order_id: payment.orderId,
       amount: payment.amount,
       currency: payment.currency,
-      name: payment.description,
+      // The business, then what they are paying for. Sending the field's
+      // description as both made the window title read "payment", which is
+      // the one moment a form cannot afford to look like a stranger asking
+      // for money.
+      name: payment.brandName || payment.description,
       description: payment.description,
+      image: payment.brandLogo,
+      ...(payment.brandAccent ? { theme: { color: payment.brandAccent } } : {}),
       prefill,
       handler: (response: RazorpayHandlerResponse) =>
         settle({ ok: true, paymentId: response.razorpay_payment_id }),

@@ -301,6 +301,12 @@ export interface Form {
    * button. Server-derived; never stored on the form itself.
    */
   needsPayerPhone?: boolean;
+  /**
+   * Who the respondent is dealing with. Only set on the public form — the
+   * builder has no use for it, and it is resolved per request rather than
+   * stored on the form.
+   */
+  branding?: FormBranding;
   createdAt: string;
   updatedAt: string;
 }
@@ -392,6 +398,29 @@ export interface PaymentRequired {
   keyId?: string;
   paymentSessionId?: string;
   description: string;
+  /**
+   * Whose name and logo the payment window carries. Resolved by Quantalog
+   * against the workspace's plan, so this is already what should be shown.
+   * Razorpay renders them; Cashfree's hosted window takes its branding from
+   * their own dashboard and ignores these.
+   */
+  brandName?: string;
+  brandLogo?: string;
+  brandAccent?: string;
+}
+
+/**
+ * How a workspace presents itself on its public form.
+ *
+ * Sent with the form rather than fetched separately, so the caption and the
+ * name render on first paint instead of appearing a moment later.
+ */
+export interface FormBranding {
+  name: string;
+  logoUrl?: string;
+  accentColor?: string;
+  showPoweredBy: boolean;
+  poweredByLabel: string;
 }
 
 export type PaymentProvider = 'razorpay' | 'cashfree';

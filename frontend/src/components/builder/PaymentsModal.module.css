@@ -117,3 +117,71 @@
   padding: 16px;
   background-color: var(--mantine-color-body);
 }
+
+/* ---- Gateway picker ---- */
+
+.gatewayGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Each gateway is a card rather than a segment: a logo needs room to be
+   recognised, and the connection status has to sit with the brand it belongs
+   to. Selection is shown with a border and a ring, never colour alone —
+   both brand marks are already coloured. */
+.gatewayCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 12px 12px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  background-color: var(--mantine-color-body);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
+}
+
+.gatewayCard:hover {
+  border-color: var(--mantine-color-dimmed);
+}
+
+.gatewayCardActive {
+  border-color: var(--mantine-primary-color-filled);
+  box-shadow: 0 0 0 1px var(--mantine-primary-color-filled);
+}
+
+/* The logo keeps its brand colours; only the wordmark, drawn with
+   currentColor, follows the theme. */
+.gatewayLogo {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  color: var(--mantine-color-text);
+}
+
+/* A gateway with no keys saved is still selectable — that is how someone gets
+   to the screen that connects it — but it should not look ready. */
+.gatewayCardIdle .gatewayLogo {
+  opacity: 0.55;
+}
+
+.gatewayStatus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gatewayDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}

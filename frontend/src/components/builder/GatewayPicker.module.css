@@ -1,0 +1,51 @@
+.gatewayPicker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* Narrower than the modal's card — this sits in a side drawer, so the logo
+   carries the identification and the status text is dropped unless the
+   gateway cannot actually charge. */
+.gatewayOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 8px;
+  min-height: 48px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+  background-color: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+  cursor: pointer;
+  width: 100%;
+  font: inherit;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
+}
+
+.gatewayOption:hover {
+  border-color: var(--mantine-color-dimmed);
+}
+
+/* Pinned to this form: a solid ring. */
+.gatewayOptionActive {
+  border-color: var(--mantine-primary-color-filled);
+  box-shadow: 0 0 0 1px var(--mantine-primary-color-filled);
+}
+
+/* Inherited from the workspace rather than chosen here — shown as a dashed
+   border so it reads as "this is what you get" without claiming the form
+   picked it. */
+.gatewayOptionInherited {
+  border-style: dashed;
+  border-color: var(--mantine-color-dimmed);
+}
+
+.gatewayOptionIdle {
+  opacity: 0.5;
+}

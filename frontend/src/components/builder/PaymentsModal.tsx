@@ -47,6 +47,7 @@ import {
   disconnectPayments,
   ApiError,
 } from '@/lib/api';
+import { GatewayLogo } from './GatewayLogos';
 import classes from './PaymentsModal.module.css';
 
 interface Props {
@@ -346,29 +347,73 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
               <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb="xs">
                 Gateway
               </Text>
-              <SegmentedControl
-                fullWidth
-                mb="md"
-                value={provider}
-                onChange={(v) => switchProvider(v as PaymentProvider)}
-                data={Object.values(settings.providers).map((p) => ({
-                  value: p.provider,
-                  label: p.label,
-                }))}
-              />
+              <Box className={classes.gatewayGrid}>
+                {Object.values(settings.providers).map((p) => {
+                  const connected = Boolean(
+                    p.enabled && (p.mode === 'live' ? p.live.keyId : p.test.keyId)
+                  );
+                  const isDefault = settings.defaultProvider === p.provider;
+                  return (
+                    <button
+                      key={p.provider}
+                      type="button"
+                      aria-pressed={provider === p.provider}
+                      className={[
+                        classes.gatewayCard,
+                        provider === p.provider ? classes.gatewayCardActive : '',
+                        connected ? '' : classes.gatewayCardIdle,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      onClick={() => switchProvider(p.provider)}
+                    >
+                      <Box className={classes.gatewayLogo}>
+                        <GatewayLogo provider={p.provider} height={18} />
+                      </Box>
+                      <Box className={classes.gatewayStatus}>
+                        <Box
+                          className={classes.gatewayDot}
+                          style={{
+                            backgroundColor: !connected
+                              ? 'var(--mantine-color-dimmed)'
+                              : p.mode === 'live'
+                                ? 'var(--mantine-color-emerald-6)'
+                                : 'var(--mantine-color-orange-6)',
+                          }}
+                        />
+                        <Text size="xs" c="dimmed">
+                          {!connected ? 'Not connected' : p.mode === 'live' ? 'Live' : 'Test'}
+                        </Text>
+                      </Box>
+                      {isDefault && (
+                        <Badge
+                          size="xs"
+                          variant="light"
+                          color="gray"
+                          style={{ position: 'absolute', top: 8, right: 8 }}
+                        >
+                          Default
+                        </Badge>
+                      )}
+                    </button>
+                  );
+                })}
+              </Box>
+
               {settings.defaultProvider === provider ? (
-                <Text size="xs" c="dimmed" mb="md">
+                <Text size="xs" c="dimmed" mt="xs" mb="md">
                   Forms that do not pick a gateway use this one.
                 </Text>
               ) : (
                 <Button
                   size="compact-xs"
                   variant="subtle"
+                  mt="xs"
                   mb="md"
                   onClick={() => save({ defaultProvider: provider })}
                   disabled={saving || !current?.enabled}
                 >
-                  Make default for new forms
+                  Make {current?.label} the default
                 </Button>
               )}
 

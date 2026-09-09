@@ -42,6 +42,8 @@ import {
   PRICEABLE_TYPES,
 } from '@/lib/payment';
 import { ChoiceEditor } from '@/components/builder/ChoiceEditor';
+import { GatewayLogo } from '@/components/builder/GatewayLogos';
+import payClasses from '@/components/builder/GatewayPicker.module.css';
 import { RepeaterFieldsEditor } from '@/components/builder/RepeaterFieldsEditor';
 import { EmailBodyEditor } from '@/components/builder/EmailBodyEditor';
 import classes from './PropertiesDrawer.module.css';
@@ -483,33 +485,53 @@ export function PropertiesDrawer({
                     )}
                   </Group>
 
-                  <Select
-                    label="Gateway"
-                    description={
-                      field.pay?.provider
-                        ? 'This form charges through the gateway picked here.'
-                        : 'Follows the workspace default. Change it to pin one gateway to this form.'
-                    }
-                    data={[
-                      {
-                        value: '',
-                        label: `Workspace default${
-                          paymentSettings
-                            ? ` (${paymentSettings.providers[paymentSettings.defaultProvider].label})`
-                            : ''
-                        }`,
-                      },
-                      ...Object.values(paymentSettings?.providers ?? {}).map((p) => ({
-                        value: p.provider,
-                        label: p.enabled ? p.label : `${p.label} — not connected`,
-                      })),
-                    ]}
-                    value={field.pay?.provider ?? ''}
-                    onChange={(v) =>
-                      setPay({ provider: (v || undefined) as PaymentProvider | undefined })
-                    }
-                    allowDeselect={false}
-                  />
+                  <Box>
+                    <Text size="xs" fw={500} mb={4}>
+                      Gateway
+                    </Text>
+                    <Box className={payClasses.gatewayPicker}>
+                      {Object.values(paymentSettings?.providers ?? {}).map((p) => {
+                        const picked = field.pay?.provider === p.provider;
+                        const inherited = !field.pay?.provider &&
+                          paymentSettings?.defaultProvider === p.provider;
+                        return (
+                          <button
+                            key={p.provider}
+                            type="button"
+                            aria-pressed={picked}
+                            className={[
+                              payClasses.gatewayOption,
+                              picked ? payClasses.gatewayOptionActive : '',
+                              inherited ? payClasses.gatewayOptionInherited : '',
+                              p.enabled ? '' : payClasses.gatewayOptionIdle,
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                            // Clicking the one already pinned unpins it, which
+                            // is how a form goes back to following the
+                            // workspace default without a third control.
+                            onClick={() =>
+                              setPay({ provider: picked ? undefined : p.provider })
+                            }
+                          >
+                            <GatewayLogo provider={p.provider} height={16} />
+                            {!p.enabled && (
+                              <Text size="9px" c="dimmed" mt={4}>
+                                Not connected
+                              </Text>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </Box>
+                    <Text size="xs" c="dimmed" mt={6}>
+                      {field.pay?.provider
+                        ? `Pinned to ${providerLabel}. Click it again to follow the workspace default.`
+                        : `Following the workspace default${
+                            paymentSettings ? ` (${providerLabel})` : ''
+                          }.`}
+                    </Text>
+                  </Box>
 
                   <SegmentedControl
                     fullWidth

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Modal,
   Group,
@@ -90,6 +90,12 @@ const PROVIDER_COPY: Record<
     keysDocsUrl: string;
     /** What to do in the gateway's dashboard, in order. */
     webhookSteps: string[];
+    /** Reference rows shown under the keys step. */
+    keyFacts: { label: string; body: ReactNode }[];
+    /** Reference rows shown under the webhook step. */
+    webhookFacts: { label: string; body: ReactNode }[];
+    /** Reference rows shown under the go-live step. */
+    liveFacts: { label: string; body: ReactNode }[];
   }
 > = {
   razorpay: {
@@ -111,6 +117,56 @@ const PROVIDER_COPY: Record<
       'Type any secret you like into the Secret field — you invent this, Razorpay does not generate it. Copy it.',
       'Tick the two events listed below under Active Events, then click Create Webhook.',
       'Come back here and paste that same secret into the box below, then save.',
+    ],
+    keyFacts: [
+      {
+        label: 'Test keys',
+        body: 'Start with rzp_test_. No real money moves and no settlement happens. Use Razorpay’s test cards — 4111 1111 1111 1111 with any future expiry and any CVV.',
+      },
+      {
+        label: 'Live keys',
+        body: 'Start with rzp_live_. Only issued once your Razorpay account has completed KYC and been activated. Every payment is real from the moment you switch modes.',
+      },
+      {
+        label: 'The secret',
+        body: 'Razorpay shows the Key Secret exactly once, when the key pair is generated. If you did not copy it, you cannot look it up — regenerate the pair and paste both halves again.',
+      },
+      {
+        label: 'Rotating',
+        body: 'Generating a new key pair does not disable the old one immediately, so save the new keys here first and only then delete the old pair in Razorpay.',
+      },
+    ],
+    webhookFacts: [
+      {
+        label: 'The secret',
+        body: 'You choose this value — Razorpay does not generate it. Any long random string works. It must match here exactly or every delivery is rejected as unverified.',
+      },
+      {
+        label: 'Test vs live',
+        body: 'Test and live mode keep separate webhooks. Register the URL in both if you intend to go live, or live payments will settle with nothing listening.',
+      },
+      {
+        label: 'Localhost',
+        body: 'Razorpay can only reach public URLs. A backend on localhost will never receive a delivery — expose it with a tunnel such as ngrok while testing.',
+      },
+      {
+        label: 'If it fails',
+        body: 'Razorpay retries a failed delivery for up to 24 hours. A payment that stayed pending usually means a wrong secret or an unreachable URL, not a lost payment.',
+      },
+    ],
+    liveFacts: [
+      {
+        label: 'Switching',
+        body: 'Changing mode here decides which saved key pair charges. It does not move money or migrate anything — test payments stay in the test dashboard.',
+      },
+      {
+        label: 'Before you switch',
+        body: 'Register the webhook in live mode, verify the live keys, and run one real low-value payment end to end. A live form with no live webhook takes money and confirms nothing.',
+      },
+      {
+        label: 'Refunds',
+        body: 'Issue refunds from the Razorpay dashboard. Refunding there does not change the response stored here — the submission stays marked paid.',
+      },
     ],
   },
   cashfree: {
@@ -139,6 +195,64 @@ const PROVIDER_COPY: Record<
       'Press Test if you like, but expect a warning — the test probe is unsigned, so this endpoint refuses it on purpose. Click Continue.',
       'Select the events listed below, then save. There is no secret to copy — Cashfree signs with your Secret Key.',
     ],
+    keyFacts: [
+      {
+        label: 'Sandbox keys',
+        body: 'Generated in the Sandbox environment and only valid against Cashfree’s sandbox servers. Nothing settles and no real money moves.',
+      },
+      {
+        label: 'Production keys',
+        body: 'Issued once your Cashfree account is KYC-verified and activated. Every payment is real from the moment you switch modes.',
+      },
+      {
+        label: 'They look alike',
+        body: 'Unlike Razorpay, Cashfree keys carry no test/live prefix, so nothing can catch a sandbox key pasted into the live slot on sight. Always press "Test connection" after saving — a mismatched key fails to authenticate, and that is the only warning you get.',
+      },
+      {
+        label: 'The secret',
+        body: 'The Secret Key is shown once, when generated. It also verifies your webhooks, so keep it — losing it means regenerating the pair and re-saving both halves here.',
+      },
+    ],
+    webhookFacts: [
+      {
+        label: 'No secret',
+        body: 'Cashfree has no per-webhook secret. Deliveries are signed with the Secret Key you saved in the previous step, so there is nothing extra to paste. If you went looking for one and found nothing, that is why.',
+      },
+      {
+        label: 'The test button',
+        body: 'Cashfree’s Test button sends an unsigned probe. This endpoint refuses unsigned requests by design, so the warning is expected — a webhook that answered it would accept forged payment notifications from anyone. Click Continue past it.',
+      },
+      {
+        label: 'Sandbox vs production',
+        body: 'The two environments keep separate webhooks and separate Secret Keys. Because the key verifies the signature, a sandbox webhook received while this workspace is set to live mode will not verify. Keep the mode aligned with the environment you are testing.',
+      },
+      {
+        label: 'Localhost',
+        body: 'Cashfree can only reach public URLs. A backend on localhost never receives a delivery — expose it with a tunnel such as ngrok while testing.',
+      },
+      {
+        label: 'Verifying it works',
+        body: 'The only conclusive test is a real sandbox payment. If the submission stays pending afterwards, the URL or the mode is wrong — the money is not lost.',
+      },
+    ],
+    liveFacts: [
+      {
+        label: 'Switching',
+        body: 'Changing mode here decides which saved keys charge, and which Secret Key verifies incoming webhooks. It moves no money and migrates nothing.',
+      },
+      {
+        label: 'Before you switch',
+        body: 'Register the webhook in production, save the production keys, verify them, and run one real low-value payment. Production keys against a sandbox webhook — or the reverse — fail silently.',
+      },
+      {
+        label: 'Phone numbers',
+        body: 'Cashfree requires the payer’s mobile number on every order. Forms with a phone field use that answer; forms without one ask for it above the pay button.',
+      },
+      {
+        label: 'Refunds',
+        body: 'Issue refunds from the Cashfree dashboard. Refunding there does not change the response stored here — the submission stays marked paid.',
+      },
+    ],
   },
 };
 
@@ -153,6 +267,56 @@ const PROVIDER_COPY: Record<
  * loudly on its own — keys that were never verified look identical to working
  * ones, and a missing webhook shows up only as responses stuck on pending.
  */
+/**
+ * The reference block under each step.
+ *
+ * Payments are the one part of a form where a wrong guess costs real money and
+ * the failure is usually silent, so what would otherwise be documentation
+ * nobody opens sits directly under the step it belongs to.
+ */
+function Reference({
+  title,
+  facts,
+  docsUrl,
+  docsLabel,
+}: {
+  title: string;
+  facts: { label: string; body: ReactNode }[];
+  docsUrl?: string;
+  docsLabel?: string;
+}) {
+  return (
+    <Box mt="xl">
+      <Group justify="space-between" mb="xs" wrap="nowrap">
+        <Text size="xs" fw={600} c="dimmed" tt="uppercase">
+          {title}
+        </Text>
+        {docsUrl && (
+          <Anchor
+            href={docsUrl}
+            target="_blank"
+            rel="noreferrer"
+            size="xs"
+            style={{ flexShrink: 0 }}
+          >
+            {docsLabel} ↗
+          </Anchor>
+        )}
+      </Group>
+      <Box className={classes.refCard}>
+        {facts.map((fact) => (
+          <Box key={fact.label} className={classes.refRow}>
+            <Text className={classes.refLabel}>{fact.label}</Text>
+            <Text size="xs" c="dimmed" style={{ lineHeight: 1.55 }}>
+              {fact.body}
+            </Text>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
 export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Props) {
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
   const [loading, setLoading] = useState(false);
@@ -179,6 +343,14 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
   const providerWebhookUrl = `${webhookUrl}/${provider}`;
   const done = (id: PaymentSettings['checklist'][number]['id']) =>
     Boolean(current?.checklist.find((c) => c.id === id)?.done);
+
+  // Everything live mode needs before it can take real money: keys saved and
+  // proven, plus a webhook secret on the gateways that mint one.
+  const liveReady = Boolean(
+    current?.live.hasKeyId &&
+      current.live.verifiedAt &&
+      (copy.webhookSecretless || current.live.webhookSecretMask)
+  );
 
   const stepDone: Record<StepId, boolean> = {
     keys: done('keys') && done('verified'),
@@ -665,6 +837,13 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                         </Button>
                       </Group>
                     )}
+
+                    <Reference
+                      title={`About ${current?.label} keys`}
+                      facts={copy.keyFacts}
+                      docsUrl={copy.keysDocsUrl}
+                      docsLabel="Their key guide"
+                    />
                   </Stack>
                 )}
 
@@ -693,7 +872,9 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                               )}
                             </CopyButton>
                           </Group>
-                          <Code block>{providerWebhookUrl}</Code>
+                          <Code block className={classes.urlBlock}>
+                            {providerWebhookUrl}
+                          </Code>
                           <Text size="xs" c="dimmed" mt={6}>
                             Add this <strong>once</strong> in {current?.label}. It covers every
                             paid form in this workspace — you do not add one per form. Each
@@ -800,6 +981,13 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                         </Button>
                       </Group>
                     )}
+
+                    <Reference
+                      title="About webhooks"
+                      facts={copy.webhookFacts}
+                      docsUrl={copy.webhookDocsUrl}
+                      docsLabel="Their webhook guide"
+                    />
                   </Stack>
                 )}
 
@@ -836,6 +1024,41 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                         { value: 'live', label: 'Live mode' },
                       ]}
                     />
+
+                    {/* The expensive mistake: live mode switched on while the
+                        live credentials are incomplete. Every respondent then
+                        hits a failure at the moment they try to pay. */}
+                    {(current?.mode ?? 'test') === 'live' && !liveReady && (
+                      <Alert
+                        variant="light"
+                        color="red"
+                        radius="md"
+                        icon={<IconAlertTriangle size={16} />}
+                        title="Live mode is not ready"
+                      >
+                        <Stack gap={4}>
+                          {!current?.live.hasKeyId && (
+                            <Text size="xs">No live keys are saved for {current?.label}.</Text>
+                          )}
+                          {current?.live.hasKeyId && !current.live.verifiedAt && (
+                            <Text size="xs">
+                              The live keys have never been verified — press “Test connection” on
+                              the keys step.
+                            </Text>
+                          )}
+                          {!copy.webhookSecretless && !current?.live.webhookSecretMask && (
+                            <Text size="xs">
+                              No live webhook secret is saved. Payments will be taken but never
+                              confirmed.
+                            </Text>
+                          )}
+                          <Text size="xs">
+                            Switch back to test mode until this is resolved, or respondents will
+                            be charged and their responses will not complete.
+                          </Text>
+                        </Stack>
+                      </Alert>
+                    )}
 
                     {copy.needsPhone && (
                       <Alert
@@ -898,6 +1121,13 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                         </Text>
                       </Group>
                     )}
+
+                    <Reference
+                      title="Going live safely"
+                      facts={copy.liveFacts}
+                      docsUrl={copy.dashboardUrl}
+                      docsLabel={`Open ${current?.label}`}
+                    />
                   </Stack>
                 )}
               </Box>

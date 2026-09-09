@@ -13,6 +13,37 @@ export const PROVIDER_LABELS: Record<PaymentProvider, string> = {
   cashfree: 'Cashfree',
 };
  
+/**
+ * Gateways that will not open an order without a customer phone number.
+ *
+ * Razorpay collects one inside its own checkout window, so a form that asks
+ * for nothing still ends up with a contact on the payment. Cashfree wants it
+ * before the order exists.
+ */
+const PHONE_REQUIRED: PaymentProvider[] = ['cashfree'];
+
+export function providerNeedsPhone(provider: PaymentProvider): boolean {
+  return PHONE_REQUIRED.includes(provider);
+}
+
+const PHONE_TYPES: FormField['type'][] = ['phone'];
+const PHONE_HINTS = ['phone', 'mobile', 'contact', 'whatsapp'];
+
+/**
+ * Whether any field on the form would hold a phone number.
+ *
+ * Mirrors the server's `formCollectsPhone`. Duplicated rather than shared
+ * because the two run in different packages, and the answer decides only what
+ * the builder warns about — the server works it out again for the submission
+ * that actually pays.
+ */
+export function formCollectsPhone(fields: FormField[]): boolean {
+  return flattenFields(fields).some((field) => {
+    if (PHONE_TYPES.includes(field.type)) return true;
+    return PHONE_HINTS.some((hint) => (field.label ?? '').toLowerCase().includes(hint));
+  });
+}
+
 export function openGatewayCheckout(
   payment: PaymentRequired,
   prefill: { name?: string; email?: string; contact?: string } = {}

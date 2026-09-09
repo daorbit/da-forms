@@ -40,6 +40,8 @@ import {
   paymentStepProblem,
   isChoiceField,
   PRICEABLE_TYPES,
+  providerNeedsPhone,
+  formCollectsPhone,
 } from '@/lib/payment';
 import { ChoiceEditor } from '@/components/builder/ChoiceEditor';
 import { GatewayLogo } from '@/components/builder/GatewayLogos';
@@ -189,6 +191,14 @@ export function PropertiesDrawer({
 
   const paymentStepIssue =
     field?.type === 'payment' ? paymentStepProblem(allFields) : null;
+
+  // Cashfree needs a phone number to open an order. When the form asks for
+  // none, one is collected beside the pay button — which works, but the author
+  // should know it is happening rather than discover it in a screenshot.
+  const needsPhoneNotice =
+    field?.type === 'payment' &&
+    providerNeedsPhone(fieldProvider) &&
+    !formCollectsPhone(allFields);
 
   const showIfRule = field?.showIf;
   const showIfValueless = showIfRule && (showIfRule.operator === 'isEmpty' || showIfRule.operator === 'isNotEmpty');
@@ -702,6 +712,19 @@ export function PropertiesDrawer({
                     <Text size="xs" c="orange">
                       {paymentStepIssue}
                     </Text>
+                  )}
+                  {needsPhoneNotice && (
+                    <Box className={payClasses.phoneNotice}>
+                      <Text size="xs" fw={600} c="orange" mb={2}>
+                        {providerLabel} needs a phone number
+                      </Text>
+                      <Text size="xs" c="dimmed" style={{ lineHeight: 1.5 }}>
+                        This form asks for none, so respondents get an extra
+                        “Mobile number” box above the pay button. It reaches{' '}
+                        {providerLabel} and the receipt, but is not saved as an answer. Add a
+                        phone field to collect it properly instead.
+                      </Text>
+                    </Box>
                   )}
                 </Section>
               )}

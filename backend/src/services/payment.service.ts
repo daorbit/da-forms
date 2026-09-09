@@ -193,10 +193,49 @@ const NAME_HINTS = ['name', 'full name', 'your name'];
 const PHONE_HINTS = ['phone', 'mobile', 'contact', 'whatsapp'];
 const INDIAN_PHONE = /^[6-9]\d{9}$/;
 
-function normalisePhone(raw: string): string | undefined {
+export class PhoneRequiredError extends Error {}
+
+/**
+ * A submitted number reduced to the ten digits Cashfree wants, or undefined
+ * when it is not a number they will accept.
+ *
+ * Country code and separators are stripped rather than rejected — someone
+ * typing "+91 98765 43210" has given a perfectly good number, and refusing it
+ * over formatting would be the wrong lesson to draw from a failed payment.
+ */
+export function normalisePhone(raw: string): string | undefined {
   const digits = raw.replace(/\D/g, '');
   const local = digits.length > 10 ? digits.slice(-10) : digits;
   return INDIAN_PHONE.test(local) ? local : undefined;
+}
+
+/**
+ * Providers that will not open an order without a customer phone number.
+ *
+ * Razorpay collects one inside its own checkout, so a form that asks for
+ * nothing still produces a payment with a contact on it. Cashfree wants it up
+ * front, which is why a form charging through it has to have a number in hand
+ * before the order can be created.
+ */
+const PHONE_REQUIRED = new Set<PaymentProvider>(['cashfree']);
+
+export function providerNeedsPhone(provider: PaymentProvider): boolean {
+  return PHONE_REQUIRED.has(provider);
+}
+
+/**
+ * Whether a form charging through this provider can find a phone number in its
+ * own fields, or will have to ask for one at submit time.
+ *
+ * Answered from the field definitions alone so the builder can warn while the
+ * form is being edited, long before anyone submits it.
+ */
+export function formCollectsPhone(fields: FormField[]): boolean {
+  return flatten(fields).some((field) => {
+    if (PHONE_TYPES.includes(field.type)) return true;
+    const label = (field.label ?? '').toLowerCase();
+    return PHONE_HINTS.some((hint) => label.includes(hint));
+  });
 }
 
 export function findCustomerDetails(

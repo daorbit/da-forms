@@ -49,3 +49,12 @@
 .gatewayOptionIdle {
   opacity: 0.5;
 }
+
+/* Not an error — the form works. It explains a box the author did not add and
+   would otherwise be surprised to see on their own form. */
+.phoneNotice {
+  padding: 10px 12px;
+  border-radius: var(--mantine-radius-sm);
+  border: 1px solid var(--mantine-color-orange-outline);
+  background-color: var(--mantine-color-orange-light);
+}

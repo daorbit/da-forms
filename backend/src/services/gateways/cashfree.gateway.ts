@@ -20,8 +20,6 @@ const API_HOST: Record<PaymentMode, string> = {
 const API_VERSION = '2025-01-01';
 
  
-const PLACEHOLDER_PHONE = '9999999999';
-
 function headers(creds: { keyId: string; keySecret: string }) {
   return {
     'x-api-version': API_VERSION,
@@ -68,6 +66,13 @@ export const cashfreeGateway: PaymentGateway = {
   ): Promise<CheckoutSession> {
     const orderId = newOrderId();
 
+    // Refused rather than filled in with a stand-in number. A placeholder
+    // would open the order and leave the form owner with a payment they cannot
+    // trace to a person, which is worse than the payment not starting.
+    if (!input.customerPhone) {
+      throw new Error('Cashfree needs the payer’s phone number');
+    }
+
     const res = await fetch(`${API_HOST[creds.mode]}/orders`, {
       method: 'POST',
       headers: headers(creds),
@@ -77,7 +82,7 @@ export const cashfreeGateway: PaymentGateway = {
         order_currency: input.currency,
         customer_details: {
           customer_id: `cust_${input.receipt}`,
-          customer_phone: input.customerPhone || PLACEHOLDER_PHONE,
+          customer_phone: input.customerPhone,
           ...(input.customerEmail ? { customer_email: input.customerEmail } : {}),
           ...(input.customerName ? { customer_name: input.customerName } : {}),
         },

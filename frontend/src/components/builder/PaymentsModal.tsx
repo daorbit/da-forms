@@ -77,10 +77,19 @@ const PROVIDER_COPY: Record<
     dashboardUrl: string;
     dashboardName: string;
     keysPath: string;
-    webhookEvents: string;
+    webhookEvents: string[];
     webhookPath: string;
     /** True when the gateway signs webhooks with the API secret already saved. */
     webhookSecretless?: boolean;
+    /** True when the gateway refuses to open an order without a phone number. */
+    needsPhone?: boolean;
+    /** Where the gateway's own webhook page lives, for the "open it" link. */
+    webhookConsoleUrl: string;
+    /** The gateway's own documentation for this step. */
+    webhookDocsUrl: string;
+    keysDocsUrl: string;
+    /** What to do in the gateway's dashboard, in order. */
+    webhookSteps: string[];
   }
 > = {
   razorpay: {
@@ -90,9 +99,19 @@ const PROVIDER_COPY: Record<
     keyIdHint: (mode) => `${mode === 'live' ? 'Live' : 'Test'} keys start with rzp_${mode}_`,
     dashboardUrl: 'https://dashboard.razorpay.com',
     dashboardName: 'Razorpay dashboard',
-    keysPath: 'Settings → API Keys',
-    webhookEvents: 'payment.captured and payment.failed',
-    webhookPath: 'Settings → Webhooks',
+    keysPath: 'Account & Settings → API Keys',
+    webhookEvents: ['payment.captured', 'payment.failed'],
+    webhookPath: 'Account & Settings → Webhooks',
+    webhookConsoleUrl: 'https://dashboard.razorpay.com/app/website-app-settings/webhooks',
+    webhookDocsUrl: 'https://razorpay.com/docs/webhooks/setup-edit-payments/',
+    keysDocsUrl: 'https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/',
+    webhookSteps: [
+      'Open Account & Settings → Webhooks, then click "+ Add New Webhook".',
+      'Paste the URL above into the Webhook URL field.',
+      'Type any secret you like into the Secret field — you invent this, Razorpay does not generate it. Copy it.',
+      'Tick the two events listed below under Active Events, then click Create Webhook.',
+      'Come back here and paste that same secret into the box below, then save.',
+    ],
   },
   cashfree: {
     keyIdLabel: 'App ID',
@@ -103,9 +122,23 @@ const PROVIDER_COPY: Record<
     dashboardUrl: 'https://merchant.cashfree.com',
     dashboardName: 'Cashfree merchant dashboard',
     keysPath: 'Developers → API Keys',
-    webhookEvents: 'PAYMENT_SUCCESS_WEBHOOK, PAYMENT_FAILED_WEBHOOK and PAYMENT_USER_DROPPED_WEBHOOK',
+    webhookEvents: [
+      'PAYMENT_SUCCESS_WEBHOOK',
+      'PAYMENT_FAILED_WEBHOOK',
+      'PAYMENT_USER_DROPPED_WEBHOOK',
+    ],
     webhookPath: 'Developers → Webhooks',
-    webhookSecretless: true,
+    needsPhone: true,
+    webhookConsoleUrl: 'https://merchant.cashfree.com/merchants/pg/developers/webhooks',
+    webhookDocsUrl: 'https://www.cashfree.com/docs/payments/online/webhooks/overview',
+    keysDocsUrl: 'https://www.cashfree.com/docs/payments/online/resources/api-keys',
+    webhookSteps: [
+      'Switch the dashboard to the environment you are setting up — Sandbox or Production. The two keep separate webhooks.',
+      'Open Developers → Webhooks and click "Add Webhook Endpoint".',
+      'Paste the URL above into Endpoint URL.',
+      'Press Test if you like, but expect a warning — the test probe is unsigned, so this endpoint refuses it on purpose. Click Continue.',
+      'Select the events listed below, then save. There is no secret to copy — Cashfree signs with your Secret Key.',
+    ],
   },
 };
 
@@ -526,6 +559,10 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                       <Anchor href={copy.dashboardUrl} target="_blank" rel="noreferrer" size="sm">
                         {copy.dashboardName}
                       </Anchor>
+                      , or read{' '}
+                      <Anchor href={copy.keysDocsUrl} target="_blank" rel="noreferrer" size="sm">
+                        their guide to finding them ↗
+                      </Anchor>
                       .
                     </Text>
 
@@ -658,11 +695,60 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                           </Group>
                           <Code block>{providerWebhookUrl}</Code>
                           <Text size="xs" c="dimmed" mt={6}>
-                            Add this <strong>once</strong> in {current?.label} under{' '}
-                            {copy.webhookPath}. It covers every paid form in this workspace — you
-                            do not add one per form. Subscribe it to{' '}
-                            <Code>{copy.webhookEvents}</Code>. Each gateway needs its own URL.
+                            Add this <strong>once</strong> in {current?.label}. It covers every
+                            paid form in this workspace — you do not add one per form. Each
+                            gateway needs its own URL, so this one is only for {current?.label}.
                           </Text>
+                        </Box>
+
+                        <Divider />
+
+                        <Box>
+                          <Group justify="space-between" mb={8} wrap="nowrap">
+                            <Text size="sm" fw={600}>
+                              Where to paste it
+                            </Text>
+                            <Anchor
+                              href={copy.webhookConsoleUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              size="xs"
+                              style={{ flexShrink: 0 }}
+                            >
+                              Open {copy.webhookPath} ↗
+                            </Anchor>
+                          </Group>
+
+                          <Stack gap={6}>
+                            {copy.webhookSteps.map((instruction, index) => (
+                              <Group key={index} gap={8} wrap="nowrap" align="flex-start">
+                                <Box className={classes.stepNumber}>{index + 1}</Box>
+                                <Text size="xs" c="dimmed" style={{ lineHeight: 1.5 }}>
+                                  {instruction}
+                                </Text>
+                              </Group>
+                            ))}
+                          </Stack>
+
+                          <Text size="xs" fw={600} mt="md" mb={6}>
+                            Events to subscribe
+                          </Text>
+                          <Group gap={6}>
+                            {copy.webhookEvents.map((event) => (
+                              <Code key={event}>{event}</Code>
+                            ))}
+                          </Group>
+
+                          <Anchor
+                            href={copy.webhookDocsUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            size="xs"
+                            display="block"
+                            mt={10}
+                          >
+                            {current?.label} webhook documentation ↗
+                          </Anchor>
                         </Box>
 
                         <Divider />
@@ -670,10 +756,11 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                         {copy.webhookSecretless ? (
                           <Alert variant="light" color="gray" radius="md" icon={<IconKey size={16} />}>
                             <Text size="xs">
-                              {current?.label} signs its webhooks with the{' '}
-                              <strong>{copy.secretLabel}</strong> you already saved, so there is no
-                              separate webhook secret to paste. Registering the URL above is the
-                              whole step.
+                              <strong>No webhook secret to paste.</strong> {current?.label} signs
+                              its webhooks with the <strong>{copy.secretLabel}</strong> you saved
+                              in the previous step, so registering the URL above finishes this
+                              step. If you did not find a secret in their dashboard, that is
+                              why — there isn’t one.
                             </Text>
                           </Alert>
                         ) : (
@@ -749,6 +836,25 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                         { value: 'live', label: 'Live mode' },
                       ]}
                     />
+
+                    {copy.needsPhone && (
+                      <Alert
+                        variant="light"
+                        color="orange"
+                        radius="md"
+                        icon={<IconAlertTriangle size={16} />}
+                        title={`${current?.label} needs a phone number`}
+                      >
+                        <Text size="xs">
+                          Every {current?.label} payment must carry the payer’s mobile number.
+                          Forms with a phone field use that answer. A form without one shows
+                          respondents an extra “Mobile number” box above the pay button — it
+                          reaches {current?.label} and the receipt, but is not stored as an
+                          answer, so add a phone field to any form where you want it in your
+                          responses.
+                        </Text>
+                      </Alert>
+                    )}
 
                     <Box className={classes.keyCard}>
                       <Switch

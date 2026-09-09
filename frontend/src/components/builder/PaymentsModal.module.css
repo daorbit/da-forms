@@ -173,6 +173,23 @@
   opacity: 0.55;
 }
 
+/* Numbered instructions in the webhook step. Small and quiet — the steps are
+   read in order, so the number is a place-keeper rather than a heading. */
+.stepNumber {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  background-color: var(--mantine-color-default-hover);
+  color: var(--mantine-color-dimmed);
+}
+
 .gatewayStatus {
   display: flex;
   align-items: center;

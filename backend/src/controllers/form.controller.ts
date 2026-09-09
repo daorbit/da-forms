@@ -356,6 +356,19 @@ export const getPublicForm: RequestHandler = async (req, res) => {
   // belongs to, instead of a bare error on a white page.
   const availability = await formService.availability(form);
 
+  // A form charging through a gateway that demands a phone number, with no
+  // field of its own that holds one, has to ask for it beside the pay button.
+  // Worked out here so the page knows before the respondent reaches the last
+  // step, rather than discovering it from a rejected submit.
+  const payField = paymentService.findPaymentField(fields ?? []);
+  let needsPayerPhone = false;
+  if (payField) {
+    const defaultProvider = await paymentService.getWorkspaceDefaultProvider(form.workspaceId);
+    const provider = paymentService.resolveProvider(payField, defaultProvider);
+    needsPayerPhone =
+      paymentService.providerNeedsPhone(provider) && !paymentService.formCollectsPhone(fields ?? []);
+  }
+
   res.json({
     _id,
     title,
@@ -379,6 +392,7 @@ export const getPublicForm: RequestHandler = async (req, res) => {
     collectPartials,
     allowEdit,
     availability,
+    needsPayerPhone,
   });
 };
 
@@ -647,12 +661,16 @@ export const submitForm: RequestHandler = async (req, res) => {
   // `_partialKey` names this attempt's autosave row so it is promoted rather
   // than duplicated. Stripped like the rest: it identifies the attempt, it is
   // not an answer.
+  // `_payerPhone` is the number collected beside the pay button on a form that
+  // asks for none of its own. It reaches the gateway and the payment record,
+  // never the answers — nobody filled in a field for it.
   const {
     _hp,
     _retryOrderId: _ignoredRetry,
     _fileMeta,
     _captcha,
     _partialKey,
+    _payerPhone: _ignoredPayerPhone,
     ...data
   } = req.body;
   if (_hp) {
@@ -723,6 +741,29 @@ export const submitForm: RequestHandler = async (req, res) => {
       const provider = paymentService.resolveProvider(payField, defaultProvider);
       const credentials = await paymentService.getCredentials(form.workspaceId, provider);
       const customer = paymentService.findCustomerDetails(form.fields, data);
+
+      // Cashfree will not open an order without a phone number. When the form
+      // asks for none, the browser collects one alongside the pay button and
+      // sends it here — outside `data`, because it is a payment detail rather
+      // than an answer to the form.
+      if (paymentService.providerNeedsPhone(provider) && !customer.phone) {
+        const supplied =
+          typeof req.body._payerPhone === 'string'
+            ? paymentService.normalisePhone(req.body._payerPhone)
+            : undefined;
+
+        if (!supplied) {
+          // 422 rather than 400: nothing the respondent typed is wrong, there
+          // is simply one more thing needed before the payment can start. The
+          // page reads this and shows the phone box.
+          return res.status(422).json({
+            error: 'phone_required',
+            message: 'Enter a mobile number to continue to payment.',
+            provider,
+          });
+        }
+        customer.phone = supplied;
+      }
 
       // Someone retrying after a cancelled checkout leaves a pending row
       // behind on every attempt. Dropped here rather than left for the sweep,

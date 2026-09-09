@@ -159,7 +159,8 @@ export function PublicFormPage() {
   /** Returns false when nothing was stored, so the renderer keeps the draft. */
   async function handleSubmit(
     values: Record<string, string>,
-    partialKey?: string | null
+    partialKey?: string | null,
+    payerPhone?: string
   ): Promise<boolean> {
     if (!id) return false;
 
@@ -211,6 +212,10 @@ export function PublicFormPage() {
         ...(resumeKey || partialKey
           ? { _partialKey: resumeKey ?? partialKey! }
           : {}),
+        // Collected beside the pay button when the gateway needs one and the
+        // form has no field that holds it. Not an answer — the server strips
+        // it before storing the response.
+        ...(payerPhone ? { _payerPhone: payerPhone } : {}),
       });
 
       // A paid form stores the response but withholds it until Razorpay
@@ -252,6 +257,14 @@ export function PublicFormPage() {
       }
     } catch (e) {
       setSubmitting(false);
+      // The gateway wants a phone number and this page did not know to ask —
+      // the form's provider changed after it loaded. Refetching turns the box
+      // on, so the retry has somewhere to put it.
+      if (e instanceof ApiError && e.code === "phone_required") {
+        getPublicForm(id).then(setForm);
+        notifications.show({ message: e.message, color: "orange" });
+        return false;
+      }
       if (
         e instanceof ApiError &&
         (e.code === "rate_limited" ||
@@ -486,6 +499,7 @@ export function PublicFormPage() {
         allowResume={Boolean(form.collectPartials) && !isPreview && !editToken}
         onSaveForLater={(email, partialKey) => emailResumeLink(id!, partialKey, email)}
         initialData={editData ?? undefined}
+        needsPayerPhone={form.needsPayerPhone}
         onSubmit={handleSubmit}
       />
     </FormPage>

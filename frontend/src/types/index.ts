@@ -320,6 +320,12 @@ export interface Form {
    * public form. Absent on the editor's own fetch.
    */
   availability?: Availability;
+  /**
+   * Set on the public form when its gateway needs a phone number and no field
+   * on the form collects one — the renderer then asks for it beside the pay
+   * button. Server-derived; never stored on the form itself.
+   */
+  needsPayerPhone?: boolean;
   createdAt: string;
   updatedAt: string;
 }

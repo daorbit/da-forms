@@ -57,9 +57,17 @@ interface Props {
   allowResume?: boolean;
   onSaveForLater?: (email: string, partialKey: string) => Promise<void>;
   initialData?: Record<string, string>;
+  /**
+   * True when the gateway this form charges through needs a phone number and
+   * the form has no field that holds one. The renderer collects it beside the
+   * pay button; it is a payment detail, not an answer, so it never joins
+   * `values`.
+   */
+  needsPayerPhone?: boolean;
   onSubmit?: (
     values: Record<string, string>,
-    partialKey?: string | null
+    partialKey?: string | null,
+    payerPhone?: string
   ) => void | boolean | Promise<void | boolean>;
 }
 
@@ -138,6 +146,7 @@ export function FormRenderer({
   submitting,
   collectPartials,
   requireCaptcha,
+  needsPayerPhone,
   allowResume,
   onSaveForLater,
   initialData,
@@ -150,6 +159,8 @@ export function FormRenderer({
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [honeypot, setHoneypot] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [payerPhone, setPayerPhone] = useState('');
+  const [payerPhoneError, setPayerPhoneError] = useState<string | null>(null);
 
   const [savingForLater, setSavingForLater] = useState(false);
   const [savedForLater, setSavedForLater] = useState(false);
@@ -243,6 +254,21 @@ export function FormRenderer({
       setPageIndex((i) => i + 1);
       return;
     }
+ 
+    if (needsPayerPhone) {
+      const digits = payerPhone.replace(/\D/g, '');
+      const local = digits.length > 10 ? digits.slice(-10) : digits;
+      if (!/^[6-9]\d{9}$/.test(local)) {
+        setPayerPhoneError(
+          payerPhone.trim()
+            ? 'Enter a valid 10-digit Indian mobile number.'
+            : 'Enter your mobile number to continue to payment.'
+        );
+        document.getElementById('payer-phone')?.focus();
+        return;
+      }
+      setPayerPhoneError(null);
+    }
     // Drop answers behind a hidden condition so a since-hidden value can't submit.
     const visibleFields = valueFields(fields).filter((f) => isFieldVisible(f, values));
     const visibleIds = new Set(visibleFields.map((f) => f.id));
@@ -305,7 +331,8 @@ export function FormRenderer({
         // verified one.
         ...(captchaToken ? { _captcha: captchaToken } : {}),
       },
-      partial.submitKey()
+      partial.submitKey(),
+      needsPayerPhone ? payerPhone.replace(/\D/g, '').slice(-10) : undefined
     );
     if (accepted !== false) {
       // Only once it landed. A cancelled checkout leaves the attempt open, and
@@ -494,6 +521,26 @@ export function FormRenderer({
          
               {requireCaptcha && turnstileSiteKey && isLastPage && (
                 <TurnstileGate siteKey={turnstileSiteKey} onToken={setCaptchaToken} />
+              )}
+
+          
+              {needsPayerPhone && isLastPage && (
+                <TextInput
+                  id="payer-phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  label="Mobile number"
+                  placeholder="98765 43210"
+                  withAsterisk
+                  description="Required by the payment provider. Used for this payment only."
+                  error={payerPhoneError}
+                  value={payerPhone}
+                  onChange={(e) => {
+                    setPayerPhone(e.currentTarget.value);
+                    if (payerPhoneError) setPayerPhoneError(null);
+                  }}
+                />
               )}
 
           

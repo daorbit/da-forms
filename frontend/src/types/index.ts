@@ -491,6 +491,46 @@ export interface ConnectionTestResult {
   settings: PaymentSettings;
 }
 
+/* ---- App connections (third-party integrations) ---- */
+
+export type AppFieldType = 'text' | 'number' | 'password' | 'boolean' | 'email';
+
+export interface AppField {
+  key: string;
+  label: string;
+  type: AppFieldType;
+  secret: boolean;
+  required: boolean;
+  placeholder?: string;
+  help?: string;
+  default?: string | number | boolean;
+}
+
+/** One card on the integrations page: the app's description plus this workspace's state. */
+export interface AppCard {
+  id: string;
+  name: string;
+  category: 'email' | 'notification' | 'crm' | 'automation';
+  description: string;
+  docsUrl?: string;
+  testable: boolean;
+  fields: AppField[];
+  connected: boolean;
+  enabled: boolean;
+  verifiedAt?: string;
+  lastUsedAt?: string;
+  /** Plain config values as stored. */
+  config: Record<string, unknown>;
+  /** One `••••1234` per saved secret field; absent keys are unset. */
+  secrets: Record<string, string>;
+}
+
+export interface AppTestResult {
+  ok: boolean;
+  message: string;
+  app: AppCard;
+}
+
 export interface Paginated<T> {
   items: T[];
   total: number;

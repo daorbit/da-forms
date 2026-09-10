@@ -56,6 +56,14 @@ interface Props {
   workspaceId: string;
   /** Registered once in Razorpay; covers every paid form in the workspace. */
   webhookUrl: string;
+  /**
+   * Open straight onto one gateway and hide the switcher.
+   *
+   * Set when the modal is launched from a single gateway's card on the
+   * integrations page — the choice was already made by which card was clicked,
+   * so the in-modal grid is noise.
+   */
+  focusProvider?: PaymentProvider;
 }
 
 type StepId = 'keys' | 'webhook' | 'golive';
@@ -158,7 +166,7 @@ const PROVIDER_COPY: Record<
  * loudly on its own — keys that were never verified look identical to working
  * ones, and a missing webhook shows up only as responses stuck on pending.
  */
-export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Props) {
+export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusProvider }: Props) {
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -214,9 +222,10 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
     getPaymentSettings(workspaceId)
       .then((s) => {
         setSettings(s);
-        // Opens on whichever gateway the workspace charges through by default,
-        // which is the one most likely to need attention.
-        const active = s.defaultProvider ?? 'razorpay';
+        // A card on the integrations page names the gateway; otherwise open on
+        // whichever the workspace charges through by default, the one most
+        // likely to need attention.
+        const active = focusProvider ?? s.defaultProvider ?? 'razorpay';
         setProvider(active);
         const view = s.providers?.[active];
         setTab(view?.mode ?? s.mode);
@@ -245,7 +254,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
         }
       })
       .finally(() => setLoading(false));
-  }, [opened, workspaceId]);
+  }, [opened, workspaceId, focusProvider]);
 
   function switchTab(next: RazorpayMode) {
     setTab(next);
@@ -377,19 +386,15 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
         <Group h="100%" gap={0} align="stretch" wrap="nowrap" className={classes.shell}>
           {/* ---- Left: steps and status ---- */}
           <Box className={classes.panel}>
-            <Group gap="sm" px={20} wrap="nowrap" className={classes.panelHeader}>
-              <ThemeIcon variant="light" color="gray" size="lg" radius="md">
-                <IconCreditCard size={18} />
-              </ThemeIcon>
-              <Box style={{ flex: 1, minWidth: 0 }}>
-                <Text fw={600}>Payments</Text>
-                <Text size="xs" c="dimmed">
-                  For this whole workspace
-                </Text>
+            <Group gap="sm" px={20} wrap="nowrap" className={classes.panelHeader} align="center">
+              <Box className={classes.gatewayLogo}>
+                <GatewayLogo provider={provider} height={22} />
               </Box>
             </Group>
 
             <Box className={classes.panelBody}>
+              {!focusProvider && (
+              <>
               <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb="xs">
                 Gateway
               </Text>
@@ -461,6 +466,8 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl }: Prop
                 >
                   Make {current?.label} the default
                 </Button>
+              )}
+              </>
               )}
 
               <Stack gap="xs">

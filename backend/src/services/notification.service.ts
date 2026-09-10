@@ -10,11 +10,12 @@ import { getBranding } from '../lib/quantalog.js';
 
  
 export async function sendResumeLink(
+  workspaceId: string,
   to: string,
   form: Pick<FormDocument, 'title' | 'theme'>,
   link: string
 ): Promise<void> {
-  if (!mailConfigured()) return;
+  if (!(await mailConfigured(workspaceId))) return;
 
   const body = `You can pick up where you left off on ${form.title}. Your answers are saved.`;
   const html = renderEmail({
@@ -25,10 +26,8 @@ export async function sendResumeLink(
     accent: form.theme?.accentColor,
   });
 
-  // Awaited, unlike the submission notifications: this one was requested by
-  // someone watching a button, and whether it sent is the answer to what they
-  // just clicked.
-  await sendMail(to, `Finish your response to ${form.title}`, html, `${body}\n\n${link}`);
+ 
+  await sendMail(workspaceId, to, `Finish your response to ${form.title}`, html, `${body}\n\n${link}`);
 }
 
 /** Minor units to a readable figure — 50000 paise reads as ₹500.00. */
@@ -75,7 +74,7 @@ export async function sendSubmissionNotifications(
   formId?: string
 ): Promise<void> {
   const notifications = form.notifications;
-  if (!notifications || !mailConfigured()) return;
+  if (!notifications || !(await mailConfigured(form.workspaceId))) return;
 
   // Only the respondent's copy carries it. The owner's alert goes to the
   // person who already pays for the product — telling them what powers their
@@ -121,7 +120,7 @@ export async function sendSubmissionNotifications(
         accent: form.theme?.accentColor,
         poweredBy,
       });
-      jobs.push(sendMail(to, subject, html, body));
+      jobs.push(sendMail(form.workspaceId, to, subject, html, body));
     }
   }
 
@@ -139,7 +138,7 @@ export async function sendSubmissionNotifications(
       accent: form.theme?.accentColor,
     });
     for (const to of notifications.ownerEmails) {
-      jobs.push(sendMail(to, subject, html, text));
+      jobs.push(sendMail(form.workspaceId, to, subject, html, text));
     }
   }
 

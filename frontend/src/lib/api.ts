@@ -9,6 +9,8 @@ import type {
   RazorpayMode,
   PaymentProvider,
   ConnectionTestResult,
+  AppCard,
+  AppTestResult,
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
 import type { GeneratedForm } from './generatedForm';
@@ -480,7 +482,52 @@ export function disconnectPayments(
   );
 }
 
-/** Uploads a respondent's file ahead of submission; the returned URL is what gets stored on the field. */
+/* ---- Workspace app connections (third-party integrations) ---- */
+
+function appsBase(workspaceId: string) {
+  return `/workspaces/${encodeURIComponent(workspaceId)}/settings/apps`;
+}
+
+export function listApps(workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<AppCard[]>(appsBase(workspaceId));
+}
+
+export function getApp(appId: string, workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<AppCard>(`${appsBase(workspaceId)}/${encodeURIComponent(appId)}`);
+}
+
+/**
+ * Create or update one app connection.
+ *
+ * Only the fields in `values` are written; omit a secret key to keep the stored
+ * one. `enabled` toggles the connection live — for email apps the server turns
+ * the others off, since one mail transport is active at a time.
+ */
+export function saveApp(
+  appId: string,
+  input: { values: Record<string, unknown>; enabled?: boolean },
+  workspaceId = DEFAULT_WORKSPACE
+) {
+  return authedRequest<AppCard>(`${appsBase(workspaceId)}/${encodeURIComponent(appId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+}
+
+ 
+export function testApp(appId: string, to?: string, workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<AppTestResult>(
+    `${appsBase(workspaceId)}/${encodeURIComponent(appId)}/test`,
+    { method: 'POST', body: JSON.stringify(to ? { to } : {}) }
+  );
+}
+
+export function disconnectApp(appId: string, workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<AppCard[]>(`${appsBase(workspaceId)}/${encodeURIComponent(appId)}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function uploadFormFile(
   formId: string,
   file: File,

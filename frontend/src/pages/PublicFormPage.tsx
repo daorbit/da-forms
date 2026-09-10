@@ -277,10 +277,11 @@ export function PublicFormPage() {
       // the payment actually lands.
       if (isPaymentRequired(result)) {
         lastOrderId.current = result.orderId;
-        // PayU is about to navigate away, taking this page's state with it.
-        // Noted first so the tab knows which payment to pick back up when the
-        // respondent returns.
-        if (providerRedirectsAway(result.provider)) {
+        // PayU's Bolt modal still redirects to its success URL after the
+        // payment lands, taking this page's state with it. Noted first so the
+        // tab knows which payment to pick back up if the respondent returns
+        // before the in-page confirmation ran.
+        if (result.provider === "payu" || providerRedirectsAway(result.provider)) {
           rememberPayuPayment({ formId: id, orderId: result.orderId, startedAt: Date.now() });
         }
         const outcome = await openGatewayCheckout(result, prefillFrom(form, values));

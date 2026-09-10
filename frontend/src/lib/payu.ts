@@ -1,15 +1,7 @@
 import type { PaymentRequired } from '@/types';
 import type { CheckoutOutcome } from './razorpay';
 
-/**
- * Where a PayU payment left off, kept across the redirect.
- *
- * PayU takes the respondent off this page entirely, so everything the page
- * knows — which order was started, and the answers behind it — is gone by the
- * time they come back. This is what survives, in session storage rather than
- * local: it belongs to this tab and this attempt, and has no business outliving
- * either.
- */
+ 
 const PENDING_KEY = 'daf.payu.pending';
 
 export interface PendingPayuPayment {
@@ -33,8 +25,6 @@ export function takePayuPayment(formId: string): PendingPayuPayment | null {
     const raw = sessionStorage.getItem(PENDING_KEY);
     if (!raw) return null;
     const pending = JSON.parse(raw) as PendingPayuPayment;
-    // Read once. A stale entry would otherwise make the next visit to this form
-    // wait on a payment that finished hours ago.
     sessionStorage.removeItem(PENDING_KEY);
     return pending.formId === formId ? pending : null;
   } catch {
@@ -42,45 +32,142 @@ export function takePayuPayment(formId: string): PendingPayuPayment | null {
   }
 }
 
-/**
- * Send the respondent to PayU.
- *
- * PayU's checkout is a page of their own, reached by POSTing the signed fields
- * the server built. There is no window to open and nothing to await: this
- * navigates away, and the outcome comes back through the return URL rather
- * than through this promise.
- *
- * The promise deliberately never settles. Its caller shows a spinner while it
- * is pending, which is exactly right for the moment between the click and the
- * browser leaving — resolving would flash a "payment not completed" message
- * over a page that is on its way out.
- */
-export function openPayuCheckout(payment: PaymentRequired): Promise<CheckoutOutcome> {
-  if (!payment.redirectUrl || !payment.redirectFields) {
-    return Promise.resolve({
+/* -------------------------------- Bolt SDK -------------------------------- */
+
+const BOLT_SRC_LIVE = 'https://jssdk.payu.in/bolt/bolt.min.js';
+const BOLT_SRC_TEST = 'https://jssdk-uat.payu.in/bolt/bolt.min.js';
+
+interface BoltResponse {
+  txnStatus?: 'SUCCESS' | 'FAILED' | 'CANCEL';
+  mihpayid?: string;
+  status?: string;
+  error_Message?: string;
+  [key: string]: unknown;
+}
+
+interface BoltSDK {
+  launch(
+    data: Record<string, string>,
+    handlers: {
+      responseHandler: (response: BoltResponse) => void;
+      catchException: (response: BoltResponse) => void;
+    },
+  ): void;
+}
+
+declare global {
+  interface Window {
+    bolt?: BoltSDK;
+  }
+}
+
+let boltLoader: Promise<void> | null = null;
+
+function loadBolt(mode: PaymentRequired['mode']): Promise<void> {
+  if (window.bolt) return Promise.resolve();
+  if (boltLoader) return boltLoader;
+
+  boltLoader = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = mode === 'live' ? BOLT_SRC_LIVE : BOLT_SRC_TEST;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      boltLoader = null;
+      reject(new Error('Could not load the payment window. Check your connection and try again.'));
+    };
+    document.body.appendChild(script);
+  });
+
+  return boltLoader;
+}
+
+const RZP_OPEN_CLASS = 'rzp-checkout-open';
+
+ 
+function unlockForCheckout() {
+  for (const el of [document.documentElement, document.body]) {
+    for (const prop of ['overflow', 'overflow-x', 'overflow-y', 'padding-right', 'position', 'top', 'width']) {
+      el.style.removeProperty(prop);
+    }
+    el.removeAttribute('data-mantine-scroll-locked');
+  }
+  document.body.classList.add(RZP_OPEN_CLASS);
+}
+
+function relockAfterCheckout() {
+  document.body.classList.remove(RZP_OPEN_CLASS);
+}
+
+ 
+export async function openPayuCheckout(payment: PaymentRequired): Promise<CheckoutOutcome> {
+  const f = payment.redirectFields;
+  if (!f || !f.key || !f.txnid || !f.hash) {
+    return {
       ok: false,
       reason: 'This payment could not be started. Nothing was charged.',
-    });
+    };
   }
 
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = payment.redirectUrl;
-  // PayU's page renders in the top-level window; nothing here is framed.
-  form.style.display = 'none';
-
-  for (const [name, value] of Object.entries(payment.redirectFields)) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = name;
-    // Assigned as a property rather than through an attribute string, so a
-    // value containing quotes cannot break out into markup.
-    input.value = value;
-    form.appendChild(input);
+  await loadBolt(payment.mode);
+  const bolt = window.bolt;
+  if (!bolt) {
+    return { ok: false, reason: 'Payment window is unavailable' };
   }
 
-  document.body.appendChild(form);
-  form.submit();
+  unlockForCheckout();
 
-  return new Promise<CheckoutOutcome>(() => {});
+  return new Promise<CheckoutOutcome>((resolve) => {
+    let settled = false;
+    const settle = (outcome: CheckoutOutcome) => {
+      if (settled) return;
+      settled = true;
+      relockAfterCheckout();
+      resolve(outcome);
+    };
+
+    bolt.launch(
+      {
+        key: f.key,
+        txnid: f.txnid,
+        amount: f.amount,
+        productinfo: f.productinfo,
+        firstname: f.firstname,
+        email: f.email,
+        phone: f.phone ?? '',
+        surl: f.surl,
+        furl: f.furl,
+        hash: f.hash,
+        udf1: f.udf1 ?? '',
+        udf2: f.udf2 ?? '',
+        udf3: f.udf3 ?? '',
+        udf4: f.udf4 ?? '',
+        udf5: f.udf5 ?? '',
+      },
+      {
+        responseHandler: (response) => {
+          if (response.txnStatus === 'SUCCESS') {
+            settle({ ok: true, paymentId: response.mihpayid });
+          } else if (response.txnStatus === 'CANCEL') {
+            settle({ ok: false, reason: 'Payment was cancelled.' });
+          } else {
+            settle({
+              ok: false,
+              reason:
+                response.error_Message ??
+                'The payment did not go through. Nothing was charged.',
+            });
+          }
+        },
+        catchException: (response) => {
+          settle({
+            ok: false,
+            reason:
+              response.error_Message ??
+              'The payment window ran into a problem. Nothing was charged.',
+          });
+        },
+      },
+    );
+  });
 }

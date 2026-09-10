@@ -15,26 +15,14 @@ export const PROVIDER_LABELS: Record<PaymentProvider, string> = {
   payu: 'PayU',
 };
 
-/**
- * Gateways that take the respondent off this page to pay.
- *
- * The difference matters to the caller: a redirecting gateway never resolves
- * its checkout promise, because the page is gone before it could. The outcome
- * arrives on the way back instead.
- */
-const REDIRECTS_AWAY: PaymentProvider[] = ['payu'];
+ 
+const REDIRECTS_AWAY: PaymentProvider[] = [];
 
 export function providerRedirectsAway(provider: PaymentProvider): boolean {
   return REDIRECTS_AWAY.includes(provider);
 }
  
-/**
- * Gateways that will not open an order without a customer phone number.
- *
- * Razorpay collects one inside its own checkout window, so a form that asks
- * for nothing still ends up with a contact on the payment. Cashfree wants it
- * before the order exists.
- */
+ 
 const PHONE_REQUIRED: PaymentProvider[] = ['cashfree', 'payu'];
 
 export function providerNeedsPhone(provider: PaymentProvider): boolean {
@@ -44,14 +32,7 @@ export function providerNeedsPhone(provider: PaymentProvider): boolean {
 const PHONE_TYPES: FormField['type'][] = ['phone'];
 const PHONE_HINTS = ['phone', 'mobile', 'contact', 'whatsapp'];
 
-/**
- * Whether any field on the form would hold a phone number.
- *
- * Mirrors the server's `formCollectsPhone`. Duplicated rather than shared
- * because the two run in different packages, and the answer decides only what
- * the builder warns about — the server works it out again for the submission
- * that actually pays.
- */
+ 
 export function formCollectsPhone(fields: FormField[]): boolean {
   return flattenFields(fields).some((field) => {
     if (PHONE_TYPES.includes(field.type)) return true;
@@ -98,10 +79,8 @@ export function toMajorUnits(minor: number): number {
   return minor / 100;
 }
 
-/** Razorpay's floor is ₹1.00 — below it the API refuses the order. */
 export const MIN_AMOUNT = 100;
 
-/** Field types whose answer can drive a price. Mirrors what Zoho allows. */
 export const PRICEABLE_TYPES: FormField['type'][] = [
   'number',
   'decimal',
@@ -114,7 +93,6 @@ export const PRICEABLE_TYPES: FormField['type'][] = [
   'multipleChoice',
 ];
 
-/** Choice fields price per option; numeric fields use the answer directly. */
 export const CHOICE_TYPES: FormField['type'][] = [
   'radio',
   'select',
@@ -126,13 +104,7 @@ export function isChoiceField(field: FormField | undefined): boolean {
   return Boolean(field && CHOICE_TYPES.includes(field.type));
 }
 
-/**
- * What this payment field will charge, given the answers so far.
- *
- * Display only. The server recomputes the same figure from the stored form at
- * submit time and bills that one, so a wrong answer here is a cosmetic bug,
- * never a pricing one.
- */
+ 
 export function previewAmount(
   pay: PaymentConfig | undefined,
   values: Record<string, string>,
@@ -143,7 +115,6 @@ export function previewAmount(
   if (pay.mode === 'fixed') return pay.amount ?? 0;
 
   if (pay.mode === 'modifiable') {
-    // The respondent's own answer to the payment field itself.
     const raw = paymentFieldId ? values[paymentFieldId] : undefined;
     if (raw === undefined || raw === '') return pay.defaultAmount ?? null;
     const parsed = Number(raw);
@@ -155,9 +126,6 @@ export function previewAmount(
   if (raw === undefined || raw === '') return null;
 
   if (pay.optionPrices) {
-    // A multi-select stores its picks as one comma-joined string, so the
-    // shown total is the sum of what was ticked — the same arithmetic the
-    // server does when it works out what to charge.
     const picks = raw.includes(', ') ? raw.split(', ').filter(Boolean) : [raw];
     let total = 0;
     for (const pick of picks) {
@@ -172,7 +140,6 @@ export function previewAmount(
   return Number.isFinite(parsed) ? toMinorUnits(parsed) : null;
 }
 
-/** Why this payment field cannot be used yet, or null when it is ready. */
 export function paymentFieldProblem(field: FormField, allFields?: FormField[]): string | null {
   const pay = field.pay;
   if (!pay) return 'Not configured';
@@ -196,16 +163,12 @@ export function paymentFieldProblem(field: FormField, allFields?: FormField[]): 
   }
 
   if (!pay.amountFieldId) return 'Pick which field holds the amount';
-
-  // The source field can be deleted long after it was chosen, and nothing
-  // else would say so until a respondent hit an error at submit.
+ 
   if (allFields && !flattenFields(allFields).some((f) => f.id === pay.amountFieldId)) {
     return 'The field this price came from was deleted — pick another';
   }
 
-  // A choice field priced per option is only configured once every option has
-  // a price — an unpriced one would be rejected at submit, which is a bad
-  // place to discover it.
+ 
   if (allFields && pay.optionPrices) {
     const source = flattenFields(allFields).find((f) => f.id === pay.amountFieldId);
     const unpriced = (source?.options ?? []).filter(
@@ -224,14 +187,7 @@ function flattenFields(fields: FormField[]): FormField[] {
   );
 }
 
-/**
- * Multi-step problems a payment field can have, or null when it is fine.
- *
- * Both are about ordering. Payment happens at final submit whatever page the
- * field sits on, so a field on an early page tells the respondent a price and
- * then charges it several steps later; and a price read from an answer the
- * respondent has not reached yet cannot be worked out at all.
- */
+ 
 export function paymentStepProblem(fields: FormField[]): string | null {
   const pages = splitPages(fields);
   if (pages.length < 2) return null;
@@ -262,12 +218,7 @@ export function paymentStepProblem(fields: FormField[]): string | null {
   return null;
 }
 
-/**
- * A submission's payment as one line of text, for CSV and PDF exports.
- *
- * Those read `data[fieldId]`, which a payment field never populates — the
- * payment lives on the submission itself, written by the webhook.
- */
+ 
 export function paymentCellText(payment: SubmissionPayment | undefined): string {
   if (!payment) return '';
   const amount = formatAmount(payment.amount, payment.currency);
@@ -277,7 +228,6 @@ export function paymentCellText(payment: SubmissionPayment | undefined): string 
   return `${amount} ${payment.status === 'failed' ? 'failed' : 'pending'}`;
 }
 
-/** Top-level page breaks split the form. Mirrors `splitIntoPages`. */
 function splitPages(fields: FormField[]): FormField[][] {
   const pages: FormField[][] = [[]];
   for (const field of fields) {
@@ -287,7 +237,6 @@ function splitPages(fields: FormField[]): FormField[][] {
   return pages;
 }
 
-/** The one payment field on a form, if any. Searches grid columns too. */
 export function findPaymentField(fields: FormField[]): FormField | undefined {
   for (const field of fields) {
     if (field.type === 'payment') return field;

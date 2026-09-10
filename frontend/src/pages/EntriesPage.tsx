@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
-import { Box, Group, Modal, Stack, Text, Anchor } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
+import { useCallback, useEffect, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
+import { Box, Group, Modal, Stack, Text, Anchor } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import {
   getForm,
   listSubmissions,
@@ -15,28 +15,37 @@ import {
   type Analytics,
   listUploadedFiles,
   type UploadedFile,
-} from '@/lib/api';
-import { useWorkspaceId } from '@/hooks/useWorkspaceId';
-import type { Form, Submission } from '@/types';
-import { staticTypes } from '@/lib/fieldPalette';
-import { valueFields } from '@/lib/fieldTree';
-import { EntriesKanban } from '@/components/builder/EntriesKanban';
-import { AnalyticsBar } from '@/components/builder/AnalyticsBar';
-import { paymentCellText } from '@/lib/payment';
-import { repeaterSummaryText } from '@/lib/repeater';
-import { EntriesTopbar } from '@/components/builder/entries/EntriesTopbar';
-import { EntriesFilterBar } from '@/components/builder/entries/EntriesFilterBar';
-import { EntriesTableSkeleton } from '@/components/builder/entries/EntriesTableSkeleton';
-import { EntriesTable } from '@/components/builder/entries/EntriesTable';
-import { ResponseModal } from '@/components/builder/entries/ResponseModal';
-import { DeleteResponseModal } from '@/components/builder/entries/DeleteResponseModal';
-import { BulkActionBar } from '@/components/builder/entries/BulkActionBar';
-import { AttachmentModal, type AttachmentState } from '@/components/builder/entries/AttachmentModal';
+  type RetiredColumn,
+} from "@/lib/api";
+import { useWorkspaceId } from "@/hooks/useWorkspaceId";
+import type { Form, FormField, Submission } from "@/types";
+import { staticTypes } from "@/lib/fieldPalette";
+import { valueFields } from "@/lib/fieldTree";
+import { EntriesKanban } from "@/components/builder/EntriesKanban";
+import { AnalyticsBar } from "@/components/builder/AnalyticsBar";
+import { paymentCellText } from "@/lib/payment";
+import { repeaterSummaryText } from "@/lib/repeater";
+import { EntriesTopbar } from "@/components/builder/entries/EntriesTopbar";
+import { EntriesFilterBar } from "@/components/builder/entries/EntriesFilterBar";
+import { EntriesTableSkeleton } from "@/components/builder/entries/EntriesTableSkeleton";
+import { EntriesTable } from "@/components/builder/entries/EntriesTable";
+import { ResponseModal } from "@/components/builder/entries/ResponseModal";
+import { DeleteResponseModal } from "@/components/builder/entries/DeleteResponseModal";
+import { BulkActionBar } from "@/components/builder/entries/BulkActionBar";
 import {
-  dayFilterToRange, formatAnswer, formatDateTime, PAGE_SIZE,
-  type CustomRange, type DayFilter, type StatusFilter,
-} from '@/components/builder/entries/entriesTypes';
-import classes from './EntriesPage.module.css';
+  AttachmentModal,
+  type AttachmentState,
+} from "@/components/builder/entries/AttachmentModal";
+import {
+  dayFilterToRange,
+  formatAnswer,
+  formatDateTime,
+  PAGE_SIZE,
+  type CustomRange,
+  type DayFilter,
+  type StatusFilter,
+} from "@/components/builder/entries/entriesTypes";
+import classes from "./EntriesPage.module.css";
 
 export function EntriesPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,11 +54,13 @@ export function EntriesPage() {
   const [form, setForm] = useState<Form | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [total, setTotal] = useState(0);
+
+  const [retiredColumns, setRetiredColumns] = useState<RetiredColumn[]>([]);
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<StatusFilter>('all');
-  const [day, setDay] = useState<DayFilter>('all');
+  const [status, setStatus] = useState<StatusFilter>("all");
+  const [day, setDay] = useState<DayFilter>("all");
   const [customRange, setCustomRange] = useState<CustomRange>([null, null]);
-  const [view, setView] = useState<'list' | 'kanban'>('list');
+  const [view, setView] = useState<"list" | "kanban">("list");
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [viewing, setViewing] = useState<Submission | null>(null);
@@ -59,16 +70,11 @@ export function EntriesPage() {
   const [attachment, setAttachment] = useState<AttachmentState>(null);
   const [deleting, setDeleting] = useState(false);
   const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState('');
+  const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
-  const [search, setSearch] = useState('');
-  /**
-   * What the loader actually queries on.
-   *
-   * Held back from `search` so typing does not fetch a page per keystroke —
-   * every one of those is a regex scan across every response on the form.
-   */
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [search, setSearch] = useState("");
+
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filesOpen, setFilesOpen] = useState(false);
   const [files, setFiles] = useState<UploadedFile[] | null>(null);
 
@@ -76,46 +82,55 @@ export function EntriesPage() {
     if (!id) return;
     setLoading(true);
     listSubmissions(id, workspaceId, {
-      page: view === 'kanban' ? 1 : page,
-      limit: view === 'kanban' ? 200 : PAGE_SIZE,
-      status: view === 'kanban' ? 'all' : status,
+      page: view === "kanban" ? 1 : page,
+      limit: view === "kanban" ? 200 : PAGE_SIZE,
+      status: view === "kanban" ? "all" : status,
       q: debouncedSearch,
       ...dayFilterToRange(day, customRange),
     })
       .then((res) => {
         setSubmissions(res.items);
         setTotal(res.total);
+        if (res.retiredColumns) setRetiredColumns(res.retiredColumns);
       })
       .finally(() => setLoading(false));
   }, [id, workspaceId, page, status, day, customRange, view, debouncedSearch]);
 
-  // Nothing to offer on a form that collects no files, so the button is absent
-  // rather than opening an empty modal.
   const hasUploadFields = Boolean(
     form?.fields &&
-      valueFields(form.fields).some(
-        (f) => f.type === 'file' || f.type === 'imageUpload' || f.type === 'mediaUpload'
-      )
+    valueFields(form.fields).some(
+      (f) =>
+        f.type === "file" ||
+        f.type === "imageUpload" ||
+        f.type === "mediaUpload",
+    ),
   );
 
   const loadAnalytics = useCallback(() => {
     if (!id) return;
     getAnalytics(id, workspaceId)
       .then(setAnalytics)
-      .catch(() => notifications.show({ message: 'Could not load analytics', color: 'red' }));
+      .catch(() =>
+        notifications.show({
+          message: "Could not load analytics",
+          color: "red",
+        }),
+      );
   }, [id, workspaceId]);
 
   useEffect(() => {
     if (!id) return;
     getForm(id, workspaceId)
       .then(setForm)
-      .catch(() => notifications.show({ message: 'Could not load this form', color: 'red' }));
+      .catch(() =>
+        notifications.show({
+          message: "Could not load this form",
+          color: "red",
+        }),
+      );
     loadAnalytics();
   }, [id, workspaceId, loadAnalytics]);
 
-  // Long enough that a typed word is one request, short enough that the list
-  // still feels live. Paging resets with it: page 4 of the old results is not
-  // page 4 of the new ones.
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedSearch(search.trim());
@@ -126,20 +141,12 @@ export function EntriesPage() {
 
   useEffect(() => {
     loadSubmissions();
-    // A fresh page of submissions invalidates any selection made on the
-    // previous one — ids that no longer appear on screen shouldn't stay
-    // checked in the background.
     setSelected(new Set());
   }, [location.key, loadSubmissions]);
 
-  /**
-   * A filter change, with paging reset in the same update.
-   *
-   * Resetting the page from its own effect instead meant two renders with two
-   * different `page` values for one interaction — and since the loader is keyed
-   * on `page`, that fetched the list twice.
-   */
-  const setFilter = (patch: Partial<{ status: StatusFilter; day: DayFilter }>) => {
+  const setFilter = (
+    patch: Partial<{ status: StatusFilter; day: DayFilter }>,
+  ) => {
     if (patch.status) setStatus(patch.status);
     if (patch.day) setDay(patch.day);
     setPage(1);
@@ -150,16 +157,33 @@ export function EntriesPage() {
     setPage(1);
   }
 
-  async function moveSubmission(submissionId: string, patch: Partial<Pick<Submission, 'read'>>) {
+  async function moveSubmission(
+    submissionId: string,
+    patch: Partial<Pick<Submission, "read">>,
+  ) {
     if (!id) return;
-    const updated = await updateSubmission(id, submissionId, patch, workspaceId);
-    setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
+    const updated = await updateSubmission(
+      id,
+      submissionId,
+      patch,
+      workspaceId,
+    );
+    setSubmissions((prev) =>
+      prev.map((s) => (s._id === updated._id ? updated : s)),
+    );
   }
 
   async function markRead(submission: Submission) {
     if (!id || submission.read) return;
-    const updated = await updateSubmission(id, submission._id, { read: true }, workspaceId);
-    setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
+    const updated = await updateSubmission(
+      id,
+      submission._id,
+      { read: true },
+      workspaceId,
+    );
+    setSubmissions((prev) =>
+      prev.map((s) => (s._id === updated._id ? updated : s)),
+    );
     setViewing((current) => (current?._id === updated._id ? updated : current));
   }
 
@@ -171,7 +195,7 @@ export function EntriesPage() {
       setSubmissions((prev) => prev.filter((s) => s._id !== pendingDelete._id));
       setTotal((prev) => prev - 1);
       loadAnalytics();
-      notifications.show({ message: 'Response deleted', color: 'emerald' });
+      notifications.show({ message: "Response deleted", color: "emerald" });
       setPendingDelete(null);
     } finally {
       setDeleting(false);
@@ -201,7 +225,10 @@ export function EntriesPage() {
       setTotal((prev) => prev - ids.length);
       setSelected(new Set());
       loadAnalytics();
-      notifications.show({ message: `${ids.length} responses deleted`, color: 'emerald' });
+      notifications.show({
+        message: `${ids.length} responses deleted`,
+        color: "emerald",
+      });
       setPendingBulkDelete(false);
     } finally {
       setDeleting(false);
@@ -212,13 +239,18 @@ export function EntriesPage() {
     if (!id || selected.size === 0) return;
     const ids = [...selected];
     await bulkUpdateSubmissions(id, ids, { read }, workspaceId);
-    setSubmissions((prev) => prev.map((s) => (selected.has(s._id) ? { ...s, read } : s)));
-    notifications.show({ message: `${ids.length} responses marked ${read ? 'read' : 'unread'}`, color: 'emerald' });
+    setSubmissions((prev) =>
+      prev.map((s) => (selected.has(s._id) ? { ...s, read } : s)),
+    );
+    notifications.show({
+      message: `${ids.length} responses marked ${read ? "read" : "unread"}`,
+      color: "emerald",
+    });
   }
 
   function exportSelected() {
     const rows = submissions.filter((s) => selected.has(s._id));
-    exportCsv(rows, '-selected');
+    exportCsv(rows, "-selected");
   }
 
   function startEditingName() {
@@ -240,7 +272,7 @@ export function EntriesPage() {
       setForm(updated);
       setEditingName(false);
     } catch {
-      notifications.show({ message: 'Could not rename form', color: 'red' });
+      notifications.show({ message: "Could not rename form", color: "red" });
     } finally {
       setSavingName(false);
     }
@@ -249,42 +281,63 @@ export function EntriesPage() {
   function copyShareLink() {
     if (!id) return;
     navigator.clipboard.writeText(publicFormUrl(id));
-    notifications.show({ message: 'Link copied', color: 'emerald' });
+    notifications.show({ message: "Link copied", color: "emerald" });
   }
 
-  /** `rows` defaults to every loaded submission; the bulk bar passes just the
-   *  checked ones so "export selected" doesn't also carry the rest of the page. */
-  function exportCsv(rows: Submission[] = submissions, filenameSuffix = '') {
+  function exportCsv(rows: Submission[] = submissions, filenameSuffix = "") {
     if (!form) return;
-    const header = [...columns.map((f) => f.label), 'Added Time'];
+    const header = [...columns.map((f) => f.label), "Added Time"];
     const body = rows.map((s) => [
       ...columns.map((f) =>
         JSON.stringify(
-          // A payment column has no answer in `data` — its value is on the
-          // submission, written by the webhook.
-          f.type === 'payment'
+          f.type === "payment"
             ? paymentCellText(s.payment)
-            : f.type === 'repeater'
-              ? repeaterSummaryText(f, s.data[f.id] ?? '')
-              : formatAnswer(f.type, s.data[f.id] ?? '')
-        )
+            : f.type === "repeater"
+              ? repeaterSummaryText(f, s.data[f.id] ?? "")
+              : formatAnswer(f.type, s.data[f.id] ?? ""),
+        ),
       ),
       JSON.stringify(formatDateTime(s.createdAt)),
     ]);
-    const csv = [header.join(','), ...body.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = [header.join(","), ...body.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${form.title || 'entries'}${filenameSuffix}.csv`;
+    a.download = `${form.title || "entries"}${filenameSuffix}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
-  // layout-only elements never collect a value, so they get no column
-  const columns = form
-    ? valueFields(form.fields).filter((field) => !staticTypes.includes(field.type))
+  const currentColumns = form
+    ? valueFields(form.fields).filter(
+        (field) => !staticTypes.includes(field.type),
+      )
     : [];
+
+  const hasPaidResponses = submissions.some((s) => s.payment);
+  const formHasPaymentField = currentColumns.some((f) => f.type === "payment");
+
+  const columns: (FormField & { retired?: boolean })[] = [
+    ...currentColumns,
+    ...(hasPaidResponses && !formHasPaymentField
+      ? [
+          {
+            id: "__payment__",
+            label: "Payment",
+            type: "payment" as const,
+            required: false,
+          },
+        ]
+      : []),
+    ...retiredColumns.map((c) => ({
+      id: c.id,
+      label: c.label,
+      type: "text" as const,
+      required: false,
+      retired: true,
+    })),
+  ];
 
   return (
     <Box className={classes.page}>
@@ -310,13 +363,15 @@ export function EntriesPage() {
           hasUploadFields
             ? () => {
                 setFilesOpen(true);
-                // Fetched on open rather than with the page: building this walks
-                // every response on the form, and most visits never ask for it.
+
                 if (!files && id) {
                   listUploadedFiles(id, workspaceId)
                     .then((res) => setFiles(res.files))
                     .catch(() =>
-                      notifications.show({ message: 'Could not load files', color: 'red' })
+                      notifications.show({
+                        message: "Could not load files",
+                        color: "red",
+                      }),
                     );
                 }
               }
@@ -331,8 +386,7 @@ export function EntriesPage() {
         onCustomRangeChange={setCustomDateRange}
         onSetView={(v) => {
           setView(v);
-          // Kanban has no checkboxes, so a selection carried over from list
-          // view would leave the floating bar showing with no way to change it.
+
           setSelected(new Set());
         }}
         onCopyShareLink={copyShareLink}
@@ -343,18 +397,14 @@ export function EntriesPage() {
         onExportCsv={() => exportCsv()}
       />
 
-      {/* Before `form` loads there are no field columns yet, so the real
-          table (header included) can't draw its real shape — showing it with
-          an empty column set and then reflowing once `form` arrives read as
-          two different tables. And `form` alone isn't enough to switch off
-          the skeleton: submissions load separately, so dropping to the real
-          table the moment `form` lands but before that fetch resolves showed
-          the "no responses yet" empty state for a beat, on a form that likely
-          has responses. Keep the skeleton up until both are ready. */}
       {!form || (loading && submissions.length === 0) ? (
         <EntriesTableSkeleton />
-      ) : view === 'kanban' ? (
-        <EntriesKanban submissions={submissions} columns={columns} onMove={moveSubmission} />
+      ) : view === "kanban" ? (
+        <EntriesKanban
+          submissions={submissions}
+          columns={columns}
+          onMove={moveSubmission}
+        />
       ) : (
         <EntriesTable
           form={form}
@@ -397,9 +447,6 @@ export function EntriesPage() {
         onOpenAttachment={setAttachment}
       />
 
-      {/* One modal for both flows: a single row's delete icon sets
-          `pendingDelete`, the bulk bar sets `pendingBulkDelete` — never both
-          at once, so `count` and `onConfirm` just follow whichever is set. */}
       <DeleteResponseModal
         opened={!!pendingDelete || pendingBulkDelete}
         deleting={deleting}
@@ -408,15 +455,20 @@ export function EntriesPage() {
           setPendingDelete(null);
           setPendingBulkDelete(false);
         }}
-        onConfirm={pendingBulkDelete ? confirmBulkDelete : confirmDeleteSubmission}
+        onConfirm={
+          pendingBulkDelete ? confirmBulkDelete : confirmDeleteSubmission
+        }
       />
 
-      <AttachmentModal attachment={attachment} onClose={() => setAttachment(null)} />
+      <AttachmentModal
+        attachment={attachment}
+        onClose={() => setAttachment(null)}
+      />
 
       <Modal
         opened={filesOpen}
         onClose={() => setFilesOpen(false)}
-        title={`Uploaded files${files ? ` (${files.length})` : ''}`}
+        title={`Uploaded files${files ? ` (${files.length})` : ""}`}
         size="lg"
         centered
         radius="lg"
@@ -433,11 +485,16 @@ export function EntriesPage() {
         ) : (
           <Stack gap="xs">
             <Text size="xs" c="dimmed">
-              Files open in a new tab. Your browser downloads them from where they are stored,
-              so nothing is routed through this page.
+              Files open in a new tab. Your browser downloads them from where
+              they are stored, so nothing is routed through this page.
             </Text>
             {files.map((file) => (
-              <Group key={file.url} justify="space-between" wrap="nowrap" gap="sm">
+              <Group
+                key={file.url}
+                justify="space-between"
+                wrap="nowrap"
+                gap="sm"
+              >
                 <div style={{ minWidth: 0 }}>
                   <Anchor
                     href={file.url}
@@ -445,14 +502,13 @@ export function EntriesPage() {
                     rel="noopener noreferrer"
                     size="sm"
                     truncate
-                    style={{ display: 'block' }}
+                    style={{ display: "block" }}
                   >
-                    {/* The stored name, which Cloudinary keeps as the last path
-                        segment — more use than the full URL in a narrow row. */}
-                    {decodeURIComponent(file.url.split('/').pop() ?? file.url)}
+                    {decodeURIComponent(file.url.split("/").pop() ?? file.url)}
                   </Anchor>
                   <Text size="xs" c="dimmed" truncate>
-                    {file.fieldLabel} · {new Date(file.submittedAt).toLocaleDateString()}
+                    {file.fieldLabel} ·{" "}
+                    {new Date(file.submittedAt).toLocaleDateString()}
                   </Text>
                 </div>
               </Group>

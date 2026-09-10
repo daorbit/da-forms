@@ -29,6 +29,17 @@ export interface Paginated<T> {
   limit: number;
 }
 
+/**
+ * A field that responses were once submitted against but the form no longer
+ * has — a column the Entries page still needs to show so an edit never hides
+ * data that was collected.
+ */
+export interface RetiredColumn {
+  id: string;
+  /** Best-effort label: a snapshot's, else the id itself. */
+  label: string;
+}
+
 const sortMap = {
   name: { name: 1 as const },
   nameDesc: { name: -1 as const },
@@ -695,25 +706,12 @@ export async function submitForm(
   return submission;
 }
 
-/**
- * Write the real Razorpay order id onto a submission.
- *
- * Separate from the insert because Razorpay's receipt is the submission's own
- * id, so the row has to exist before the order can be opened.
- */
+ 
 export function attachOrderId(submissionId: Types.ObjectId, orderId: string) {
   return SubmissionModel.updateOne({ _id: submissionId }, { 'payment.orderId': orderId });
 }
 
-/**
- * Promote a paid submission to a real response.
- *
- * The filter is what makes this safe to call twice: Razorpay retries webhooks,
- * and matching only rows that are not yet paid means a duplicate delivery
- * updates nothing and returns null. The caller reads that as "already handled"
- * and skips the notification emails, so a respondent is never thanked twice for
- * one payment.
- */
+ 
 export async function markSubmissionPaid(
   orderId: string,
   paymentId: string,
@@ -736,7 +734,6 @@ export async function markSubmissionPaid(
   );
 }
 
-/** Records a failed attempt. The row stays pending so the sweep can clear it later. */
 export async function markSubmissionFailed(orderId: string) {
   return SubmissionModel.findOneAndUpdate(
     { 'payment.orderId': orderId, 'payment.status': 'created' },
@@ -745,13 +742,7 @@ export async function markSubmissionFailed(orderId: string) {
   );
 }
 
-/**
- * Drop an abandoned checkout the respondent is now retrying.
- *
- * Guarded on 'pending_payment' so a paid submission can never be removed this
- * way — the order id arrives from the browser, and a client asking to delete a
- * completed response must get nothing.
- */
+ 
 export async function discardPendingSubmission(orderId: string) {
   const submission = await SubmissionModel.findOne({
     'payment.orderId': orderId,
@@ -770,14 +761,7 @@ export function getSubmissionByOrderId(orderId: string) {
   return SubmissionModel.findOne({ 'payment.orderId': orderId });
 }
 
-/**
- * Delete checkouts that were never completed.
- *
- * Mirrors the abandoned-upload sweep: a respondent who opens Razorpay and walks
- * away leaves a row that will never become a response, and its uploaded files
- * are storage nothing can reach. Only rows past the grace period are touched,
- * so a payment still in progress is never pulled out from under someone.
- */
+ 
 export async function sweepAbandonedPayments(graceMinutes: number) {
   const cutoff = new Date(Date.now() - graceMinutes * 60_000);
   const stale = await SubmissionModel.find(
@@ -805,20 +789,7 @@ export interface UploadedFile {
   submittedAt: Date;
 }
 
-/**
- * Every file uploaded to a form, newest response first.
- *
- * A manifest rather than a zip. Building the archive here would mean pulling
- * every file back out of Cloudinary through this process and holding it in
- * memory — on a serverless function with a fixed timeout and a fixed memory
- * budget, which a form collecting three hundred CVs would exhaust. The browser
- * fetches from Cloudinary directly instead, which is where the files already
- * are and what its CDN is for.
- *
- * Reads from the answers rather than the upload rows because only the answers
- * know which question a file belonged to — the upload row has the id, not the
- * label.
- */
+ 
 export async function uploadedFiles(
   formId: string,
   fields: FormField[]
@@ -892,8 +863,10 @@ export async function listSubmissions(
     q?: string;
     /** Exact-match filters, keyed by field id — "everyone who picked Large". */
     fieldFilters?: Record<string, string>;
+    /** The form's current field ids, so the retired-column set can exclude them. */
+    currentFieldIds?: string[];
   } = {}
-): Promise<Paginated<InstanceType<typeof SubmissionModel>>> {
+): Promise<Paginated<InstanceType<typeof SubmissionModel>> & { retiredColumns: RetiredColumn[] }> {
   const page = Math.max(1, options.page ?? 1);
   const limit = Math.max(1, options.limit ?? 10);
   // Checkouts still in progress are not responses — they never appear on the
@@ -904,17 +877,7 @@ export async function listSubmissions(
   else if (options.status === 'unread') filter.read = false;
   else if (options.status === 'starred') filter.starred = true;
 
-  /*
-   * Free-text search across the answers.
-   *
-   * `$regex` over `data` as a whole is not possible — the field ids differ per
-   * form — so this matches the serialised object with `$where`-free operators
-   * by way of an aggregation-free trick: Mongo can regex a Mixed subdocument's
-   * values only via `$expr`, so the search is done over the stringified
-   * document. Restricted to a bounded, escaped needle: the input is a
-   * respondent-visible box, and an unescaped one both breaks on a stray `(` and
-   * hands the server a regex someone else wrote.
-   */
+ 
   if (options.q?.trim()) {
     const needle = options.q.trim().slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     filter.$expr = {
@@ -946,15 +909,39 @@ export async function listSubmissions(
     filter.createdAt = createdAt;
   }
 
-  const [items, total] = await Promise.all([
+  const [items, total, retiredColumns] = await Promise.all([
     SubmissionModel.find(filter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit),
     SubmissionModel.countDocuments(filter),
+    // Only worth computing for the first page — the list is the same set of
+    // columns however deep it is paged.
+    page === 1 ? retiredColumnsFor(formId, options.currentFieldIds ?? []) : Promise.resolve([]),
   ]);
 
-  return { items, total, page, limit };
+  return { items, total, page, limit, retiredColumns };
+}
+
+ 
+export async function retiredColumnsFor(
+  formId: string,
+  currentFieldIds: string[]
+): Promise<RetiredColumn[]> {
+  const known = new Set(currentFieldIds);
+
+  const rows = await SubmissionModel.aggregate<{ _id: string }>([
+    { $match: { formId: new Types.ObjectId(formId), status: 'complete' } },
+    { $project: { keys: { $objectToArray: '$data' } } },
+    { $unwind: '$keys' },
+    { $group: { _id: '$keys.k' } },
+    { $limit: 200 },
+  ]);
+
+  return rows
+    .map((r) => r._id)
+    .filter((id) => id && !known.has(id))
+    .map((id) => ({ id, label: id }));
 }
 
 /** One response by id, however it is reached — currently only an edit link. */
@@ -970,17 +957,7 @@ export function updateSubmission(
   return SubmissionModel.findOneAndUpdate({ _id: id, formId }, patch, { new: true });
 }
 
-/**
- * Replace a respondent's own answers, from a signed edit link.
- *
- * Restricted to 'complete' rows: a checkout still in flight has an amount
- * derived from the answers it was created with, and letting those answers move
- * underneath it would mean a respondent editing their way to a different price
- * than the one Razorpay is holding.
- *
- * Marked unread again, because from the owner's side this is new information
- * about a response they may have already read and acted on.
- */
+ 
 export async function editSubmission(
   id: string,
   fields: FormField[],
@@ -990,18 +967,14 @@ export async function editSubmission(
   const target = await SubmissionModel.findById(id, { formId: 1 });
   if (!target) return null;
 
-  // The same derivation the original submit did. A respondent who changes the
-  // quantity has changed the total, and leaving the old one would store a row
-  // whose own numbers disagree.
+ 
   applyCalculatedFields(fields, data);
 
   const uniqueFields = flattenFields(fields).filter((field) => field.unique);
   for (const field of uniqueFields) {
     const value = data[field.id];
     if (!value) continue;
-    // `$ne: id` is what makes an edit that leaves a unique field alone still
-    // valid — without it the row would collide with itself and no edit could
-    // ever be saved.
+ 
     const existing = await SubmissionModel.exists({
       _id: { $ne: id },
       formId: target.formId,
@@ -1023,9 +996,7 @@ export async function editSubmission(
   return updated;
 }
 
-/** Same as `updateSubmission`, for a batch of ids — scoped to `formId` the
- *  same way, so an id that isn't this form's is silently skipped rather than
- *  failing the whole batch. */
+ 
 export async function bulkUpdateSubmissions(
   ids: string[],
   formId: string,
@@ -1035,12 +1006,7 @@ export async function bulkUpdateSubmissions(
   return { matchedCount: result.matchedCount ?? 0 };
 }
 
-/**
- * Delete one response, and the files it uploaded along with it.
- *
- * Same reasoning as deleting a form: the files existed only to be part of this
- * answer, so keeping them past it is storage nothing can reach.
- */
+ 
 export async function deleteSubmission(id: string, formId: string) {
   const submission = await SubmissionModel.findOne({ _id: id, formId });
   if (!submission) return null;
@@ -1050,15 +1016,7 @@ export async function deleteSubmission(id: string, formId: string) {
   return submission;
 }
 
-/**
- * Same as `deleteSubmission`, for a batch of ids at once.
- *
- * Scoped to `formId` the same way — every id is matched against `{ _id, formId }`
- * before deletion, so a client can't smuggle in another form's submission id
- * and have it deleted through this form's route. Ids that don't match (already
- * deleted, or not this form's) are silently skipped rather than failing the
- * whole batch — the caller only sent ids it believed were still there.
- */
+ 
 export async function bulkDeleteSubmissions(ids: string[], formId: string) {
   const submissions = await SubmissionModel.find({ _id: { $in: ids }, formId }, { _id: 1 });
   const matchedIds = submissions.map((s) => s._id);

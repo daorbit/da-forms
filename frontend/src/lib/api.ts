@@ -48,21 +48,10 @@ function raise(err: ApiError): never {
   throw err;
 }
 
-/**
- * Every call, with the workspace token attached where the server wants one.
- *
- * Workspace-scoped routes need it: a workspace id travels in the URL and is no
- * kind of secret, so without proof of a session behind it anyone could point
- * the app at someone else's id and read their forms and responses.
- *
- * The public routes must not carry it — those are opened by respondents who
- * have no session at all, which is the entire point of a share link.
- */
+ 
 async function request<T>(path: string, init?: RequestInit, isRetry = false): Promise<T> {
   const needsToken = path.startsWith('/workspaces/');
-  // Asked for up front rather than after a rejection: the host loads this app
-  // before it has handed one over, so the first workspace call would otherwise
-  // always be a wasted round trip.
+ 
   const token = needsToken ? await ensureWorkspaceToken() : '';
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
@@ -75,9 +64,7 @@ async function request<T>(path: string, init?: RequestInit, isRetry = false): Pr
 
   if (!res.ok) {
     const err = await errorFrom(res);
-    // The token lasts an hour and the builder is a screen people leave open
-    // for longer. Rather than fail the call, ask the host for a fresh one and
-    // try again — once, so a host that cannot answer does not loop.
+ 
     if (err.code === 'workspace_token_expired' && needsToken && !isRetry) {
       const renewed = await refreshWorkspaceToken();
       if (renewed) return request<T>(path, init, true);
@@ -143,24 +130,13 @@ export class DemoWorkspaceError extends ApiError {
     super(403, 'demo_workspace', 'This is a read-only demo workspace.');
   }
 }
-
-/**
- * Draft a form from a sentence.
- *
- * Nothing is stored by this call — the answer is a starting point the editor
- * opens, and it becomes a form only when the person saves it. Slower than every
- * other call here: two model attempts run behind it.
- */
+ 
 export function generateFormDraft(
   prompt: string,
   workspaceId = DEFAULT_WORKSPACE,
-  /** The draft being revised, when the prompt is a change rather than a first ask. */
+ 
   previous?: GeneratedForm,
-  /**
-   * "edit" — changing a form that already exists in the builder; the server
-   * keeps fields and theme unless the prompt asks otherwise.
-   * "create" (default) — a draft still being shaped in the generator modal.
-   */
+ 
   mode: 'create' | 'edit' = 'create'
 ) {
   return authedRequest<GeneratedForm>(`${ws(workspaceId)}/generate`, {
@@ -231,14 +207,19 @@ export function listSubmissions(
   if (options.from) params.set('from', options.from);
   if (options.to) params.set('to', options.to);
   if (options.q?.trim()) params.set('q', options.q.trim());
-  // `f_` prefix rather than bracket syntax: the server reads flat keys and
-  // checks each id against the form's real fields, so nothing here can name a
-  // path of its own.
+
   for (const [fieldId, value] of Object.entries(options.fieldFilters ?? {})) {
     if (value) params.set(`f_${fieldId}`, value);
   }
   const qs = params.toString();
-  return request<Paginated<Submission>>(`${ws(workspaceId)}/${id}/submissions${qs ? `?${qs}` : ''}`);
+  return request<Paginated<Submission> & { retiredColumns: RetiredColumn[] }>(
+    `${ws(workspaceId)}/${id}/submissions${qs ? `?${qs}` : ''}`
+  );
+}
+
+export interface RetiredColumn {
+  id: string;
+  label: string;
 }
 
 export function updateSubmission(
@@ -307,7 +288,6 @@ export function getAnalytics(id: string, workspaceId = DEFAULT_WORKSPACE) {
 }
 
 
-/* ---- Public: reachable by form id alone, no workspace ---- */
 
 export function getPublicForm(id: string) {
   return request<Form>(`/public/forms/${id}`);
@@ -317,14 +297,7 @@ export function recordView(id: string) {
   return request<void>(`/public/forms/${id}/view`, { method: 'POST' });
 }
 
-/**
- * Save what the respondent has typed so far.
- *
- * Fire-and-forget by design: this runs on a timer behind someone who is still
- * filling the form in, and a failed draft save is not something they can act on
- * or should be told about. The server answers 204 even when the form has
- * drafts turned off.
- */
+ 
 export function savePartial(
   id: string,
   data: Record<string, string>,
@@ -384,12 +357,7 @@ export interface UploadedFile {
   submittedAt: string;
 }
 
-/**
- * Every file this form has collected.
- *
- * A manifest, not an archive — the browser fetches each file from Cloudinary
- * directly rather than routing hundreds of megabytes through the API.
- */
+ 
 export function listUploadedFiles(id: string, workspaceId = DEFAULT_WORKSPACE) {
   return request<{ files: UploadedFile[] }>(`${ws(workspaceId)}/${id}/files`);
 }
@@ -398,18 +366,11 @@ export function duplicateForm(id: string, workspaceId = DEFAULT_WORKSPACE) {
   return request<Form>(`${ws(workspaceId)}/${id}/duplicate`, { method: 'POST' });
 }
 
-/**
- * A form with a payment field answers with `PaymentRequired` instead of a
- * submission — the response is stored but held back until Razorpay confirms.
- * Callers tell the two apart with `isPaymentRequired`.
- */
+ 
 export function submitForm(id: string, data: Record<string, string>) {
   return request<Submission | PaymentRequired>(`/public/forms/${id}/submissions`, {
     method: 'POST',
-    // `_hp` rides along in `data` when the honeypot got filled (a bot did
-    // it — never a real respondent); otherwise it is simply absent. So do
-    // `_partialKey` and `_captcha`, for the same reason: they are properties of
-    // the attempt, and the server strips each before storing the answers.
+ 
     body: JSON.stringify(data),
   });
 }
@@ -420,19 +381,13 @@ export function isPaymentRequired(
   return (result as PaymentRequired).paymentRequired === true;
 }
 
-/**
- * Whether a payment has landed yet.
- *
- * Polled after checkout closes: the webhook is what completes the submission,
- * and it can arrive a moment after the browser does.
- */
+ 
 export function getPaymentStatus(formId: string, orderId: string) {
   return request<{ status: 'complete' | 'pending_payment'; paymentStatus: string }>(
     `/public/forms/${formId}/payments/${orderId}`
   );
 }
 
-/* ---- Workspace payment settings ---- */
 
 export function getPaymentSettings(workspaceId = DEFAULT_WORKSPACE) {
   return authedRequest<PaymentSettings>(`/workspaces/${encodeURIComponent(workspaceId)}/settings/payments`);
@@ -440,9 +395,8 @@ export function getPaymentSettings(workspaceId = DEFAULT_WORKSPACE) {
 
 export function savePaymentSettings(
   input: {
-    /** Which gateway this save is about. Defaults to the workspace default. */
+ 
     provider?: PaymentProvider;
-    /** Which gateway new forms should use when they do not name one. */
     defaultProvider?: PaymentProvider;
     enabled?: boolean;
     mode?: RazorpayMode;

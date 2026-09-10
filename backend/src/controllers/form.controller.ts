@@ -205,6 +205,7 @@ export const listSubmissions: RequestHandler = async (req, res) => {
     to,
     q,
     fieldFilters,
+    currentFieldIds: [...validIds],
   });
   res.json(result);
 };

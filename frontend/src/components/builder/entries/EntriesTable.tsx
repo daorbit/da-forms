@@ -33,7 +33,7 @@ export function EntriesTable({
   onOpenAttachment,
 }: {
   form: Form | null;
-  columns: FormField[];
+  columns: (FormField & { retired?: boolean })[];
   submissions: Submission[];
   total: number;
   page: number;
@@ -81,9 +81,18 @@ export function EntriesTable({
                   field type is already visible from the values. */}
               {columns.map((field) => (
                 <Table.Th key={field.id} className={classes.th}>
-                  <Text size="sm" fw={600} title={field.label} truncate>
-                    {field.label}
-                  </Text>
+                  <Group gap={6} wrap="nowrap">
+                    <Text size="sm" fw={600} title={field.label} truncate c={field.retired ? 'dimmed' : undefined}>
+                      {field.label}
+                    </Text>
+                    {field.retired && (
+                      <Tooltip label="This field was removed from the form — its earlier answers are kept here" withArrow>
+                        <Text component="span" size="xs" c="dimmed" style={{ flexShrink: 0 }}>
+                          removed
+                        </Text>
+                      </Tooltip>
+                    )}
+                  </Group>
                 </Table.Th>
               ))}
               <Table.Th className={classes.th}>

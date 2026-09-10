@@ -121,7 +121,7 @@ function ColumnDropZone({
 
 interface Props {
   submissions: Submission[];
-  columns: FormField[];
+  columns: (FormField & { retired?: boolean })[];
   onMove: (submissionId: string, patch: Partial<Pick<Submission, 'read'>>) => void;
 }
 

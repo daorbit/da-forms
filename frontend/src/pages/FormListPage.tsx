@@ -24,6 +24,7 @@ import {
   IconWorldUpload,
   IconX,
   IconInfoCircle,
+  IconPlugConnected,
 } from '@tabler/icons-react';
 import {
   listForms,
@@ -41,6 +42,7 @@ import { NewFormModal } from '@/components/NewFormModal';
 import { AiFormModal } from '@/components/AiFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
+import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
 import classes from './FormListPage.module.css';
 
 function formatDate(iso: string) {
@@ -81,6 +83,7 @@ export function FormListPage() {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [loading, setLoading] = useState(true);
   const [newFormOpen, setNewFormOpen] = useState(false);
+  const [integrationsOpen, setIntegrationsOpen] = useState(false);
   /**
    * The Orbit builder, and what the first step already collected.
    *
@@ -227,25 +230,34 @@ export function FormListPage() {
             </Badge>
           )}
         </Group>
-        {isDemo ? (
-          <Tooltip label="Creating forms is disabled in the demo workspace" withArrow>
-            {/* Wrapped: a disabled Mantine button fires no pointer events, so
-                the tooltip would never open on the button itself. */}
-            <span>
-              <Button color="emerald" leftSection={<IconPlus size={16} />} disabled>
-                New Form
-              </Button>
-            </span>
-          </Tooltip>
-        ) : (
+        <Group gap="xs" wrap="nowrap">
           <Button
-            color="emerald"
-            leftSection={<IconPlus size={16} />}
-            onClick={() => setNewFormOpen(true)}
+            variant="default"
+            leftSection={<IconPlugConnected size={16} />}
+            onClick={() => setIntegrationsOpen(true)}
           >
-            New Form
+            Integrations
           </Button>
-        )}
+          {isDemo ? (
+            <Tooltip label="Creating forms is disabled in the demo workspace" withArrow>
+              {/* Wrapped: a disabled Mantine button fires no pointer events, so
+                  the tooltip would never open on the button itself. */}
+              <span>
+                <Button color="emerald" leftSection={<IconPlus size={16} />} disabled>
+                  New Form
+                </Button>
+              </span>
+            </Tooltip>
+          ) : (
+            <Button
+              color="emerald"
+              leftSection={<IconPlus size={16} />}
+              onClick={() => setNewFormOpen(true)}
+            >
+              New Form
+            </Button>
+          )}
+        </Group>
       </Group>
 
       {isDemo && (
@@ -644,6 +656,13 @@ export function FormListPage() {
           }
         />
       )}
+
+      <IntegrationsModal
+        opened={integrationsOpen}
+        onClose={() => setIntegrationsOpen(false)}
+        workspaceId={workspaceId}
+        isDemo={isDemo}
+      />
 
       <Modal
         opened={!!pendingDelete}

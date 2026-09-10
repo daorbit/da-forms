@@ -564,7 +564,7 @@ export const emailResumeLink: RequestHandler = async (req, res) => {
     String(draft._id)
   )}`;
 
-  await sendResumeLink(email.trim(), form, link);
+  await sendResumeLink(form.workspaceId, email.trim(), form, link);
   res.status(204).send();
 };
 

@@ -11,7 +11,7 @@ import { ThemeDrawer } from '@/components/builder/ThemeDrawer';
 import { StepsDrawer } from '@/components/builder/StepsDrawer';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
 import { NotificationsModal } from '@/components/builder/NotificationsModal';
-import { PaymentsModal } from '@/components/builder/PaymentsModal';
+import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import type { FormBuilderState } from './useFormBuilderState';
@@ -79,7 +79,7 @@ export function BuilderDrawers({
         paymentSettings={paymentSettings}
         onOpenPaymentSettings={() => {
           state.setEditingId(null);
-          setRailPanel('payments');
+          setRailPanel('integrations');
         }}
       />
 
@@ -182,15 +182,11 @@ export function BuilderDrawers({
         onChange={(patch) => state.setEmailNotifications((prev) => ({ ...prev, ...patch }))}
       />
 
-      <PaymentsModal
-        opened={railPanel === 'payments'}
+      <IntegrationsModal
+        opened={railPanel === 'integrations'}
         onClose={() => setRailPanel(null)}
         workspaceId={workspaceId}
-        // One URL for the whole workspace — registered once in Razorpay,
-        // covering every paid form. Available before the form is even saved.
-        webhookUrl={`${
-          import.meta.env.VITE_API_URL ?? `${window.location.origin}/api`
-        }/public/workspaces/${workspaceId}/payments/webhook`}
+        isDemo={isDemo}
       />
 
       <PreviewModal

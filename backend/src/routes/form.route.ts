@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import * as formController from '../controllers/form.controller.js';
 import * as settingsController from '../controllers/settings.controller.js';
+import * as appController from '../controllers/appConnection.controller.js';
 import { uploadFormFile, uploadBackgroundImage } from '../controllers/upload.controller.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import { blockDemoWorkspaceWrites } from '../middleware/demo-workspace.js';
@@ -156,6 +157,27 @@ workspaceSettingsRouter.post(
   asyncHandler(settingsController.testPaymentConnection)
 );
 workspaceSettingsRouter.delete('/payments', asyncHandler(settingsController.disconnectPayments));
+
+// Third-party app connections (email delivery today; notification and CRM apps
+// to follow). Each test call opens a real connection to the provider with the
+// saved credentials, so it is rate limited the same way payment tests are.
+const appTestLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited', message: 'Too many attempts — try again in a minute.' },
+});
+
+workspaceSettingsRouter.get('/apps', asyncHandler(appController.listApps));
+workspaceSettingsRouter.get('/apps/:appId', asyncHandler(appController.getApp));
+workspaceSettingsRouter.put('/apps/:appId', asyncHandler(appController.saveApp));
+workspaceSettingsRouter.post(
+  '/apps/:appId/test',
+  appTestLimiter,
+  asyncHandler(appController.testApp)
+);
+workspaceSettingsRouter.delete('/apps/:appId', asyncHandler(appController.disconnectApp));
 
 /**
  * The respondent-facing routes: reachable by form id alone, because that id is

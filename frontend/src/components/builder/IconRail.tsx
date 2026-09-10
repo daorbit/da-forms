@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import { Tooltip } from '@mantine/core';
-import { IconCircleCheck, IconCode, IconAdjustmentsHorizontal, IconPalette, IconListNumbers, IconMail, IconCreditCard } from '@tabler/icons-react';
+import { IconCircleCheck, IconCode, IconAdjustmentsHorizontal, IconPalette, IconListNumbers, IconMail, IconPlugConnected } from '@tabler/icons-react';
 import { OrbitMark } from '@/components/OrbitMark';
 import classes from './IconRail.module.css';
 
-export type RailPanel = 'ai' | 'quickSettings' | 'thankYou' | 'embed' | 'theme' | 'steps' | 'notifications' | 'payments';
+export type RailPanel = 'ai' | 'quickSettings' | 'thankYou' | 'embed' | 'theme' | 'steps' | 'notifications' | 'payments' | 'integrations';
 
 interface Props {
   active: RailPanel | null;
@@ -19,7 +19,9 @@ const items: { id: RailPanel; label: string; icon: () => ReactNode }[] = [
   { id: 'steps', label: 'Steps & Progress', icon: () => <IconListNumbers size={19} stroke={1.6} /> },
   { id: 'thankYou', label: 'Thank You Page & Redirection', icon: () => <IconCircleCheck size={19} stroke={1.6} /> },
   { id: 'notifications', label: 'Email Notifications', icon: () => <IconMail size={19} stroke={1.6} /> },
-  { id: 'payments', label: 'Payments', icon: () => <IconCreditCard size={19} stroke={1.6} /> },
+  // 'integrations' covers payment gateways too — there is no separate Payments
+  // rail entry; a payment field's own settings link here as well.
+  { id: 'integrations', label: 'Integrations', icon: () => <IconPlugConnected size={19} stroke={1.6} /> },
   { id: 'embed', label: 'Share & Embed', icon: () => <IconCode size={19} stroke={1.6} /> },
 ];
 

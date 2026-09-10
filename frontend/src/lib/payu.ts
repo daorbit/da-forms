@@ -1,5 +1,6 @@
 import type { PaymentRequired } from '@/types';
 import type { CheckoutOutcome } from './razorpay';
+import { loadScriptOnce, unlockForCheckout, relockAfterCheckout } from './checkoutShell';
 
  
 const PENDING_KEY = 'daf.payu.pending';
@@ -61,45 +62,22 @@ declare global {
   }
 }
 
-let boltLoader: Promise<void> | null = null;
-
 function loadBolt(mode: PaymentRequired['mode']): Promise<void> {
-  if (window.bolt) return Promise.resolve();
-  if (boltLoader) return boltLoader;
-
-  boltLoader = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = mode === 'live' ? BOLT_SRC_LIVE : BOLT_SRC_TEST;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => {
-      boltLoader = null;
-      reject(new Error('Could not load the payment window. Check your connection and try again.'));
-    };
-    document.body.appendChild(script);
-  });
-
-  return boltLoader;
+  return loadScriptOnce(mode === 'live' ? BOLT_SRC_LIVE : BOLT_SRC_TEST, 'bolt');
 }
 
-const RZP_OPEN_CLASS = 'rzp-checkout-open';
-
- 
-function unlockForCheckout() {
-  for (const el of [document.documentElement, document.body]) {
-    for (const prop of ['overflow', 'overflow-x', 'overflow-y', 'padding-right', 'position', 'top', 'width']) {
-      el.style.removeProperty(prop);
-    }
-    el.removeAttribute('data-mantine-scroll-locked');
-  }
-  document.body.classList.add(RZP_OPEN_CLASS);
-}
-
-function relockAfterCheckout() {
-  document.body.classList.remove(RZP_OPEN_CLASS);
-}
-
- 
+/**
+ * Open PayU's Bolt (Checkout Plus) modal.
+ *
+ * Bolt keeps the respondent on this page: the checkout is a modal served from
+ * PayU, PCI handled on their side. It takes exactly the fields the server
+ * already builds for the classic flow — same SHA-512 hash — so nothing changes
+ * on the backend.
+ *
+ * On a completed payment Bolt still navigates to `surl`; the promise settles
+ * before that with `ok: true` so the caller can show its own confirmation, and
+ * the session-storage recovery above covers the reload.
+ */
 export async function openPayuCheckout(payment: PaymentRequired): Promise<CheckoutOutcome> {
   const f = payment.redirectFields;
   if (!f || !f.key || !f.txnid || !f.hash) {

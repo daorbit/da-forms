@@ -1,4 +1,5 @@
 import type { PaymentRequired } from '@/types';
+import { loadScriptOnce, unlockForCheckout, relockAfterCheckout } from './checkoutShell';
 
 const CHECKOUT_SRC = 'https://checkout.razorpay.com/v1/checkout.js';
 
@@ -19,62 +20,36 @@ declare global {
   }
 }
 
-let loader: Promise<void> | null = null;
-
 /**
  * Load Razorpay's checkout script, once.
  *
  * Deliberately not bundled: Razorpay require checkout to be served from their
  * domain, and a vendored copy would go stale against a payment flow we do not
- * control. The promise is cached so a respondent who submits twice does not
- * add a second script tag.
+ * control.
  */
 export function loadRazorpay(): Promise<void> {
-  if (window.Razorpay) return Promise.resolve();
-  if (loader) return loader;
-
-  loader = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = CHECKOUT_SRC;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => {
-      // Cleared so a later attempt can retry rather than reusing a rejected
-      // promise forever — the failure is usually a blocked network, not a
-      // permanent one.
-      loader = null;
-      reject(new Error('Could not load the payment window. Check your connection and try again.'));
-    };
-    document.body.appendChild(script);
-  });
-
-  return loader;
+  return loadScriptOnce(CHECKOUT_SRC, 'Razorpay');
 }
 
 export interface CheckoutOutcome {
+  /**
+   * True when checkout reported success. It is not proof of payment — the
+   * webhook is — so the caller still confirms with the server before showing a
+   * thank-you.
+   */
   ok: boolean;
   paymentId?: string;
+  /** Set when checkout reported a failure, or the respondent closed the window. */
   reason?: string;
 }
 
- 
-const RZP_OPEN_CLASS = 'rzp-checkout-open';
-
- 
-function unlockForCheckout() {
-  for (const el of [document.documentElement, document.body]) {
-    for (const prop of ['overflow', 'overflow-x', 'overflow-y', 'padding-right', 'position', 'top', 'width']) {
-      el.style.removeProperty(prop);
-    }
-    el.removeAttribute('data-mantine-scroll-locked');
-  }
-  document.body.classList.add(RZP_OPEN_CLASS);
-}
-
-function relockAfterCheckout() {
-  document.body.classList.remove(RZP_OPEN_CLASS);
-}
-
+/**
+ * Open Razorpay checkout and settle when the respondent is done with it.
+ *
+ * Resolves rather than rejects on failure or dismissal: neither is exceptional
+ * — someone closing the window is an ordinary thing to do, and the caller
+ * handles all three outcomes the same way.
+ */
 export async function openCheckout(
   payment: PaymentRequired,
   prefill: { name?: string; email?: string; contact?: string } = {}
@@ -87,6 +62,8 @@ export async function openCheckout(
 
   return new Promise<CheckoutOutcome>((resolve) => {
     let settled = false;
+    // Razorpay can fire both a failure event and the dismiss handler for one
+    // abandoned payment. First outcome wins; the rest are ignored.
     const settle = (outcome: CheckoutOutcome) => {
       if (settled) return;
       settled = true;
@@ -99,6 +76,10 @@ export async function openCheckout(
       order_id: payment.orderId,
       amount: payment.amount,
       currency: payment.currency,
+      // The business, then what they are paying for. Sending the field's
+      // description as both made the window title read "payment", which is the
+      // one moment a form cannot afford to look like a stranger asking for
+      // money.
       name: payment.brandName || payment.description,
       description: payment.description,
       image: payment.brandLogo,
@@ -119,7 +100,13 @@ export async function openCheckout(
   });
 }
 
- 
+/**
+ * Wait for the webhook to mark the submission complete.
+ *
+ * Checkout returning success only means the respondent's bank approved it; the
+ * submission is not a response until the gateway's webhook tells the server so.
+ * That usually lands within a second or two, hence the short poll.
+ */
 export async function waitForPayment(
   check: () => Promise<{ status: string }>,
   { attempts = 10, intervalMs = 1500 } = {}
@@ -129,8 +116,8 @@ export async function waitForPayment(
       const result = await check();
       if (result.status === 'complete') return true;
     } catch {
-      // A failed poll is not a failed payment — keep trying until the
-      // attempts run out.
+      // A failed poll is not a failed payment — keep trying until the attempts
+      // run out.
     }
     await new Promise((r) => setTimeout(r, intervalMs));
   }

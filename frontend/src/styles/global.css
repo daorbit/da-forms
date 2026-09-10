@@ -300,6 +300,23 @@ body {
 }
 
 /*
+ * While Razorpay's Standard Checkout is open, the document must be a normal
+ * scrolling page or checkout.js drops to its full-page view instead of the
+ * centred modal. The rule above otherwise pins the viewport and scrolls #root,
+ * which reads to Razorpay as a broken viewport. `openCheckout` adds this class
+ * before opening and removes it when checkout settles.
+ */
+body.rzp-checkout-open,
+html:has(body.rzp-checkout-open) {
+  overflow: visible;
+  height: auto;
+}
+body.rzp-checkout-open #root {
+  overflow: visible;
+  height: auto;
+}
+
+/*
  * A public form page in a plain iframe embed (no host chrome, unlike the
  * dashboard's full-app embed) is sized by its own content, not by the
  * iframe's starting viewport — the iframe resizes to match instead. Locking

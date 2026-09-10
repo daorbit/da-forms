@@ -52,24 +52,29 @@ export function loadRazorpay(): Promise<void> {
 }
 
 export interface CheckoutOutcome {
-  /**
-   * True when checkout reported success. It is not proof of payment — the
-   * webhook is — so the caller still confirms with the server before
-   * showing a thank-you.
-   */
   ok: boolean;
   paymentId?: string;
-  /** Set when checkout reported a failure, or the respondent closed the window. */
   reason?: string;
 }
 
-/**
- * Open Razorpay checkout and settle when the respondent is done with it.
- *
- * Resolves rather than rejects on failure or dismissal: neither is exceptional
- * — someone closing the window is an ordinary thing to do, and the caller
- * handles all three outcomes the same way.
- */
+ 
+const RZP_OPEN_CLASS = 'rzp-checkout-open';
+
+ 
+function unlockForCheckout() {
+  for (const el of [document.documentElement, document.body]) {
+    for (const prop of ['overflow', 'overflow-x', 'overflow-y', 'padding-right', 'position', 'top', 'width']) {
+      el.style.removeProperty(prop);
+    }
+    el.removeAttribute('data-mantine-scroll-locked');
+  }
+  document.body.classList.add(RZP_OPEN_CLASS);
+}
+
+function relockAfterCheckout() {
+  document.body.classList.remove(RZP_OPEN_CLASS);
+}
+
 export async function openCheckout(
   payment: PaymentRequired,
   prefill: { name?: string; email?: string; contact?: string } = {}
@@ -78,13 +83,14 @@ export async function openCheckout(
   const Razorpay = window.Razorpay;
   if (!Razorpay) throw new Error('Payment window is unavailable');
 
+  unlockForCheckout();
+
   return new Promise<CheckoutOutcome>((resolve) => {
     let settled = false;
-    // Razorpay can fire both a failure event and the dismiss handler for one
-    // abandoned payment. First outcome wins; the rest are ignored.
     const settle = (outcome: CheckoutOutcome) => {
       if (settled) return;
       settled = true;
+      relockAfterCheckout();
       resolve(outcome);
     };
 
@@ -93,10 +99,6 @@ export async function openCheckout(
       order_id: payment.orderId,
       amount: payment.amount,
       currency: payment.currency,
-      // The business, then what they are paying for. Sending the field's
-      // description as both made the window title read "payment", which is
-      // the one moment a form cannot afford to look like a stranger asking
-      // for money.
       name: payment.brandName || payment.description,
       description: payment.description,
       image: payment.brandLogo,
@@ -117,13 +119,7 @@ export async function openCheckout(
   });
 }
 
-/**
- * Wait for the webhook to mark the submission complete.
- *
- * Checkout returning success only means the respondent's bank approved it;
- * the submission is not a response until Razorpay's webhook tells the server
- * so. That usually lands within a second or two, hence the short poll.
- */
+ 
 export async function waitForPayment(
   check: () => Promise<{ status: string }>,
   { attempts = 10, intervalMs = 1500 } = {}

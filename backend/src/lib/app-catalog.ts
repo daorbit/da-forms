@@ -70,7 +70,7 @@ export const APP_CATALOG: AppDescriptor[] = [
         secret: true,
         required: true,
         placeholder: 'xsmtpsib-…',
-        help: 'Brevo → SMTP & API → SMTP → Generate a new SMTP key. Not a REST API key.',
+        help: 'In Brevo, open SMTP & API, then the SMTP tab, and generate a new SMTP key. Not a REST API key.',
       },
       ...FROM_FIELDS,
     ],

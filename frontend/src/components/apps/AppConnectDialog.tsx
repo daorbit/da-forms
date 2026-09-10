@@ -11,7 +11,8 @@ import {
   Switch,
   Button,
   Alert,
-  Anchor,
+  ActionIcon,
+  Tooltip,
   Divider,
   Badge,
   Center,
@@ -335,9 +336,19 @@ export function AppConnectDialog({
             <Group px={28} className={classes.paneHeader} align="center" justify="space-between">
               <Text fw={600}>Connect {app.name}</Text>
               {app.docsUrl && (
-                <Anchor href={app.docsUrl} target="_blank" rel="noreferrer" size="sm">
-                  Where to find these <IconExternalLink size={12} />
-                </Anchor>
+                <Tooltip label="Where to find these" withArrow position="left">
+                  <ActionIcon
+                    component="a"
+                    href={app.docsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    variant="subtle"
+                    color="gray"
+                    aria-label="Where to find these"
+                  >
+                    <IconExternalLink size={16} />
+                  </ActionIcon>
+                </Tooltip>
               )}
             </Group>
 

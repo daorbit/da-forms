@@ -32,6 +32,8 @@ import {
   IconCircleDashed,
   IconCopy,
   IconCheck,
+  IconChevronRight,
+  IconExternalLink,
   IconPlugConnected,
   IconCreditCard,
   IconKey,
@@ -68,6 +70,20 @@ interface Props {
 
 type StepId = 'keys' | 'webhook' | 'golive';
 
+/** A dashboard path — "Developers › API Keys" — with a chevron between steps. */
+function Crumbs({ steps }: { steps: string[] }) {
+  return (
+    <Box component="span" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+      {steps.map((step, i) => (
+        <Box component="span" key={step} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+          {i > 0 && <IconChevronRight size={11} style={{ opacity: 0.5 }} />}
+          {step}
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
 const STEPS: { id: StepId; label: string; hint: string; icon: typeof IconKey }[] = [
   { id: 'keys', label: 'API keys', hint: 'Connect your gateway account', icon: IconKey },
   { id: 'webhook', label: 'Webhook', hint: 'So payments get confirmed', icon: IconWebhook },
@@ -84,9 +100,10 @@ const PROVIDER_COPY: Record<
     keyIdHint: (mode: RazorpayMode) => string;
     dashboardUrl: string;
     dashboardName: string;
-    keysPath: string;
+    /** Dashboard navigation steps, rendered with chevron separators. */
+    keysPath: string[];
     webhookEvents: string[];
-    webhookPath: string;
+    webhookPath: string[];
     /** True when the gateway signs webhooks with the API secret already saved. */
     webhookSecretless?: boolean;
     /** True when the gateway refuses to open an order without a phone number. */
@@ -105,9 +122,9 @@ const PROVIDER_COPY: Record<
     keyIdHint: (mode) => `${mode === 'live' ? 'Live' : 'Test'} keys start with rzp_${mode}_`,
     dashboardUrl: 'https://dashboard.razorpay.com',
     dashboardName: 'Razorpay dashboard',
-    keysPath: 'Account & Settings → API Keys',
+    keysPath: ['Account & Settings', 'API Keys'],
     webhookEvents: ['payment.captured', 'payment.failed'],
-    webhookPath: 'Account & Settings → Webhooks',
+    webhookPath: ['Account & Settings', 'Webhooks'],
     webhookConsoleUrl: 'https://dashboard.razorpay.com/app/website-app-settings/webhooks',
     webhookDocsUrl: 'https://razorpay.com/docs/webhooks/setup-edit-payments/',
     keysDocsUrl: 'https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/',
@@ -120,13 +137,13 @@ const PROVIDER_COPY: Record<
       `From the ${mode === 'live' ? 'production' : 'sandbox'} environment. Cashfree keys look alike in both, so test the connection after saving.`,
     dashboardUrl: 'https://merchant.cashfree.com',
     dashboardName: 'Cashfree merchant dashboard',
-    keysPath: 'Developers → API Keys',
+    keysPath: ['Developers', 'API Keys'],
     webhookEvents: [
       'PAYMENT_SUCCESS_WEBHOOK',
       'PAYMENT_FAILED_WEBHOOK',
       'PAYMENT_USER_DROPPED_WEBHOOK',
     ],
-    webhookPath: 'Developers → Webhooks',
+    webhookPath: ['Developers', 'Webhooks'],
     webhookSecretless: true,
     needsPhone: true,
     webhookConsoleUrl: 'https://merchant.cashfree.com/merchants/pg/developers/webhooks',
@@ -141,11 +158,11 @@ const PROVIDER_COPY: Record<
       `From your ${mode === 'live' ? 'production' : 'test'} PayU account. The key looks the same in both, so test the connection after saving.`,
     dashboardUrl: 'https://onboarding.payu.in/app/account',
     dashboardName: 'PayU dashboard',
-    keysPath: 'Payment Gateway → Key & Salt Details',
+    keysPath: ['Payment Gateway', 'Key & Salt Details'],
     // PayU names its events by the transaction state rather than by an event
     // string, so these read as the states to send rather than as literal names.
     webhookEvents: ['Successful transactions', 'Failed transactions'],
-    webhookPath: 'Payment Gateway → Webhooks',
+    webhookPath: ['Payment Gateway', 'Webhooks'],
     // The salt saved above signs the webhook, so there is no second secret.
     webhookSecretless: true,
     needsPhone: true,
@@ -576,9 +593,16 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                     {/* The one thing someone needs before they can fill this in:
                         where the gateway keeps these keys. */}
                     <Text size="xs" c="dimmed">
-                      {copy.keysPath} in the{' '}
-                      <Anchor href={copy.dashboardUrl} target="_blank" rel="noreferrer" size="xs">
-                        {copy.dashboardName} ↗
+                      <Crumbs steps={copy.keysPath} /> in the{' '}
+                      <Anchor
+                        href={copy.dashboardUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        size="xs"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}
+                      >
+                        {copy.dashboardName}
+                        <IconExternalLink size={11} />
                       </Anchor>
                     </Text>
 
@@ -698,9 +722,10 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                         target="_blank"
                         rel="noreferrer"
                         size="xs"
-                        style={{ flexShrink: 0 }}
+                        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
                       >
-                        Open {copy.webhookPath} ↗
+                        Open <Crumbs steps={copy.webhookPath} />
+                        <IconExternalLink size={11} />
                       </Anchor>
                     </Group>
 

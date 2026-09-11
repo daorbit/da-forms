@@ -106,7 +106,7 @@ export function AppCard({ card, onOpen }: Props) {
         </Text>
 
         <Button
-          variant={card.connected ? 'default' : 'light'}
+          variant="default"
           fullWidth
           leftSection={<IconPlugConnected size={16} />}
           onClick={() => onOpen(card)}

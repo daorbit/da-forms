@@ -27,6 +27,10 @@ const groupAccent: Record<string, string> = {
   Uploads: '56, 189, 248',
   'Rating Scales': '250, 204, 21',
   'Legal & Consent': '52, 211, 153',
+  Payment: '74, 222, 128',
+  Survey: '232, 121, 249',
+  Repeating: '251, 191, 36',
+  Calculation: '248, 113, 113',
   Identifier: '129, 140, 248',
   'Page Elements': '148, 163, 184',
 };

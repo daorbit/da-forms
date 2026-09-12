@@ -3,25 +3,13 @@
   background-color: var(--mantine-color-body);
 }
 
-/*
- * Only the focus state is set here. The resting fill is Mantine's own default
- * for the variant — `--input-bg: var(--mantine-color-dark-6)`, which this
- * app's palette maps to the same #16181b the shell's search button wears — so
- * restating it would be duplication that can drift.
- *
- * Set through the variable rather than as a `background-color`: the input's own
- * rule reads `background-color: var(--input-bg)`, which wins over a competing
- * declaration on the same element whatever its specificity. It goes on the
- * wrapper because that is where Mantine's varsResolver writes these, and uses
- * `:focus-within` because the wrapper is never itself the focused node.
- */
+ 
 .searchInput:focus-within {
   --input-bg: var(--mantine-color-default-hover);
   --input-bd: var(--mantine-color-emerald-7);
 }
 
-/* The shell's search glyph is muted rather than full-strength text colour, and
-   a brighter icon here read as a different control. */
+ 
 .searchIcon {
   color: var(--mantine-color-placeholder);
 }
@@ -50,12 +38,7 @@
 .title:hover {
   color: var(--mantine-color-emerald-7);
 }
-
-/*
- * Floats on the page rather than sitting in a bordered card: a frame around
- * "there is nothing here" draws a box around empty space as if the box were
- * the content.
- */
+ 
 .emptyState {
   min-height: 52vh;
   text-align: center;
@@ -82,11 +65,7 @@
   line-height: 1.6;
 }
 
-/* ---- Responsive --------------------------------------------------------
-   Container queries, not viewport media queries: this page is often rendered
-   inside a narrow iframe on a wide screen, where `@media (max-width)` reads
-   the outer window and never fires. `container-type: inline-size` makes the
-   `@container` rules below measure this element's own width instead. */
+ 
 .page {
   container-type: inline-size;
 }
@@ -99,8 +78,7 @@
   gap: 12px;
 }
 
-/* Keep the name from pushing the row wider than its container — the link
-   inside truncates instead. */
+ 
 .title {
   max-width: 100%;
   overflow: hidden;

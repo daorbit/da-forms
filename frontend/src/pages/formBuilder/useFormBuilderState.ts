@@ -16,6 +16,7 @@ import type {
   SubmitButtonAlign,
   FormTheme,
   NotificationSettings,
+  WebhookSettings,
   FormSchedule,
 } from '@/types';
 import type { EditableState } from './types';
@@ -73,6 +74,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
   const [allowEdit, setAllowEdit] = useState(false);
   const [schedule, setSchedule] = useState<FormSchedule | undefined>(undefined);
   const [emailNotifications, setEmailNotifications] = useState<NotificationSettings>({});
+  const [webhook, setWebhook] = useState<WebhookSettings>({});
   const [savedFormId, setSavedFormId] = useState<string | null>(routeFormId ?? null);
   const [loadingForm, setLoadingForm] = useState(!!routeFormId);
   const [savedForm, setSavedForm] = useState<Form | null>(null);
@@ -104,6 +106,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
         allowEdit,
         schedule,
         notifications: emailNotifications,
+        webhook,
       }),
     [
       name,
@@ -129,6 +132,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       allowEdit,
       schedule,
       emailNotifications,
+      webhook,
     ]
   );
 
@@ -159,6 +163,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       allowEdit,
       schedule,
       notifications: emailNotifications,
+      webhook,
     }),
     [
       name,
@@ -184,6 +189,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       allowEdit,
       schedule,
       emailNotifications,
+      webhook,
     ]
   );
 
@@ -211,6 +217,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
     setAllowEdit(state.allowEdit);
     setSchedule(state.schedule);
     setEmailNotifications(state.notifications);
+    setWebhook(state.webhook);
     // The selected/editing field may not exist in this snapshot's tree.
     setSelectedId((id) => (id && findField(state.fields, id) ? id : null));
     setEditingId((id) => (id && findField(state.fields, id) ? id : null));
@@ -291,6 +298,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
         setAllowEdit(form.allowEdit ?? false);
         setSchedule(form.schedule);
         setEmailNotifications(form.notifications ?? {});
+        setWebhook(form.webhook ?? {});
         if (form.thankYouMessage) setThankYouMessage(form.thankYouMessage);
         setSavedSnapshot(
           JSON.stringify({
@@ -317,6 +325,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
             allowEdit: form.allowEdit ?? false,
             schedule: form.schedule,
             notifications: form.notifications ?? {},
+            webhook: form.webhook ?? {},
           })
         );
         setLoadingForm(false);
@@ -361,6 +370,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
     allowEdit,
     schedule,
     emailNotifications,
+    webhook,
     savedFormId,
     loadingForm,
     savedForm,
@@ -392,6 +402,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
     setAllowEdit,
     setSchedule,
     setEmailNotifications,
+    setWebhook,
     setSavedFormId,
     setSavedForm,
     setSavedSnapshot,

@@ -12,6 +12,7 @@ import { StepsDrawer } from '@/components/builder/StepsDrawer';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
 import { NotificationsModal } from '@/components/builder/NotificationsModal';
 import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
+import { WebhookConnectDialog } from '@/components/apps/WebhookConnectDialog';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import type { FormBuilderState } from './useFormBuilderState';
@@ -187,6 +188,16 @@ export function BuilderDrawers({
         onClose={() => setRailPanel(null)}
         workspaceId={workspaceId}
         isDemo={isDemo}
+      />
+
+      <WebhookConnectDialog
+        opened={railPanel === 'webhook'}
+        workspaceId={workspaceId}
+        formName={state.title}
+        webhook={state.webhook}
+        onChange={(patch) => state.setWebhook((prev) => ({ ...prev, ...patch }))}
+        onClose={() => setRailPanel(null)}
+        onOpenIntegrations={() => setRailPanel('integrations')}
       />
 
       <PreviewModal

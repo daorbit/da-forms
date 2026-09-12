@@ -1,9 +1,6 @@
 import { createTheme, rem } from '@mantine/core';
 
-/**
- * Matches the Quantalog app's theme: emerald accent, Inter, flat surfaces —
- * so an embedded form and its builder read as part of the same product.
- */
+ 
 export const theme = createTheme({
   primaryColor: 'emerald',
   primaryShade: { light: 6, dark: 7 },
@@ -33,9 +30,7 @@ export const theme = createTheme({
       '#065f46',
       '#064e3b',
     ],
-    // Matched to the host app's own surfaces: text, then muted tones, then
-    // borders, then the card and shell fills at 6-9. Cards sit a step above
-    // the shell rather than below it, or they read as holes in the page.
+ 
     dark: [
       '#f2f4f6',
       '#a9afba',
@@ -54,8 +49,25 @@ export const theme = createTheme({
     lg: '0 16px 40px -12px rgba(0,0,0,0.55)',
   },
   components: {
+ 
     Tooltip: {
       defaultProps: { color: 'dark.8' },
+      styles: { tooltip: { color: 'var(--mantine-color-text)' } },
+    },
+ 
+    SegmentedControl: {
+      styles: {
+        indicator: { backgroundColor: 'var(--mantine-color-dark-4)' },
+        label: {
+          color: 'var(--mantine-color-dimmed)',
+          '&[data-active]': { color: 'var(--mantine-color-text)' },
+        },
+      },
+    },
+ 
+ 
+    Alert: {
+      styles: { message: { color: 'var(--mantine-color-text)' } },
     },
     Loader: { defaultProps: { type: 'oval' } },
     Card: { defaultProps: { radius: 'md' } },

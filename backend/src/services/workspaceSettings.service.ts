@@ -71,8 +71,7 @@ const KEY_LABELS: Record<PaymentProvider, { id: string; secret: string; dashboar
 const WEBHOOK_USES_API_SECRET: Record<PaymentProvider, boolean> = {
   razorpay: false,
   cashfree: true,
-  // PayU hashes its webhook with the merchant salt — the same value that signs
-  // the payment request — so there is no separate webhook secret to collect.
+
   payu: true,
 };
 
@@ -101,9 +100,7 @@ function buildChecklist(
     {
       id: 'webhook',
       label: WEBHOOK_USES_API_SECRET[provider] ? 'Webhook registered' : 'Webhook secret saved',
-      // Cashfree signs webhooks with the API secret already saved above, so
-      // there is no second secret to collect — having keys is having the
-      // webhook credential. Razorpay mints a separate one per webhook.
+
       done: WEBHOOK_USES_API_SECRET[provider] ? hasKeys : Boolean(pair.webhookSecretMask),
       hint: WEBHOOK_USES_API_SECRET[provider]
         ? `Add the webhook URL in ${name}. It is signed with your Secret Key, so there is nothing else to paste here.`
@@ -195,7 +192,6 @@ export async function getPaymentSettings(workspaceId: string): Promise<PaymentSe
   };
 }
 
-
 export interface PaymentSettingsInput {
   provider?: PaymentProvider;
   defaultProvider?: PaymentProvider;
@@ -244,7 +240,6 @@ export async function savePaymentSettings(workspaceId: string, input: PaymentSet
   return getPaymentSettings(workspaceId);
 }
 
-
 export async function verifyKeys(
   workspaceId: string,
   provider: PaymentProvider,
@@ -280,7 +275,6 @@ export async function verifyKeys(
   return result;
 }
 
-
 export async function disconnectProvider(
   workspaceId: string,
   provider: PaymentProvider,
@@ -296,10 +290,23 @@ export async function disconnectProvider(
   return getPaymentSettings(workspaceId);
 }
 
-
 export async function markCharged(workspaceId: string, provider: PaymentProvider = 'razorpay') {
   await WorkspaceSettingsModel.updateOne(
     { workspaceId },
     { $set: { [`${provider}.lastChargeAt`]: new Date() } }
   );
+}
+
+export async function getWebhookEnabled(workspaceId: string): Promise<boolean> {
+  const doc = await WorkspaceSettingsModel.findOne({ workspaceId }, { webhookEnabled: 1 });
+  return Boolean(doc?.webhookEnabled);
+}
+
+export async function setWebhookEnabled(workspaceId: string, enabled: boolean): Promise<boolean> {
+  await WorkspaceSettingsModel.updateOne(
+    { workspaceId },
+    { $set: { webhookEnabled: enabled } },
+    { upsert: true }
+  );
+  return enabled;
 }

@@ -58,6 +58,7 @@ export function useFormPersistence({
       allowEdit: state.allowEdit,
       schedule: state.schedule,
       notifications: state.emailNotifications,
+      webhook: state.webhook,
     };
     const form = state.savedFormId
       ? await updateForm(state.savedFormId, payload, workspaceId)

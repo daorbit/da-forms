@@ -1,5 +1,5 @@
-// A value, not just a type: `dropOffBreakdown` casts a string id for its
-// aggregation, which the query builder does not do on its own.
+
+
 import { Types } from 'mongoose';
 import { FormModel } from '../models/form.model.js';
 import { SubmissionModel, type SubmissionPayment } from '../models/submission.model.js';
@@ -19,6 +19,7 @@ import type {
   FormStep,
   StepIndicator,
   NotificationSettings,
+  WebhookSettings,
   FormSchedule,
 } from '../models/form.model.js';
 
@@ -29,14 +30,9 @@ export interface Paginated<T> {
   limit: number;
 }
 
-/**
- * A field that responses were once submitted against but the form no longer
- * has — a column the Entries page still needs to show so an edit never hides
- * data that was collected.
- */
 export interface RetiredColumn {
   id: string;
-  /** Best-effort label: a snapshot's, else the id itself. */
+
   label: string;
 }
 
@@ -57,7 +53,7 @@ export interface WorkspaceStats {
 }
 
 export interface FormListResult extends Paginated<InstanceType<typeof FormModel>> {
-  /** Workspace-wide, unaffected by the current search/page — the stat tiles above the list. */
+
   stats: WorkspaceStats;
 }
 
@@ -75,8 +71,7 @@ export async function listForms(
   const limit = Math.max(1, options.limit ?? 10);
   const filter: Record<string, unknown> = { workspaceId };
   if (options.q) filter.name = { $regex: options.q, $options: 'i' };
-  // Filtered server-side rather than in the page component: the list is paged,
-  // so filtering the current page would hide matches sitting on later ones.
+
   if (options.status) filter.status = options.status;
   const sort = sortMap[options.sort ?? 'date'];
 
@@ -86,8 +81,7 @@ export async function listForms(
       .skip((page - 1) * limit)
       .limit(limit),
     FormModel.countDocuments(filter),
-    // Unfiltered — the stat tiles reflect the whole workspace, not the
-    // current search, so this cannot reuse the `filter` query above.
+
     FormModel.find({ workspaceId }, { status: 1, viewCount: 1 }),
   ]);
 
@@ -118,7 +112,6 @@ export function getForm(id: string) {
   return FormModel.findById(id);
 }
 
-/** How many forms a workspace holds — what the plan's form cap is counted against. */
 export function countForms(workspaceId: string) {
   return FormModel.countDocuments({ workspaceId });
 }
@@ -176,6 +169,7 @@ export function updateForm(
     showStepHeadings: boolean;
     collectIp: boolean;
     notifications: NotificationSettings;
+    webhook: WebhookSettings;
     requireCaptcha: boolean;
     collectPartials: boolean;
     allowEdit: boolean;
@@ -185,25 +179,15 @@ export function updateForm(
   return FormModel.findOneAndUpdate({ _id: id, workspaceId }, input, { new: true });
 }
 
-/* ------------------------------ availability ------------------------------ */
-
-/**
- * Why a form is not taking answers, or null when it is.
- *
- * `notYetOpen` and `closed` are told apart because they need different words in
- * front of a respondent: one is "come back later", the other is "you missed
- * it", and showing the wrong one wastes the visit either way.
- */
 export type ClosedReason = 'notPublished' | 'notYetOpen' | 'closed' | 'full';
 
 export interface Availability {
   open: boolean;
   reason?: ClosedReason;
-  /** The owner's own wording, when they set one. */
+
   message?: string;
 }
 
-/** What a respondent is told when the owner has not written their own message. */
 const CLOSED_TEXT: Record<ClosedReason, string> = {
   notPublished: 'This form is not accepting responses yet',
   notYetOpen: 'This form is not open for responses yet',
@@ -211,18 +195,6 @@ const CLOSED_TEXT: Record<ClosedReason, string> = {
   full: 'This form has reached its response limit',
 };
 
-/**
- * Whether a form is currently accepting answers.
- *
- * The single source of truth for that question: the public page asks it to
- * decide what to render, and the submit route asks it again to decide what to
- * accept. Two implementations would eventually disagree, and the one that
- * disagreed in the respondent's favour would be a closed form still taking
- * responses.
- *
- * Counting is left until last because it costs a query, and a form closed by
- * date needs no count to know it is shut.
- */
 export async function availability(
   form: Pick<FormDocumentLike, '_id' | 'status' | 'schedule'>,
   now: Date = new Date()
@@ -234,8 +206,7 @@ export async function availability(
   });
 
   if (form.status !== 'published') {
-    // Deliberately not the owner's `closedMessage`: an unpublished form is a
-    // draft nobody was invited to, not a window that has shut.
+
     return { open: false, reason: 'notPublished', message: CLOSED_TEXT.notPublished };
   }
 
@@ -246,8 +217,7 @@ export async function availability(
   if (schedule.closesAt && now >= schedule.closesAt) return closed('closed');
 
   if (schedule.maxSubmissions) {
-    // 'complete' only, matching every other place responses are counted: a
-    // checkout someone abandoned has not taken one of the seats.
+
     const count = await SubmissionModel.countDocuments({
       formId: form._id,
       status: 'complete',
@@ -258,38 +228,16 @@ export async function availability(
   return { open: true };
 }
 
-/** The parts of a form `availability` reads. Keeps it callable with a lean projection. */
 type FormDocumentLike = {
   _id: Types.ObjectId;
   status: 'draft' | 'published';
   schedule?: FormSchedule;
 };
 
-/**
- * Copy a form, without its responses.
- *
- * A duplicate is a starting point, so it comes back as a draft no matter what
- * the original was: publishing is a deliberate act, and a copy that went live
- * the moment it was made would put an unreviewed form on the original's
- * audience.
- *
- * Responses, view counts and the schedule are all left behind for the same
- * reason — they describe the original's run, and carrying them over would mean
- * a brand-new form that reports other people's answers and may already be
- * "full".
- */
-/**
- * A theme with its uploaded images removed, colours and everything else kept.
- *
- * Mirrors the URLs `destroyFormBackground` looks for — if a new background slot
- * is added there, it belongs here too, or a duplicate starts sharing a file
- * again.
- */
 function stripBackgrounds(theme: FormTheme | undefined): FormTheme | undefined {
   if (!theme) return theme;
   const next: FormTheme = { ...theme };
-  // A gradient or a plain colour is a string with no file behind it; only an
-  // uploaded image is shared storage.
+
   if (typeof next.pageBg === 'string' && next.pageBg.startsWith('http')) delete next.pageBg;
   if (next.pageBackground?.image) next.pageBackground = { ...next.pageBackground, image: undefined };
   if (next.cardBackground?.image) next.cardBackground = { ...next.cardBackground, image: undefined };
@@ -308,15 +256,7 @@ export async function duplicateForm(id: string, workspaceId: string) {
 
   return FormModel.create({
     ...copy,
-    // Background images are dropped rather than shared.
-    //
-    // `destroyFormBackground` deletes by URL with no notion of which form owns
-    // the file, so two forms pointing at one image means deleting either takes
-    // the other's background with it. Re-uploading the file for the copy would
-    // avoid that, but a duplicate is usually about to be edited anyway — the
-    // cost of losing a background someone re-picks in a click is far below the
-    // cost of a form silently losing its design when an unrelated one is
-    // deleted.
+
     theme: stripBackgrounds(copy.theme),
     name: `${source.name ?? source.title} (copy)`,
     status: 'draft',
@@ -324,18 +264,6 @@ export async function duplicateForm(id: string, workspaceId: string) {
   });
 }
 
-/**
- * Delete a form and everything that only existed because of it.
- *
- * A form's responses are meaningless without it and its uploaded files cost
- * storage forever, so they go together — leaving them behind is not "keeping
- * data safe", it is an orphaned collection nobody can reach through the UI and
- * a Cloudinary bill for files no form references.
- *
- * Ordered so nothing is stranded if this fails partway: the files go first
- * (their rows still name them), then the rows, then the form. The reverse order
- * would delete the form and lose the only handle on the rest.
- */
 export async function deleteForm(id: string, workspaceId: string) {
   const form = await FormModel.findOne({ _id: id, workspaceId });
   if (!form) return null;
@@ -344,40 +272,27 @@ export async function deleteForm(id: string, workspaceId: string) {
   await destroyFormBackground(form.get('theme'));
 
   await SubmissionModel.deleteMany({ formId: form._id });
-  // FormView stores the id as a string, unlike Submission's ObjectId ref.
+
   await FormViewModel.deleteMany({ formId: String(form._id) });
 
   await FormModel.deleteOne({ _id: form._id });
   return form;
 }
 
-/**
- * Counts a view once per (form, fingerprint) per dedup window — a page
- * reload or the same visitor reopening the link minutes later shouldn't
- * inflate the count. The unique index on FormView is what enforces this:
- * a duplicate insert fails instead of racing a read-then-write check.
- */
 export async function recordView(id: string, fingerprint: string) {
   try {
     await FormViewModel.create({ formId: id, fingerprint });
   } catch (err) {
-    if ((err as { code?: number }).code === 11000) return; // already counted this window
+    if ((err as { code?: number }).code === 11000) return; 
     throw err;
   }
   await FormModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
 }
 
-/**
- * Every field in document order, grids included.
- *
- * Exported as well, for callers that need to check an id against the form's
- * real fields before it reaches a query.
- */
 export function flattenFieldsPublic(fields: FormField[]): FormField[] {
   return flattenFields(fields);
 }
 
-/** Every field in document order, grids included — mirrors the frontend's `flattenFields`. */
 function flattenFields(fields: FormField[]): FormField[] {
   return fields.flatMap((field) =>
     field.type === 'grid'
@@ -386,21 +301,6 @@ function flattenFields(fields: FormField[]): FormField[] {
   );
 }
 
-/* --------------------------- partial submissions --------------------------- */
-
-/**
- * Record what someone has typed so far.
- *
- * Upserted against `(formId, partialKey)` rather than inserted, so a form
- * autosaving every few seconds leaves one row per attempt instead of one per
- * keystroke. The unique index is what enforces that under a race; this query
- * merely expresses the intent.
- *
- * Never touches a row that is not `partial`. Someone whose submission has
- * already completed may still have a tab open firing one last autosave, and
- * without that guard it would overwrite the real response with a half-filled
- * copy of itself.
- */
 export async function savePartial(
   formId: string,
   partialKey: string,
@@ -419,17 +319,6 @@ export async function savePartial(
   );
 }
 
-/**
- * Turn this attempt's partial row into the real submission, if one exists.
- *
- * Promotion in place rather than insert-then-delete: the row already holds the
- * uploads this attempt claimed, and a new row would strand them. It also means
- * a respondent who finishes leaves exactly one row behind, which is what stops
- * "started" and "completed" from double-counting the same person.
- *
- * Returns null when there is nothing to promote — a form with autosave off, or
- * a submit that arrived before the first save.
- */
 async function promotePartial(
   formId: string,
   partialKey: string,
@@ -449,7 +338,7 @@ async function promotePartial(
         status: payment ? 'pending_payment' : 'complete',
         ...(payment ? { payment } : {}),
         ...(quiz ? { quiz } : {}),
-        // The drop-off point described where they stopped. They did not stop.
+
         lastFieldId: undefined,
         lastFieldIndex: undefined,
       },
@@ -458,18 +347,6 @@ async function promotePartial(
   );
 }
 
-/**
- * Delete partials nobody came back to finish.
- *
- * These are the rows with the weakest claim to exist — text someone typed and
- * chose not to send — so they are kept only as long as the drop-off report
- * needs them and then removed. Aged by `updatedAt`, so a respondent who left a
- * tab open for a week is measured from when they last typed, not when they
- * arrived.
- *
- * Uploads go with them: a file attached to an abandoned attempt is exactly the
- * orphan the media sweep exists to prevent.
- */
 export async function sweepAbandonedPartials(retentionDays: number) {
   const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
   const stale = await SubmissionModel.find(
@@ -484,37 +361,22 @@ export async function sweepAbandonedPartials(retentionDays: number) {
   return deletedCount ?? 0;
 }
 
-/**
- * The draft behind a resume link.
- *
- * Restricted to 'partial' on purpose: a link emailed while someone was halfway
- * through must stop working once they finish, or it would reopen a submitted
- * response as an editable draft and let them fork it into a second one.
- */
 export function getPartialById(id: string) {
   return SubmissionModel.findOne({ _id: id, status: 'partial' });
 }
 
-/** This attempt's draft row, by the key the browser has been autosaving under. */
 export function getPartialByKey(formId: string, partialKey: string) {
   return SubmissionModel.findOne({ formId, partialKey, status: 'partial' });
 }
 
 export interface DropOffEntry {
   fieldId: string;
-  /** Where this field sits in document order, as recorded when the row was written. */
+
   index: number;
-  /** How many people stopped here without sending. */
+
   abandoned: number;
 }
 
-/**
- * Where a form loses people, worst first.
- *
- * Only answers anything for forms with autosave on — without partial rows there
- * is no record of where anyone stopped, and the honest answer is an empty list
- * rather than a guess derived from view counts.
- */
 export async function dropOffBreakdown(formId: string): Promise<DropOffEntry[]> {
   const rows = await SubmissionModel.aggregate<{
     _id: { fieldId: string; index: number };
@@ -537,18 +399,6 @@ export async function dropOffBreakdown(formId: string): Promise<DropOffEntry[]> 
   }));
 }
 
-/**
- * Fill in every calculated field from the answers around it.
- *
- * Recomputed here rather than taken from the submitted body, for the same
- * reason a payment amount is derived from the stored form: the browser's copy
- * is a display convenience, and a respondent who edits the request must not be
- * able to name their own total. A form whose calculated field feeds a payment
- * would otherwise be a price the customer sets.
- *
- * Mutates the answers in place so everything downstream — storage, the emailed
- * receipt, the CSV — sees one set of numbers rather than each recomputing.
- */
 export function applyCalculatedFields(
   fields: FormField[],
   data: Record<string, string>
@@ -566,44 +416,27 @@ export function applyCalculatedFields(
 
   for (const field of calculated) {
     const result = evaluateFormula(field.formula!, values);
-    // A formula that does not compile stores nothing rather than an error
-    // string: the answers are what the owner reads, and "unexpected symbol"
-    // sitting in a totals column is worse than a blank the author can spot.
+
     if (!result.ok) continue;
 
     const precision = field.formulaPrecision ?? (field.formulaFormat === 'currency' ? 2 : 0);
     data[field.id] = result.value.toFixed(precision);
 
-    // Available to any formula that references this one, so a subtotal can feed
-    // a total. Order matters and is document order — a field referring to one
-    // below it reads the value from before this pass, which is zero.
     if (field.label?.trim()) values.set(field.label.trim(), result.value);
   }
 }
 
 export interface QuizScore {
-  /** Marks earned. */
+
   score: number;
-  /** Marks available — the sum of each scored question's best possible answer. */
+
   total: number;
-  /** How many scored questions were answered correctly. */
+
   correct: number;
-  /** How many questions carried marks at all. */
+
   questions: number;
 }
 
-/**
- * Mark a submission against the form's answer key.
- *
- * A question counts toward the total when it has `correctOptions` — that is
- * what makes it a question rather than a field. Its worth is the highest
- * `optionValues` entry it has, defaulting to one mark, so a form can mix
- * one-mark questions with weighted ones without declaring a scheme.
- *
- * Marked server-side and stored, not recomputed on read: an owner who fixes a
- * typo in the answer key afterwards has not thereby changed what a respondent
- * scored on the day.
- */
 export function scoreSubmission(
   fields: FormField[],
   data: Record<string, string>
@@ -624,10 +457,6 @@ export function scoreSubmission(
     const answer = data[field.id];
     if (!answer) continue;
 
-    // Checkboxes submit several options; every selected one must be in the key
-    // and every key option must be selected. A partially-right multi-answer is
-    // wrong rather than half-right — awarding partial credit is a scheme the
-    // author has not been asked to choose.
     const chosen = String(answer).split(',').map((s) => s.trim()).filter(Boolean);
     const key = field.correctOptions!;
     const right =
@@ -657,21 +486,17 @@ export async function submitForm(
   sourceUrl?: string,
   payment?: SubmissionPayment,
   fileMeta?: Record<string, { bytes: number }>,
-  /** This attempt's autosave row, promoted in place rather than duplicated. */
+
   partialKey?: string
 ) {
-  // Before anything reads the answers: a calculated field is one of them, and
-  // the uniqueness check below, the stored row, the emailed receipt and the CSV
-  // must all see the same number.
+
   applyCalculatedFields(fields, data);
 
   const uniqueFields = flattenFields(fields).filter((field) => field.unique);
   for (const field of uniqueFields) {
     const value = data[field.id];
     if (!value) continue;
-    // Abandoned checkouts must not reserve a value. Someone who opened
-    // Razorpay and closed the tab has not used that email address, and
-    // blocking their retry would make the field impossible to submit.
+
     const existing = await SubmissionModel.exists({
       formId,
       status: 'complete',
@@ -681,9 +506,7 @@ export async function submitForm(
   }
 
   const quiz = scoreSubmission(fields, data);
-  // Promotion first, insert as the fallback: a form with autosave on already
-  // has this attempt's row, and creating a second one would leave the abandoned
-  // half of the same visit sitting next to the finished response.
+
   const submission =
     (partialKey
       ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta, quiz)
@@ -698,20 +521,15 @@ export async function submitForm(
       quiz,
     }));
 
-  // Attach whatever this answer uploaded, so the abandoned-upload sweep stops
-  // considering those files fair game. Done after the insert because the claim
-  // needs the submission's id.
   await claimUploads(submission._id, data);
 
   return submission;
 }
 
- 
 export function attachOrderId(submissionId: Types.ObjectId, orderId: string) {
   return SubmissionModel.updateOne({ _id: submissionId }, { 'payment.orderId': orderId });
 }
 
- 
 export async function markSubmissionPaid(
   orderId: string,
   paymentId: string,
@@ -724,8 +542,7 @@ export async function markSubmissionPaid(
       'payment.status': 'paid',
       'payment.paymentId': paymentId,
       'payment.paidAt': new Date(),
-      // Undefined keys are dropped by Mongoose rather than written as null,
-      // so a payment without an email simply leaves the field unset.
+
       'payment.payerEmail': payer.payerEmail,
       'payment.payerContact': payer.payerContact,
       'payment.method': payer.method,
@@ -742,7 +559,6 @@ export async function markSubmissionFailed(orderId: string) {
   );
 }
 
- 
 export async function discardPendingSubmission(orderId: string) {
   const submission = await SubmissionModel.findOne({
     'payment.orderId': orderId,
@@ -750,18 +566,14 @@ export async function discardPendingSubmission(orderId: string) {
   });
   if (!submission) return null;
 
-  // The uploads stay: the retry reuses the same URLs, so destroying them here
-  // would leave the new submission pointing at files that no longer exist.
   await SubmissionModel.deleteOne({ _id: submission._id });
   return submission;
 }
 
-/** A submission by its Razorpay order id — how the post-checkout poll finds its status. */
 export function getSubmissionByOrderId(orderId: string) {
   return SubmissionModel.findOne({ 'payment.orderId': orderId });
 }
 
- 
 export async function sweepAbandonedPayments(graceMinutes: number) {
   const cutoff = new Date(Date.now() - graceMinutes * 60_000);
   const stale = await SubmissionModel.find(
@@ -782,14 +594,13 @@ export function submissionCount(formId: string) {
 
 export interface UploadedFile {
   url: string;
-  /** Which question it answered, for naming the file on disk. */
+
   fieldLabel: string;
-  /** Which response it came from, so two people's CVs do not collide. */
+
   submissionId: string;
   submittedAt: Date;
 }
 
- 
 export async function uploadedFiles(
   formId: string,
   fields: FormField[]
@@ -810,8 +621,7 @@ export async function uploadedFiles(
   for (const submission of submissions) {
     for (const [fieldId, label] of uploadFieldIds) {
       const value = submission.data?.[fieldId];
-      // An unanswered upload field is absent; anything not a URL is a stale
-      // answer from before the field became an upload.
+
       if (typeof value !== 'string' || !value.startsWith('http')) continue;
       files.push({
         url: value,
@@ -825,12 +635,11 @@ export async function uploadedFiles(
 }
 
 export interface SourceBreakdownEntry {
-  /** The referring page's hostname, or 'direct' when no referrer was sent. */
+
   source: string;
   count: number;
 }
 
-/** Submissions grouped by referrer hostname, most common first. */
 export async function sourceBreakdown(formId: string): Promise<SourceBreakdownEntry[]> {
   const submissions = await SubmissionModel.find({ formId, status: 'complete' }, { sourceUrl: 1 });
   const counts = new Map<string, number>();
@@ -840,7 +649,7 @@ export async function sourceBreakdown(formId: string): Promise<SourceBreakdownEn
       try {
         source = new URL(submission.sourceUrl).hostname;
       } catch {
-        // Malformed referrer header — count it rather than drop the submission from the breakdown.
+
         source = 'Other';
       }
     }
@@ -859,25 +668,23 @@ export async function listSubmissions(
     status?: 'all' | 'read' | 'unread' | 'starred';
     from?: string;
     to?: string;
-    /** Free text, matched across every answer. */
+
     q?: string;
-    /** Exact-match filters, keyed by field id — "everyone who picked Large". */
+
     fieldFilters?: Record<string, string>;
-    /** The form's current field ids, so the retired-column set can exclude them. */
+
     currentFieldIds?: string[];
   } = {}
 ): Promise<Paginated<InstanceType<typeof SubmissionModel>> & { retiredColumns: RetiredColumn[] }> {
   const page = Math.max(1, options.page ?? 1);
   const limit = Math.max(1, options.limit ?? 10);
-  // Checkouts still in progress are not responses — they never appear on the
-  // Entries page, whichever status filter is applied.
+
   const filter: Record<string, unknown> = { formId, status: 'complete' };
 
   if (options.status === 'read') filter.read = true;
   else if (options.status === 'unread') filter.read = false;
   else if (options.status === 'starred') filter.starred = true;
 
- 
   if (options.q?.trim()) {
     const needle = options.q.trim().slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     filter.$expr = {
@@ -893,9 +700,6 @@ export async function listSubmissions(
     };
   }
 
-  // Exact match on one field's stored answer. Keyed by field id, which comes
-  // from the form the caller already loaded — not free text, so it cannot name
-  // a path outside `data`.
   for (const [fieldId, value] of Object.entries(options.fieldFilters ?? {})) {
     if (!value) continue;
     if (!/^[A-Za-z0-9_-]{1,64}$/.test(fieldId)) continue;
@@ -915,15 +719,13 @@ export async function listSubmissions(
       .skip((page - 1) * limit)
       .limit(limit),
     SubmissionModel.countDocuments(filter),
-    // Only worth computing for the first page — the list is the same set of
-    // columns however deep it is paged.
+
     page === 1 ? retiredColumnsFor(formId, options.currentFieldIds ?? []) : Promise.resolve([]),
   ]);
 
   return { items, total, page, limit, retiredColumns };
 }
 
- 
 export async function retiredColumnsFor(
   formId: string,
   currentFieldIds: string[]
@@ -944,7 +746,6 @@ export async function retiredColumnsFor(
     .map((id) => ({ id, label: id }));
 }
 
-/** One response by id, however it is reached — currently only an edit link. */
 export function getSubmissionById(id: string) {
   return SubmissionModel.findById(id);
 }
@@ -957,7 +758,6 @@ export function updateSubmission(
   return SubmissionModel.findOneAndUpdate({ _id: id, formId }, patch, { new: true });
 }
 
- 
 export async function editSubmission(
   id: string,
   fields: FormField[],
@@ -967,14 +767,13 @@ export async function editSubmission(
   const target = await SubmissionModel.findById(id, { formId: 1 });
   if (!target) return null;
 
- 
   applyCalculatedFields(fields, data);
 
   const uniqueFields = flattenFields(fields).filter((field) => field.unique);
   for (const field of uniqueFields) {
     const value = data[field.id];
     if (!value) continue;
- 
+
     const existing = await SubmissionModel.exists({
       _id: { $ne: id },
       formId: target.formId,
@@ -996,7 +795,6 @@ export async function editSubmission(
   return updated;
 }
 
- 
 export async function bulkUpdateSubmissions(
   ids: string[],
   formId: string,
@@ -1006,7 +804,6 @@ export async function bulkUpdateSubmissions(
   return { matchedCount: result.matchedCount ?? 0 };
 }
 
- 
 export async function deleteSubmission(id: string, formId: string) {
   const submission = await SubmissionModel.findOne({ _id: id, formId });
   if (!submission) return null;
@@ -1016,7 +813,6 @@ export async function deleteSubmission(id: string, formId: string) {
   return submission;
 }
 
- 
 export async function bulkDeleteSubmissions(ids: string[], formId: string) {
   const submissions = await SubmissionModel.find({ _id: { $in: ids }, formId }, { _id: 1 });
   const matchedIds = submissions.map((s) => s._id);

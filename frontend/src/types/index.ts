@@ -279,6 +279,7 @@ export interface Form {
   /** Records the respondent's IP with each submission. Off by default. */
   collectIp?: boolean;
   notifications?: NotificationSettings;
+  webhook?: WebhookSettings;
   /** Puts a Turnstile challenge in front of submitting. Off by default. */
   requireCaptcha?: boolean;
   /**
@@ -349,6 +350,23 @@ export interface NotificationSettings {
   ownerEnabled?: boolean;
   ownerEmails?: string[];
   ownerSubject?: string;
+}
+
+/**
+ * One POST per submission to a URL the owner supplies — the generic
+ * integration surface. `secret` is write-only: sent when setting or changing
+ * it, never read back. `hasSecret` is what the settings page checks instead.
+ */
+export interface WebhookSettings {
+  enabled?: boolean;
+  url?: string;
+  /** Write-only; the server encrypts it and never returns it. */
+  secret?: string;
+  /** True once a secret has been saved — the UI's "leave blank to keep it" cue. */
+  hasSecret?: boolean;
+  lastStatus?: 'ok' | 'failed';
+  lastAttemptAt?: string;
+  lastError?: string;
 }
 
 export interface SubmissionPayment {

@@ -68,10 +68,10 @@ export interface FormField {
   type: FieldType;
   label: string;
   required: boolean;
-  /** Rejects a submission whose answer for this field matches an existing one for the same form. */
+
   unique?: boolean;
   hideLabel?: boolean;
-  /** Chip fields only: lets the respondent pick more than one option. */
+
   allowMultiple?: boolean;
   instructions?: string;
   size?: FieldSize;
@@ -87,89 +87,55 @@ export interface FormField {
   maxLength?: number;
   maxRating?: number;
   content?: string;
-  /** A grid's columns, each holding its own fields. */
+
   columns?: FormField[][];
   subFields?: FormField[];
   minRows?: number;
   maxRows?: number;
-  /** A matrix's statements, one per row; the answer columns are `options`. */
+
   rows?: string[];
-  /** The URL query parameter a hidden field takes its value from. */
+
   paramName?: string;
   showIf?: ShowIfRule;
-  /** Payment fields only: what this field charges. */
+
   pay?: PaymentConfig;
-  /**
-   * Calculated fields only: the arithmetic, written over other fields by their
-   * labels — `{{Quantity}} * {{Unit price}}`.
-   *
-   * Recomputed server-side on submit rather than stored from what the browser
-   * sent. The displayed value is a convenience; the stored one has to be
-   * derived, for the same reason a payment amount is — a respondent who edits
-   * the request must not be able to name their own total.
-   */
+
   formula?: string;
-  /** How the result is shown: a bare number, or money with the currency below. */
+
   formulaFormat?: 'number' | 'currency';
   formulaCurrency?: string;
-  /** Decimal places in the displayed result. Defaults to 2 for currency, 0 otherwise. */
+
   formulaPrecision?: number;
-  /**
-   * What each option of a choice field is worth, keyed by the option's own
-   * text.
-   *
-   * Shared by two features that turned out to want the same thing: a price
-   * formula that treats "Large" as 500, and a quiz that treats it as 1 mark.
-   * An option missing from here is worth nothing.
-   */
+
   optionValues?: Record<string, number>;
-  /**
-   * Quiz fields only: which options are correct, by their own text.
-   *
-   * Separate from `optionValues` because "worth 5 marks" and "is the right
-   * answer" are different claims — a partial-credit question has several
-   * options worth something and only one that is right.
-   */
+
   correctOptions?: string[];
-  /** Pixel width, overriding the size preset outright. */
+
   customWidth?: number;
-  /** Pixel height for this field's input, e.g. a taller text area. */
+
   customHeight?: number;
-  /** Extra class name applied to the field's own input, for power-user styling. */
+
   cssClass?: string;
 }
 
-/**
- * What a payment field charges.
- *
- * Only ever read from the stored form — never from a submitted body. A
- * respondent who edits the request cannot change what they are billed, because
- * the amount is derived here and the client's copy is ignored outright.
- */
 export type PaymentMode = 'fixed' | 'field' | 'modifiable';
 
 export interface PaymentConfig {
-  /**
-   * - 'fixed': every respondent pays `amount`.
-   * - 'field': the price is another field's answer — a number the respondent
-   *   typed, or the value assigned to the choice they picked.
-   * - 'modifiable': the respondent names their own price, within min/max.
-   *   Donations and pay-what-you-want.
-   */
+
   mode: PaymentMode;
   provider?: PaymentProvider;
-  /** Minor units — paise, not rupees. Integers only, so nothing rounds twice. */
+
   amount?: number;
   currency: string;
-  /** mode='field': the field whose answer is the price. */
+
   amountFieldId?: string;
   optionPrices?: Record<string, number>;
-  /** mode='modifiable': the range the respondent may choose within. Minor units. */
+
   minAmount?: number;
   maxAmount?: number;
-  /** mode='modifiable': what the box starts at. Minor units. */
+
   defaultAmount?: number;
-  /** Shown on the gateway's checkout. Falls back to the form's title. */
+
   description?: string;
   buttonLabel?: string;
 }
@@ -207,7 +173,6 @@ export interface BackgroundLayer {
 
 export type FontFamilyId = 'system' | 'inter' | 'serif' | 'mono' | 'rounded';
 
-/** How a multi-step form shows the respondent where they are. */
 export type StepIndicator = 'progress' | 'stepper' | 'dots' | 'counter' | 'none';
 
 export interface FormStep {
@@ -236,18 +201,14 @@ export interface FormTheme {
 }
 
 export interface NotificationSettings {
-  /** Confirmation email to whoever filled the form. */
+
   respondentEnabled?: boolean;
-  /** Which field on the form holds the respondent's address — must be an 'email' field. */
+
   respondentEmailFieldId?: string;
   respondentSubject?: string;
-  /**
-   * Plain text. `{{Field Label}}` is replaced with that field's submitted
-   * answer — matched by the field's current label, so it stays readable and
-   * typeable by hand. Renaming the field afterward breaks the match silently.
-   */
+
   respondentBody?: string;
-  /** Which HTML layout the message is rendered into. See `EMAIL_LAYOUTS`. */
+
   respondentLayout?:
     | 'plain'
     | 'thankYou'
@@ -257,47 +218,39 @@ export interface NotificationSettings {
     | 'confirmation'
     | 'minimal'
     | 'hero';
-  /** The button the 'nextSteps' layout renders. Ignored by every other layout. */
+
   respondentCtaLabel?: string;
   respondentCtaHref?: string;
-  /** Alerts the form owner on every submission. */
+
   ownerEnabled?: boolean;
   ownerEmails?: string[];
   ownerSubject?: string;
 }
 
-/**
- * When a published form actually accepts responses.
- *
- * Separate from `status` because the two answer different questions: `status`
- * is whether the owner has finished building it, this is whether the window is
- * open. A registration that closes on Friday is published the whole time — it
- * just stops taking answers — and collapsing that into `status: 'draft'` would
- * mean the owner's own list showed it as unfinished work.
- *
- * Every bound is optional and absent means "no bound", so a form with no
- * schedule behaves exactly as it did before this existed.
- */
+export interface WebhookSettings {
+  enabled?: boolean;
+  url?: string;
+
+  secretEnc?: string;
+
+  lastStatus?: 'ok' | 'failed';
+  lastAttemptAt?: Date;
+  lastError?: string;
+}
+
 export interface FormSchedule {
-  /** Nothing is accepted before this instant. */
+
   opensAt?: Date;
-  /** Nothing is accepted from this instant on. */
+
   closesAt?: Date;
-  /**
-   * Stops accepting once this many complete responses exist.
-   *
-   * Counted server-side at submit time rather than tracked as a running total:
-   * a counter and the rows it claims to count drift apart the first time a
-   * response is deleted, and the owner deleting spam should get their slots
-   * back.
-   */
+
   maxSubmissions?: number;
-  /** Shown in place of the form once any bound above has closed it. */
+
   closedMessage?: string;
 }
 
 export interface FormDocument {
-  /** Set once at creation; shown in the forms list. Independent of the canvas header text below. */
+
   name: string;
   title: string;
   description?: string;
@@ -312,50 +265,25 @@ export interface FormDocument {
   submitButtonSize?: SubmitButtonSize;
   submitButtonWidth?: SubmitButtonWidth;
   submitButtonAlign?: SubmitButtonAlign;
-  /** Text alignment for the title/description block. */
+
   headerAlign?: SubmitButtonAlign;
   theme?: FormTheme;
-  /** Per-page names for a multi-step form, indexed by page. */
+
   steps?: FormStep[];
   stepIndicator?: StepIndicator;
   showStepHeadings?: boolean;
   collectIp?: boolean;
   notifications?: NotificationSettings;
-  /**
-   * Puts a Turnstile challenge in front of this form's submit.
-   *
-   * Per-form rather than global because the challenge costs a real respondent
-   * something — a widget to wait on, and a hard failure for anyone whose
-   * browser Cloudflare dislikes. A low-traffic contact form does not need that;
-   * a public form that charges money does.
-   */
+  webhook?: WebhookSettings;
+
   requireCaptcha?: boolean;
-  /**
-   * Saves answers as they are typed, so a form abandoned halfway still says
-   * where it lost people.
-   *
-   * Off unless the owner turns it on, and deliberately not defaulted on for
-   * existing forms: this stores what someone typed and then chose not to send,
-   * which is a different promise from the one their respondents were made when
-   * the form was published. Whether that is acceptable depends on what the form
-   * asks for and what the owner told people — so it is their decision, not a
-   * default.
-   */
+
   collectPartials?: boolean;
-  /**
-   * Lets a respondent reopen and change what they sent, via a signed link in
-   * their confirmation email.
-   *
-   * Off by default, because for a good number of forms an answer that can
-   * change afterwards is worse than one that cannot — an application, a vote, a
-   * signed agreement. The forms that want it (a booking, a profile, a long
-   * survey someone got halfway through) want it badly, so it is a switch rather
-   * than a policy.
-   */
+
   allowEdit?: boolean;
-  /** When this form accepts responses. Absent means always, once published. */
+
   schedule?: FormSchedule;
-  /** Total public-page loads — the denominator for completion rate. */
+
   viewCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -384,12 +312,7 @@ const fieldSchema = new Schema<FormField>(
     maxLength: { type: Number },
     maxRating: { type: Number },
     content: { type: String },
-    /*
-     * Mixed because the shape is recursive: a column holds fields, and one of
-     * those may itself be a grid. A subdocument schema cannot reference itself,
-     * and the alternative — a flat list with parent pointers — moves the
-     * nesting into every query that reads a form.
-     */
+
     columns: { type: Schema.Types.Mixed },
     subFields: { type: Schema.Types.Mixed },
     minRows: { type: Number, min: 0 },
@@ -493,6 +416,19 @@ const formSchema = new Schema<FormDocument>(
           ownerEnabled: { type: Boolean },
           ownerEmails: { type: [String], default: undefined },
           ownerSubject: { type: String },
+        },
+        { _id: false }
+      ),
+    },
+    webhook: {
+      type: new Schema<WebhookSettings>(
+        {
+          enabled: { type: Boolean },
+          url: { type: String },
+          secretEnc: { type: String },
+          lastStatus: { type: String, enum: ['ok', 'failed'] },
+          lastAttemptAt: { type: Date },
+          lastError: { type: String },
         },
         { _id: false }
       ),

@@ -482,6 +482,20 @@ export function disconnectApp(appId: string, workspaceId = DEFAULT_WORKSPACE) {
   });
 }
 
+ 
+export function getWebhookApp(workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<{ enabled: boolean }>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/settings/webhook-app`
+  );
+}
+
+export function saveWebhookApp(enabled: boolean, workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<{ enabled: boolean }>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/settings/webhook-app`,
+    { method: 'PUT', body: JSON.stringify({ enabled }) }
+  );
+}
+
 export async function uploadFormFile(
   formId: string,
   file: File,

@@ -8,6 +8,7 @@ import type {
   SubmitButtonAlign,
   FormTheme,
   NotificationSettings,
+  WebhookSettings,
   FormSchedule,
 } from '@/types';
 
@@ -42,4 +43,5 @@ export interface EditableState {
   allowEdit: boolean;
   schedule?: FormSchedule;
   notifications: NotificationSettings;
+  webhook: WebhookSettings;
 }

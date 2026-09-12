@@ -14,8 +14,7 @@ export const getPaymentSettings: RequestHandler = async (req, res) => {
 };
 
 export const savePaymentSettings: RequestHandler = async (req, res) => {
-  // Refused rather than stored in the clear: a gateway secret sitting
-  // unencrypted in the database is worse than the feature being unavailable.
+
   if (!isEncryptionConfigured()) {
     return res.status(503).json({
       error: 'encryption_unavailable',
@@ -26,9 +25,6 @@ export const savePaymentSettings: RequestHandler = async (req, res) => {
   const { enabled, mode, target, keyId, keySecret, webhookSecret, defaultProvider } = req.body;
   const provider = readProvider(req.body.provider);
 
-  // Turning payments on with nothing to charge through would leave every
-  // respondent hitting a 503 at submit time, so the credentials are checked
-  // here instead.
   if (enabled) {
     const current = await settingsService.getPaymentSettings(req.params.workspaceId);
     const providerView = current.providers[provider];
@@ -65,7 +61,6 @@ export const savePaymentSettings: RequestHandler = async (req, res) => {
   }
 };
 
-/** Asks the gateway whether the saved keys work, and records the answer. */
 export const testPaymentConnection: RequestHandler = async (req, res) => {
   const mode = req.body?.mode === 'live' ? 'live' : 'test';
   const provider = readProvider(req.body?.provider);
@@ -83,4 +78,17 @@ export const disconnectPayments: RequestHandler = async (req, res) => {
     mode
   );
   res.json(settings);
+};
+
+export const getWebhookApp: RequestHandler = async (req, res) => {
+  const enabled = await settingsService.getWebhookEnabled(req.params.workspaceId);
+  res.json({ enabled });
+};
+
+export const saveWebhookApp: RequestHandler = async (req, res) => {
+  const enabled = await settingsService.setWebhookEnabled(
+    req.params.workspaceId,
+    Boolean(req.body?.enabled)
+  );
+  res.json({ enabled });
 };

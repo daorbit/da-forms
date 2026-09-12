@@ -39,6 +39,8 @@ export interface WorkspaceSettingsDocument {
   cashfree?: ProviderSettings;
   payu?: ProviderSettings;
   defaultProvider?: PaymentProvider;
+
+  webhookEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -86,6 +88,7 @@ const workspaceSettingsSchema = new Schema<WorkspaceSettingsDocument>(
       enum: ['razorpay', 'cashfree', 'payu'],
       default: 'razorpay',
     },
+    webhookEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SimpleGrid, Stack, Skeleton, Alert, Title, Text } from '@mantine/core';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
-import { listApps, getPaymentSettings, ApiError } from '@/lib/api';
+import { listApps, getPaymentSettings, getWebhookApp, saveWebhookApp, ApiError } from '@/lib/api';
 import type { AppCard as AppCardData, PaymentSettings, PaymentProvider } from '@/types';
-import { AppCard, type PaymentCardData } from './AppCard';
+import { AppCard, type PaymentCardData, type WebhookCardData } from './AppCard';
 import { AppConnectDialog } from './AppConnectDialog';
 import { PaymentsModal } from '../builder/PaymentsModal';
 
@@ -48,26 +48,29 @@ interface Props {
   reloadKey?: number;
 }
 
-/**
- * The integrations card grid — email apps, payment gateways, and later the
- * notification and CRM apps. Rendered by both the standalone Integrations page
- * and the in-editor dialog, so the two stay identical.
- */
+ 
 export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
   const [apps, setApps] = useState<AppCardData[]>([]);
   const [payments, setPayments] = useState<PaymentSettings | null>(null);
+  const [webhookEnabled, setWebhookEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [payFocus, setPayFocus] = useState<PaymentProvider | null>(null);
+  const [webhookBusy, setWebhookBusy] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    Promise.all([listApps(workspaceId), getPaymentSettings(workspaceId).catch(() => null)])
-      .then(([appList, paySettings]) => {
+    Promise.all([
+      listApps(workspaceId),
+      getPaymentSettings(workspaceId).catch(() => null),
+      getWebhookApp(workspaceId).catch(() => ({ enabled: false })),
+    ])
+      .then(([appList, paySettings, webhookApp]) => {
         setApps(appList);
         setPayments(paySettings);
+        setWebhookEnabled(webhookApp.enabled);
       })
       .catch((err) =>
         setError(err instanceof ApiError ? err.message : 'Could not load integrations.')
@@ -84,7 +87,17 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
 
   const grouped = useMemo(() => {
     const generic = apps.map((a) => ({ kind: 'generic' as const, ...a }));
-    const all = [...generic, ...paymentCards(payments)];
+    const webhookCard: WebhookCardData = {
+      kind: 'webhook',
+      id: 'webhook',
+      name: 'Webhook',
+      category: 'automation',
+      description:
+        'Turn on to let any form send its submissions to a URL. Set the URL and secret from that form’s own Webhook panel.',
+      connected: webhookEnabled,
+      enabled: webhookEnabled,
+    };
+    const all = [...generic, ...paymentCards(payments), webhookCard];
     const map = new Map<Category, (typeof all)[number][]>();
     for (const card of all) {
       const list = map.get(card.category as Category) ?? [];
@@ -95,10 +108,19 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
       category: c,
       cards: map.get(c)!,
     }));
-  }, [apps, payments]);
+  }, [apps, payments, webhookEnabled]);
 
   function replaceCard(card: AppCardData) {
     setApps((prev) => prev.map((a) => (a.id === card.id ? card : a)));
+  }
+
+  function toggleWebhook() {
+    const next = !webhookEnabled;
+    setWebhookEnabled(next);
+    setWebhookBusy(true);
+    saveWebhookApp(next, workspaceId)
+      .catch(() => setWebhookEnabled(!next))
+      .finally(() => setWebhookBusy(false));
   }
 
   return (
@@ -135,11 +157,12 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
                 <AppCard
                   key={card.id}
                   card={card}
-                  onOpen={() =>
-                    card.kind === 'payment'
-                      ? setPayFocus(card.id as PaymentProvider)
-                      : setOpenId(card.id)
-                  }
+                  busy={card.kind === 'webhook' ? webhookBusy : false}
+                  onOpen={() => {
+                    if (card.kind === 'payment') setPayFocus(card.id as PaymentProvider);
+                    else if (card.kind === 'webhook') toggleWebhook();
+                    else setOpenId(card.id);
+                  }}
                 />
               ))}
             </SimpleGrid>

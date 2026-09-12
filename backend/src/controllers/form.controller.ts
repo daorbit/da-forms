@@ -5,6 +5,8 @@ import * as paymentService from '../services/payment.service.js';
 import type { PaymentProvider } from '../models/workspaceSettings.model.js';
 import * as workspaceSettingsService from '../services/workspaceSettings.service.js';
 import { sendSubmissionNotifications, sendResumeLink } from '../services/notification.service.js';
+import { deliverWebhook } from '../services/webhook.service.js';
+import { encrypt, isEncryptionConfigured } from '../lib/crypto.js';
 import {
   getFormLimits,
   recordSubmission,
@@ -16,17 +18,12 @@ import { turnstileConfigured, verifyTurnstileToken } from '../lib/turnstile.js';
 import { readEditToken, mintResumeToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
 
-/**
- * IP + user-agent, hashed. Not identity-grade — just enough to tell "same
- * browser reopening the link" from "a different visitor," for view dedup.
- */
 function fingerprintOf(req: Request) {
   const ip = req.ip ?? '';
   const ua = req.get('user-agent') ?? '';
   return createHash('sha256').update(`${ip}:${ua}`).digest('hex');
 }
 
-/** Every workspace-scoped route carries the id in the path. */
 function workspaceIdOf(req: { params: Record<string, string> }) {
   return req.params.workspaceId;
 }
@@ -38,8 +35,7 @@ export const listForms: RequestHandler = async (req, res) => {
     limit: limit ? Number(limit) : undefined,
     q,
     sort: sort as never,
-    // Anything other than the two real states is ignored rather than passed
-    // through to the query.
+
     status: status === 'published' || status === 'draft' ? status : undefined,
   });
   res.json(result);
@@ -48,11 +44,18 @@ export const listForms: RequestHandler = async (req, res) => {
 export const getForm: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
-  // A form is only reachable through the workspace that owns it.
+
   if (form.workspaceId !== workspaceIdOf(req)) {
     return res.status(404).json({ error: 'not_found', message: 'Form not found' });
   }
-  res.json(form);
+
+  const doc = form.toObject();
+
+  if (doc.webhook?.secretEnc) {
+    const { secretEnc: _secretEnc, ...rest } = doc.webhook;
+    doc.webhook = { ...rest, hasSecret: true } as typeof doc.webhook & { hasSecret: boolean };
+  }
+  res.json(doc);
 };
 
 export const createForm: RequestHandler = async (req, res) => {
@@ -80,9 +83,7 @@ export const createForm: RequestHandler = async (req, res) => {
 
   const workspaceId = workspaceIdOf(req);
   const limits = await getFormLimits(workspaceId);
-  // Unknown limits refuse the create, unlike a submission, which is accepted.
-  // Nobody loses anything they already had by being asked to try again, and a
-  // cap that can be stepped around by catching an outage is not a cap.
+
   if (limits) {
     const count = await formService.countForms(workspaceId);
     if (count >= limits.maxForms) {
@@ -126,21 +127,28 @@ export const createForm: RequestHandler = async (req, res) => {
 };
 
 export const updateForm: RequestHandler = async (req, res) => {
-  // `workspaceId` is never taken from the body: a form cannot be moved between
-  // workspaces by editing it.
+
   const { workspaceId: _ignored, ...patch } = req.body;
+
+  if (patch.webhook && typeof patch.webhook === 'object') {
+    const { secret, ...rest } = patch.webhook as { secret?: string; [k: string]: unknown };
+    if (typeof secret === 'string' && secret.trim()) {
+      if (!isEncryptionConfigured()) {
+        return res.status(503).json({
+          error: 'encryption_unavailable',
+          message: 'Webhooks cannot be configured until ENCRYPTION_KEY is set on the server.',
+        });
+      }
+      (rest as Record<string, unknown>).secretEnc = encrypt(secret.trim());
+    }
+    patch.webhook = rest;
+  }
+
   const form = await formService.updateForm(req.params.id, workspaceIdOf(req), patch);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
   res.json(form);
 };
 
-/**
- * Copy a form into the same workspace.
- *
- * Counted against the plan's form cap exactly as a create is — a duplicate is
- * a new form, and a cap that can be stepped around by copying instead of
- * creating is not a cap.
- */
 export const duplicateForm: RequestHandler = async (req, res) => {
   const workspaceId = workspaceIdOf(req);
   const limits = await getFormLimits(workspaceId);
@@ -179,14 +187,6 @@ export const listSubmissions: RequestHandler = async (req, res) => {
   }
   const { page, limit, status, from, to, q } = req.query as Record<string, string | undefined>;
 
-  /*
-   * Per-field filters arrive as `f_<fieldId>=value`.
-   *
-   * A prefix rather than a nested object, because the query string is built by
-   * a browser and `qs`-style bracket syntax is where an attacker gets to hand
-   * Express an object of their own shaping. Each id is checked against the
-   * form's real fields, so nothing outside it reaches the query.
-   */
   const validIds = new Set(
     formService.flattenFieldsPublic(form.fields).map((f) => f.id)
   );
@@ -224,7 +224,6 @@ export const updateSubmission: RequestHandler = async (req, res) => {
   res.json(submission);
 };
 
- 
 const BULK_ACTION_LIMIT = 200;
 
 function validateBulkIds(ids: unknown, res: Response): ids is string[] {
@@ -277,7 +276,6 @@ export const bulkDeleteSubmissions: RequestHandler = async (req, res) => {
   res.json({ deletedCount });
 };
 
-/** Every file this form has collected, for a bulk download. */
 export const listUploadedFiles: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form || form.workspaceId !== workspaceIdOf(req)) {
@@ -294,8 +292,7 @@ export const getAnalytics: RequestHandler = async (req, res) => {
   const [submissionCount, sources, dropOff] = await Promise.all([
     formService.submissionCount(req.params.id),
     formService.sourceBreakdown(req.params.id),
-    // Empty for a form with autosave off — there is no record of where anyone
-    // stopped, and an empty list says that more honestly than a zero would.
+
     formService.dropOffBreakdown(req.params.id),
   ]);
   const viewCount = form.viewCount ?? 0;
@@ -306,33 +303,17 @@ export const getAnalytics: RequestHandler = async (req, res) => {
     completionRate,
     sources,
     dropOff,
-    // So the page can tell "nobody abandoned this form" from "we were never
-    // watching", which are the same empty list otherwise.
+
     partialsEnabled: Boolean(form.collectPartials),
   });
 };
 
-/* ---- Public routes: no workspace in the path ---- */
-
-/** The form as respondents see it. Reachable by id alone — that is the share link. */
 export const getPublicForm: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
 
   const doc = form.toObject();
 
-  /*
-   * An allow-list, not the whole document.
-   *
-   * A share link is opened by strangers, and everything this route returns is
-   * readable in their network tab. Sending the stored form outright published
-   * `notifications.ownerEmails` — the owner's own address, and any colleague
-   * they had alerts going to — to every respondent who ever opened the form.
-   *
-   * Listing the fields the renderer actually uses means a future setting is
-   * private until someone deliberately adds it here, rather than public the
-   * moment it is saved.
-   */
   const {
     _id,
     title,
@@ -357,15 +338,8 @@ export const getPublicForm: RequestHandler = async (req, res) => {
     allowEdit,
   } = doc;
 
-  // Sent alongside the form rather than in place of it: the page still needs
-  // the title and theme to render a closed notice that looks like the form it
-  // belongs to, instead of a bare error on a white page.
   const availability = await formService.availability(form);
 
-  // A form charging through a gateway that demands a phone number, with no
-  // field of its own that holds one, has to ask for it beside the pay button.
-  // Worked out here so the page knows before the respondent reaches the last
-  // step, rather than discovering it from a rejected submit.
   const payField = paymentService.findPaymentField(fields ?? []);
   let needsPayerPhone = false;
   if (payField) {
@@ -399,35 +373,23 @@ export const getPublicForm: RequestHandler = async (req, res) => {
     allowEdit,
     availability,
     needsPayerPhone,
-    // Who the respondent is dealing with — the caption under the form, and the
-    // same name the payment window will carry. Sent with the form so the
-    // footer renders on first paint rather than appearing a moment later.
+
     branding: await getBranding(form.workspaceId),
   });
 };
 
-/**
- * Resolve an edit link to the submission it names, or say why not.
- *
- * The token is the whole credential — there is no session behind a link in an
- * email — so every refusal is deliberately the same shape and gives away
- * nothing about whether the submission exists.
- */
 async function resolveEditToken(token: unknown, formId: string) {
   const read = readEditToken(token);
   if (!read.ok) return { error: read.reason } as const;
 
   const submission = await formService.getSubmissionById(read.submissionId);
-  // Belongs to this form, and is a real response rather than a checkout in
-  // flight. A token for another form's submission is refused even though it
-  // carries a valid signature.
+
   if (!submission || String(submission.formId) !== formId || submission.status !== 'complete') {
     return { error: 'invalid' } as const;
   }
   return { submission } as const;
 }
 
-/** The answers behind an edit link, so the form can open pre-filled. */
 export const getSubmissionForEdit: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
@@ -449,14 +411,6 @@ export const getSubmissionForEdit: RequestHandler = async (req, res) => {
   res.json({ data: found.submission.data, fileMeta: found.submission.fileMeta });
 };
 
-/**
- * Save a respondent's changes to their own submission.
- *
- * Payment fields are refused rather than re-charged: an edit that changes what
- * someone owes is a second transaction, and quietly taking more money — or
- * silently keeping the old amount for new answers — are both wrong. Those forms
- * keep `allowEdit` off.
- */
 export const updateSubmissionByToken: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
@@ -489,7 +443,7 @@ export const updateSubmissionByToken: RequestHandler = async (req, res) => {
     try {
       fileMeta = JSON.parse(_fileMeta);
     } catch {
-      // Cosmetic, as on submit — the edit still saves without it.
+
     }
   }
 
@@ -514,16 +468,6 @@ export const updateSubmissionByToken: RequestHandler = async (req, res) => {
   }
 };
 
-/**
- * Email the respondent a link back to the draft they are part-way through.
- *
- * Asked for explicitly — a "save and finish later" button — rather than sent
- * automatically on every autosave, which would mean mailing someone the moment
- * they typed their address into a form they were still filling in.
- *
- * Requires the same `collectPartials` switch as the autosave itself: there is
- * no draft to return to unless the owner turned drafts on.
- */
 export const emailResumeLink: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
@@ -543,16 +487,11 @@ export const emailResumeLink: RequestHandler = async (req, res) => {
   if (typeof _partialKey !== 'string' || !_partialKey.trim()) {
     return res.status(400).json({ error: 'missing_key', message: 'Nothing to save yet' });
   }
-  // Validated here rather than trusted: this address is what the link is sent
-  // to, so a malformed one is a mail that bounces and a draft the respondent
-  // never hears about again.
+
   if (typeof email !== 'string' || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
     return res.status(400).json({ error: 'invalid_email', message: 'Enter a valid email address' });
   }
 
-  // The row the autosave has been writing. Absent when someone hits save before
-  // the first debounce landed — nothing has been stored, so there is nothing to
-  // come back to.
   const draft = await formService.getPartialByKey(req.params.id, _partialKey);
   if (!draft) {
     return res.status(404).json({
@@ -569,7 +508,6 @@ export const emailResumeLink: RequestHandler = async (req, res) => {
   res.status(204).send();
 };
 
-/** The answers behind a resume link, so the form reopens where it was left. */
 export const getPartialForResume: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
@@ -586,8 +524,7 @@ export const getPartialForResume: RequestHandler = async (req, res) => {
   }
 
   const draft = await formService.getPartialById(read.submissionId);
-  // A draft that has since been submitted or swept is gone rather than
-  // forbidden, but both are told the same thing: there is nothing here now.
+
   if (!draft || String(draft.formId) !== req.params.id) {
     return res.status(410).json({
       error: 'link_expired',
@@ -605,24 +542,10 @@ export const recordView: RequestHandler = async (req, res) => {
   res.status(204).send();
 };
 
-/**
- * Autosave: what this respondent has typed so far.
- *
- * Answers 204 in every non-error case, including when the form has autosave
- * off. The browser is firing this on a timer behind someone who is still
- * typing, and an error it cannot act on would only produce console noise on a
- * form that is working exactly as configured.
- *
- * Deliberately outside the plan's submission quota: a partial is not a
- * response, and metering the act of typing would charge a customer for people
- * who never sent anything.
- */
 export const savePartial: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
 
-  // The owner has to have asked for this. Without the flag the route stores
-  // nothing, whatever the browser sends.
   if (!form.collectPartials) return res.status(204).send();
 
   const state = await formService.availability(form);
@@ -647,9 +570,7 @@ export const savePartial: RequestHandler = async (req, res) => {
 export const submitForm: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form) return res.status(404).json({ error: 'not_found', message: 'Form not found' });
-  // The same check the public page ran to decide what to render. Repeated here
-  // because that one is advisory — a closed form still has a reachable submit
-  // endpoint, and this is what actually refuses.
+
   const state = await formService.availability(form);
   if (!state.open) {
     return res.status(403).json({
@@ -658,22 +579,6 @@ export const submitForm: RequestHandler = async (req, res) => {
     });
   }
 
-  // `_hp` is a field real respondents never see or fill — a bot filling
-  // every input trips it. It is not part of the form's own data and is
-  // stripped before the submission is stored.
-  // `_retryOrderId` rides along the same way — it names the abandoned attempt
-  // this submission replaces, and is no more part of the answers than `_hp`.
-  // `_fileMeta` is metadata about the upload answers (currently just byte
-  // size, read off Cloudinary's own upload response client-side) rather than
-  // an answer itself, so it is split off the same way.
-  // `_captcha` is the Turnstile token, stripped for the same reason as the
-  // rest: it proves something about the request, it is not an answer.
-  // `_partialKey` names this attempt's autosave row so it is promoted rather
-  // than duplicated. Stripped like the rest: it identifies the attempt, it is
-  // not an answer.
-  // `_payerPhone` is the number collected beside the pay button on a form that
-  // asks for none of its own. It reaches the gateway and the payment record,
-  // never the answers — nobody filled in a field for it.
   const {
     _hp,
     _retryOrderId: _ignoredRetry,
@@ -687,9 +592,6 @@ export const submitForm: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: 'spam_detected', message: 'Submission rejected' });
   }
 
-  // Only when the owner asked for it and the deployment can actually verify.
-  // An unconfigured secret means no challenge was rendered either, so failing
-  // here would close the form to everyone over a missing env var.
   if (form.requireCaptcha && turnstileConfigured()) {
     const verdict = await verifyTurnstileToken(_captcha, req.ip);
     if (!verdict.ok && verdict.reason === 'invalid') {
@@ -698,34 +600,20 @@ export const submitForm: RequestHandler = async (req, res) => {
         message: 'Could not verify you are human. Please try again.',
       });
     }
-    // `unavailable` deliberately falls through and accepts the response.
-    // Cloudflare being unreachable is our outage, and the cost of guessing
-    // wrong is some spam; the cost of the other guess is every real
-    // respondent turned away for the duration — the same trade the quota
-    // check below already makes.
+
   }
-  // Sent as a JSON string, not a nested object: the submit payload's own
-  // type is `Record<string, string>`, matching every other field, so this
-  // rides along the same shape everything else does rather than special-cased.
+
   let fileMeta: Record<string, { bytes: number }> | undefined;
   if (typeof _fileMeta === 'string') {
     try {
       fileMeta = JSON.parse(_fileMeta);
     } catch {
-      // Malformed input from a hand-edited request — the size badge is
-      // cosmetic, so the submission still goes through without it.
+
     }
   }
 
-  // Unknown limits accept the response, unlike form creation, which refuses.
-  // If Quantalog is unreachable the cost of guessing wrong is one row over
-  // quota; the cost of guessing the other way is a lead that a real visitor
-  // already took the trouble to type, lost for good.
   const limits = await getFormLimits(form.workspaceId);
-  // Deliberately not `planLimit`: the person hitting this is the respondent
-  // filling the form in, not the customer who owns the plan. Nudging a stranger
-  // towards someone else's billing page would be nonsense, so this stays a
-  // neutral "not accepting responses" with no code and no upgrade path.
+
   if (limits && limits.submissionsUsed >= limits.monthlySubmissionQuota + limits.submissionCredits) {
     return res.status(402).json({
       error: 'submission_quota_reached',
@@ -734,16 +622,11 @@ export const submitForm: RequestHandler = async (req, res) => {
   }
 
   const sourceUrl = req.get('referer');
-  // Only charges when its own condition is met — someone who picked the free
-  // option should not be billed just because the field exists on the form.
-  // Evaluated here rather than trusted from the browser, since it decides
-  // whether money changes hands.
+
   const payField = paymentService.activePaymentField(form.fields, data);
 
   try {
-    // A form that charges takes a different path: the response is stored, but
-    // held back until Razorpay confirms the money arrived. Nothing downstream
-    // — quota, emails — runs until then.
+
     if (payField) {
       const amount = paymentService.resolveAmount(payField, data, form.fields);
       const currency = payField.pay?.currency ?? 'INR';
@@ -752,10 +635,6 @@ export const submitForm: RequestHandler = async (req, res) => {
       const credentials = await paymentService.getCredentials(form.workspaceId, provider);
       const customer = paymentService.findCustomerDetails(form.fields, data);
 
-      // Cashfree will not open an order without a phone number. When the form
-      // asks for none, the browser collects one alongside the pay button and
-      // sends it here — outside `data`, because it is a payment detail rather
-      // than an answer to the form.
       if (paymentService.providerNeedsPhone(provider) && !customer.phone) {
         const supplied =
           typeof req.body._payerPhone === 'string'
@@ -763,9 +642,7 @@ export const submitForm: RequestHandler = async (req, res) => {
             : undefined;
 
         if (!supplied) {
-          // 422 rather than 400: nothing the respondent typed is wrong, there
-          // is simply one more thing needed before the payment can start. The
-          // page reads this and shows the phone box.
+
           return res.status(422).json({
             error: 'phone_required',
             message: 'Enter a mobile number to continue to payment.',
@@ -775,10 +652,6 @@ export const submitForm: RequestHandler = async (req, res) => {
         customer.phone = supplied;
       }
 
-      // Someone retrying after a cancelled checkout leaves a pending row
-      // behind on every attempt. Dropped here rather than left for the sweep,
-      // so three abandoned tries do not become three rows nobody can see but
-      // that still hold this respondent's uploads.
       if (req.body._retryOrderId) {
         await formService.discardPendingSubmission(String(req.body._retryOrderId));
       }
@@ -790,9 +663,7 @@ export const submitForm: RequestHandler = async (req, res) => {
         sourceUrl,
         {
           provider,
-          // Replaced with the real order id immediately below. Written first
-          // because the receipt the gateway stores is this submission's id, and
-          // that only exists once the row does.
+
           orderId: `pending_${Date.now()}`,
           amount,
           currency,
@@ -811,19 +682,12 @@ export const submitForm: RequestHandler = async (req, res) => {
         customerEmail: customer.email,
         customerName: customer.name,
         description: payField.pay?.description ?? form.title,
-        // Only a redirecting gateway uses this. PayU sends the respondent to
-        // its own page and posts the outcome back here afterwards, so the URL
-        // has to be one PayU can reach — the API's own origin, worked out from
-        // the request rather than configured, so a preview deployment returns
-        // to itself.
+
         returnUrl: paymentReturnUrl(req, form.workspaceId, provider),
       });
 
       await formService.attachOrderId(submission._id, order.orderId);
 
-      // Whose name goes on the payment window. Razorpay renders it from these
-      // options; Cashfree's hosted window takes branding from their dashboard
-      // and ignores what we send, which is why only one gateway reads it.
       const brand = await getBranding(form.workspaceId);
 
       return res.status(202).json({
@@ -839,8 +703,7 @@ export const submitForm: RequestHandler = async (req, res) => {
         currency: order.currency,
         keyId: order.keyId,
         paymentSessionId: order.paymentSessionId,
-        // Present only for PayU: the page builds a hidden form from these and
-        // submits it, which is how the respondent reaches the payment page.
+
         redirectUrl: order.redirectUrl,
         redirectFields: order.redirectFields,
         description: payField.pay?.description ?? form.title,
@@ -857,13 +720,9 @@ export const submitForm: RequestHandler = async (req, res) => {
       typeof _partialKey === 'string' ? _partialKey : undefined
     );
     res.status(201).json(submission);
-    // After responding: the respondent's own confirmation should not make
-    // them wait on an SMTP round trip, and a slow or failing mail server must
-    // never turn a successful submission into an error response.
+
     void recordSubmission(form.workspaceId);
-    // Notification emails are a paid feature, so a plan without them sends
-    // nothing — checked here rather than inside the mailer so an unreachable
-    // Quantalog (null limits) still lets a paying customer's mail go out.
+
     if (!limits || limits.notificationEmails) {
       void sendSubmissionNotifications(
         form,
@@ -873,6 +732,7 @@ export const submitForm: RequestHandler = async (req, res) => {
         String(form._id)
       );
     }
+    void deliverWebhook(form, data, String(submission._id));
   } catch (err) {
     if (err instanceof formService.DuplicateValueError) {
       return res.status(409).json({
@@ -885,9 +745,7 @@ export const submitForm: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: 'invalid_amount', message: err.message });
     }
     if (err instanceof paymentService.PaymentConfigError) {
-      // The respondent cannot fix this — it is the form owner's setup that is
-      // wrong — so it reads as the form being unavailable rather than as
-      // something they typed being rejected.
+
       console.error('[payments] configuration problem:', err.message);
       return res.status(503).json({
         error: 'payment_unavailable',
@@ -898,26 +756,6 @@ export const submitForm: RequestHandler = async (req, res) => {
   }
 };
 
-/**
- * Razorpay telling us a payment settled.
- *
- * This is what actually completes a submission. The browser's own report of
- * success is not trusted for that — it can be fabricated, and it never arrives
- * at all if the respondent closes the tab at the wrong moment.
- *
- * Addressed by workspace rather than by form: a workspace registers this once
- * in its Razorpay dashboard and every paid form it owns is covered. Which form
- * a payment belongs to is discovered from the submission the order id points
- * at, so it does not need to be in the URL.
- */
-/**
- * Where a redirecting gateway posts its outcome, as an absolute URL.
- *
- * Built from the incoming request rather than configuration so a preview
- * deployment returns to itself instead of to production. The proxy headers are
- * trusted because `trust proxy` is set — behind Vercel the socket is plain HTTP
- * and only `x-forwarded-proto` knows the request arrived over TLS.
- */
 function paymentReturnUrl(
   req: Parameters<RequestHandler>[0],
   workspaceId: string,
@@ -925,17 +763,9 @@ function paymentReturnUrl(
 ): string {
   const proto = req.get('x-forwarded-proto') ?? req.protocol;
   const host = req.get('x-forwarded-host') ?? req.get('host');
-  return `${proto}://${host}/api/public/workspaces/${workspaceId}/payments/return/${provider}`;
+  return `${proto}:
 }
 
-/**
- * Complete the submission an order belongs to, or mark it failed.
- *
- * Shared by the webhook and by PayU's return, which are two reports of the same
- * event and must not produce two sets of confirmation emails. `markSubmissionPaid`
- * is what makes that safe: it settles a submission once, so whichever arrives
- * second gets null and does nothing.
- */
 async function applyPaymentEvent(
   workspaceId: string,
   provider: PaymentProvider,
@@ -951,16 +781,11 @@ async function applyPaymentEvent(
 
   if (!paymentId) return 'ignored';
 
-  // Which form this belongs to comes from the pending submission the order id
-  // points at — the webhook is registered once per workspace and serves them
-  // all, so it cannot know the form up front.
   const pending = await formService.getSubmissionByOrderId(orderId);
   if (!pending) return 'unknown';
 
   const form = await formService.getForm(String(pending.formId));
-  // A signature verified against this workspace's secret should never resolve
-  // to another workspace's form. If it does, something is wrong enough that
-  // completing the submission would be the wrong move.
+
   if (!form || form.workspaceId !== workspaceId) {
     console.error('[payments] order', orderId, 'does not belong to workspace', workspaceId);
     return 'unknown';
@@ -971,19 +796,17 @@ async function applyPaymentEvent(
     payerContact: event.payerContact,
     method: event.method,
   });
-  // Null means a retry of an event already handled. Acknowledged, but nothing
-  // runs again — otherwise a redelivery would send a second set of
-  // confirmation emails for one payment.
+
   if (!submission) return 'already';
 
   void workspaceSettingsService.markCharged(workspaceId, provider);
   void recordSubmission(workspaceId);
   const limits = await getFormLimits(workspaceId);
   if (!limits || limits.notificationEmails) {
-    // The payment rides along so the confirmation actually says what was
-    // paid — a receipt that omits the amount is not much of a receipt.
+
     void sendSubmissionNotifications(form, submission.data, submission.payment);
   }
+  void deliverWebhook(form, submission.data, String(submission._id), submission.payment);
   return 'paid';
 }
 
@@ -992,8 +815,6 @@ const paymentWebhook =
   async (req, res) => {
     const { workspaceId } = req.params;
 
-    // `express.raw` is mounted on this path, so the body is the exact bytes
-    // the gateway signed. Re-serialised JSON would not match.
     const rawBody = req.body as Buffer;
     if (!Buffer.isBuffer(rawBody)) {
       console.error('[payments] webhook body was parsed — raw parser is not mounted');
@@ -1035,20 +856,6 @@ export const razorpayWebhook = paymentWebhook('razorpay');
 export const cashfreeWebhook = paymentWebhook('cashfree');
 export const payuWebhook = paymentWebhook('payu');
 
-/**
- * Where PayU sends the respondent back to.
- *
- * PayU has no checkout window of its own worth using — the respondent leaves
- * for `secure.payu.in` and their browser posts the outcome here on the way
- * back. So this is a page navigation, not an API call, and it answers with a
- * redirect to the form rather than with JSON.
- *
- * What it does *not* do is take the browser's word for it. The posted fields
- * are hashed with the merchant salt, which the browser does not have, and on
- * top of that the payment is confirmed straight from PayU over a
- * server-to-server call. The redirect only decides what the respondent sees;
- * the submission is settled by what PayU itself said.
- */
 export const payuReturn: RequestHandler = async (req, res) => {
   const { workspaceId } = req.params;
 
@@ -1057,8 +864,6 @@ export const payuReturn: RequestHandler = async (req, res) => {
     ? Object.fromEntries(new URLSearchParams(rawBody.toString('utf8')))
     : ((req.body ?? {}) as Record<string, string>);
 
-  // PayU also allows a GET return on some accounts, where the fields arrive as
-  // query parameters instead.
   const params: Record<string, string | undefined> = {
     ...(req.query as Record<string, string>),
     ...posted,
@@ -1075,10 +880,6 @@ export const payuReturn: RequestHandler = async (req, res) => {
     return res.redirect(303, respondentReturnUrl(formId, orderId, 'error'));
   }
 
-  // The hash proves the fields were not edited on their way through the
-  // browser. A failed check is not treated as a failed payment — it says
-  // nothing about the money, only that this report cannot be believed — so the
-  // verify call below still runs and decides.
   const trusted = paymentService.parseWebhook('payu', {
     rawBody: Buffer.from(new URLSearchParams(params as Record<string, string>).toString()),
     headers: {},
@@ -1089,9 +890,6 @@ export const payuReturn: RequestHandler = async (req, res) => {
     console.warn('[payments] payu return failed its hash check for order', orderId);
   }
 
-  // The second, authoritative source. PayU's webhook is enabled per merchant
-  // and can lag or be switched off, so the return asks PayU directly rather
-  // than leaving the submission pending until a webhook that may never come.
   const verified = orderId ? await paymentService.verifyPayment(credentials, orderId) : null;
   const event = verified ?? trusted;
 
@@ -1110,13 +908,6 @@ export const payuReturn: RequestHandler = async (req, res) => {
   res.redirect(303, respondentReturnUrl(formId, orderId, status));
 };
 
-/**
- * The page the respondent lands on after PayU, as an absolute URL.
- *
- * `status` is a hint for what to show while the page confirms the payment for
- * itself against `/payments/:orderId` — nothing is trusted from this URL, since
- * the respondent can edit it.
- */
 function respondentReturnUrl(
   formId: string | undefined,
   orderId: string | undefined,
@@ -1124,8 +915,7 @@ function respondentReturnUrl(
 ): string {
   const base = env.publicFormBaseUrl;
   if (!base || !formId) {
-    // Nothing to send them back to. Better than a redirect to a URL that does
-    // not exist, which would look like the payment broke the site.
+
     return `${base || ''}/`;
   }
   const query = new URLSearchParams({ payuStatus: status });
@@ -1133,12 +923,6 @@ function respondentReturnUrl(
   return `${base}/form/${formId}/view?${query.toString()}`;
 }
 
-/**
- * Where the respondent's page checks whether its payment landed.
- *
- * Polled after checkout closes, because the webhook is what completes the
- * submission and it may arrive a moment later than the browser does.
- */
 export const getPaymentStatus: RequestHandler = async (req, res) => {
   const submission = await formService.getSubmissionByOrderId(req.params.orderId);
   if (!submission) return res.status(404).json({ error: 'not_found', message: 'Unknown order' });
@@ -1148,17 +932,6 @@ export const getPaymentStatus: RequestHandler = async (req, res) => {
   });
 };
 
-/**
- * Draft a form from a sentence.
- *
- * A pass-through to Quantalog, which owns the model and the AI quota. Nothing
- * is stored: the answer goes back to the editor as a starting point, and it
- * becomes a form only if the person saves it — so a generation they dislike
- * costs them a click, not a row to delete.
- *
- * The demo workspace is refused rather than served. Generation spends a real
- * workspace's AI allowance, and the showcase belongs to no one to spend.
- */
 export const generateForm: RequestHandler = async (req, res) => {
   const workspaceId = workspaceIdOf(req);
   const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
@@ -1167,22 +940,16 @@ export const generateForm: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: 'prompt_required', message: 'Describe the form you want.' });
   }
 
-  // Present on a follow-up ("add a phone field"). Quantalog validates it
-  // before it reaches the model, so nothing is checked here beyond its shape.
   const previous = req.body?.previous && typeof req.body.previous === 'object'
     ? req.body.previous
     : undefined;
 
-  // "edit" comes from the builder's AI drawer, changing a live form; "create"
-  // (default) is the generator modal drafting a new one. Quantalog only pulls
-  // an "edit" reply back toward the previous form.
   const mode = req.body?.mode === 'edit' ? 'edit' : 'create';
 
   const result = await quantalogGenerate(workspaceId, prompt, previous, mode);
 
   if (!result.ok) {
-    // The quota refusal is passed through with its code intact, so the editor
-    // can offer an upgrade rather than showing a generic failure.
+
     return res.status(result.status).json({
       error: result.code ?? 'generation_failed',
       message: result.error,

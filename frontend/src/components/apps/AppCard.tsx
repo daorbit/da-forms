@@ -14,12 +14,24 @@ export interface PaymentCardData {
   enabled: boolean;
 }
 
+ 
+export interface WebhookCardData {
+  kind: 'webhook';
+  id: 'webhook';
+  name: string;
+  category: 'automation';
+  description: string;
+  connected: boolean;
+  enabled: boolean;
+}
+
 type GenericCard = { kind: 'generic' } & AppCardData;
-export type AnyCard = GenericCard | PaymentCardData;
+export type AnyCard = GenericCard | PaymentCardData | WebhookCardData;
 
 interface Props {
   card: AnyCard;
   onOpen: (card: AnyCard) => void;
+  busy?: boolean;
 }
 
 function StatusBadge({ connected, enabled }: { connected: boolean; enabled: boolean }) {
@@ -42,7 +54,7 @@ function StatusBadge({ connected, enabled }: { connected: boolean; enabled: bool
   );
 }
 
-export function AppCard({ card, onOpen }: Props) {
+export function AppCard({ card, onOpen, busy = false }: Props) {
   const wordmark = isWordmark(card.id);
 
   return (
@@ -108,10 +120,17 @@ export function AppCard({ card, onOpen }: Props) {
         <Button
           variant="default"
           fullWidth
+          loading={busy}
           leftSection={<IconPlugConnected size={16} />}
           onClick={() => onOpen(card)}
         >
-          {card.connected ? 'Manage' : 'Connect'}
+          {card.kind === 'webhook'
+            ? card.enabled
+              ? 'Turn off'
+              : 'Turn on'
+            : card.connected
+              ? 'Manage'
+              : 'Connect'}
         </Button>
       </Stack>
     </Card>

@@ -58,5 +58,5 @@ Run one only: `npm run dev:backend` / `npm run dev:frontend`.
 
 ```bash
 npm run build
-npm start        # serves built backend
+npm start        
 ```

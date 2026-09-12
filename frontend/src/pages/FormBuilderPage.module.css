@@ -73,17 +73,12 @@
   cursor: grabbing;
 }
 
-/* Publish-state badge in the header. `!important` for the same reason as the
-   title input: the embedding shell uppercases every `.mantine-Badge-label` and
-   can recolour it, and a white "LIVE" gave no signal that the form is live. */
-.statusBadge {
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  font-weight: 600 !important;
-}
-.statusBadge :global(.mantine-Badge-label) {
-  text-transform: none !important;
-  letter-spacing: 0 !important;
+/* Publish-state indicator in the header: a dot plus text, not a pill — a
+   filled badge competed with Save/Publish for attention, and inherited
+   invisible text whenever the embedding shell's accent was too light for
+   Mantine's hardcoded white-on-filled to read. */
+.statusText {
+  line-height: 1;
 }
 
 /* The pulsing dot that reads as "this is serving traffic right now". */
@@ -92,7 +87,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: currentColor;
+  background: #10b981;
   animation: live-dot 1.8s ease-in-out infinite;
 }
 @keyframes live-dot {

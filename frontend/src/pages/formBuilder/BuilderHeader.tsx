@@ -84,21 +84,16 @@ export function BuilderHeader({
             {name}
           </Text>
           {/* Publish state belongs next to the name it describes, not inferred
-              from which way the button in the corner is pointing. */}
+              from which way the button in the corner is pointing. A dot plus
+              text reads as status, not as a call to action — a filled pill
+              here competed with Save/Publish for attention it doesn't need. */}
           {savedForm && (
-            <Badge
-              variant={savedForm.status === 'published' ? 'filled' : 'light'}
-              color={savedForm.status === 'published' ? 'emerald' : 'gray'}
-              radius="sm"
-              size="sm"
-              visibleFrom="sm"
-              className={classes.statusBadge}
-              leftSection={
-                savedForm.status === 'published' ? <span className={classes.liveDot} /> : undefined
-              }
-            >
-              {savedForm.status === 'published' ? 'Live' : 'Draft'}
-            </Badge>
+            <Group gap={6} wrap="nowrap" visibleFrom="sm" className={classes.statusText}>
+              {savedForm.status === 'published' && <span className={classes.liveDot} />}
+              <Text size="xs" c="dimmed" fw={600}>
+                {savedForm.status === 'published' ? 'Live' : 'Draft'}
+              </Text>
+            </Group>
           )}
           {isDirty && (
             <Text size="xs" c="dimmed" visibleFrom="sm">

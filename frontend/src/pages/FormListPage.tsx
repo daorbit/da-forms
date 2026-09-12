@@ -25,8 +25,8 @@ import {
   IconX,
   IconInfoCircle,
   IconPlugConnected,
-  IconBook2,
 } from '@tabler/icons-react';
+import { BookOpen } from 'lucide-react';
 import {
   listForms,
   deleteForm,
@@ -240,8 +240,9 @@ export function FormListPage() {
               rel="noopener noreferrer"
               variant="default"
               size="lg"
+              radius="md"
             >
-              <IconBook2 size={16} />
+              <BookOpen size={17} />
             </ActionIcon>
           </Tooltip>
           <Button

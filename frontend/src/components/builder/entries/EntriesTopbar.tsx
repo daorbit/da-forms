@@ -1,6 +1,7 @@
 import { ActionIcon, Button, Group, Skeleton, Text, TextInput, Tooltip } from '@mantine/core';
 import { Link } from 'react-router-dom';
-import { IconArrowLeft, IconBook2, IconCheck, IconPencil, IconX } from '@tabler/icons-react';
+import { IconArrowLeft, IconCheck, IconPencil, IconX } from '@tabler/icons-react';
+import { BookOpen } from 'lucide-react';
 import type { Form } from '@/types';
 import classes from '../../../pages/EntriesPage.module.css';
 
@@ -91,8 +92,9 @@ export function EntriesTopbar({
             rel="noopener noreferrer"
             variant="default"
             size="lg"
+            radius="md"
           >
-            <IconBook2 size={16} />
+            <BookOpen size={17} />
           </ActionIcon>
         </Tooltip>
         <Button variant="default" radius="md" color="emerald" onClick={onCopyShareLink}>

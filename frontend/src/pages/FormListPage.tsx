@@ -25,6 +25,7 @@ import {
   IconX,
   IconInfoCircle,
   IconPlugConnected,
+  IconBook2,
 } from '@tabler/icons-react';
 import {
   listForms,
@@ -231,6 +232,18 @@ export function FormListPage() {
           )}
         </Group>
         <Group gap="xs" wrap="nowrap">
+          <Tooltip label="Docs">
+            <ActionIcon
+              component="a"
+              href="https://quantalog.daorbit.in/docs/lead-capture"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="default"
+              size="lg"
+            >
+              <IconBook2 size={16} />
+            </ActionIcon>
+          </Tooltip>
           <Button
             variant="default"
             leftSection={<IconPlugConnected size={16} />}

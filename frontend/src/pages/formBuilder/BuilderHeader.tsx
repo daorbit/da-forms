@@ -7,6 +7,7 @@ import {
   IconArrowLeft,
   IconArrowBackUp,
   IconArrowForwardUp,
+  IconBook2,
 } from '@tabler/icons-react';
 import type { Form } from '@/types';
 import classes from '../FormBuilderPage.module.css';
@@ -140,6 +141,19 @@ export function BuilderHeader({
               onClick={onPreview}
             >
               <IconEye size={18} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Docs">
+            <ActionIcon
+              component="a"
+              href="https://quantalog.daorbit.in/docs/forms-advanced-fields"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="default"
+              size="lg"
+              visibleFrom="sm"
+            >
+              <IconBook2 size={16} />
             </ActionIcon>
           </Tooltip>
           <Divider orientation="vertical" my={14} />

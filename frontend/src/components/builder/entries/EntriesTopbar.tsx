@@ -1,6 +1,6 @@
 import { ActionIcon, Button, Group, Skeleton, Text, TextInput, Tooltip } from '@mantine/core';
 import { Link } from 'react-router-dom';
-import { IconArrowLeft, IconCheck, IconPencil, IconX } from '@tabler/icons-react';
+import { IconArrowLeft, IconBook2, IconCheck, IconPencil, IconX } from '@tabler/icons-react';
 import type { Form } from '@/types';
 import classes from '../../../pages/EntriesPage.module.css';
 
@@ -83,6 +83,18 @@ export function EntriesTopbar({
         )}
       </Group>
       <Group gap="xs">
+        <Tooltip label="Docs">
+          <ActionIcon
+            component="a"
+            href="https://quantalog.daorbit.in/docs/forms-entries-and-links"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="default"
+            size="lg"
+          >
+            <IconBook2 size={16} />
+          </ActionIcon>
+        </Tooltip>
         <Button variant="default" radius="md" color="emerald" onClick={onCopyShareLink}>
           Share
         </Button>

@@ -1,24 +1,11 @@
 import { Anchor, Group, Text } from '@mantine/core';
-import type { FormBranding, FormTheme } from '@/types';
+import type { FormBranding } from '@/types';
 
-export function PoweredBy({
-  branding,
-  theme,
-}: {
-  branding?: FormBranding;
-  theme?: FormTheme;
-}) {
+export function PoweredBy({ branding }: { branding?: FormBranding }) {
   if (!branding?.showPoweredBy) return null;
 
-  const embedded = theme?.scope === 'card';
-
   return (
-    <Group
-      justify="center"
-      mt={embedded ? 'lg' : 'xl'}
-      mb={embedded ? 'lg' : 'md'}
-      px="md"
-    >
+    <Group justify="center" mt="lg">
       <Anchor
         href="https://quantalog.com"
         target="_blank"

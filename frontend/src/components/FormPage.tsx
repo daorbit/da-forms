@@ -6,14 +6,15 @@ interface Props {
   theme?: FormTheme;
   minHeight?: string;
   children: React.ReactNode;
-  footer?: React.ReactNode;
 }
 
-export function FormPage({ theme, minHeight, children, footer }: Props) {
+
+export function FormPage({ theme, minHeight, children }: Props) {
   const cardScope = theme?.scope === 'card';
+
   const height = minHeight ?? (cardScope ? 'auto' : '100vh');
 
-  const surface = (
+  return (
     <Box
       className="da-forms-light-surface"
       data-mantine-color-scheme="light"
@@ -26,17 +27,7 @@ export function FormPage({ theme, minHeight, children, footer }: Props) {
     >
       <Container size={cardScope ? '100%' : 'sm'} py={cardScope ? 0 : 'xl'} px={cardScope ? 0 : 'md'}>
         {children}
-        {!cardScope && footer}
       </Container>
-    </Box>
-  );
-
-  if (!cardScope) return surface;
-
-  return (
-    <Box className="da-forms-light-surface" data-mantine-color-scheme="light">
-      {surface}
-      {footer}
     </Box>
   );
 }

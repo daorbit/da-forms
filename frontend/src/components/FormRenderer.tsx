@@ -57,18 +57,14 @@ interface Props {
   allowResume?: boolean;
   onSaveForLater?: (email: string, partialKey: string) => Promise<void>;
   initialData?: Record<string, string>;
-  /**
-   * True when the gateway this form charges through needs a phone number and
-   * the form has no field that holds one. The renderer collects it beside the
-   * pay button; it is a payment detail, not an answer, so it never joins
-   * `values`.
-   */
   needsPayerPhone?: boolean;
   onSubmit?: (
     values: Record<string, string>,
     partialKey?: string | null,
     payerPhone?: string
   ) => void | boolean | Promise<void | boolean>;
+
+  footer?: React.ReactNode;
 }
 
 const buttonSize: Record<SubmitButtonSize, string> = {
@@ -122,11 +118,6 @@ function initialValues(fields: FormField[]) {
   return values;
 }
 
-
-/**
- * The respondent-facing form. Shared by the public page and the builder's
- * preview so the two can never drift apart.
- */
 export function FormRenderer({
   formId,
   title,
@@ -151,6 +142,7 @@ export function FormRenderer({
   onSaveForLater,
   initialData,
   onSubmit,
+  footer,
 }: Props) {
 
   const [values, setValues] = useState<Record<string, string>>(
@@ -170,13 +162,9 @@ export function FormRenderer({
   const [pageIndex, setPageIndex] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
-  // Set once a page has been submitted, so a half-typed email is not marked
-  // wrong while it is still being typed.
   const [showErrors, setShowErrors] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const stepHeadingRef = useRef<HTMLDivElement>(null);
-  // Skips the first render: focus belongs to the page on load, not to a
-  // heading nobody has navigated to yet.
   const hasAdvanced = useRef(false);
   const textColor = resolveTextColor(theme);
   const accent = theme?.accentColor;
@@ -647,6 +635,11 @@ export function FormRenderer({
           )}
         </Stack>
       </form>
+      {/* Inside the card, under the button: it is part of what the respondent
+          is looking at, not a note pinned to the page behind it. Outside the
+          form element rather than inside, so it is never read as part of the
+          thing being submitted. */}
+      {footer}
     </Paper>
   );
 }

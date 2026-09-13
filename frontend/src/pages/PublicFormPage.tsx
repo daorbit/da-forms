@@ -445,10 +445,7 @@ export function PublicFormPage() {
   }
 
   return (
-    <FormPage
-      theme={form.theme}
-      footer={<PoweredBy branding={form.branding} theme={form.theme} />}
-    >
+    <FormPage theme={form.theme}>
       <FormRenderer
         formId={id}
         title={form.title}
@@ -473,6 +470,7 @@ export function PublicFormPage() {
         initialData={editData ?? undefined}
         needsPayerPhone={form.needsPayerPhone}
         onSubmit={handleSubmit}
+        footer={<PoweredBy branding={form.branding} />}
       />
     </FormPage>
   );

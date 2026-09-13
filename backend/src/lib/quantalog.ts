@@ -160,17 +160,96 @@ export interface GeneratedForm {
 }
 
 /**
- * Which path answered an edit.
- *
- * "theme" means Quantalog restyled the form without ever showing the fields to
- * a model, so the fields in the reply are the ones that were sent. Worth
- * passing on: it is the difference between telling someone their form was
- * restyled and telling them five fields were rewritten when none were.
+ * One field as the editor describes it to the model: an id, and enough to
+ * recognise it by.
  */
-export type GenerateIntent = "theme" | "form";
+export interface EditSnapshotField {
+  id: string;
+  type: string;
+  label: string;
+  required?: boolean;
+  options?: string[];
+}
+
+export interface EditSnapshot {
+  title?: string;
+  formDescription?: string;
+  submitLabel?: string;
+  fields: EditSnapshotField[];
+  theme?: Record<string, unknown>;
+}
+
+/**
+ * A change to make, rather than the form to replace.
+ *
+ * Passed through unread: this service is a courier between the builder and
+ * Quantalog, and the operations are checked on the far side against the ids the
+ * builder actually sent. Re-validating them here would mean keeping a second
+ * copy of the field schema in step with the first.
+ */
+export type EditOp = Record<string, unknown>;
+
+export type EditOutcome =
+  | { ok: true; ops: EditOp[] }
+  | { ok: false; status: number; error: string; code?: string };
+
+/**
+ * Ask what should change about a form that already exists.
+ *
+ * Separate from `generateForm` because the answers are different in kind: a
+ * generation is a whole form, and applying one to a live canvas overwrites
+ * everything the author did not ask about — including the layout, which this
+ * wire shape has never been able to describe. An edit comes back as operations
+ * naming existing fields by id, and the builder applies them in place.
+ */
+export async function editForm(
+  workspaceId: string,
+  prompt: string,
+  snapshot: EditSnapshot
+): Promise<EditOutcome> {
+  if (!isConfigured()) {
+    return { ok: false, status: 503, error: "Form editing is not configured." };
+  }
+
+  try {
+    const res = await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/edit/${encodeURIComponent(workspaceId)}`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${env.formsServiceSecret}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ prompt, snapshot }),
+        // Two model attempts run behind this, as with a generation.
+        signal: AbortSignal.timeout(45_000),
+      }
+    );
+
+    const body = (await res.json().catch(() => null)) as
+      | { ops?: EditOp[]; error?: string; code?: string }
+      | null;
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        error: body?.error ?? `Edit failed (${res.status}).`,
+        code: body?.code,
+      };
+    }
+    if (!Array.isArray(body?.ops)) {
+      return { ok: false, status: 502, error: "The editor returned nothing usable." };
+    }
+    return { ok: true, ops: body.ops };
+  } catch (err) {
+    console.error("[quantalog] edit failed:", err);
+    return { ok: false, status: 504, error: "The editor took too long to answer." };
+  }
+}
 
 export type GenerateOutcome =
-  | { ok: true; form: GeneratedForm; intent?: GenerateIntent }
+  | { ok: true; form: GeneratedForm }
   | { ok: false; status: number; error: string; code?: string };
 
 /**
@@ -221,7 +300,7 @@ export async function generateForm(
     );
 
     const body = (await res.json().catch(() => null)) as
-      | { form?: GeneratedForm; error?: string; code?: string; intent?: GenerateIntent }
+      | { form?: GeneratedForm; error?: string; code?: string }
       | null;
 
     if (!res.ok) {
@@ -235,11 +314,7 @@ export async function generateForm(
     if (!body?.form) {
       return { ok: false, status: 502, error: 'Generation returned nothing usable.' };
     }
-    return {
-      ok: true,
-      form: body.form,
-      intent: body.intent === "theme" ? "theme" : undefined,
-    };
+    return { ok: true, form: body.form };
   } catch (err) {
     console.error('[quantalog] generate failed:', err);
     return { ok: false, status: 504, error: 'The generator took too long to answer.' };

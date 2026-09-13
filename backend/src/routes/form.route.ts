@@ -63,6 +63,14 @@ workspaceFormRouter.post(
   asyncHandler(formController.generateForm)
 );
 
+// Changing an existing form, as against drafting a new one. Shares the
+// generator's limiter: the same models sit behind both, so one budget.
+workspaceFormRouter.post(
+  '/edit',
+  generateLimiter,
+  asyncHandler(formController.editForm)
+);
+
 workspaceFormRouter.get('/', asyncHandler(formController.listForms));
 workspaceFormRouter.post('/', asyncHandler(formController.createForm));
 workspaceFormRouter.get('/:id', asyncHandler(formController.getForm));

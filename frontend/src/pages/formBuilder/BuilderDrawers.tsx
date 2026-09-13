@@ -1,8 +1,7 @@
 import { Modal, Button, Group, Text } from '@mantine/core';
 import type { FormField, FormTheme, PaymentSettings } from '@/types';
 import type { RailPanel } from '@/components/builder/IconRail';
-import type { CurrentFormSnapshot } from '@/components/builder/AiEditDrawer';
-import type { GeneratedForm } from '@/lib/generatedForm';
+import type { EditOp, EditSnapshot } from '@/lib/editOps';
 import { PropertiesDrawer } from '@/components/builder/PropertiesDrawer';
 import { FormSettings } from '@/components/builder/FormSettings';
 import { AiEditDrawer } from '@/components/builder/AiEditDrawer';
@@ -35,8 +34,8 @@ interface Props {
   setPendingLeave: React.Dispatch<React.SetStateAction<boolean>>;
   onLeave: () => void;
   updateField: (id: string, patch: Partial<FormField>) => void;
-  aiSnapshot: CurrentFormSnapshot;
-  applyAiRevision: (form: GeneratedForm) => void;
+  aiSnapshot: EditSnapshot;
+  applyAiRevision: (ops: EditOp[]) => number;
 }
 
 /**

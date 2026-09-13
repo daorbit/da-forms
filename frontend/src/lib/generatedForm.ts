@@ -70,17 +70,9 @@ export interface GeneratedForm {
   submitLabel?: string;
   fields: GeneratedField[];
   theme?: Record<string, unknown>;
-  /**
-   * How an edit was answered, when the server said.
-   *
-   * "theme" means only the palette was generated — the fields came back exactly
-   * as they were sent, because no model was shown them. Absent on a draft and
-   * on an ordinary revision.
-   */
-  intent?: 'theme' | 'form';
 }
 
- 
+
 export function generatedToTemplate(
   generated: GeneratedForm,
   prev: FormField[] = []

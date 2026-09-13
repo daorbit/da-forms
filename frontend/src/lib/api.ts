@@ -14,6 +14,7 @@ import type {
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
 import type { GeneratedForm } from './generatedForm';
+import type { EditOp, EditSnapshot } from './editOps';
 import { workspaceToken, refreshWorkspaceToken, ensureWorkspaceToken } from './workspaceToken';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -134,18 +135,36 @@ export class DemoWorkspaceError extends ApiError {
 export function generateFormDraft(
   prompt: string,
   workspaceId = DEFAULT_WORKSPACE,
- 
-  previous?: GeneratedForm,
- 
-  mode: 'create' | 'edit' = 'create'
+
+  previous?: GeneratedForm
 ) {
   return authedRequest<GeneratedForm>(`${ws(workspaceId)}/generate`, {
     method: 'POST',
     body: JSON.stringify({
       prompt,
       ...(previous ? { previous } : {}),
-      ...(mode === 'edit' ? { mode } : {}),
     }),
+  });
+}
+
+/**
+ * Ask what should change about a form that already exists.
+ *
+ * Answers with operations against the ids in `snapshot`, not with a form. That
+ * is the difference between this and `generateFormDraft`: a generated form
+ * replaces the canvas, and everything the author did not ask about — their
+ * wording, their settings, the grids holding the layout together — goes with
+ * it. Operations are applied in place, so what the model did not name is not
+ * touched at all.
+ */
+export function requestFormEdit(
+  prompt: string,
+  snapshot: EditSnapshot,
+  workspaceId = DEFAULT_WORKSPACE
+) {
+  return authedRequest<{ ops: EditOp[] }>(`${ws(workspaceId)}/edit`, {
+    method: 'POST',
+    body: JSON.stringify({ prompt, snapshot }),
   });
 }
 

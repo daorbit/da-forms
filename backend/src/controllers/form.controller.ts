@@ -14,6 +14,7 @@ import {
   getFormLimits,
   recordSubmission,
   generateForm as quantalogGenerate,
+  editForm as quantalogEdit,
   getBranding,
 } from "../lib/quantalog.js";
 import { planLimit } from "../lib/plan-limit.js";
@@ -1132,8 +1133,47 @@ export const generateForm: RequestHandler = async (req, res) => {
     });
   }
 
-  // `intent` rides alongside the form rather than inside it: the builder reads
-  // it to describe what happened ("restyled" against "5 fields"), and anything
-  // that does not care goes on treating the body as the form it always was.
-  res.json({ ...result.form, intent: result.intent });
+  res.json(result.form);
+};
+
+/**
+ * Work out what should change about a form the author is already editing.
+ *
+ * Distinct from `generateForm` on purpose. A generation answers with a whole
+ * form, and dropping one onto a live canvas replaces everything — including the
+ * grids and columns the generator's wire shape cannot describe, which is how an
+ * edit could come back having quietly flattened the layout and lost the fields
+ * inside it. This answers with operations against the ids the builder sent, and
+ * the builder applies them to the form it already has.
+ */
+export const editForm: RequestHandler = async (req, res) => {
+  const workspaceId = workspaceIdOf(req);
+  const prompt =
+    typeof req.body?.prompt === "string" ? req.body.prompt.trim() : "";
+
+  if (!prompt) {
+    return res.status(400).json({
+      error: "prompt_required",
+      message: "Describe the change you want.",
+    });
+  }
+
+  const snapshot = req.body?.snapshot;
+  if (!snapshot || typeof snapshot !== "object" || !Array.isArray(snapshot.fields)) {
+    return res.status(400).json({
+      error: "snapshot_required",
+      message: "The form being edited was not sent.",
+    });
+  }
+
+  const result = await quantalogEdit(workspaceId, prompt, snapshot);
+
+  if (!result.ok) {
+    return res.status(result.status).json({
+      error: result.code ?? "edit_failed",
+      message: result.error,
+    });
+  }
+
+  res.json({ ops: result.ops });
 };

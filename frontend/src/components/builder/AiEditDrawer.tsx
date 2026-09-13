@@ -5,8 +5,8 @@ import {
 import { notifications } from '@mantine/notifications';
 import { IconArrowUp } from '@tabler/icons-react';
 import { OrbitMark } from '@/components/OrbitMark';
-import { generateFormDraft } from '@/lib/api';
-import type { GeneratedForm } from '@/lib/generatedForm';
+import { requestFormEdit } from '@/lib/api';
+import type { EditOp, EditSnapshot } from '@/lib/editOps';
 import { isPlanLimit } from '@/lib/planLimit';
 import drawerShared from './PropertiesDrawer.module.css';
 // The exact pane the from-scratch generator uses — same border, wash, bubble,
@@ -14,27 +14,17 @@ import drawerShared from './PropertiesDrawer.module.css';
 import ai from '@/components/AiFormModal.module.css';
 import edit from './AiEditDrawer.module.css';
 
-/**
- * The form as the generator understands it. Rebuilt from live editor state on
- * every request so a follow-up prompt ("make the email optional") is applied
- * to what is actually on the canvas, not to the first draft.
- */
-export interface CurrentFormSnapshot {
-  title: string;
-  formDescription?: string;
-  submitLabel?: string;
-  fields: GeneratedForm['fields'];
-  theme?: Record<string, unknown>;
-}
-
 interface Props {
   opened: boolean;
   onClose: () => void;
   workspaceId: string;
-  /** Live editor state, in the generator's wire shape. */
-  snapshot: CurrentFormSnapshot;
-  /** Hand a revised form back to the editor to drop onto the canvas. */
-  onApply: (form: GeneratedForm) => void;
+  /**
+   * Live editor state, as the model is shown it. Rebuilt on every request so a
+   * follow-up ("now make it optional too") reads against what is on the canvas.
+   */
+  snapshot: EditSnapshot;
+  /** Apply the changes to the canvas, and say how many of them landed. */
+  onApply: (ops: EditOp[]) => number;
   /** Demo workspace — the drawer explains rather than calls. */
   disabled?: boolean;
 }
@@ -46,12 +36,16 @@ const SUGGESTIONS = [
   'Add a dropdown for how they heard about us',
 ];
 
-/** One exchange: what was asked, and what came back. */
+/**
+ * One exchange: what was asked, and how much changed.
+ *
+ * A count of changes rather than of fields. The old line reported the form's
+ * length, which said nothing about what the edit did — and read as a lie on a
+ * restyle, where it announced five fields and meant none of them.
+ */
 interface Turn {
   prompt: string;
-  fieldCount?: number;
-  /** Set once the answer has landed, so the summary can describe the right thing. */
-  intent?: 'theme' | 'form';
+  changes?: number;
 }
 
 export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, disabled }: Props) {
@@ -66,15 +60,11 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
     setBusy(true);
     setTurns((t) => [...t, { prompt: asked }]);
     try {
-      const next = await generateFormDraft(asked, workspaceId, snapshot as GeneratedForm, 'edit');
-      onApply(next);
+      const { ops } = await requestFormEdit(asked, snapshot, workspaceId);
+      const changes = onApply(ops);
       setTurns((t) => {
         const copy = [...t];
-        copy[copy.length - 1] = {
-          prompt: asked,
-          fieldCount: next.fields.length,
-          intent: next.intent,
-        };
+        copy[copy.length - 1] = { prompt: asked, changes };
         return copy;
       });
       setPrompt('');
@@ -209,7 +199,7 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
                     <Text size="xs" lh={1.45}>{turn.prompt}</Text>
                   </Box>
 
-                  {busy && i === turns.length - 1 && turn.fieldCount === undefined && (
+                  {busy && i === turns.length - 1 && turn.changes === undefined && (
                     <Group gap={8} wrap="nowrap">
                       <Loader size={12} type="dots" color="var(--mantine-color-emerald-5)" />
                       <Text size="xs" c="emerald.4" fw={500} className={ai.thinking}>
@@ -218,15 +208,15 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
                     </Group>
                   )}
 
-                  {turn.fieldCount !== undefined && (
+                  {turn.changes !== undefined && (
                     <Box className={ai.fieldSummary}>
                       <Text size="xs" c="dimmed">
-                        {turn.intent === 'theme' ? (
-                          <>Restyled the form — fields left as they were. Ctrl+Z to undo.</>
+                        {turn.changes === 0 ? (
+                          <>Nothing to change for that. Try naming the field.</>
                         ) : (
                           <>
-                            Applied to the canvas — {turn.fieldCount} field
-                            {turn.fieldCount === 1 ? '' : 's'}. Ctrl+Z to undo.
+                            Applied to the canvas — {turn.changes} change
+                            {turn.changes === 1 ? '' : 's'}. Ctrl+Z to undo.
                           </>
                         )}
                       </Text>

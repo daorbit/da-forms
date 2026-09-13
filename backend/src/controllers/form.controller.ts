@@ -1132,5 +1132,8 @@ export const generateForm: RequestHandler = async (req, res) => {
     });
   }
 
-  res.json(result.form);
+  // `intent` rides alongside the form rather than inside it: the builder reads
+  // it to describe what happened ("restyled" against "5 fields"), and anything
+  // that does not care goes on treating the body as the form it always was.
+  res.json({ ...result.form, intent: result.intent });
 };

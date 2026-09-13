@@ -46,10 +46,12 @@ const SUGGESTIONS = [
   'Add a dropdown for how they heard about us',
 ];
 
-/** One exchange: what was asked, and the field count that came back. */
+/** One exchange: what was asked, and what came back. */
 interface Turn {
   prompt: string;
   fieldCount?: number;
+  /** Set once the answer has landed, so the summary can describe the right thing. */
+  intent?: 'theme' | 'form';
 }
 
 export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, disabled }: Props) {
@@ -68,7 +70,11 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
       onApply(next);
       setTurns((t) => {
         const copy = [...t];
-        copy[copy.length - 1] = { prompt: asked, fieldCount: next.fields.length };
+        copy[copy.length - 1] = {
+          prompt: asked,
+          fieldCount: next.fields.length,
+          intent: next.intent,
+        };
         return copy;
       });
       setPrompt('');
@@ -215,8 +221,14 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
                   {turn.fieldCount !== undefined && (
                     <Box className={ai.fieldSummary}>
                       <Text size="xs" c="dimmed">
-                        Applied to the canvas — {turn.fieldCount} field
-                        {turn.fieldCount === 1 ? '' : 's'}. Ctrl+Z to undo.
+                        {turn.intent === 'theme' ? (
+                          <>Restyled the form — fields left as they were. Ctrl+Z to undo.</>
+                        ) : (
+                          <>
+                            Applied to the canvas — {turn.fieldCount} field
+                            {turn.fieldCount === 1 ? '' : 's'}. Ctrl+Z to undo.
+                          </>
+                        )}
                       </Text>
                     </Box>
                   )}

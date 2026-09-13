@@ -159,8 +159,18 @@ export interface GeneratedForm {
   theme?: Record<string, unknown>;
 }
 
+/**
+ * Which path answered an edit.
+ *
+ * "theme" means Quantalog restyled the form without ever showing the fields to
+ * a model, so the fields in the reply are the ones that were sent. Worth
+ * passing on: it is the difference between telling someone their form was
+ * restyled and telling them five fields were rewritten when none were.
+ */
+export type GenerateIntent = "theme" | "form";
+
 export type GenerateOutcome =
-  | { ok: true; form: GeneratedForm }
+  | { ok: true; form: GeneratedForm; intent?: GenerateIntent }
   | { ok: false; status: number; error: string; code?: string };
 
 /**
@@ -211,7 +221,7 @@ export async function generateForm(
     );
 
     const body = (await res.json().catch(() => null)) as
-      | { form?: GeneratedForm; error?: string; code?: string }
+      | { form?: GeneratedForm; error?: string; code?: string; intent?: GenerateIntent }
       | null;
 
     if (!res.ok) {
@@ -225,7 +235,11 @@ export async function generateForm(
     if (!body?.form) {
       return { ok: false, status: 502, error: 'Generation returned nothing usable.' };
     }
-    return { ok: true, form: body.form };
+    return {
+      ok: true,
+      form: body.form,
+      intent: body.intent === "theme" ? "theme" : undefined,
+    };
   } catch (err) {
     console.error('[quantalog] generate failed:', err);
     return { ok: false, status: 504, error: 'The generator took too long to answer.' };

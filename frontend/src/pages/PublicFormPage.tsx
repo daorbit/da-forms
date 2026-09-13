@@ -31,11 +31,6 @@ import { PoweredBy } from '@/components/public/PoweredBy';
 import { FormPage } from '@/components/FormPage';
 import { FormLoader } from '@/components/FormLoader';
 
-/**
- * Carry what the respondent already typed into the Razorpay window, so they
- * are not asked for their name and email a second time. Best-effort: a form
- * with none of these fields simply prefills nothing.
- */
 function prefillFrom(form: Form | null, values: Record<string, string>) {
   if (!form) return {};
   const findValue = (types: string[]) => {
@@ -57,23 +52,15 @@ export function PublicFormPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
-  // Present when the respondent followed the edit link in their confirmation
-  // email. The token is the whole credential — there is no session here.
   const editToken = searchParams.get("edit");
-  // Present when they followed the "finish later" link they emailed themselves.
   const resumeToken = searchParams.get("resume");
   const [form, setForm] = useState<Form | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  /** The answers being edited, once the token has been exchanged for them. */
   const [editData, setEditData] = useState<Record<string, string> | null>(null);
-  /** Why the edit link did not work, in words meant for the respondent. */
   const [editError, setEditError] = useState<string | null>(null);
-  /** The draft row a resume link points at, so continuing writes back to it. */
   const [resumeKey, setResumeKey] = useState<string | null>(null);
-  // The order id of the last attempt, so a retry after a cancelled checkout
-  // can tell the server which pending row it supersedes.
   const lastOrderId = useRef<string | null>(null);
  
   const embedded = window.self !== window.top;
@@ -85,16 +72,12 @@ export function PublicFormPage() {
       .catch((e: Error) => setError(e.message));
   }, [id]);
 
-  // The saved draft, fetched before the form renders for the same reason an
-  // edit link's answers are: `initialValues` runs once on mount, so answers
-  // arriving later would never be shown.
+
   useEffect(() => {
     if (!id || !resumeToken) return;
     getPartialForResume(id, resumeToken)
       .then((res) => {
         setEditData(res.data);
-        // The draft's own key, so continuing writes back to the same row rather
-        // than starting a second one beside it.
         if (res.partialKey) setResumeKey(res.partialKey);
       })
       .catch(() =>
@@ -104,8 +87,6 @@ export function PublicFormPage() {
       );
   }, [id, resumeToken]);
 
-  // Exchanged for the stored answers before the form renders, so it opens on
-  // what was sent rather than flashing an empty form first.
   useEffect(() => {
     if (!id || !editToken) return;
     getSubmissionForEdit(id, editToken)
@@ -145,26 +126,15 @@ export function PublicFormPage() {
     };
   }, [id, form, submitted, error]);
 
-  // Not tracked in preview: an editor opening the share-link preview is not
-  // a respondent, and shouldn't inflate the view count analytics reads from.
+
   useEffect(() => {
     if (!id || isPreview) return;
-    // Guards against React StrictMode's double-invoke in dev, and a tab
-    // reload re-running this effect — the server also dedupes by visitor
-    // fingerprint, this just skips the redundant request client-side.
     const key = `da-forms-viewed-${id}`;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
     recordView(id).catch(() => {});
   }, [id, isPreview]);
 
-  // Coming back from PayU. The respondent left this page to pay and has landed
-  // on a fresh one, so the answers, the spinner and the thank-you screen are
-  // all gone — this is what puts them back where they were.
-  //
-  // The status in the URL is a hint about what to show first, nothing more:
-  // the respondent can edit it, so what actually decides is the server's own
-  // answer about the order, asked for below.
   useEffect(() => {
     if (!id) return;
     const hinted = searchParams.get("payuStatus");
@@ -189,8 +159,6 @@ export function PublicFormPage() {
       return;
     }
 
-    // Paid, as far as PayU told the server. The submission is only complete
-    // once the server says so, which may trail the redirect by a moment.
     setSubmitting(true);
     waitForPayment(() => getPaymentStatus(id, orderId))
       .then((confirmed) => {
@@ -210,7 +178,6 @@ export function PublicFormPage() {
       .catch(() => setSubmitting(false));
   }, [id, searchParams]);
 
-  /** Returns false when nothing was stored, so the renderer keeps the draft. */
   async function handleSubmit(
     values: Record<string, string>,
     partialKey?: string | null,
@@ -218,8 +185,7 @@ export function PublicFormPage() {
   ): Promise<boolean> {
     if (!id) return false;
 
-    // Editing replaces a response that already exists. It never creates one, so
-    // it skips quota, payment and the draft machinery entirely.
+
     if (editToken && editData) {
       setSubmitting(true);
       try {
@@ -240,9 +206,6 @@ export function PublicFormPage() {
       }
     }
 
-    // An author checking their own form is not a respondent: nothing is
-    // stored, and above all nothing is charged. Without this, previewing a
-    // paid form opens a real checkout and bills the person who built it.
     if (isPreview) {
       notifications.show({
         message: 'Preview — nothing was submitted and no payment was taken.',
@@ -256,31 +219,16 @@ export function PublicFormPage() {
     try {
       const result = await submitForm(id, {
         ...values,
-        // Names the attempt this one replaces, so a cancelled checkout does
-        // not leave a pending row behind on every retry.
         ...(lastOrderId.current ? { _retryOrderId: lastOrderId.current } : {}),
-        // Names this visit's autosaved row, so the server promotes it instead
-        // of storing the finished answers beside the abandoned half. A resumed
-        // draft's own key wins: this visit's autosave started a new row, but
-        // the one worth promoting is the draft they came back to.
         ...(resumeKey || partialKey
           ? { _partialKey: resumeKey ?? partialKey! }
           : {}),
-        // Collected beside the pay button when the gateway needs one and the
-        // form has no field that holds it. Not an answer — the server strips
-        // it before storing the response.
         ...(payerPhone ? { _payerPhone: payerPhone } : {}),
       });
 
-      // A paid form stores the response but withholds it until Razorpay
-      // confirms. Nothing is a submission yet, so nothing below runs until
-      // the payment actually lands.
+
       if (isPaymentRequired(result)) {
         lastOrderId.current = result.orderId;
-        // PayU's Bolt modal still redirects to its success URL after the
-        // payment lands, taking this page's state with it. Noted first so the
-        // tab knows which payment to pick back up if the respondent returns
-        // before the in-page confirmation ran.
         if (result.provider === "payu" || providerRedirectsAway(result.provider)) {
           rememberPayuPayment({ formId: id, orderId: result.orderId, startedAt: Date.now() });
         }
@@ -291,14 +239,8 @@ export function PublicFormPage() {
             message: outcome.reason ?? "Payment was not completed.",
             color: "red",
           });
-          // Their answers stay put — cancelling a payment should not cost
-          // someone the form they just filled in.
           return false;
         }
-
-        // Checkout succeeding is the bank's word, not the server's. The
-        // webhook is what completes the submission, so wait for it before
-        // telling the respondent they are done.
         const confirmed = await waitForPayment(() =>
           getPaymentStatus(id, result.orderId),
         );
@@ -311,16 +253,11 @@ export function PublicFormPage() {
             color: "yellow",
             autoClose: false,
           });
-          // Paid but unconfirmed: the draft goes, because submitting again
-          // would charge them a second time.
           return true;
         }
       }
     } catch (e) {
       setSubmitting(false);
-      // The gateway wants a phone number and this page did not know to ask —
-      // the form's provider changed after it loaded. Refetching turns the box
-      // on, so the retry has somewhere to put it.
       if (e instanceof ApiError && e.code === "phone_required") {
         getPublicForm(id).then(setForm);
         notifications.show({ message: e.message, color: "orange" });
@@ -337,8 +274,7 @@ export function PublicFormPage() {
         notifications.show({ message: e.message, color: "red" });
         return false;
       }
-      // The form was unpublished after this page loaded — refetch so the
-      // "not accepting responses" screen takes over instead of a dead end.
+
       getPublicForm(id).then(setForm);
       return false;
     }
@@ -351,9 +287,6 @@ export function PublicFormPage() {
     return true;
   }
 
-  // Same standalone/embedded split as the status screens below: a spinner
-  // pinned to the middle of its own tab, but only as tall as it needs to be
-  // inside someone's page.
   if (error)
     return (
       <Center mih="100dvh" py={0}>
@@ -361,29 +294,15 @@ export function PublicFormPage() {
       </Center>
     );
 
-  // The form's own theme is not known until it arrives, so the loader uses its
-  // own accent here and picks up the form's once there is one.
-  //
-  // An edit link waits for its answers too: `initialValues` runs once when the
-  // renderer mounts, so a form that appeared before they arrived would stay
-  // empty no matter what came back.
   if (!form || ((editToken || resumeToken) && !editData && !editError))
     return (
       <FormPage>
-        {/* Centred in the viewport rather than sitting where the form's first
-            field would be: there is no card yet to anchor it to the top, and
-            a spinner parked under the page's top padding reads as misplaced.
-            Fills the frame whether standalone or embedded, so the spinner is
-            always vertically centred. */}
         <Center mih="100dvh">
           <FormLoader />
         </Center>
       </FormPage>
     );
 
-  // A dead edit link is shown in place of the form: someone who followed one
-  // has already submitted, and dropping them into a blank form would invite a
-  // duplicate response instead of the change they came to make.
   if (editError)
     return (
       <Center
@@ -415,10 +334,6 @@ export function PublicFormPage() {
       </Center>
     );
 
-  // The server decides this, not the page: `availability` is computed from the
-  // schedule and the response count, and the same function refuses the submit.
-  // An edit link is exempt — a form that has closed for new responses has not
-  // withdrawn the answers someone already sent.
   const closed = form.availability && !form.availability.open;
   if (closed && !isPreview && !editToken)
     return (
@@ -455,8 +370,6 @@ export function PublicFormPage() {
                   : "This form isn't accepting responses yet"}
           </Text>
           <Text size="sm" c="dimmed" mt="md">
-            {/* The owner's own wording when they wrote one; the server has
-                already resolved which message applies. */}
             {form.availability?.message ??
               "The owner hasn't published it. Check back later or contact whoever shared this link."}
           </Text>
@@ -468,8 +381,7 @@ export function PublicFormPage() {
 
     const accent = form?.theme?.accentColor;
     return (
-      // Respondents see the form's own colours, never a host app's theme — the
-      // share link and the embed are public pages, not part of anyone's dashboard.
+
       <Center
         mih="100dvh"
         py={64}
@@ -514,8 +426,7 @@ export function PublicFormPage() {
               You can safely close this page now.
             </Text>
           </Stack>
-          {/* Not offered after an edit: this person already has a response on
-              file, and the button would invite them to file a second one. */}
+
           {!editToken && (
             <Button
               color={accent ? undefined : "emerald"}
@@ -534,7 +445,10 @@ export function PublicFormPage() {
   }
 
   return (
-    <FormPage theme={form.theme}>
+    <FormPage
+      theme={form.theme}
+      footer={<PoweredBy branding={form.branding} theme={form.theme} />}
+    >
       <FormRenderer
         formId={id}
         title={form.title}
@@ -560,7 +474,6 @@ export function PublicFormPage() {
         needsPayerPhone={form.needsPayerPhone}
         onSubmit={handleSubmit}
       />
-      <PoweredBy branding={form.branding} />
     </FormPage>
   );
 }

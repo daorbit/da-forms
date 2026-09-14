@@ -8,11 +8,7 @@ import { DEFAULT_WORKSPACE } from '@/lib/api';
 import { isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 
-/**
- * Creating a form is the one editor entry point the demo workspace has no
- * answer for — there is nowhere to save it, so the URL sends the visitor back
- * to the sample list rather than into an editor that cannot finish.
- */
+ 
 function NewFormRoute() {
   const workspaceId = useWorkspaceId();
   if (isDemoWorkspace(workspaceId)) return <Navigate to={`/${workspaceId}/forms`} replace />;
@@ -23,7 +19,6 @@ function NewFormRoute() {
   );
 }
 
-/** Sample forms collect nothing, so their entries screen has no data to show. */
 function EntriesRoute() {
   const workspaceId = useWorkspaceId();
   if (isDemoWorkspace(workspaceId)) return <Navigate to={`/${workspaceId}/forms`} replace />;
@@ -48,16 +43,7 @@ export function App() {
           }
         />
         <Route path="/:workspaceId/forms/:id/entries" element={<EntriesRoute />} />
-
-        {/* The public share link: form id only, no workspace. */}
         <Route path="/form/:id/view" element={<PublicFormPage />} />
-        {/*
-          The original spelling, kept working forever. Links already live in
-          QR codes, printed material and other people's pages — none of which
-          can be reissued — so this stays served rather than redirected: a
-          redirect would still break anything that captured the response
-          directly, and costs a round trip for no gain.
-        */}
         <Route path="/from/:id/view" element={<PublicFormPage />} />
       </Routes>
     </BrowserRouter>

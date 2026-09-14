@@ -14,10 +14,7 @@ const RADIUS: Record<RadiusStyle, number> = {
   sharp: 2,
 };
 
-/**
- * A ten-step ramp around one mid-tone, so a host app can pass its own accent
- * as a single hex rather than a whole palette.
- */
+
 function rampFrom(hex: string, colorScheme: MantineColorScheme): MantineColorsTuple {
   const value = hex.replace('#', '');
   const r = parseInt(value.slice(0, 2), 16);
@@ -52,14 +49,7 @@ export interface ThemeParams {
   theme: ReturnType<typeof createTheme>;
 }
 
-/**
- * Reads the theme a host app passes on the URL.
- *
- * Every parameter is optional: with none of them the management UI uses its
- * dark theme, while public forms and previews keep their own light surface.
- *
- *   ?mode=dark&accent=%237c3aed&radius=soft&density=compact
- */
+
 export function themeFromParams(search: string): ThemeParams {
   const params = new URLSearchParams(search);
 
@@ -74,9 +64,7 @@ export function themeFromParams(search: string): ThemeParams {
   const overrides: Parameters<typeof createTheme>[0] = {};
 
   if (accent && /^#?[0-9a-fA-F]{6}$/.test(accent)) {
-    // Spread the base palette back in: `colors` is replaced wholesale, not
-    // merged key by key, so naming only `emerald` here would drop the custom
-    // `dark` ramp and drop every surface back to Mantine's stock greys.
+
     overrides.colors = { ...baseTheme.colors, emerald: rampFrom(accent, colorScheme) };
 
  
@@ -84,10 +72,13 @@ export function themeFromParams(search: string): ThemeParams {
     const r = parseInt(hex.slice(0, 2), 16);
     const g = parseInt(hex.slice(2, 4), 16);
     const b = parseInt(hex.slice(4, 6), 16);
+
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    if (luminance > 0.6) {
-      overrides.white = '#0a0b0d';
-    }
+    overrides.primaryColor = 'emerald';
+    overrides.other = {
+      ...(baseTheme.other ?? {}),
+      accentContrast: luminance > 0.6 ? '#0a0b0d' : '#ffffff',
+    };
   }
 
   if (radius && radius in RADIUS) {
@@ -100,11 +91,6 @@ export function themeFromParams(search: string): ThemeParams {
 
   return {
     colorScheme,
-    // `createTheme({ ...baseTheme, ...overrides })` looked equivalent and was
-    // not: spreading an already-created theme back through `createTheme` lost
-    // the custom `colors`, so every surface in the app silently fell back to
-    // Mantine's stock dark palette (dark-6 #2e2e2e rather than this app's
-    // #16181b). This merges the two overrides properly instead.
     theme: mergeThemeOverrides(baseTheme, overrides),
   };
 }

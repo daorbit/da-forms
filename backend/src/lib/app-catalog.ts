@@ -56,12 +56,16 @@ export const APP_CATALOG: AppDescriptor[] = [
     fields: [
       {
         key: 'loginEmail',
-        label: 'Brevo login email',
-        type: 'email',
+        label: 'SMTP login',
+        // Deliberately `text`, not `email`. Brevo shows some accounts their own
+        // account address here and others a generated `xxxxxxx@smtp-brevo.com`
+        // identifier; both are addresses, but the field must accept whatever
+        // the SMTP tab shows rather than imply the sign-in address is correct.
+        type: 'text',
         secret: false,
         required: true,
-        placeholder: 'you@company.com',
-        help: 'The address you sign in to Brevo with — it is the SMTP username.',
+        placeholder: '8a1b2c001@smtp-brevo.com',
+        help: 'Copy the Login shown on Brevo\'s SMTP & API page, SMTP tab. It is often your account address, but some accounts get a generated smtp-brevo.com login instead — use whatever that page shows.',
       },
       {
         key: 'smtpKey',
@@ -70,7 +74,7 @@ export const APP_CATALOG: AppDescriptor[] = [
         secret: true,
         required: true,
         placeholder: 'xsmtpsib-…',
-        help: 'In Brevo, open SMTP & API, then the SMTP tab, and generate a new SMTP key. Not a REST API key.',
+        help: 'On the same SMTP tab, copy or generate an SMTP key. Not a REST API key (xkeysib-…) — that pair fails with "535 5.7.8 Authentication failed".',
       },
       ...FROM_FIELDS,
     ],

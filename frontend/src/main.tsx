@@ -43,6 +43,18 @@ Object.entries(managementTokens).forEach(([name, value]) => {
   document.documentElement.style.setProperty(name, value, 'important');
 });
 
+// Text drawn on top of the accent itself. A host app can pass a near-white
+// accent, which needs dark text — but only here, never on the other filled
+// colours (see `themeFromParams`).
+const accentContrast = (theme.other as { accentContrast?: string } | undefined)?.accentContrast;
+if (accentContrast) {
+  document.documentElement.style.setProperty(
+    '--mantine-primary-color-contrast',
+    accentContrast,
+    'important'
+  );
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <MantineProvider theme={theme} defaultColorScheme={colorScheme} forceColorScheme={colorScheme === 'auto' ? undefined : colorScheme}>

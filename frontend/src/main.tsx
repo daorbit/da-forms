@@ -43,15 +43,30 @@ Object.entries(managementTokens).forEach(([name, value]) => {
   document.documentElement.style.setProperty(name, value, 'important');
 });
 
-// The Switch thumb is a white shape on an accent-coloured track, not a label,
-// so `autoContrast` never touches it — a pale accent leaves it invisible.
-// Scoped to the checked state on purpose: an unchecked thumb sits on a dark
-// track and must stay white, so this cannot be a plain `--switch-thumb-bg`.
+// Ink for anything painted with the accent itself.
+//
+// `autoContrast` resolves a filled label to `var(--mantine-color-black)` on a
+// light accent, but the dark colour scheme never emits that variable, so the
+// label resolved to nothing and vanished. Defining it is what makes
+// `autoContrast` work at all here.
+//
+// It only covers *text*, though. Components that paint a shape — the Switch
+// thumb, the Checkbox tick, the Radio dot — hardcode `--mantine-color-white`
+// and need the contrast colour applied directly.
 if (accentContrast) {
+  document.documentElement.style.setProperty('--mantine-color-black', accentContrast, 'important');
+
   const style = document.createElement('style');
-  style.textContent =
-    `.mantine-Switch-input:checked + * > .mantine-Switch-thumb` +
-    `{background-color:${accentContrast};}`;
+  style.textContent = [
+    // Switch thumb: checked only. An unchecked thumb sits on a dark track and
+    // must stay white, so this cannot be a blanket `--switch-thumb-bg`.
+    `.mantine-Switch-input:checked + * > .mantine-Switch-thumb{background-color:${accentContrast};}`,
+    // Checkbox tick and Radio dot, drawn on an accent-filled box. These read
+    // their own vars, so setting those beats fighting icon specificity — and
+    // only in the checked state, where the box is actually accent-filled.
+    `.mantine-Checkbox-input:checked{--checkbox-icon-color:${accentContrast};}`,
+    `.mantine-Radio-radio:checked{--radio-icon-color:${accentContrast};}`,
+  ].join('');
   document.head.appendChild(style);
 }
 

@@ -14,7 +14,7 @@ import '@/styles/global.css';
 
 // Read once at boot: a host app sets the theme when it opens the iframe, and
 // changing it means loading a new URL anyway.
-const { theme, colorScheme } = themeFromParams(BOOT_SEARCH);
+const { theme, colorScheme, accentContrast } = themeFromParams(BOOT_SEARCH);
 
 const dark = colorScheme === 'dark' ||
   (colorScheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -43,16 +43,16 @@ Object.entries(managementTokens).forEach(([name, value]) => {
   document.documentElement.style.setProperty(name, value, 'important');
 });
 
-// Text drawn on top of the accent itself. A host app can pass a near-white
-// accent, which needs dark text — but only here, never on the other filled
-// colours (see `themeFromParams`).
-const accentContrast = (theme.other as { accentContrast?: string } | undefined)?.accentContrast;
+// The Switch thumb is a white shape on an accent-coloured track, not a label,
+// so `autoContrast` never touches it — a pale accent leaves it invisible.
+// Scoped to the checked state on purpose: an unchecked thumb sits on a dark
+// track and must stay white, so this cannot be a plain `--switch-thumb-bg`.
 if (accentContrast) {
-  document.documentElement.style.setProperty(
-    '--mantine-primary-color-contrast',
-    accentContrast,
-    'important'
-  );
+  const style = document.createElement('style');
+  style.textContent =
+    `.mantine-Switch-input:checked + * > .mantine-Switch-thumb` +
+    `{background-color:${accentContrast};}`;
+  document.head.appendChild(style);
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

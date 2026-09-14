@@ -47,6 +47,22 @@ function rampFrom(hex: string, colorScheme: MantineColorScheme): MantineColorsTu
 export interface ThemeParams {
   colorScheme: MantineColorScheme;
   theme: ReturnType<typeof createTheme>;
+  /**
+   * Readable ink for surfaces painted with the accent itself, or null when the
+   * host passed no accent. `autoContrast` covers filled *text*, but components
+   * that paint a shape rather than a label — the Switch thumb, which is
+   * `--mantine-color-white` on an accent track — need the value directly.
+   */
+  accentContrast: string | null;
+}
+
+/** Perceived brightness of a `#rrggbb` accent, 0–1. */
+function accentLuminance(hex: string): number {
+  const value = hex.replace('#', '');
+  const r = parseInt(value.slice(0, 2), 16);
+  const g = parseInt(value.slice(2, 4), 16);
+  const b = parseInt(value.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
 
@@ -62,23 +78,24 @@ export function themeFromParams(search: string): ThemeParams {
   const density = params.get('density');
 
   const overrides: Parameters<typeof createTheme>[0] = {};
+  const LUMINANCE_THRESHOLD = 0.6;
+  let accentContrast: string | null = null;
 
   if (accent && /^#?[0-9a-fA-F]{6}$/.test(accent)) {
 
     overrides.colors = { ...baseTheme.colors, emerald: rampFrom(accent, colorScheme) };
 
- 
-    const hex = accent.replace('#', '');
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
+    // A pale accent needs dark text on top of it. `theme.white` is the wrong
+    // knob — Mantine also draws text on every OTHER filled colour with it, so
+    // flipping it globally painted red/teal notification titles near-black on
+    // a dark card. `autoContrast` picks the readable label per colour instead,
+    // so a pale accent gets dark text while a red button keeps white.
+    overrides.autoContrast = true;
+    overrides.luminanceThreshold = LUMINANCE_THRESHOLD;
 
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    overrides.primaryColor = 'emerald';
-    overrides.other = {
-      ...(baseTheme.other ?? {}),
-      accentContrast: luminance > 0.6 ? '#0a0b0d' : '#ffffff',
-    };
+    // Same decision, exposed for the shapes `autoContrast` does not reach.
+    accentContrast =
+      accentLuminance(accent) > LUMINANCE_THRESHOLD ? '#0a0b0d' : '#ffffff';
   }
 
   if (radius && radius in RADIUS) {
@@ -92,5 +109,6 @@ export function themeFromParams(search: string): ThemeParams {
   return {
     colorScheme,
     theme: mergeThemeOverrides(baseTheme, overrides),
+    accentContrast,
   };
 }

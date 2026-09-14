@@ -87,6 +87,38 @@ export const theme = createTheme({
     },
  
  
+    /*
+     * Toasts, in whichever scheme is showing.
+     *
+     * Mantine derives the notification surface from the `dark` palette, which
+     * this theme replaces with its own near-black scale — so in light mode the
+     * toast painted white while its text still resolved against that scale and
+     * came out invisible. Stating both ends of the pair fixes it in both
+     * schemes, and the close button has to be told separately because it does
+     * not inherit from the body.
+     */
+    Notification: {
+      styles: {
+        root: {
+          backgroundColor: 'light-dark(var(--mantine-color-white), var(--mantine-color-dark-6))',
+          borderColor: 'var(--mantine-color-default-border)',
+        },
+        title: { color: 'light-dark(var(--mantine-color-black), var(--mantine-color-white))' },
+        // Most toasts here are a bare `message` with no title, and that renders
+        // into `description` — so this is the primary text more often than not
+        // and cannot be dimmed.
+        description: {
+          color: 'light-dark(var(--mantine-color-black), var(--mantine-color-white))',
+        },
+        closeButton: {
+          color: 'var(--mantine-color-dimmed)',
+          '&:hover': {
+            backgroundColor: 'var(--mantine-color-default-hover)',
+          },
+        },
+      },
+    },
+
     Alert: {
       styles: { message: { color: 'var(--mantine-color-text)' } },
     },

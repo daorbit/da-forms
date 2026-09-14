@@ -491,11 +491,34 @@ export function CreateFormPage() {
             color="gray"
             radius="xl"
             leftSection={<IconArrowLeft size={16} />}
-            // Inside one of the panes, Back is a step within this screen and
-            // returns to the prompt; from the prompt itself there is nowhere
-            // left to go but the list.
-            onClick={mode === 'hero' ? backToList : () => setMode('hero')}
-            disabled={creating || importing}
+            /*
+             * Back is a step within this screen wherever there is one to take.
+             *
+             * The workspace is not a `mode` — it is whatever `turns` says — so
+             * checking the mode alone left Back exiting to the list from the
+             * one screen people most want to step back from.
+             */
+            onClick={() => {
+              if (mode !== 'hero') {
+                setMode('hero');
+                return;
+              }
+              if (turns.length > 0) {
+                // Throwing away a generated form on a stray Back click would
+                // cost an AI question and give nothing back, so it is worth
+                // asking first.
+                const ok = window.confirm(
+                  'Start over? The form Orbit drafted will be discarded.'
+                );
+                if (!ok) return;
+                setTurns([]);
+                setReady(false);
+                setPrompt('');
+                return;
+              }
+              backToList();
+            }}
+            disabled={creating || importing || generating}
           >
             Back
           </Button>

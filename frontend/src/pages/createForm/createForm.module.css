@@ -372,198 +372,151 @@
 /* ------------------------------------------------------------ drafting -- */
 
 /*
- * A single centred column: the card being written, then one line saying what
- * is happening, then the ask.
+ * The wait, as a wireframe of what is coming.
  *
- * The previous version put the card beside a checklist with the mark floating
- * over the seam — which left the mark clipping the card's edge like a stray
- * spinner, and a third of the screen empty. One column is both calmer and
- * easier to keep centred.
+ * Everything is on screen from the first frame. Nothing assembles, spins or
+ * travels — the only motion is a slow shimmer across the bars, because the
+ * shape of the form is the message and anything on top of it was noise.
  */
 .drafting {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 22px;
-  animation: riseIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  gap: 20px;
+  animation: riseIn 360ms ease both;
 }
 
-.draftCard {
-  width: 400px;
+.wire {
+  width: 420px;
   max-width: 100%;
-  padding: 26px 26px 22px;
-  border-radius: 16px;
+  padding: 28px;
+  border-radius: 14px;
   border: 1px solid var(--mantine-color-default-border);
-  background: color-mix(in srgb, var(--mantine-color-body) 72%, transparent);
-  backdrop-filter: blur(16px);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent),
-    0 22px 56px rgba(0, 0, 0, 0.14);
+  background: color-mix(in srgb, var(--mantine-color-body) 75%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 14px 36px rgba(16, 24, 40, 0.08);
 }
 
-.draftCardHead {
+:global([data-mantine-color-scheme='dark']) .wire {
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+}
+
+.wireHead {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 9px;
-  padding-bottom: 20px;
-  margin-bottom: 18px;
+  padding-bottom: 22px;
+  margin-bottom: 20px;
   border-bottom: 1px solid var(--mantine-color-default-border);
 }
 
-.draftTitle {
-  width: 46%;
-  height: 13px;
+.wireTitle {
+  width: 44%;
+  height: 12px;
 }
 
-.draftSub {
-  width: 72%;
+.wireSub {
+  width: 70%;
   height: 7px;
 }
 
-/*
- * The rows, laid out the way a form is.
- *
- * Wrapping, so the two half-width rows sit side by side as a real name field
- * would — a single column of full-width bars is what made the old skeleton read
- * as a loading state rather than as a form.
- */
-.draftRows {
+/* Wrapping, so the two half rows sit side by side the way a name field does. */
+.wireRows {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 12px;
+  gap: 16px 12px;
 }
 
-.draftRow {
+.wireRow {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  /* Boxed so the percentage widths in the markup include their own padding and
-     the two half rows actually fit on one line. */
+  gap: 8px;
+  width: 100%;
   box-sizing: border-box;
-  animation: rowIn 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Two of these share a line, minus the column gap between them. */
-.draftRowHalf {
+.wireRowHalf {
   width: calc(50% - 6px);
 }
 
-.draftRowFull {
-  width: 100%;
-}
-
-@keyframes rowIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.draftLabel {
-  width: 55%;
+.wireLabel {
+  width: 52%;
   height: 7px;
 }
 
-.draftInput {
+.wireInput {
   width: 100%;
-  height: 32px;
+  height: 34px;
   border-radius: 7px;
 }
 
-.draftInputTall {
-  height: 62px;
+.wireInputTall {
+  height: 66px;
 }
 
-.draftButton {
+.wireButton {
   display: block;
   width: 100%;
-  height: 36px;
-  margin-top: 20px;
+  height: 38px;
+  margin-top: 24px;
   border-radius: 8px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--mantine-color-emerald-5) 20%, transparent) 0%,
-    color-mix(in srgb, var(--mantine-color-emerald-5) 36%, transparent) 50%,
-    color-mix(in srgb, var(--mantine-color-emerald-5) 20%, transparent) 100%
-  );
-  background-size: 220% 100%;
 }
 
 /*
- * One line of status, with the mark beside it.
+ * One shimmer, shared.
  *
- * A mark that simply sits there rather than spinning: the card above is already
- * showing that work is happening, and a second moving thing next to it was two
- * animations competing to say the same thing.
+ * A sweep across a flat base rather than a fade of the whole bar: the moving
+ * highlight reads as work in progress, where a pulse reads as waiting. Every
+ * bar runs the same animation on the same clock, so the sweep crosses the card
+ * as one band instead of each bar blinking on its own.
  */
-.draftingStatus {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 8px 16px 8px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--mantine-color-default-border);
-  background: color-mix(in srgb, var(--mantine-color-body) 72%, transparent);
-  backdrop-filter: blur(10px);
+/*
+ * The two tones are set as plain values per scheme rather than through
+ * `light-dark()` in a custom property: a custom property holding `light-dark()`
+ * is substituted as text before the function is evaluated, so the gradient ends
+ * up with something it cannot parse and the bar paints nothing at all.
+ */
+.wireBar {
+  --wire-base: rgba(16, 24, 40, 0.08);
+  --wire-peak: rgba(16, 24, 40, 0.15);
+
+  display: block;
+  border-radius: 5px;
+  background: linear-gradient(
+    90deg,
+    var(--wire-base) 0%,
+    var(--wire-peak) 50%,
+    var(--wire-base) 100%
+  );
+  background-size: 200% 100%;
+  animation: wireSweep 1.6s ease-in-out infinite;
 }
 
-.draftingMark {
-  display: flex;
-  border-radius: 7px;
-  overflow: hidden;
+:global([data-mantine-color-scheme='dark']) .wireBar {
+  --wire-base: rgba(255, 255, 255, 0.06);
+  --wire-peak: rgba(255, 255, 255, 0.12);
 }
 
-/* Keyed on the stage in the markup, so each new label cross-fades in rather
-   than the text swapping in place. */
-.stageLabel {
-  animation: stageIn 320ms ease both;
-}
-
-@keyframes stageIn {
+@keyframes wireSweep {
   from {
-    opacity: 0;
-    transform: translateY(4px);
+    background-position: 150% 0;
   }
   to {
-    opacity: 1;
-    transform: none;
+    background-position: -50% 0;
   }
 }
 
-/* A row of dots instead of a checklist: the stage names are narration, and
-   five of them listed out invited reading progress that is not being measured. */
-.stageDots {
+.wireStatus {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 5px;
-  margin-left: 3px;
+  text-align: center;
 }
 
-.stageDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--mantine-color-default-border);
-  transition: background 300ms ease, transform 300ms ease;
-}
-
-.stageDotDone {
-  background: color-mix(in srgb, var(--mantine-color-emerald-5) 55%, transparent);
-}
-
-.stageDotCurrent {
-  background: var(--mantine-color-emerald-5);
-  transform: scale(1.35);
-}
-
-.draftingPrompt {
+.wirePrompt {
   max-width: 420px;
-  font-style: italic;
   line-height: 1.5;
 }
 
@@ -655,7 +608,10 @@
   border-color: color-mix(in srgb, var(--mantine-color-emerald-5) 60%, transparent);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent),
-    0 14px 32px rgba(0, 0, 0, 0.28),
+    /* Shadows have to be far lighter on a white page: an opacity pitched to
+       read against near-black turns into a smudge under the card in light
+       mode. */
+    light-dark(0 10px 24px rgba(16, 24, 40, 0.1), 0 14px 32px rgba(0, 0, 0, 0.28)),
     0 0 0 1px color-mix(in srgb, var(--mantine-color-emerald-5) 18%, transparent);
 }
 
@@ -1293,12 +1249,10 @@
     animation: none;
   }
 
-  /* The stage label still changes, it just stops sliding in. */
-  .stageLabel,
-  .draftRow {
+  /* The wireframe stays, it just stops shimmering — the stage line underneath
+     still advances, so there is no doubt work is happening. */
+  .wireBar {
     animation: none;
-    opacity: 1;
-    transform: none;
   }
 
   .rise,

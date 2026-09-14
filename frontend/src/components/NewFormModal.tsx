@@ -351,7 +351,6 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
               placeholder="Client Details"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              data-autofocus
               required
             />
 

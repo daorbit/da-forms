@@ -35,6 +35,14 @@ interface Options {
 export function useFieldReveal({ total, enabled }: Options) {
   const [shown, setShown] = useState(enabled ? 0 : total);
   const timers = useRef<number[]>([]);
+  /**
+   * Whether the staggered deal has already been played once.
+   *
+   * A ref rather than state: it must be readable inside the effect without
+   * putting the effect back in the dependency list, and changing it should not
+   * itself cause a render.
+   */
+  const played = useRef(false);
 
   useEffect(() => {
     // Clear whatever the previous run scheduled. Without this, a second
@@ -43,7 +51,15 @@ export function useFieldReveal({ total, enabled }: Options) {
     timers.current.forEach(clearTimeout);
     timers.current = [];
 
-    if (!enabled || total === 0) {
+    /*
+     * Every field at once, with no pass through zero.
+     *
+     * The reset to zero is what made revisions flicker: `total` changes when a
+     * revised form arrives, so the effect re-ran, `shown` dropped to 0, `done`
+     * went false, and anything gated on it — the ready bar — unmounted and
+     * animated back in while the page height jumped around it.
+     */
+    if (!enabled || played.current || total === 0) {
       setShown(total);
       return;
     }
@@ -57,6 +73,7 @@ export function useFieldReveal({ total, enabled }: Options) {
       return;
     }
 
+    played.current = true;
     setShown(0);
     for (let i = 1; i <= total; i++) {
       const id = window.setTimeout(() => setShown(i), LEAD_MS + i * STEP_MS);

@@ -253,6 +253,320 @@
   background: color-mix(in srgb, var(--mantine-color-emerald-5) 10%, var(--mantine-color-body));
 }
 
+/*
+ * A shared entrance.
+ *
+ * Every block that should arrive after the one above it carries this plus an
+ * inline delay — the delay is positional rather than stylistic, so a class per
+ * index would be several rules all saying the same thing.
+ */
+.rise {
+  animation: riseIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The two panes of the workspace slide in from their own side, so opening it
+   reads as the screen splitting rather than as two boxes fading up. */
+.paneEnterLeft {
+  animation: slideInLeft 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.paneEnterRight {
+  animation: slideInRight 460ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------- building the preview -- */
+
+/*
+ * A stand-in for the field currently being written.
+ *
+ * The reveal deals fields in one at a time, and between two of them nothing
+ * moves — the form grows in silent steps. This sits at the end of whatever has
+ * arrived so there is always something at the growing edge, and disappears once
+ * the last field lands.
+ *
+ * Positioned to line up with the form's own column: `FormRenderer` owns its
+ * markup, so rather than reaching into it, this matches the container's width
+ * and centres itself the same way.
+ */
+.ghostField {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  max-width: var(--mantine-breakpoint-sm, 540px);
+  margin: 0 auto;
+  padding: 4px 16px 0;
+  box-sizing: border-box;
+  animation: ghostIn 260ms ease both;
+}
+
+@keyframes ghostIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ghostBar {
+  display: block;
+  border-radius: 6px;
+  /* A sweep across a flat base, rather than a fade of the whole bar: the moving
+     highlight is what reads as work happening, where a pulse reads as waiting. */
+  background: linear-gradient(
+    90deg,
+    rgba(120, 130, 150, 0.13) 0%,
+    rgba(120, 130, 150, 0.26) 50%,
+    rgba(120, 130, 150, 0.13) 100%
+  );
+  background-size: 220% 100%;
+  animation: ghostSweep 1.25s ease-in-out infinite;
+}
+
+.ghostLabel {
+  width: 38%;
+  height: 9px;
+}
+
+.ghostInput {
+  width: 100%;
+  height: 34px;
+  border-radius: 8px;
+  animation-delay: 0.12s;
+}
+
+@keyframes ghostSweep {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -30% 0;
+  }
+}
+
+/* ------------------------------------------------------------ drafting -- */
+
+/*
+ * A single centred column: the card being written, then one line saying what
+ * is happening, then the ask.
+ *
+ * The previous version put the card beside a checklist with the mark floating
+ * over the seam — which left the mark clipping the card's edge like a stray
+ * spinner, and a third of the screen empty. One column is both calmer and
+ * easier to keep centred.
+ */
+.drafting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  animation: riseIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.draftCard {
+  width: 400px;
+  max-width: 100%;
+  padding: 26px 26px 22px;
+  border-radius: 16px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: color-mix(in srgb, var(--mantine-color-body) 72%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent),
+    0 22px 56px rgba(0, 0, 0, 0.14);
+}
+
+.draftCardHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding-bottom: 20px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.draftTitle {
+  width: 46%;
+  height: 13px;
+}
+
+.draftSub {
+  width: 72%;
+  height: 7px;
+}
+
+/*
+ * The rows, laid out the way a form is.
+ *
+ * Wrapping, so the two half-width rows sit side by side as a real name field
+ * would — a single column of full-width bars is what made the old skeleton read
+ * as a loading state rather than as a form.
+ */
+.draftRows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 12px;
+}
+
+.draftRow {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  /* Boxed so the percentage widths in the markup include their own padding and
+     the two half rows actually fit on one line. */
+  box-sizing: border-box;
+  animation: rowIn 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Two of these share a line, minus the column gap between them. */
+.draftRowHalf {
+  width: calc(50% - 6px);
+}
+
+.draftRowFull {
+  width: 100%;
+}
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.draftLabel {
+  width: 55%;
+  height: 7px;
+}
+
+.draftInput {
+  width: 100%;
+  height: 32px;
+  border-radius: 7px;
+}
+
+.draftInputTall {
+  height: 62px;
+}
+
+.draftButton {
+  display: block;
+  width: 100%;
+  height: 36px;
+  margin-top: 20px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mantine-color-emerald-5) 20%, transparent) 0%,
+    color-mix(in srgb, var(--mantine-color-emerald-5) 36%, transparent) 50%,
+    color-mix(in srgb, var(--mantine-color-emerald-5) 20%, transparent) 100%
+  );
+  background-size: 220% 100%;
+}
+
+/*
+ * One line of status, with the mark beside it.
+ *
+ * A mark that simply sits there rather than spinning: the card above is already
+ * showing that work is happening, and a second moving thing next to it was two
+ * animations competing to say the same thing.
+ */
+.draftingStatus {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 16px 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: color-mix(in srgb, var(--mantine-color-body) 72%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.draftingMark {
+  display: flex;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+/* Keyed on the stage in the markup, so each new label cross-fades in rather
+   than the text swapping in place. */
+.stageLabel {
+  animation: stageIn 320ms ease both;
+}
+
+@keyframes stageIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A row of dots instead of a checklist: the stage names are narration, and
+   five of them listed out invited reading progress that is not being measured. */
+.stageDots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 3px;
+}
+
+.stageDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--mantine-color-default-border);
+  transition: background 300ms ease, transform 300ms ease;
+}
+
+.stageDotDone {
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 55%, transparent);
+}
+
+.stageDotCurrent {
+  background: var(--mantine-color-emerald-5);
+  transform: scale(1.35);
+}
+
+.draftingPrompt {
+  max-width: 420px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
 /* ---------------------------------------------------------------- deck --- */
 
 .deck {
@@ -275,11 +589,13 @@
 }
 
 .deckGrid {
-  max-width: 940px;
+  /* Narrower than before: at 940 the three cards were larger than the prompt
+     they are an alternative to. */
+  max-width: 860px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 @media (max-width: 900px) {
@@ -478,23 +794,92 @@
   min-height: 0;
 }
 
-/* What was asked, in the person's own words. Aligned right and tinted, so a
+/* A running count, pushed to the end of the header. */
+.turnCount {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mantine-color-default) 60%, transparent);
+}
+
+/* Each exchange enters as a unit when it is added. */
+.turn {
+  animation: turnIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes turnIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.askRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* What was asked, in the person's own words. Tinted and aligned right, so a
    long conversation still reads as a conversation at a glance. */
 .askBubble {
-  align-self: flex-end;
-  max-width: 88%;
+  max-width: 86%;
   padding: 8px 12px;
-  border-radius: 12px 12px 4px 12px;
-  background: color-mix(in srgb, var(--mantine-color-emerald-5) 16%, var(--mantine-color-body));
-  border: 1px solid color-mix(in srgb, var(--mantine-color-emerald-5) 26%, transparent);
+  border-radius: 13px 13px 4px 13px;
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mantine-color-emerald-5) 24%, transparent);
+}
+
+/*
+ * Orbit's side of the exchange: a mark in the gutter and the reply beside it.
+ *
+ * The mark is what makes the panel read as a conversation rather than as a
+ * list — without it the ask and the answer are two boxes with nothing saying
+ * who wrote either.
+ */
+.replyRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.replyMark {
+  flex: none;
+  display: flex;
+  margin-top: 2px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.pendingBubble {
+  padding: 7px 11px;
+  border-radius: 13px 13px 13px 4px;
+  border: 1px solid color-mix(in srgb, var(--mantine-color-emerald-5) 22%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 8%, transparent);
 }
 
 /* What came back: the shape of the form, rather than a sentence about it. */
 .fieldSummary {
-  padding: 10px 12px;
-  border-radius: 12px 12px 12px 4px;
+  flex: 1;
+  min-width: 0;
+  border-radius: 13px 13px 13px 4px;
   border: 1px solid var(--mantine-color-default-border);
-  background: color-mix(in srgb, var(--mantine-color-default) 40%, var(--mantine-color-body));
+  background: color-mix(in srgb, var(--mantine-color-default) 45%, transparent);
+  overflow: hidden;
+}
+
+.summaryHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background: color-mix(in srgb, var(--mantine-color-default) 45%, transparent);
 }
 
 .fieldRow {
@@ -502,14 +887,37 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
+  padding: 5px 11px;
+}
+
+.fieldRow + .fieldRow {
+  border-top: 1px solid color-mix(in srgb, var(--mantine-color-default-border) 55%, transparent);
+}
+
+/* A marker in place of the old type column at the front of the row: the type is
+   detail, the label is the thing being scanned, and leading with the type meant
+   every row started with the same handful of grey words. */
+.fieldDot {
+  flex: none;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 70%, transparent);
 }
 
 .fieldType {
   flex: none;
-  min-width: 62px;
-  font-size: 10px;
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
   text-transform: lowercase;
   color: var(--mantine-color-dimmed);
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mantine-color-default) 70%, transparent);
+}
+
+.required {
+  color: var(--mantine-color-red-6);
 }
 
 /* ------------------------------------------------------ template pane -- */
@@ -708,15 +1116,55 @@
   text-align: center;
 }
 
-.buildStatus {
+/*
+ * The build status, as a pill rather than a line of small text.
+ *
+ * This is the payoff of the whole screen — the moment the form exists — and in
+ * a bar corner at 11px it was the least prominent thing on it.
+ */
+.status {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 16px;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 13px 5px 9px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mantine-color-body) 88%, transparent);
   border: 1px solid var(--mantine-color-default-border);
-  backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--mantine-color-default) 55%, transparent);
+  transition: border-color 300ms ease, background 300ms ease;
+}
+
+/* Arriving at "ready" is worth marking: the pill takes the accent colour and
+   pulses once, rather than swapping one grey label for another. */
+.statusReady {
+  border-color: color-mix(in srgb, var(--mantine-color-emerald-5) 45%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 12%, transparent);
+  animation: readyPop 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes readyPop {
+  0% {
+    transform: scale(0.94);
+    opacity: 0.4;
+  }
+  55% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.statusTick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  background: var(--mantine-color-emerald-5);
+  color: #fff;
 }
 
 .thinking {
@@ -743,7 +1191,27 @@
  * the renderer's own wrapper and the Stack it lays the fields out in.
  */
 .revealed > * > * > *:last-child {
-  animation: riseIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation:
+    riseIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    landGlow 900ms ease-out both;
+}
+
+/*
+ * A wash of the accent behind the field that has just landed, fading out.
+ *
+ * `box-shadow` rather than a background: the fields have their own surfaces,
+ * and tinting those would mean overriding whatever theme the form is using.
+ * A spread shadow sits behind the field and leaves its own colours alone.
+ */
+@keyframes landGlow {
+  0% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--mantine-color-emerald-5) 16%, transparent);
+    border-radius: 8px;
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+    border-radius: 8px;
+  }
 }
 
 @keyframes riseIn {
@@ -782,6 +1250,19 @@
   flex-wrap: wrap;
 }
 
+/* Pushed to the end, and given a lift of its own — it is the only thing on this
+   bar anyone came here to press. */
+.readyAction {
+  margin-left: auto;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--mantine-color-emerald-5) 30%, transparent);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.readyAction:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--mantine-color-emerald-5) 40%, transparent);
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -796,9 +1277,46 @@
 @media (prefers-reduced-motion: reduce) {
   .heroMark,
   .thinking,
-  .revealed > *,
   .readyBar {
     animation: none;
+  }
+
+  .revealed > * > * > *:last-child,
+  .ghostField {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* The skeleton stays visible as a placeholder, it just stops sweeping. */
+  .ghostBar {
+    animation: none;
+  }
+
+  /* The stage label still changes, it just stops sliding in. */
+  .stageLabel,
+  .draftRow {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .rise,
+  .turn,
+  .drafting,
+  .paneEnterLeft,
+  .paneEnterRight,
+  .statusReady {
+    /* Opacity and transform are reset alongside: these animations use `both`,
+       so cancelling one without clearing its start state would leave the
+       element stuck at the `from` frame — invisible. */
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .readyAction:hover:not(:disabled) {
+    transform: none;
   }
 
   .deckCard:hover:not(:disabled),

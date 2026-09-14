@@ -50,17 +50,38 @@ export const theme = createTheme({
   },
   components: {
  
+    /*
+     * A dark tooltip in both schemes, with light text to match.
+     *
+     * The label colour has to be stated rather than inherited: `--mantine-color-text`
+     * follows the scheme, so on a light page it resolved to near-black and put
+     * dark text on the dark tooltip.
+     */
     Tooltip: {
       defaultProps: { color: 'dark.8' },
-      styles: { tooltip: { color: 'var(--mantine-color-text)' } },
+      styles: { tooltip: { color: 'var(--mantine-color-white)' } },
     },
- 
+
+    /*
+     * The selected segment, in whichever scheme is showing.
+     *
+     * `dark-4` is a dark grey in both schemes — Mantine's `dark` palette does
+     * not flip — so on a light page the indicator was a near-black pill under
+     * near-black text. `light-dark()` picks a raised surface for light and the
+     * same grey as before for dark, and the active label takes whatever sits
+     * legibly on it.
+     */
     SegmentedControl: {
       styles: {
-        indicator: { backgroundColor: 'var(--mantine-color-dark-4)' },
+        indicator: {
+          backgroundColor: 'light-dark(var(--mantine-color-white), var(--mantine-color-dark-4))',
+          boxShadow: 'light-dark(0 1px 3px rgba(0, 0, 0, 0.12), none)',
+        },
         label: {
           color: 'var(--mantine-color-dimmed)',
-          '&[data-active]': { color: 'var(--mantine-color-text)' },
+          '&[data-active]': {
+            color: 'light-dark(var(--mantine-color-black), var(--mantine-color-white))',
+          },
         },
       },
     },

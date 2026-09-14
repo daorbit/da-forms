@@ -1,10 +1,16 @@
 /*
  * The wash that sits behind the whole create flow.
  *
- * Three blurred blobs on a fixed layer rather than a CSS gradient: a gradient
- * of this size bands badly on 8-bit displays, and blobs can be moved
- * independently, which is what makes the build phase feel like something is
- * happening rather than a static picture.
+ * Three radial gradients painted straight onto one fixed layer, anchored to the
+ * corners so colour collects at the edges and the middle stays clean — which is
+ * what keeps the prompt and the form preview legible sitting on top of it.
+ *
+ * Gradients rather than blurred circles. A blurred solid circle has a hard edge
+ * that `filter: blur()` has to interpolate across, and every step of that
+ * interpolation lands on a different 8-bit value; over a dark ground those
+ * steps are visible as rings. A gradient's falloff is computed rather than
+ * filtered and reaches `transparent` smoothly, so there is no edge to band
+ * along — and no blurred layers to composite either, which is markedly cheaper.
  */
 .aurora {
   position: fixed;
@@ -12,137 +18,86 @@
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background: var(--mantine-color-body);
+  background:
+    radial-gradient(
+      70% 54% at 6% 0%,
+      rgba(180, 150, 245, 0.4) 0%,
+      rgba(180, 150, 245, 0.16) 38%,
+      transparent 72%
+    ),
+    radial-gradient(
+      66% 52% at 97% 4%,
+      rgba(250, 205, 145, 0.42) 0%,
+      rgba(250, 205, 145, 0.17) 40%,
+      transparent 74%
+    ),
+    radial-gradient(
+      72% 50% at 46% 108%,
+      rgba(244, 178, 214, 0.28) 0%,
+      transparent 70%
+    ),
+    var(--mantine-color-body);
+  transition: background 900ms ease;
 }
 
 /*
- * A wash of the page colour over the middle, on top of the blobs.
+ * A dither, to break up what is left.
  *
- * Without it the three colours meet in the centre and mix into mud, which is
- * exactly where the prompt sits. Clearing that area is what leaves colour in
- * the corners and light in the middle, and it is the difference between a wash
- * and a stain.
+ * Even a computed gradient has to round to 8 bits somewhere, and across a wash
+ * this wide the flattest areas still band. A faint noise texture over the top
+ * pushes neighbouring pixels either side of each boundary, so the step lands in
+ * different places for different pixels and stops reading as a line. The SVG is
+ * inline because an external one is a request the page does not need to make
+ * for a few hundred bytes of noise.
  */
-.aurora::after {
+.aurora::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    68% 58% at 50% 42%,
-    var(--mantine-color-body) 0%,
-    color-mix(in srgb, var(--mantine-color-body) 72%, transparent) 42%,
-    transparent 78%
-  );
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  /* Heavy blur is what turns three circles into a wash. Below ~90px they read
-     as discrete shapes and the whole effect looks like a mistake. */
-  filter: blur(110px);
-  opacity: 0.55;
-  transition: opacity 900ms ease, transform 900ms ease;
-  will-change: transform;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /*
- * Pushed well past the edges, so what reaches the page is the soft falloff of
- * each blob rather than its body. Colour then collects in the corners and the
- * middle stays clean, which is what keeps the composer legible sitting on top
- * of it — a blob centred in view puts its densest part directly behind the
- * thing being read.
- */
-.blob1 {
-  width: 58vw;
-  height: 58vw;
-  top: -30vw;
-  left: -24vw;
-  background: var(--aurora-cool, #c6a8f0);
-  animation: drift1 22s ease-in-out infinite alternate;
-}
-
-.blob2 {
-  width: 62vw;
-  height: 62vw;
-  top: -32vw;
-  right: -26vw;
-  background: var(--aurora-warm, #fbd49a);
-  animation: drift2 26s ease-in-out infinite alternate;
-}
-
-.blob3 {
-  width: 54vw;
-  height: 54vw;
-  bottom: -34vw;
-  left: 24vw;
-  background: var(--aurora-mid, #f2b9d8);
-  opacity: 0.34;
-  animation: drift3 30s ease-in-out infinite alternate;
-}
-
-/*
- * Building state: the blobs swell and brighten. Same elements, so there is no
- * cross-fade between two backgrounds — the one on screen simply intensifies.
- */
-.building .blob {
-  opacity: 0.8;
-}
-
-/* Swell, but outward. Pulling them toward the middle would put their dense
-   centres back behind the form, which is the thing being looked at. */
-.building .blob1 {
-  transform: scale(1.18) translate(-2vw, -1vw);
-}
-
-.building .blob2 {
-  transform: scale(1.2) translate(2vw, -1vw);
-}
-
-.building .blob3 {
-  transform: scale(1.15) translate(0, 2vw);
-  opacity: 0.5;
-}
-
-/* Small drifts. These blobs sit mostly off-screen, so a large translate swings
-   a hard edge into view instead of moving light around. */
-@keyframes drift1 {
-  to {
-    transform: translate(3vw, 2vw) scale(1.08);
-  }
-}
-
-@keyframes drift2 {
-  to {
-    transform: translate(-3vw, 3vw) scale(1.1);
-  }
-}
-
-@keyframes drift3 {
-  to {
-    transform: translate(2vw, -3vw) scale(1.06);
-  }
-}
-
-/*
- * Dark mode is drawn a different way, not merely recoloured.
+ * Building state: the wash lifts.
  *
- * A blurred solid circle has a hard edge that `filter: blur()` has to
- * interpolate across, and over a near-black ground each step of that
- * interpolation lands on a different 8-bit value — which is what the visible
- * rings were. The same steps exist on a white page and are invisible there,
- * because the eye cannot separate two near-white values the way it separates
- * two near-black ones.
- *
- * Radial gradients do not have that edge to begin with: the falloff is
- * computed, not filtered, and `transparent` stops let it reach nothing
- * smoothly. Hiding the blobs and painting the wash straight onto the layer is
- * both softer and considerably cheaper than three blurred elements.
+ * The same three gradients at higher weight, so what happens on screen is the
+ * background intensifying rather than a second background cross-fading over the
+ * first.
  */
-:global([data-mantine-color-scheme='dark']) .blob {
-  display: none;
+.building {
+  background:
+    radial-gradient(
+      74% 58% at 6% 0%,
+      rgba(180, 150, 245, 0.55) 0%,
+      rgba(180, 150, 245, 0.22) 38%,
+      transparent 72%
+    ),
+    radial-gradient(
+      70% 56% at 97% 4%,
+      rgba(250, 205, 145, 0.58) 0%,
+      rgba(250, 205, 145, 0.24) 40%,
+      transparent 74%
+    ),
+    radial-gradient(
+      76% 54% at 46% 108%,
+      rgba(244, 178, 214, 0.4) 0%,
+      transparent 70%
+    ),
+    var(--mantine-color-body);
 }
 
+/*
+ * Dark mode keeps to one side of the wheel.
+ *
+ * An earlier set put violet top-left and amber top-right, which are near enough
+ * to complements that everywhere they overlapped they neutralised — and what
+ * they neutralise into, over black, is brown. Staying within violet-to-teal
+ * means the overlaps stay colours rather than turning to mud.
+ *
+ * They are also much fainter. On a white page a wash at four-tenths opacity is
+ * a tint; on a near-black one it is the brightest thing on screen.
+ */
 :global([data-mantine-color-scheme='dark']) .aurora {
   background:
     radial-gradient(
@@ -163,29 +118,13 @@
       transparent 70%
     ),
     var(--mantine-color-body);
-  transition: background 900ms ease;
 }
 
-/*
- * A dither, to break up what is left.
- *
- * Even a computed gradient has to round to 8 bits somewhere, and across a wash
- * this wide the flattest areas still band. A faint noise texture scattered over
- * the top pushes neighbouring pixels either side of each boundary, so the step
- * lands in different places for different pixels and stops reading as a line.
- * The SVG is inline because an external one is a request the page does not need
- * to make for four hundred bytes of noise.
- */
+/* Banding is far more visible over black, so the dither works a little harder. */
 :global([data-mantine-color-scheme='dark']) .aurora::before {
-  content: '';
-  position: absolute;
-  inset: 0;
   opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* The building state lifts the whole wash rather than each blob, since there
-   are no blobs here to lift. */
 :global([data-mantine-color-scheme='dark']) .building {
   background:
     radial-gradient(
@@ -208,39 +147,10 @@
     var(--mantine-color-body);
 }
 
-/*
- * No scrim in dark mode.
- *
- * The gradients above are already anchored to the corners and reach nothing by
- * the middle, so there is nothing left for a scrim to clear — and laying a
- * second wide gradient over the first only adds a second set of rounding
- * boundaries to band along.
- */
-:global([data-mantine-color-scheme='dark']) .aurora::after {
-  display: none;
-}
-
-:global([data-mantine-color-scheme='dark']) .building .blob {
-  opacity: 0.24;
-}
-
-:global([data-mantine-color-scheme='dark']) .building .blob3 {
-  opacity: 0.18;
-}
-
-/*
- * Drifting blobs are decoration, and decoration that moves for 30 seconds is
- * exactly what this setting is for.
- */
+/* The wash is decoration, and a 900ms colour shift on it is exactly what this
+   setting is for. */
 @media (prefers-reduced-motion: reduce) {
-  .blob {
-    animation: none;
-    transition: opacity 200ms ease;
-  }
-
-  .building .blob1,
-  .building .blob2,
-  .building .blob3 {
-    transform: none;
+  .aurora {
+    transition: none;
   }
 }

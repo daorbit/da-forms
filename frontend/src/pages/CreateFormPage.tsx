@@ -25,12 +25,14 @@ import { OrbitMark } from '@/components/OrbitMark';
 import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
 import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
 import { useFitScale } from '@/hooks/useFitScale';
-import { createForm, generateFormDraft } from '@/lib/api';
+import { ApiError, createForm, generateFormDraft, importFormConfig } from '@/lib/api';
 import { formTemplates } from '@/lib/templates';
 import { generatedToTemplate, type GeneratedForm } from '@/lib/generatedForm';
 import { isPlanLimit } from '@/lib/planLimit';
 import { pickSuggestionChips } from '@/lib/formSuggestions';
 import { Aurora } from './createForm/Aurora';
+import { TemplatePane } from './createForm/TemplatePane';
+import { ImportPane } from './createForm/ImportPane';
 import { useFieldReveal } from './createForm/useFieldReveal';
 import classes from './createForm/createForm.module.css';
 
@@ -74,8 +76,20 @@ export function CreateFormPage() {
   const formName = searchParams.get('name')?.trim() || 'Untitled form';
   const scope: Scope = searchParams.get('scope') === 'card' ? 'card' : 'page';
 
+  /**
+   * Which way in is on screen.
+   *
+   * 'hero' is the prompt and the deck of alternatives; the other two are the
+   * panes those alternatives open. Orbit has no mode of its own — it takes over
+   * as soon as there is a turn to show.
+   */
+  const [mode, setMode] = useState<'hero' | 'template' | 'import'>('hero');
+
   /** Drawn once per mount, so the list does not reshuffle on every keystroke. */
   const [suggestions] = useState(() => pickSuggestionChips(3));
+
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -195,13 +209,54 @@ export function CreateFormPage() {
     }
   }
 
-  /**
-   * The other ways in.
-   *
-   * Template and import hand back to the list page's modal, which owns the
-   * picker and the config paste — rebuilding either here would be a second copy
-   * of a screen that already works.
-   */
+  /** Create from a picked template, under the name already chosen. */
+  async function handleTemplate(tpl: (typeof formTemplates)[number]) {
+    if (creating) return;
+    setCreating(true);
+    try {
+      const form = await createForm(
+        {
+          name: formName,
+          // A blank form has no heading of its own, so it falls back to the
+          // name; every other template brings one.
+          title: tpl.id === 'blank' ? formName : tpl.title,
+          description: tpl.formDescription,
+          fields: tpl.fields,
+          hideHeader: tpl.hideHeader,
+          submitLabel: tpl.submitLabel,
+          theme: tpl.theme ?? { scope },
+          steps: tpl.steps,
+          stepIndicator: tpl.stepIndicator,
+          showStepHeadings: tpl.showStepHeadings,
+        },
+        workspaceId
+      );
+      navigate(`/${workspaceId}/forms/${form._id}/edit`);
+    } catch (err) {
+      setCreating(false);
+      if (isPlanLimit(err)) return;
+      notifications.show({ message: 'Could not create form', color: 'red' });
+    }
+  }
+
+  /** Bring in a config copied from another form, as a draft. */
+  async function handleImport(parsed: unknown) {
+    if (importing) return;
+    setImporting(true);
+    setImportError(null);
+    try {
+      const form = await importFormConfig(parsed, workspaceId);
+      navigate(`/${workspaceId}/forms/${form._id}/edit`);
+    } catch (err) {
+      setImporting(false);
+      if (isPlanLimit(err)) return;
+      setImportError(
+        err instanceof ApiError ? err.message : 'Could not import that config.'
+      );
+    }
+  }
+
+  /** The other ways in, shown under the prompt. */
   const deck: DeckCard[] = [
     {
       key: 'blank',
@@ -215,14 +270,17 @@ export function CreateFormPage() {
       art: '/build-with-tempalte.webp',
       title: 'Use a template',
       body: `${formTemplates.length - 1} ready-made forms`,
-      onClick: () => navigate(`/${workspaceId}/forms?start=template`),
+      onClick: () => setMode('template'),
     },
     {
       key: 'import',
       art: '/build-with-config.webp',
       title: 'Import a config',
       body: 'Paste a config from another form',
-      onClick: () => navigate(`/${workspaceId}/forms?start=import`),
+      onClick: () => {
+        setImportError(null);
+        setMode('import');
+      },
     },
   ];
 
@@ -293,8 +351,11 @@ export function CreateFormPage() {
             color="gray"
             radius="xl"
             leftSection={<IconArrowLeft size={16} />}
-            onClick={backToList}
-            disabled={creating}
+            // Inside one of the panes, Back is a step within this screen and
+            // returns to the prompt; from the prompt itself there is nowhere
+            // left to go but the list.
+            onClick={mode === 'hero' ? backToList : () => setMode('hero')}
+            disabled={creating || importing}
           >
             Back
           </Button>
@@ -309,7 +370,16 @@ export function CreateFormPage() {
           </Group>
         </header>
 
-        {turns.length > 0 ? (
+        {mode === 'template' ? (
+          <TemplatePane scope={scope} creating={creating} onCreate={handleTemplate} />
+        ) : mode === 'import' ? (
+          <ImportPane
+            importing={importing}
+            error={importError}
+            onErrorChange={setImportError}
+            onImport={handleImport}
+          />
+        ) : turns.length > 0 ? (
           /* ------------------------------------------------- workspace -- */
           <div className={classes.build}>
             <section className={classes.orbitPane}>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl, Alert, Badge,
 } from '@mantine/core';
@@ -42,7 +42,6 @@ import { isDemoWorkspace, listDemoForms } from '@/lib/demoWorkspace';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form, FormTheme } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
-import { AiFormModal } from '@/components/AiFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
@@ -78,7 +77,6 @@ export function FormListPage() {
   const isDemo = isDemoWorkspace(workspaceId);
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [forms, setForms] = useState<Form[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -89,16 +87,6 @@ export function FormListPage() {
   const [loading, setLoading] = useState(true);
   const [newFormOpen, setNewFormOpen] = useState(false);
   const [integrationsOpen, setIntegrationsOpen] = useState(false);
-  /**
-   * The Orbit builder, and what the first step already collected.
-   *
-   * Held here rather than inside either modal: the name and scope are chosen in
-   * one and used by the other, and the handoff closes the first as it opens the
-   * second.
-   */
-  const [aiForm, setAiForm] = useState<{ name: string; scope: 'page' | 'card' } | null>(null);
-  /** Carried back from the Orbit modal, so returning skips the naming step. */
-  const [resume, setResume] = useState<{ name: string; scope: 'page' | 'card' } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState<Form | null>(null);
@@ -107,40 +95,15 @@ export function FormListPage() {
   const [previewing, setPreviewing] = useState<Form | null>(null);
 
   /**
-   * The create page's "use a template" and "import a config" cards come back
-   * here with `?start=`, because the picker and the config paste still live in
-   * the modal. Opening it on arrival is what makes those cards feel like they
-   * went somewhere rather than merely returning to the list.
-   *
-   * The parameter is cleared as it is read, so a reload — or a back button —
-   * does not reopen the modal over a list the person meant to be looking at.
-   */
-  const startParam = searchParams.get('start');
-  /**
-   * Whether the open modal came from a `?start=` link rather than from the New
-   * Form button. Held in state rather than read from the URL at render: the
-   * effect below clears the parameter as soon as it has acted on it, so by the
-   * time the modal renders the URL no longer says where it came from.
-   */
-  const [deepLinked, setDeepLinked] = useState(false);
-  useEffect(() => {
-    if (!startParam || isDemo) return;
-    setResume({ name: '', scope: 'page' });
-    setDeepLinked(true);
-    setNewFormOpen(true);
-    setSearchParams({}, { replace: true });
-  }, [startParam, isDemo, setSearchParams]);
-
-  /**
-   * The first step is still a dialog.
+   * The first step is a dialog.
    *
    * The name and the scope are asked here, before anything is described,
    * because the create screen wants both by the time it creates the form and
    * asking for them afterwards means interrupting someone who has just watched
-   * their form appear. Continue there navigates on to the create screen.
+   * their form appear. Continue navigates on to the create screen, which owns
+   * every way of starting from there.
    */
   function startCreate() {
-    setResume(null);
     setNewFormOpen(true);
   }
 
@@ -680,49 +643,15 @@ export function FormListPage() {
       )}
 
       <NewFormModal
-        // Remounted when resuming, so the modal picks up the name and step it
-        // is being reopened at — a state initialiser only runs on mount.
-        key={resume ? `resume-${resume.name}` : 'fresh'}
         opened={newFormOpen}
-        resume={resume}
-        onClose={() => {
+        onClose={() => setNewFormOpen(false)}
+        onContinue={(name, scope) => {
           setNewFormOpen(false);
-          setResume(null);
+          navigate(
+            `/${workspaceId}/forms/create?name=${encodeURIComponent(name)}&scope=${scope}`
+          );
         }}
-        onUseAi={(name, scope) => {
-          setNewFormOpen(false);
-          setAiForm({ name, scope });
-        }}
-        // Only the plain "New Form" path continues to the create screen. A
-        // modal reopened by a `?start=` deep link keeps its own step two, which
-        // is where the template picker and the config paste live.
-        onContinue={
-          deepLinked
-            ? undefined
-            : (name, scope) => {
-                setNewFormOpen(false);
-                navigate(
-                  `/${workspaceId}/forms/create?name=${encodeURIComponent(name)}&scope=${scope}`
-                );
-              }
-        }
       />
-
-      {aiForm && (
-        <AiFormModal
-          opened
-          formName={aiForm.name}
-          scope={aiForm.scope}
-          onClose={() => setAiForm(null)}
-          // Back reopens the chooser rather than dropping the person at the
-          // list, so changing their mind about the method costs one click.
-          onBack={() => {
-            setResume({ name: aiForm.name, scope: aiForm.scope });
-            setAiForm(null);
-            setNewFormOpen(true);
-          }}
-        />
-      )}
 
       {previewing && (
         <PreviewModal

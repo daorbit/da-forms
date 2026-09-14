@@ -517,6 +517,91 @@
   color: var(--mantine-color-dimmed);
 }
 
+/* ------------------------------------------------------ template pane -- */
+
+/* The search and scope filter, pinned above the scrolling list. */
+.pickerHead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.templateList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 9px;
+}
+
+/* Doubled, like the other `UnstyledButton`s on this screen: Mantine's own rule
+   zeroes padding and background, ties on specificity, and wins on order. */
+.templateItem.templateItem {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 13px;
+  border-radius: 11px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: color-mix(in srgb, var(--mantine-color-default) 35%, transparent);
+  text-align: left;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.templateItem.templateItem:hover {
+  border-color: color-mix(in srgb, var(--mantine-color-emerald-5) 40%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-default) 70%, transparent);
+}
+
+.templateItemActive.templateItemActive,
+.templateItemActive.templateItemActive:hover {
+  border-color: var(--mantine-color-emerald-5);
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 13%, transparent);
+}
+
+.categoryTag {
+  flex: none;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: color-mix(in srgb, var(--mantine-color-default) 60%, transparent);
+}
+
+/*
+ * The category chips scroll sideways rather than wrapping: with a dozen of them
+ * a wrapped bar costs the stage its height. `min-width: 0` is what lets the
+ * track actually shrink — without it the flex item is sized by its content and
+ * the last chip is clipped by the bar instead of being scrolled to.
+ */
+.filterBar {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Held out of the scrolling chip track, with a rule between the two so the
+   scroll has a visible end rather than appearing to run under the buttons. */
+.previewActions {
+  flex: none;
+  padding-left: 12px;
+  border-left: 1px solid var(--mantine-color-default-border);
+}
+
+/* -------------------------------------------------------- import pane -- */
+
+.importPane {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 24px;
+}
+
+.importInner {
+  width: min(720px, 100%);
+}
+
 /* ---------------------------------------------------------- right pane -- */
 
 .previewPane {
@@ -534,6 +619,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  /* `min-width: 0` so the chip track inside can shrink; without it the bar is
+     sized by its content and pushes the buttons off the pane. */
+  min-width: 0;
   padding: 8px 12px;
   border-bottom: 1px solid var(--mantine-color-default-border);
 }

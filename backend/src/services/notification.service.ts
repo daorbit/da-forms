@@ -74,11 +74,19 @@ export async function sendSubmissionNotifications(
   formId?: string
 ): Promise<void> {
   const notifications = form.notifications;
-  if (!notifications || !(await mailConfigured(form.workspaceId))) return;
+  if (!notifications) return;
 
-  // Only the respondent's copy carries it. The owner's alert goes to the
-  // person who already pays for the product — telling them what powers their
-  // own dashboard is noise.
+ 
+  if (!(await mailConfigured(form.workspaceId))) {
+    if (notifications.respondentEnabled || notifications.ownerEnabled) {
+      console.warn(
+        `[notifications] workspace ${form.workspaceId} has notifications on but no enabled email app — nothing sent`
+      );
+    }
+    return;
+  }
+
+ 
   const brand = await getBranding(form.workspaceId);
   const poweredBy = brand.showPoweredBy ? brand.poweredByLabel : undefined;
 
@@ -90,6 +98,17 @@ export async function sendSubmissionNotifications(
       (f) => f.id === notifications.respondentEmailFieldId && f.type === 'email'
     );
     const to = emailField ? data[emailField.id] : undefined;
+    const formRef = formId ?? form.title;
+    if (!emailField) {
+ 
+      console.warn(
+        `[notifications] form ${formRef}: respondent field ${notifications.respondentEmailFieldId} is missing or not an email field — no confirmation sent`
+      );
+    } else if (!to) {
+      console.warn(
+        `[notifications] form ${formRef}: respondent left ${emailField.id} blank — no confirmation sent`
+      );
+    }
     if (to) {
       const subject = fillPlaceholders(
         notifications.respondentSubject || 'Thanks for your submission',

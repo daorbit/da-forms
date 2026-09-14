@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Modal,
   Group,
@@ -6,6 +6,7 @@ import {
   Text,
   Button,
   ActionIcon,
+  Alert,
   Divider,
   Stack,
   Switch,
@@ -16,8 +17,16 @@ import {
   Menu,
   UnstyledButton,
 } from '@mantine/core';
-import { IconX, IconMail, IconBellRinging, IconChevronDown, IconPlus } from '@tabler/icons-react';
+import {
+  IconX,
+  IconMail,
+  IconBellRinging,
+  IconChevronDown,
+  IconPlus,
+  IconAlertTriangle,
+} from '@tabler/icons-react';
 import type { Editor } from '@tiptap/react';
+import { listApps } from '@/lib/api';
 import type { EmailLayout, FormField, FormTheme, NotificationSettings } from '@/types';
 import { EMAIL_LAYOUTS, renderEmail } from '@/lib/emailTemplates';
 import { EmailBodyEditor } from './EmailBodyEditor';
@@ -183,6 +192,22 @@ export function NotificationsModal({
   const [tab, setTab] = useState<TabId>('respondent');
   const [previewing, setPreviewing] = useState(false);
   const [bodyEditor, setBodyEditor] = useState<Editor | null>(null);
+ 
+  const [emailAppLive, setEmailAppLive] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!opened) return;
+    let active = true;
+    listApps()
+      .then((apps) => {
+        if (active) {
+          setEmailAppLive(apps.some((a) => a.category === 'email' && a.enabled));
+        }
+      })
+      .catch(() => active && setEmailAppLive(null));
+    return () => {
+      active = false;
+    };
+  }, [opened]);
   const emailFields = flattenFields(fields).filter((f) => f.type === 'email');
   const placeholderFields = flattenFields(fields).filter((f) => f.label && f.type !== 'grid');
   const respondentEmailField = emailFields.find((f) => f.id === notifications.respondentEmailFieldId);
@@ -279,6 +304,20 @@ export function NotificationsModal({
           </Group>
 
           <Box className={classes.panelBody}>
+            {emailAppLive === false && (
+              <Alert
+                color="orange"
+                variant="light"
+                icon={<IconAlertTriangle size={16} />}
+                mb="lg"
+              >
+                <Text size="sm">
+                  No email app is switched on for this workspace, so nothing here will send.
+                  Open <b>Integrations</b>, pick Custom SMTP or Brevo, and press{' '}
+                  <b>Connect</b> — saving or testing the details is not enough on its own.
+                </Text>
+              </Alert>
+            )}
             {isRespondent ? (
               <Stack gap="lg">
                 <Group justify="space-between" align="center" wrap="nowrap">
@@ -313,6 +352,12 @@ export function NotificationsModal({
                     value={notifications.respondentEmailFieldId ?? null}
                     onChange={(value) => onChange({ respondentEmailFieldId: value ?? undefined })}
                     disabled={!notifications.respondentEnabled}
+                  
+                    error={
+                      notifications.respondentEnabled && !notifications.respondentEmailFieldId
+                        ? 'Pick a field or no confirmation will be sent.'
+                        : null
+                    }
                   />
                 )}
 

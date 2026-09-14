@@ -49,29 +49,17 @@
 }
 
 /*
- * The coloured band at the top of each card.
- *
- * Tall enough to be a field of colour rather than a stripe — at strip height it
- * read as a decorative rule instead of the thing that distinguishes the cards.
+ * Illustration band at the top of each card. The renders are dark, so the head
+ * keeps a dark ground rather than flashing white behind a transparent PNG while
+ * it loads.
  */
 .cardHead {
   position: relative;
   display: block;
-  padding: 16px;
-  min-height: 74px;
-  border-bottom: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
-}
-
-/*
- * Cards backed by an illustration. The art is a dark render, so the head keeps a
- * dark ground in both themes rather than flashing white behind a transparent PNG
- * while it loads.
- */
-.cardHeadArt {
   padding: 0;
+  height: 96px;
   background: #0b0b0d;
-  aspect-ratio: 3 / 2;
-  min-height: 0;
+  border-bottom: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
 }
 
 .headArt {
@@ -80,8 +68,29 @@
   height: 100%;
   object-fit: cover;
   /* The renders are centre-weighted with a lot of empty ground at the bottom;
-     biasing the crop upward keeps the subject in frame at card size. */
-  object-position: center 42%;
+     biasing the crop upward keeps the subject in frame at this band height. */
+  object-position: center 38%;
+}
+
+/* Blank-option head: a dotted drop-zone standing in for the art, plus icon
+   centred inside it. */
+.headBlank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.headBlankBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1.5px dashed light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-2));
+  color: light-dark(var(--mantine-color-gray-6), var(--mantine-color-gray-4));
 }
 
 /* Icon and badge sit over the art, so they need their own row rather than
@@ -96,42 +105,17 @@
   padding: 16px;
 }
 
-/* Over artwork the icon needs its own backing to stay legible. */
-.cardHeadArt .headIcon {
+/* Sits over artwork, so it needs its own backing to stay legible regardless of
+   theme. */
+.headIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
   padding: 6px;
   border-radius: 8px;
   background: rgba(10, 10, 12, 0.62);
   backdrop-filter: blur(6px);
-}
-
-.headIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-gray-1));
-}
-
-/*
- * No render for the blank option — a picture of nothing is not worth drawing.
- * It takes the same 3:2 head so the four heads line up across the grid, with a
- * grid pattern standing in for the art.
- */
-.toneBlank {
-  aspect-ratio: 3 / 2;
-  min-height: 0;
-  background-image: linear-gradient(
-      to right,
-      light-dark(rgba(15, 23, 42, 0.07), rgba(255, 255, 255, 0.05)) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      light-dark(rgba(15, 23, 42, 0.07), rgba(255, 255, 255, 0.05)) 1px,
-      transparent 1px
-    );
-  background-size: 16px 16px;
-  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
 }
 
 /* Takes the remaining height so the three bodies align even when one

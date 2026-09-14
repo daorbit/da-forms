@@ -137,8 +137,6 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
       navigate(`/${workspaceId}/forms/${form._id}/edit`);
     } catch (err) {
       setCreating(false);
-      // A plan cap already opened the upgrade dialog on its way out of the API
-      // layer. A red toast under it would read as a second, separate failure.
       if (isPlanLimit(err)) {
         handleClose();
         return;
@@ -147,12 +145,7 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
     }
   }
 
-  /**
-   * Read the clipboard for them where the browser allows it.
-   *
-   * Permission is refused outright in some browsers and on insecure origins, so
-   * a failure is silent: the textarea is still there and Ctrl+V still works.
-   */
+ 
   async function pasteFromClipboard() {
     try {
       const text = await navigator.clipboard.readText();
@@ -165,13 +158,7 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
     }
   }
 
-  /**
-   * Create a form from a pasted config.
-   *
-   * The JSON is parsed here only to give a useful message for a truncated or
-   * mangled paste; what the config actually contains is the server's call,
-   * since it is the side that decides what may cross a workspace boundary.
-   */
+ 
   async function handleImport() {
     const text = configText.trim();
     if (!text) return;
@@ -217,10 +204,7 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
               : 'Choose a template'
       }
       centered
-      // A click on the backdrop is far more often a miss than an intent to
-      // leave, and it would throw away a typed name, a chosen template, or a
-      // draft that cost an AI question. Escape and the explicit buttons still
-      // close it.
+ 
       closeOnClickOutside={false}
 
       size={
@@ -235,12 +219,7 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
     >
       {step === 2 ? (
         <Stack gap="md">
-          {/* Repeats the title's question only to name the form: the title has
-              to stand on its own, and this is where what was typed comes back
-              so the step is clearly about that form and not forms in general. */}
-          <Text size="sm" c="dimmed" mt={-4}>
-            How would you like to start “{name.trim()}”?
-          </Text>
+      
 
           <StartMethodCards
             creating={creating || importing}

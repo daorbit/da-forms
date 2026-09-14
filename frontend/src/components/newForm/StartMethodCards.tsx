@@ -34,7 +34,7 @@ export function StartMethodCards({
     },
     {
       key: 'orbit',
-      art: '/build-with-ai.png',
+      art: '/build-with-ai.webp',
       icon: <OrbitMark size={24} />,
       title: 'Build with Orbit',
       body: 'Describe what you need. Orbit drafts the fields, wording and colours.',
@@ -43,7 +43,7 @@ export function StartMethodCards({
     },
     {
       key: 'template',
-      art: '/build-with-tempalte.png',
+      art: '/build-with-tempalte.webp',
       icon: <IconLayoutGrid size={24} />,
       title: 'Start from a template',
       body: `${formTemplates.length - 1} ready-made forms, previewed before you pick.`,
@@ -51,7 +51,7 @@ export function StartMethodCards({
     },
     {
       key: 'import',
-      art: '/build-with-config.png',
+      art: '/build-with-config.webp',
       icon: importing ? <Loader size={24} color="emerald" /> : <IconClipboardCheck size={24} />,
       title: 'Import a config',
       body: 'Paste a config copied from another form — fields, theme and settings.',
@@ -69,12 +69,18 @@ export function StartMethodCards({
           disabled={creating}
         >
         
-          <span className={`${classes.cardHead} ${method.art ? classes.cardHeadArt : classes.toneBlank}`}>
-            {/* Decorative only — the title below already names the option, so an
-                alt string here would just repeat it to a screen reader. */}
-            {method.art && <img src={method.art} alt="" className={classes.headArt} aria-hidden />}
+          <span className={classes.cardHead}>
+            {method.art ? (
+              <img src={method.art} alt="" className={classes.headArt} aria-hidden />
+            ) : (
+              // No render for the blank option — a picture of nothing is not
+              // worth drawing. A dotted drop-zone with the plus stands in for it.
+              <span className={classes.headBlank} aria-hidden>
+                <span className={classes.headBlankBox}>{method.icon}</span>
+              </span>
+            )}
             <span className={classes.headOverlay}>
-              <span className={classes.headIcon}>{method.icon}</span>
+              {method.art && <span className={classes.headIcon}>{method.icon}</span>}
               {method.badge && (
                 <Badge size="xs" variant="filled" color="emerald" radius="sm">
                   {method.badge}

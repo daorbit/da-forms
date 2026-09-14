@@ -10,9 +10,7 @@ import {
   Divider,
   Stack,
   Switch,
-  Select,
   TextInput,
-  TagsInput,
   SegmentedControl,
   Menu,
   UnstyledButton,
@@ -24,11 +22,12 @@ import {
   IconChevronDown,
   IconPlus,
   IconAlertTriangle,
+  IconCheck,
 } from '@tabler/icons-react';
 import type { Editor } from '@tiptap/react';
 import { listApps } from '@/lib/api';
 import type { EmailLayout, FormField, FormTheme, NotificationSettings } from '@/types';
-import { EMAIL_LAYOUTS, renderEmail } from '@/lib/emailTemplates';
+import { EMAIL_LAYOUTS, partsOfLayout, renderEmail } from '@/lib/emailTemplates';
 import { EmailBodyEditor } from './EmailBodyEditor';
 import classes from './NotificationsModal.module.css';
 
@@ -339,34 +338,19 @@ export function NotificationsModal({
 
                 <Divider />
 
-                {emailFields.length === 0 ? (
+                {emailFields.length === 0 && (
                   <Text size="sm" c="red">
                     Add an Email field to this form to send a confirmation — there's nothing to send
                     it to yet.
                   </Text>
-                ) : (
-                  <Select
-                    label="Send to"
-                    description="Which field holds the respondent's address"
-                    data={emailFields.map((f) => ({ value: f.id, label: f.label || 'Untitled field' }))}
-                    value={notifications.respondentEmailFieldId ?? null}
-                    onChange={(value) => onChange({ respondentEmailFieldId: value ?? undefined })}
-                    disabled={!notifications.respondentEnabled}
-                  
-                    error={
-                      notifications.respondentEnabled && !notifications.respondentEmailFieldId
-                        ? 'Pick a field or no confirmation will be sent.'
-                        : null
-                    }
-                  />
                 )}
 
                 <div>
                   <Text size="sm" fw={600} mb={4}>
-                    Template
+                    What the email includes
                   </Text>
                   <Text size="xs" c="dimmed" mb={10}>
-                    How the message is laid out when it lands.
+                    Your message is always there. Pick what sits around it.
                   </Text>
                   <div className={classes.layoutGrid}>
                     {EMAIL_LAYOUTS.map((option) => {
@@ -388,6 +372,9 @@ export function NotificationsModal({
                               {option.hint}
                             </Text>
                           </div>
+                          {/* Colour alone does not say which is chosen — the
+                              accent can be any hue the host passes. */}
+                          {on && <IconCheck size={16} className={classes.layoutCheck} />}
                         </UnstyledButton>
                       );
                     })}
@@ -397,8 +384,7 @@ export function NotificationsModal({
                 {/* Both layouts that render a button. Previously only
                     'nextSteps' offered these fields, so a 'confirmation' email
                     had a button slot with no way to fill it. */}
-                {(notifications.respondentLayout === 'nextSteps' ||
-                  notifications.respondentLayout === 'confirmation') && (
+                {partsOfLayout(notifications.respondentLayout).button && (
                   <>
                     <Divider />
                     <TextInput
@@ -415,6 +401,13 @@ export function NotificationsModal({
                       value={notifications.respondentCtaHref ?? ''}
                       onChange={(e) => onChange({ respondentCtaHref: e.target.value })}
                       disabled={!notifications.respondentEnabled}
+                      // The layout leaves a button slot, so an empty link is a
+                      // half-finished choice rather than a neutral default.
+                      error={
+                        notifications.respondentEnabled && !notifications.respondentCtaHref?.trim()
+                          ? 'No link, no button — the email sends without it.'
+                          : null
+                      }
                     />
                   </>
                 )}
@@ -445,19 +438,16 @@ export function NotificationsModal({
 
                 <Divider />
 
-                <TagsInput
-                  label="Send to"
-                  description="Press enter after each address"
-                  placeholder="you@example.com"
-                  value={notifications.ownerEmails ?? []}
-                  onChange={(value) => onChange({ ownerEmails: value })}
-                  disabled={!notifications.ownerEnabled}
-                />
-
-                <Text size="xs" c="dimmed">
-                  The message lists every answer submitted on the form — only the subject is yours
-                  to write.
+                <Text size="sm">
+                  Every answer on the form is listed in the message. Set who it goes to and what
+                  the subject says on the right.
                 </Text>
+
+                {notifications.ownerEnabled && !notifications.ownerEmails?.length && (
+                  <Text size="sm" c="red">
+                    Add at least one address or nothing will be sent.
+                  </Text>
+                )}
               </Stack>
             )}
           </Box>
@@ -553,7 +543,14 @@ export function NotificationsModal({
                 ) : (
                   <Menu shadow="md" position="bottom-start" disabled={!enabled}>
                     <Menu.Target>
-                      <UnstyledButton className={classes.toPicker} disabled={!enabled}>
+                      {/* The only place the recipient is chosen, so an unset
+                          one has to read as unfinished here — turned on with
+                          no field picked sends nothing at all. */}
+                      <UnstyledButton
+                        className={classes.toPicker}
+                        disabled={!enabled}
+                        data-unset={enabled && !respondentEmailField ? true : undefined}
+                      >
                         {respondentEmailField?.label || 'Choose a field'}
                         <IconChevronDown size={14} />
                       </UnstyledButton>

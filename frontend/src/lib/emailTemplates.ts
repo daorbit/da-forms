@@ -64,12 +64,40 @@ export interface LayoutOption {
  * can be newly chosen, not what can be rendered.
  */
 export const EMAIL_LAYOUTS: LayoutOption[] = [
-  { id: 'confirmation', label: 'Confirmation', hint: 'Tick, your message, their answers, and a button.' },
-  { id: 'thankYou', label: 'Thank you', hint: 'A confirmation tick above your message.' },
-  { id: 'receipt', label: 'Receipt', hint: 'Your message, then a copy of what they submitted.' },
-  { id: 'nextSteps', label: 'Next steps', hint: 'Your message, then a button to somewhere.' },
-  { id: 'plain', label: 'Plain', hint: 'Your text, lightly styled. No tick, answers or button.' },
+  { id: 'plain', label: 'Just your message', hint: 'Your words, nothing added.' },
+  { id: 'thankYou', label: 'With a tick', hint: 'A confirmation tick above your message.' },
+  { id: 'receipt', label: 'With their answers', hint: 'Your message, then a copy of what they sent.' },
+  { id: 'nextSteps', label: 'With a button', hint: 'Your message, then a link to somewhere.' },
+  { id: 'confirmation', label: 'Everything', hint: 'Tick, message, their answers, and a button.' },
 ];
+
+ 
+export interface EmailParts {
+  tick: boolean;
+  answers: boolean;
+  button: boolean;
+}
+
+/** What a stored layout shows — the same conditions `renderEmail` applies. */
+export function partsOfLayout(layout: EmailLayout | undefined): EmailParts {
+  const id = layout ?? 'plain';
+  return {
+    tick: id === 'thankYou' || id === 'confirmation',
+    answers: id === 'receipt' || id === 'confirmation',
+    button: id === 'nextSteps' || id === 'confirmation',
+  };
+}
+
+ 
+export function layoutForParts(parts: EmailParts): EmailLayout | null {
+  const { tick, answers, button } = parts;
+  if (tick && answers && button) return 'confirmation';
+  if (tick && !answers && !button) return 'thankYou';
+  if (!tick && answers && !button) return 'receipt';
+  if (!tick && !answers && button) return 'nextSteps';
+  if (!tick && !answers && !button) return 'plain';
+  return null;
+}
 
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -84,17 +112,7 @@ const FONT = `-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial
 /** How the card around a message is dressed. */
 type Chrome = 'card' | 'banner' | 'bare';
 
-/**
- * The shell every message shares: the card, the form's name, the body.
- *
- * The form name sits at the top as plain text rather than a logo — the sender
- * is a form we know only by title, and an invented mark would be someone
- * else's brand.
- *
- * "banner" moves that name into a coloured band across the top; "bare" drops
- * the card altogether, for the layout that wants to look like a message
- * someone typed rather than a designed notification.
- */
+ 
 function shell(formName: string, inner: string, accent: string, chrome: Chrome = 'card'): string {
   if (chrome === 'bare') {
     return `<div style="background:${C.card};padding:40px 16px;font-family:${FONT}">
@@ -140,12 +158,7 @@ function shell(formName: string, inner: string, accent: string, chrome: Chrome =
 </div>`;
 }
 
-/**
- * The opening line, set as a headline.
- *
- * Takes the message's own first paragraph rather than inventing a heading —
- * the form owner wrote the words, this only sets them larger.
- */
+ 
 function heroSplit(html: string): { headline: string; rest: string } {
   const clean = sanitizeHtml(html).trim();
   // The body is HTML from the editor, so the "first line" is its first block
@@ -159,14 +172,7 @@ function heroSplit(html: string): { headline: string; rest: string } {
   return { headline: first ?? '', rest: others.join('<br>') };
 }
 
-/**
- * The tags the composer's editor can produce, and nothing else.
- *
- * The body arrives as HTML from a rich text editor, so it cannot simply be
- * escaped — but it is also not trusted markup: it is stored on a form and sent
- * to other people, so anything outside this list (a `<script>`, an `<iframe>`,
- * an event handler) is stripped rather than passed on to a mail client.
- */
+ 
 const ALLOWED_TAGS = new Set([
   'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
   'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'a', 'blockquote', 'span',

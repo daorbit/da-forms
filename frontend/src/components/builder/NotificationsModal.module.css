@@ -130,6 +130,11 @@
   color: var(--mantine-color-text);
   font-size: 13px;
 }
+ 
+.toPicker[data-unset] {
+  border-color: var(--mantine-color-red-6);
+  color: var(--mantine-color-red-6);
+}
 
 .toInput,
 .subjectInput {
@@ -247,14 +252,21 @@
   border-color: var(--mantine-color-emerald-6);
 }
 
+ 
 .layoutOption[data-active] {
   border-color: var(--mantine-color-emerald-6);
-  box-shadow: 0 0 0 1px var(--mantine-color-emerald-6);
+  background-color: var(--mantine-color-default-hover);
+  box-shadow: inset 3px 0 0 0 var(--mantine-color-emerald-6);
 }
 
 .layoutOption:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.layoutCheck {
+  flex-shrink: 0;
+  color: var(--mantine-color-emerald-6);
 }
 
 .layoutName {

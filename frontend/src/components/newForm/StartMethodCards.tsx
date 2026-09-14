@@ -27,7 +27,6 @@ export function StartMethodCards({
   const methods = [
     {
       key: 'blank',
-      tone: classes.toneBlank,
       icon: creatingBlank ? <Loader size={24} color="emerald" /> : <IconPlus size={24} />,
       title: 'Start from scratch',
       body: 'An empty form. Add the fields you want, in the order you want them.',
@@ -35,7 +34,7 @@ export function StartMethodCards({
     },
     {
       key: 'orbit',
-      tone: classes.toneOrbit,
+      art: '/build-with-ai.png',
       icon: <OrbitMark size={24} />,
       title: 'Build with Orbit',
       body: 'Describe what you need. Orbit drafts the fields, wording and colours.',
@@ -44,7 +43,7 @@ export function StartMethodCards({
     },
     {
       key: 'template',
-      tone: classes.toneTemplate,
+      art: '/build-with-tempalte.png',
       icon: <IconLayoutGrid size={24} />,
       title: 'Start from a template',
       body: `${formTemplates.length - 1} ready-made forms, previewed before you pick.`,
@@ -52,7 +51,7 @@ export function StartMethodCards({
     },
     {
       key: 'import',
-      tone: classes.toneImport,
+      art: '/build-with-config.png',
       icon: importing ? <Loader size={24} color="emerald" /> : <IconClipboardCheck size={24} />,
       title: 'Import a config',
       body: 'Paste a config copied from another form — fields, theme and settings.',
@@ -70,13 +69,18 @@ export function StartMethodCards({
           disabled={creating}
         >
         
-          <span className={`${classes.cardHead} ${method.tone}`}>
-            <span className={classes.headIcon}>{method.icon}</span>
-            {method.badge && (
-              <Badge size="xs" variant="filled" color="emerald" radius="sm">
-                {method.badge}
-              </Badge>
-            )}
+          <span className={`${classes.cardHead} ${method.art ? classes.cardHeadArt : classes.toneBlank}`}>
+            {/* Decorative only — the title below already names the option, so an
+                alt string here would just repeat it to a screen reader. */}
+            {method.art && <img src={method.art} alt="" className={classes.headArt} aria-hidden />}
+            <span className={classes.headOverlay}>
+              <span className={classes.headIcon}>{method.icon}</span>
+              {method.badge && (
+                <Badge size="xs" variant="filled" color="emerald" radius="sm">
+                  {method.badge}
+                </Badge>
+              )}
+            </span>
           </span>
 
           <span className={classes.cardBody}>

@@ -55,13 +55,54 @@
  * read as a decorative rule instead of the thing that distinguishes the cards.
  */
 .cardHead {
+  position: relative;
+  display: block;
+  padding: 16px;
+  min-height: 74px;
+  border-bottom: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+}
+
+/*
+ * Cards backed by an illustration. The art is a dark render, so the head keeps a
+ * dark ground in both themes rather than flashing white behind a transparent PNG
+ * while it loads.
+ */
+.cardHeadArt {
+  padding: 0;
+  background: #0b0b0d;
+  aspect-ratio: 3 / 2;
+  min-height: 0;
+}
+
+.headArt {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The renders are centre-weighted with a lot of empty ground at the bottom;
+     biasing the crop upward keeps the subject in frame at card size. */
+  object-position: center 42%;
+}
+
+/* Icon and badge sit over the art, so they need their own row rather than
+   relying on the head being a flex container. */
+.headOverlay {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   padding: 16px;
-  min-height: 74px;
-  border-bottom: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+}
+
+/* Over artwork the icon needs its own backing to stay legible. */
+.cardHeadArt .headIcon {
+  color: #fff;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(10, 10, 12, 0.62);
+  backdrop-filter: blur(6px);
 }
 
 .headIcon {
@@ -72,38 +113,25 @@
 }
 
 /*
- * One tint per option.
- *
- * Distinct hues rather than three shades of the accent: the point is telling
- * them apart, which three greens at different lightness does poorly. Kept pale
- * so the head stays a backdrop for the icon rather than competing with it.
+ * No render for the blank option — a picture of nothing is not worth drawing.
+ * It takes the same 3:2 head so the four heads line up across the grid, with a
+ * grid pattern standing in for the art.
  */
-.toneOrbit {
-  background: light-dark(
-    linear-gradient(135deg, var(--mantine-color-violet-1), var(--mantine-color-violet-0)),
-    linear-gradient(135deg, var(--mantine-color-violet-9), var(--mantine-color-dark-6))
-  );
-}
-
-.toneTemplate {
-  background: light-dark(
-    linear-gradient(135deg, var(--mantine-color-blue-1), var(--mantine-color-blue-0)),
-    linear-gradient(135deg, var(--mantine-color-blue-9), var(--mantine-color-dark-6))
-  );
-}
-
 .toneBlank {
-  background: light-dark(
-    linear-gradient(135deg, var(--mantine-color-gray-2), var(--mantine-color-gray-0)),
-    linear-gradient(135deg, var(--mantine-color-dark-5), var(--mantine-color-dark-6))
-  );
-}
-
-.toneImport {
-  background: light-dark(
-    linear-gradient(135deg, var(--mantine-color-teal-1), var(--mantine-color-teal-0)),
-    linear-gradient(135deg, var(--mantine-color-teal-9), var(--mantine-color-dark-6))
-  );
+  aspect-ratio: 3 / 2;
+  min-height: 0;
+  background-image: linear-gradient(
+      to right,
+      light-dark(rgba(15, 23, 42, 0.07), rgba(255, 255, 255, 0.05)) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      light-dark(rgba(15, 23, 42, 0.07), rgba(255, 255, 255, 0.05)) 1px,
+      transparent 1px
+    );
+  background-size: 16px 16px;
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
 }
 
 /* Takes the remaining height so the three bodies align even when one

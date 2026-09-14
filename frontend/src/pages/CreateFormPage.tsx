@@ -7,6 +7,7 @@ import {
   CloseButton,
   Group,
   Loader,
+  Modal,
   ScrollArea,
   Stack,
   Text,
@@ -76,18 +77,7 @@ interface DeckCard {
   busy?: boolean;
 }
 
-/**
- * The create flow, as a page of its own rather than a modal.
- *
- * The name and the scope are already settled by the time anyone arrives — the
- * list page asks for both in a small dialog and passes them in the URL — so
- * this screen is only ever about the form itself.
- *
- * It has two faces. Before there is a draft it is a single prompt, centred,
- * with the other ways in beneath it. Once a form exists it becomes a
- * workspace: Orbit on the left to keep asking for changes, the form on the
- * right in a device mock, and a bar along the bottom to accept it.
- */
+ 
 export function CreateFormPage() {
   const navigate = useNavigate();
   const workspaceId = useWorkspaceId();
@@ -121,6 +111,9 @@ export function CreateFormPage() {
    * the transition into the workspace is a handover rather than a cut.
    */
   const [drafting, setDrafting] = useState<string | null>(null);
+
+  /** Whether Back is waiting on a confirmation to discard the current draft. */
+  const [pendingRestart, setPendingRestart] = useState(false);
 
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -198,15 +191,7 @@ export function CreateFormPage() {
       let next: Draft;
 
       if (template) {
-        /*
-         * An existing form is edited, not regenerated.
-         *
-         * The model answers with operations against the ids it was shown, and
-         * those are applied to the fields already on screen. Asking for a whole
-         * form back instead means everything the prompt did not mention is
-         * rewritten from scratch — which is how "add an email field" ended up
-         * replacing the fields that were already there.
-         */
+
         const snapshot: EditSnapshot = {
           title: template.title,
           formDescription: template.formDescription,
@@ -507,13 +492,7 @@ export function CreateFormPage() {
                 // Throwing away a generated form on a stray Back click would
                 // cost an AI question and give nothing back, so it is worth
                 // asking first.
-                const ok = window.confirm(
-                  'Start over? The form Orbit drafted will be discarded.'
-                );
-                if (!ok) return;
-                setTurns([]);
-                setReady(false);
-                setPrompt('');
+                setPendingRestart(true);
                 return;
               }
               backToList();
@@ -522,7 +501,29 @@ export function CreateFormPage() {
           >
             Back
           </Button>
-          <CloseButton size="lg" radius="xl" onClick={backToList} aria-label="Close" />
+          <Group gap={10}>
+            {/*
+              * Only on the workspace, where a form exists to create.
+              *
+              * It stays mounted for the whole of that screen — disabled while a
+              * revision is in flight rather than disappearing — so it has a
+              * fixed home. On the hero and the two panes there is nothing to
+              * create, and a permanently greyed button there is just clutter.
+              */}
+            {turns.length > 0 && mode === 'hero' && !drafting && (
+              <Button
+                color="emerald"
+                radius="xl"
+                onClick={handleCreate}
+                loading={creating}
+                disabled={!ready || generating}
+                className={classes.createAction}
+              >
+                Create form
+              </Button>
+            )}
+            <CloseButton size="lg" radius="xl" onClick={backToList} aria-label="Close" />
+          </Group>
         </header>
 
         {mode === 'template' ? (
@@ -789,29 +790,36 @@ export function CreateFormPage() {
           </>
         )}
 
-        {/* -------------------------------------------------- ready bar -- */}
-        {ready && (
-          <div className={classes.readyBar}>
-            <div className={classes.readyInner}>
-              <Text size="xs" c="dimmed">
-                Keep refining on the left, or open it in the builder.
-              </Text>
-              <Button
-                color="emerald"
-                size="md"
-                onClick={handleCreate}
-                loading={creating}
-                // Held rather than hidden while a revision is in flight: the
-                // bar staying put is the whole point of latching it.
-                disabled={generating}
-                className={classes.readyAction}
-              >
-                Create form
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
+
+      <Modal
+        opened={pendingRestart}
+        onClose={() => setPendingRestart(false)}
+        title="Start over?"
+        centered
+        radius="lg"
+      >
+        <Text size="sm">
+          The form Orbit drafted will be discarded, and you&apos;ll go back to an empty
+          prompt.
+        </Text>
+        <Group justify="flex-end" mt="lg">
+          <Button variant="default" onClick={() => setPendingRestart(false)}>
+            Keep it
+          </Button>
+          <Button
+            color="red"
+            onClick={() => {
+              setTurns([]);
+              setReady(false);
+              setPrompt('');
+              setPendingRestart(false);
+            }}
+          >
+            Discard and start over
+          </Button>
+        </Group>
+      </Modal>
     </>
   );
 }

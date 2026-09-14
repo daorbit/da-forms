@@ -1181,53 +1181,27 @@
   }
 }
 
-/* ------------------------------------------------------------ ready bar -- */
+/* -------------------------------------------------------- create action -- */
 
-.readyBar {
-  /* A flex child of a fixed-height column, so it is already pinned to the foot
-     of the page — sticky would be positioning it against a scroll that no
-     longer happens. */
-  flex: none;
-  z-index: 4;
-  width: 100%;
-  padding: 14px 20px;
-  background: color-mix(in srgb, var(--mantine-color-body) 90%, transparent);
-  backdrop-filter: blur(14px);
-  border-top: 1px solid var(--mantine-color-default-border);
-  animation: slideUp 280ms ease both;
-}
-
-.readyInner {
-  max-width: 1100px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-/* Pushed to the end, and given a lift of its own — it is the only thing on this
-   bar anyone came here to press. */
-.readyAction {
-  margin-left: auto;
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--mantine-color-emerald-5) 30%, transparent);
+/*
+ * The one action the screen exists for, in the header.
+ *
+ * Always present, so it has a fixed home instead of a bar that slides in under
+ * the cursor part way through; disabled until there is a form to create. The
+ * lift only applies once it is live — a disabled button that still glows reads
+ * as pressable.
+ */
+.createAction {
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
-.readyAction:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--mantine-color-emerald-5) 40%, transparent);
+.createAction:not(:disabled) {
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--mantine-color-emerald-5) 28%, transparent);
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+.createAction:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--mantine-color-emerald-5) 38%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

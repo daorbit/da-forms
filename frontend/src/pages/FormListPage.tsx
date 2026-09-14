@@ -17,6 +17,7 @@ import {
   IconTrash,
   IconCopy,
   IconCopyPlus,
+  IconClipboardCopy,
   IconExternalLink,
   IconRefresh,
   IconEye,
@@ -32,6 +33,7 @@ import {
   deleteForm,
   updateForm,
   duplicateForm as duplicateFormApi,
+  exportFormConfig,
   publicFormPath,
   publicFormUrl,
 } from '@/lib/api';
@@ -99,6 +101,7 @@ export function FormListPage() {
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState<Form | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [copyingConfigId, setCopyingConfigId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<Form | null>(null);
 
   /**
@@ -195,6 +198,31 @@ export function FormListPage() {
       load();
     } finally {
       setDuplicatingId(null);
+    }
+  }
+
+  /**
+   * Put a form's config on the clipboard, to be pasted into another workspace.
+   *
+   * Duplicate copies within one workspace; this crosses the boundary, so the
+   * server strips what cannot travel — uploaded backgrounds, the webhook
+   * secret, the schedule — and hands back a portable envelope.
+   */
+  async function copyConfig(form: Form) {
+    setCopyingConfigId(form._id);
+    try {
+      const config = await exportFormConfig(form._id, workspaceId);
+      await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+      notifications.show({
+        message: 'Config copied — paste it into another workspace',
+        color: 'emerald',
+      });
+    } catch {
+      // Either the export failed or the browser refused clipboard access; the
+      // distinction does not change what they can do about it.
+      notifications.show({ message: 'Could not copy the config', color: 'red' });
+    } finally {
+      setCopyingConfigId(null);
     }
   }
 
@@ -574,6 +602,13 @@ export function FormListPage() {
                       onClick={() => duplicateForm(form)}
                     >
                       Duplicate
+                    </Menu.Item>
+                    <Menu.Item
+                      leftSection={<IconClipboardCopy size={15} />}
+                      disabled={copyingConfigId === form._id}
+                      onClick={() => copyConfig(form)}
+                    >
+                      Copy config
                     </Menu.Item>
                     <Menu.Divider />
                     <Menu.Item

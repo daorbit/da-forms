@@ -386,6 +386,25 @@ export function duplicateForm(id: string, workspaceId = DEFAULT_WORKSPACE) {
 }
 
  
+export interface FormConfigEnvelope {
+  kind: string;
+  version: number;
+  exportedAt: string;
+  form: Record<string, unknown>;
+}
+
+export function exportFormConfig(id: string, workspaceId = DEFAULT_WORKSPACE) {
+  return request<FormConfigEnvelope>(`${ws(workspaceId)}/${id}/config`);
+}
+
+export function importFormConfig(config: unknown, workspaceId = DEFAULT_WORKSPACE) {
+  return request<Form>(`${ws(workspaceId)}/import`, {
+    method: 'POST',
+    body: JSON.stringify({ config }),
+  });
+}
+
+ 
 export function submitForm(id: string, data: Record<string, string>) {
   return request<Submission | PaymentRequired>(`/public/forms/${id}/submissions`, {
     method: 'POST',

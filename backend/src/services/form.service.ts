@@ -264,6 +264,180 @@ export async function duplicateForm(id: string, workspaceId: string) {
   });
 }
 
+/* ------------------------- portable form config ---------------------------- */
+
+/**
+ * The envelope a copied form travels in.
+ *
+ * Versioned because the shape people paste may have been copied weeks ago
+ * against an older build, and `kind` so a stray clipboard paste is rejected
+ * with a sentence rather than a schema error.
+ */
+export const FORM_CONFIG_KIND = 'da-forms/form-config';
+export const FORM_CONFIG_VERSION = 1;
+
+export interface FormConfigEnvelope {
+  kind: typeof FORM_CONFIG_KIND;
+  version: number;
+  exportedAt: string;
+  form: Record<string, unknown>;
+}
+
+/**
+ * Everything that travels with a copied form.
+ *
+ * Listed rather than derived by deletion, so a field added to the model later
+ * is left out of an export until someone decides it should travel — the safer
+ * default when the new field might be a secret or a workspace-bound id.
+ */
+const PORTABLE_FIELDS = [
+  'name',
+  'title',
+  'description',
+  'fields',
+  'redirectUrl',
+  'thankYouMessage',
+  'hideHeader',
+  'headerAlign',
+  'labelPlacement',
+  'submitLabel',
+  'submitButtonSize',
+  'submitButtonWidth',
+  'submitButtonAlign',
+  'theme',
+  'steps',
+  'stepIndicator',
+  'showStepHeadings',
+  'collectIp',
+  'notifications',
+  'requireCaptcha',
+  'collectPartials',
+  'allowEdit',
+] as const;
+
+/**
+ * Uploaded images belong to the workspace that uploaded them.
+ *
+ * A pasted form pointing at the source workspace's upload would break the day
+ * that form is deleted, and would leak an asset across a workspace boundary in
+ * the meantime — so the reference is dropped and the colours are kept. Same
+ * reasoning as `stripBackgrounds`, which the duplicate path uses for the
+ * narrower same-workspace case.
+ */
+function stripUploadedImages(theme: FormTheme | undefined): FormTheme | undefined {
+  if (!theme) return theme;
+  const next: FormTheme = { ...theme };
+  if (typeof next.pageBg === 'string' && next.pageBg.startsWith('http')) delete next.pageBg;
+  if (next.pageBackground) {
+    const { image: _image, ...rest } = next.pageBackground;
+    next.pageBackground = rest;
+  }
+  if (next.cardBackground) {
+    const { image: _image, ...rest } = next.cardBackground;
+    next.cardBackground = rest;
+  }
+  return next;
+}
+
+/**
+ * A payment field names the gateway it charges through, and the keys for that
+ * gateway live in workspace settings. The provider is kept — the field is
+ * useless without one and the target workspace may well have the same gateway
+ * connected — but it is the importing workspace's own keys that will be used.
+ */
+export async function exportFormConfig(
+  id: string,
+  workspaceId: string
+): Promise<FormConfigEnvelope | null> {
+  const source = await FormModel.findOne({ _id: id, workspaceId });
+  if (!source) return null;
+
+  const doc = source.toObject() as unknown as Record<string, unknown>;
+  const form: Record<string, unknown> = {};
+  for (const key of PORTABLE_FIELDS) {
+    if (doc[key] !== undefined) form[key] = doc[key];
+  }
+  form.theme = stripUploadedImages(doc.theme as FormTheme | undefined);
+  if (form.theme === undefined) delete form.theme;
+
+  return {
+    kind: FORM_CONFIG_KIND,
+    version: FORM_CONFIG_VERSION,
+    exportedAt: new Date().toISOString(),
+    form,
+  };
+}
+
+export class InvalidFormConfigError extends Error {}
+
+/**
+ * Read a pasted envelope back into something `createForm` will accept.
+ *
+ * Anything outside `PORTABLE_FIELDS` is discarded rather than trusted: the
+ * payload arrives from a clipboard, so it must be treated as input a person
+ * can edit, not as a document this server wrote.
+ */
+export function parseFormConfig(payload: unknown): Record<string, unknown> {
+  if (!payload || typeof payload !== 'object') {
+    throw new InvalidFormConfigError('That does not look like a form config.');
+  }
+  const envelope = payload as Partial<FormConfigEnvelope>;
+  if (envelope.kind !== FORM_CONFIG_KIND) {
+    throw new InvalidFormConfigError('That does not look like a form config.');
+  }
+  if (typeof envelope.version !== 'number' || envelope.version > FORM_CONFIG_VERSION) {
+    throw new InvalidFormConfigError(
+      'This config was copied from a newer version of the app.'
+    );
+  }
+  const source = envelope.form;
+  if (!source || typeof source !== 'object') {
+    throw new InvalidFormConfigError('That config has no form in it.');
+  }
+
+  const form: Record<string, unknown> = {};
+  for (const key of PORTABLE_FIELDS) {
+    const value = (source as Record<string, unknown>)[key];
+    if (value !== undefined) form[key] = value;
+  }
+
+  if (typeof form.title !== 'string' || !form.title.trim()) {
+    throw new InvalidFormConfigError('That config has no form title.');
+  }
+  if (form.fields !== undefined && !Array.isArray(form.fields)) {
+    throw new InvalidFormConfigError('That config has no usable fields.');
+  }
+
+  form.theme = stripUploadedImages(form.theme as FormTheme | undefined);
+  if (form.theme === undefined) delete form.theme;
+
+  return form;
+}
+
+/**
+ * Create a form in `workspaceId` from a pasted config.
+ *
+ * Always a draft: a form arriving from elsewhere has not been reviewed against
+ * this workspace's gateways or mailer, and publishing it on paste would put a
+ * live, possibly uncharged checkout on the internet.
+ */
+export async function importFormConfig(payload: unknown, workspaceId: string) {
+  const form = parseFormConfig(payload);
+  // `parseFormConfig` has already established that the title is a non-empty
+  // string; the name falls back to it when the config carried none.
+  const title = form.title as string;
+  const name = typeof form.name === 'string' && form.name.trim() ? form.name : title;
+
+  return FormModel.create({
+    ...form,
+    title,
+    name,
+    workspaceId,
+    status: 'draft',
+    viewCount: 0,
+  });
+}
+
 export async function deleteForm(id: string, workspaceId: string) {
   const form = await FormModel.findOne({ _id: id, workspaceId });
   if (!form) return null;

@@ -1,41 +1,38 @@
-import { Badge, Group, Loader, Text, UnstyledButton } from '@mantine/core';
-import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
+import { Badge, Loader, Text, UnstyledButton } from '@mantine/core';
+import { IconClipboardCheck, IconLayoutGrid, IconPlus } from '@tabler/icons-react';
 import { formTemplates } from '@/lib/templates';
 import { OrbitMark } from '@/components/OrbitMark';
 import classes from './StartMethodCards.module.css';
 
 interface Props {
-  /** True while the blank form is being created, which disables all three. */
   creating: boolean;
-  /** True for the card whose action is running, so only it shows a spinner. */
   creatingBlank: boolean;
+  importing?: boolean;
   onBlank: () => void;
   onTemplate: () => void;
   onOrbit: () => void;
+  onImport: () => void;
 }
 
-/**
- * The three ways to start, on the step between naming a form and building it.
- *
- * Each card is a tall panel with its own tinted head: the head carries the icon
- * and gives the three distinct colour, so they are told apart at a glance
- * rather than by reading three near-identical grey boxes. Below it the title
- * and one line of explanation, and the whole card is the click target.
- *
- * Ordered by how much each does for you. Orbit leads and carries the badge — it
- * is the one most people want and the least likely to be found on its own.
- *
- * "From scratch" creates the form on the spot; the other two open another step,
- * so only the first can be mid-flight and only it has a loading state.
- */
+ 
 export function StartMethodCards({
   creating,
   creatingBlank,
+  importing = false,
   onBlank,
   onTemplate,
   onOrbit,
+  onImport,
 }: Props) {
   const methods = [
+    {
+      key: 'blank',
+      tone: classes.toneBlank,
+      icon: creatingBlank ? <Loader size={24} color="emerald" /> : <IconPlus size={24} />,
+      title: 'Start from scratch',
+      body: 'An empty form. Add the fields you want, in the order you want them.',
+      onClick: onBlank,
+    },
     {
       key: 'orbit',
       tone: classes.toneOrbit,
@@ -50,23 +47,21 @@ export function StartMethodCards({
       tone: classes.toneTemplate,
       icon: <IconLayoutGrid size={24} />,
       title: 'Start from a template',
-      // Less the blank entry, which is its own card rather than one of the
-      // templates on offer.
       body: `${formTemplates.length - 1} ready-made forms, previewed before you pick.`,
       onClick: onTemplate,
     },
     {
-      key: 'blank',
-      tone: classes.toneBlank,
-      icon: creatingBlank ? <Loader size={24} color="emerald" /> : <IconPlus size={24} />,
-      title: 'Start from scratch',
-      body: 'An empty form. Add the fields you want, in the order you want them.',
-      onClick: onBlank,
+      key: 'import',
+      tone: classes.toneImport,
+      icon: importing ? <Loader size={24} color="emerald" /> : <IconClipboardCheck size={24} />,
+      title: 'Import a config',
+      body: 'Paste a config copied from another form — fields, theme and settings.',
+      onClick: onImport,
     },
   ];
 
   return (
-    <Group grow align="stretch" gap="sm" wrap="nowrap">
+    <div className={classes.methodGrid}>
       {methods.map((method) => (
         <UnstyledButton
           key={method.key}
@@ -74,8 +69,7 @@ export function StartMethodCards({
           onClick={method.onClick}
           disabled={creating}
         >
-          {/* The tinted head. Its colour is what separates the three on sight,
-              and it holds the badge so the body below stays one clean block. */}
+        
           <span className={`${classes.cardHead} ${method.tone}`}>
             <span className={classes.headIcon}>{method.icon}</span>
             {method.badge && (
@@ -95,6 +89,6 @@ export function StartMethodCards({
           </span>
         </UnstyledButton>
       ))}
-    </Group>
+    </div>
   );
 }

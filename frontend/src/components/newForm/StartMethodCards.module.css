@@ -1,10 +1,17 @@
-/*
- * One way of starting, as a tall card.
- *
- * A tinted head over a plain body, rather than an icon floating on a grey
- * rectangle: the head gives each option its own colour, which is what lets the
- * three be told apart before any of the text is read.
- */
+
+.methodGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+@media (max-width: 560px) {
+  .methodGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .methodCard {
   display: flex !important;
   flex-direction: column;
@@ -89,6 +96,13 @@
   background: light-dark(
     linear-gradient(135deg, var(--mantine-color-gray-2), var(--mantine-color-gray-0)),
     linear-gradient(135deg, var(--mantine-color-dark-5), var(--mantine-color-dark-6))
+  );
+}
+
+.toneImport {
+  background: light-dark(
+    linear-gradient(135deg, var(--mantine-color-teal-1), var(--mantine-color-teal-0)),
+    linear-gradient(135deg, var(--mantine-color-teal-9), var(--mantine-color-dark-6))
   );
 }
 

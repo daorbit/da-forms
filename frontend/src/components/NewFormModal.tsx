@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, TextInput, Button, Group, Stack, Text, SegmentedControl, Box, UnstyledButton, Chip, ScrollArea, CloseButton } from '@mantine/core';
+import { Modal, TextInput, Textarea, Button, Group, Stack, Text, SegmentedControl, Box, UnstyledButton, Chip, ScrollArea, CloseButton, Alert } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconSearch } from '@tabler/icons-react';
+import { IconArrowLeft, IconClipboard, IconSearch } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import type { FormTheme } from '@/types';
 import { formTemplates, templateCategories, type TemplateCategory } from '@/lib/templates';
@@ -12,7 +12,7 @@ import { FormPage } from '@/components/FormPage';
 import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
 import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
 import { useFitScale } from '@/hooks/useFitScale';
-import { createForm } from '@/lib/api';
+import { createForm, importFormConfig, ApiError } from '@/lib/api';
 import { isPlanLimit } from '@/lib/planLimit';
 import { ScopePicker } from './newForm/ScopePicker';
 import { StartMethodCards } from './newForm/StartMethodCards';
@@ -35,7 +35,8 @@ interface Props {
 export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
   const navigate = useNavigate();
   const workspaceId = useWorkspaceId();
-  const [step, setStep] = useState<1 | 2 | 3>(resume ? 2 : 1);
+  // 4 is the paste step, reached only from the import card on step two.
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(resume ? 2 : 1);
   const [name, setName] = useState(resume?.name ?? '');
   const [scope, setScope] = useState<NonNullable<FormTheme['scope']>>(resume?.scope ?? 'page');
   const defaultTemplateId = formTemplates.find((t) => t.id !== 'blank')?.id ?? formTemplates[0].id;
@@ -46,6 +47,11 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
 
   const [device, setDevice] = useState<DeviceId>('macbook');
+
+  /** The pasted config, and whatever was wrong with it last time we tried. */
+  const [configText, setConfigText] = useState('');
+  const [configError, setConfigError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const categories = usedCategories(formTemplates, templateCategories);
   // The blank card is a shortcut, not a template — it stays pinned at the top
@@ -85,6 +91,9 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
     setQuery('');
     setCategory('All');
     setScopeFilter('all');
+    setConfigText('');
+    setConfigError(null);
+    setImporting(false);
   }
 
   function handleClose() {
@@ -138,29 +147,87 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
     }
   }
 
+  /**
+   * Read the clipboard for them where the browser allows it.
+   *
+   * Permission is refused outright in some browsers and on insecure origins, so
+   * a failure is silent: the textarea is still there and Ctrl+V still works.
+   */
+  async function pasteFromClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.trim()) {
+        setConfigText(text);
+        setConfigError(null);
+      }
+    } catch {
+      /* No clipboard permission — they can paste into the field themselves. */
+    }
+  }
+
+  /**
+   * Create a form from a pasted config.
+   *
+   * The JSON is parsed here only to give a useful message for a truncated or
+   * mangled paste; what the config actually contains is the server's call,
+   * since it is the side that decides what may cross a workspace boundary.
+   */
+  async function handleImport() {
+    const text = configText.trim();
+    if (!text) return;
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      setConfigError('That is not valid JSON — paste the whole config, including the braces.');
+      return;
+    }
+
+    setImporting(true);
+    setConfigError(null);
+    try {
+      const form = await importFormConfig(parsed, workspaceId);
+      reset();
+      onClose();
+      navigate(`/${workspaceId}/forms/${form._id}/edit`);
+    } catch (err) {
+      setImporting(false);
+      if (isPlanLimit(err)) {
+        handleClose();
+        return;
+      }
+      setConfigError(
+        err instanceof ApiError ? err.message : 'Could not import that config.'
+      );
+    }
+  }
+
   return (
     <Modal
       opened={opened}
       onClose={handleClose}
-      title={step === 1 ? 'Create a new form' : step === 2 ? 'How do you want to start?' : 'Choose a template'}
+      title={
+        step === 1
+          ? 'Create a new form'
+          : step === 2
+            ? 'How do you want to start?'
+            : step === 4
+              ? 'Import a form config'
+              : 'Choose a template'
+      }
       centered
       // A click on the backdrop is far more often a miss than an intent to
       // leave, and it would throw away a typed name, a chosen template, or a
       // draft that cost an AI question. Escape and the explicit buttons still
       // close it.
       closeOnClickOutside={false}
-      // A fixed 960 left the preview cramped on a large screen and overflowing
-      // on a small one. The picker step tracks the viewport with a ceiling, so
-      // a long template (RSVP, feedback survey) is readable without scrolling
-      // the modal itself.
-      // Step two holds three cards side by side, which 'lg' squeezed to the
-      // point that each description wrapped to five lines. Step one holds two
-      // diagrams, which need width of their own to stay readable.
+
       size={
         step === 3
           ? 'min(1180px, 94vw)'
           : step === 2
-            ? 'min(860px, 94vw)'
+            ? 'min(760px, 94vw)'
             : 'min(820px, 94vw)'
       }
       radius="lg"
@@ -176,8 +243,9 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
           </Text>
 
           <StartMethodCards
-            creating={creating}
+            creating={creating || importing}
             creatingBlank={creating && templateId === blank?.id}
+            importing={importing}
             onBlank={() => {
               if (!blank) return;
               setTemplateId(blank.id);
@@ -185,6 +253,11 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
             }}
             onTemplate={() => setStep(3)}
             onOrbit={() => onUseAi(name.trim(), scope)}
+            onImport={() => {
+              setConfigError(null);
+              setStep(4);
+              pasteFromClipboard();
+            }}
           />
 
           <Group justify="space-between">
@@ -199,6 +272,96 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
             <Button variant="default" onClick={handleClose}>
               Cancel
             </Button>
+          </Group>
+        </Stack>
+      ) : step === 4 ? (
+        <Stack gap="md">
+          <Text size="sm" c="dimmed" mt={-4}>
+            Open the form you want to copy in its own workspace, choose{' '}
+            <b>Copy config</b>, and paste it here. It arrives as a draft named “
+            {name.trim()}”.
+          </Text>
+
+          <Textarea
+            label="Form config"
+            description="The JSON copied from another form. Fields, layout, theme and settings travel; uploaded background images and webhook secrets do not."
+            placeholder='{"kind":"da-forms/form-config", …}'
+            value={configText}
+            onChange={(e) => {
+              setConfigText(e.currentTarget.value);
+              setConfigError(null);
+            }}
+            error={configError}
+            autosize
+            minRows={7}
+            maxRows={14}
+            spellCheck={false}
+            styles={{ input: { fontFamily: 'var(--mantine-font-family-monospace)', fontSize: 12 } }}
+            data-autofocus
+            disabled={importing}
+          />
+
+          <Group gap="xs">
+            <Button
+              variant="light"
+              color="gray"
+              size="xs"
+              leftSection={<IconClipboard size={14} />}
+              onClick={pasteFromClipboard}
+              disabled={importing}
+            >
+              Paste from clipboard
+            </Button>
+            {configText && (
+              <Button
+                variant="subtle"
+                color="gray"
+                size="xs"
+                onClick={() => {
+                  setConfigText('');
+                  setConfigError(null);
+                }}
+                disabled={importing}
+              >
+                Clear
+              </Button>
+            )}
+          </Group>
+
+          {/* Payment fields keep the gateway they name, but the keys are the
+              importing workspace's — worth saying before someone publishes a
+              pasted checkout and wonders whose account it charges. */}
+          <Alert color="gray" variant="light" radius="md">
+            <Text size="xs">
+              The form is imported as a draft. Payment fields keep their gateway,
+              but charge through this workspace&apos;s own keys — connect it under
+              Integrations before publishing.
+            </Text>
+          </Alert>
+
+          <Group justify="space-between">
+            <Button
+              variant="subtle"
+              color="gray"
+              leftSection={<IconArrowLeft size={16} />}
+              onClick={() => setStep(2)}
+              disabled={importing}
+            >
+              Back
+            </Button>
+            <Group>
+              <Button variant="default" onClick={handleClose} disabled={importing}>
+                Cancel
+              </Button>
+              <Button
+                color="emerald"
+                onClick={handleImport}
+                loading={importing}
+                disabled={!configText.trim()}
+              >
+                Import form
+              </Button>
+            </Group>
           </Group>
         </Stack>
       ) : step === 1 ? (

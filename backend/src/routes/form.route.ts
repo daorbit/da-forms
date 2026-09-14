@@ -76,6 +76,10 @@ workspaceFormRouter.post('/', asyncHandler(formController.createForm));
 workspaceFormRouter.get('/:id', asyncHandler(formController.getForm));
 workspaceFormRouter.patch('/:id', asyncHandler(formController.updateForm));
 workspaceFormRouter.post('/:id/duplicate', asyncHandler(formController.duplicateForm));
+// Copying a form between workspaces: export hands back a portable config, and
+// import creates a draft from one pasted into another workspace.
+workspaceFormRouter.get('/:id/config', asyncHandler(formController.exportFormConfig));
+workspaceFormRouter.post('/import', asyncHandler(formController.importFormConfig));
 workspaceFormRouter.delete('/:id', asyncHandler(formController.deleteForm));
 workspaceFormRouter.get('/:id/submissions', asyncHandler(formController.listSubmissions));
 workspaceFormRouter.patch('/:id/submissions/:subId', asyncHandler(formController.updateSubmission));

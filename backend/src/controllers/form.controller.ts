@@ -180,6 +180,51 @@ export const duplicateForm: RequestHandler = async (req, res) => {
   res.status(201).json(copy);
 };
 
+export const exportFormConfig: RequestHandler = async (req, res) => {
+  const config = await formService.exportFormConfig(
+    req.params.id,
+    workspaceIdOf(req),
+  );
+  if (!config)
+    return res
+      .status(404)
+      .json({ error: "not_found", message: "Form not found" });
+  res.json(config);
+};
+
+export const importFormConfig: RequestHandler = async (req, res) => {
+  const workspaceId = workspaceIdOf(req);
+  const limits = await getFormLimits(workspaceId);
+  if (limits) {
+    const count = await formService.countForms(workspaceId);
+    if (count >= limits.maxForms) {
+      return planLimit(
+        res,
+        `Your plan includes ${limits.maxForms} form${limits.maxForms === 1 ? "" : "s"} — upgrade to build more.`,
+        {
+          kind: "forms",
+          label: "Forms",
+          used: count,
+          quota: limits.maxForms,
+          plan: limits.planName ?? limits.plan,
+        },
+      );
+    }
+  }
+
+  try {
+    const form = await formService.importFormConfig(req.body?.config, workspaceId);
+    res.status(201).json(form);
+  } catch (err) {
+    if (err instanceof formService.InvalidFormConfigError) {
+      return res
+        .status(400)
+        .json({ error: "invalid_config", message: err.message });
+    }
+    throw err;
+  }
+};
+
 export const deleteForm: RequestHandler = async (req, res) => {
   const form = await formService.deleteForm(req.params.id, workspaceIdOf(req));
   if (!form)

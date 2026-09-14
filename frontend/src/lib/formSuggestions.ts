@@ -91,6 +91,49 @@ const SUGGESTIONS = [
  * Picking indices at random without this would eventually offer the same
  * suggestion twice in one set, which reads as a bug rather than as chance.
  */
+export interface SuggestionChip {
+  /** A few words, for a chip that has to stay on one line. */
+  label: string;
+  /** The full sentence, which is what actually gets sent. */
+  prompt: string;
+}
+
+/**
+ * A short name for a suggestion, taken from the front of the sentence.
+ *
+ * The sentences are written to produce good forms, not to fit on a chip — "Vet
+ * registration for a new pet, with breed and vaccination history" is the right
+ * thing to send and the wrong thing to show. Everything from the first comma or
+ * dash onwards is detail about the fields, and everything after the first
+ * preposition is detail about the context, so cutting at whichever comes first
+ * leaves the part that names the form.
+ *
+ * The full sentence is still what gets sent, and still what the chip's tooltip
+ * shows — this only changes the label.
+ */
+function chipLabel(prompt: string): string {
+  // Only break on punctuation that separates clauses. A hyphen inside a word is
+  // part of it — splitting on that turned "Post-support-call survey" into the
+  // label "Post".
+  const head = prompt.split(/,|\s[—–-]\s/)[0].trim();
+  const words = head.split(/\s+/);
+
+  const stop = words.findIndex((w, i) =>
+    i > 0 && /^(for|with|about|at|to|of|by|from|in|on|asking|covering|that)$/i.test(w)
+  );
+  const kept = stop === -1 ? words : words.slice(0, stop);
+
+  // Four words is the most a chip holds comfortably at this size. Past that the
+  // row wraps into a block and stops reading as a set of quick picks.
+  const label = kept.slice(0, 4).join(' ');
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+/** `count` suggestions as chips, each with a short label and its full prompt. */
+export function pickSuggestionChips(count = 3): SuggestionChip[] {
+  return pickSuggestions(count).map((prompt) => ({ label: chipLabel(prompt), prompt }));
+}
+
 export function pickSuggestions(count = 3): string[] {
   const pool = [...SUGGESTIONS];
   const take = Math.min(count, pool.length);

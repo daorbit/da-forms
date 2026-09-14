@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { FormListPage } from '@/pages/FormListPage';
 import { FormBuilderPage } from '@/pages/FormBuilderPage';
+import { CreateFormPage } from '@/pages/CreateFormPage';
 import { EntriesPage } from '@/pages/EntriesPage';
 import { PublicFormPage } from '@/pages/PublicFormPage';
 import { SmallScreenGate } from '@/components/builder/SmallScreenGate';
@@ -15,6 +16,20 @@ function NewFormRoute() {
   return (
     <SmallScreenGate>
       <FormBuilderPage />
+    </SmallScreenGate>
+  );
+}
+
+/**
+ * The create flow. Behind the same demo guard as the builder: it ends in a
+ * write, so a read-only workspace should never reach it.
+ */
+function CreateFormRoute() {
+  const workspaceId = useWorkspaceId();
+  if (isDemoWorkspace(workspaceId)) return <Navigate to={`/${workspaceId}/forms`} replace />;
+  return (
+    <SmallScreenGate>
+      <CreateFormPage />
     </SmallScreenGate>
   );
 }
@@ -34,6 +49,7 @@ export function App() {
 
         <Route path="/:workspaceId/forms" element={<FormListPage />} />
         <Route path="/:workspaceId/forms/new" element={<NewFormRoute />} />
+        <Route path="/:workspaceId/forms/create" element={<CreateFormRoute />} />
         <Route
           path="/:workspaceId/forms/:id/edit"
           element={

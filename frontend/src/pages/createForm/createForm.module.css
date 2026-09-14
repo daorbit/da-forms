@@ -1,0 +1,653 @@
+/* ---------------------------------------------------------------- shell -- */
+
+.page {
+  position: relative;
+  z-index: 1;
+  /* Fixed to the viewport rather than merely at least as tall as it: the two
+     panes scroll on their own, and a page that also scrolls would take the
+     device mock and the ready bar off screen together. */
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar {
+  flex: none;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  /* No background: the aurora is meant to run under the bar. A surface here
+     would cut a hard band across the wash at the top of the page. */
+}
+
+/* ----------------------------------------------------------------- hero -- */
+
+.hero {
+  flex: 1;
+  min-height: 0;
+  /* The page itself no longer scrolls, so on a short window the hero takes the
+     overflow rather than hiding the deck below the fold. */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px 40px;
+  gap: 28px;
+}
+
+.heroHead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.heroMark {
+  /* A slow bob, so the mark reads as alive while the page is idle. */
+  animation: bob 4.5s ease-in-out infinite;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+/*
+ * The prompt box, with a border that runs through several colours.
+ *
+ * The hues are declared once here and used by both the border and the glow
+ * below it, so the light spilling onto the page is the same light as the edge
+ * rather than an approximation of it.
+ */
+.composer {
+  --composer-edge: linear-gradient(
+    108deg,
+    #8b5cf6 0%,
+    #a855f7 18%,
+    #f0abfc 32%,
+    #fbbf24 55%,
+    #a3e635 78%,
+    #22c55e 100%
+  );
+
+  position: relative;
+  width: min(720px, 100%);
+  border-radius: 18px;
+
+  /*
+   * A gradient border, which CSS has no direct property for.
+   *
+   * Two backgrounds in one declaration: the fill clipped to the padding box,
+   * and the gradient clipped to the border box. The border itself is
+   * transparent, so what shows through it is the second layer — the gradient —
+   * and what covers the middle is the first. `border-box` on the origin is what
+   * stops the fill from being offset by the border width.
+   */
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--mantine-color-body), var(--mantine-color-body)) padding-box,
+    var(--composer-edge) border-box;
+
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 220ms ease, transform 220ms ease;
+}
+
+/*
+ * The glow: the same gradient again, blurred, sitting behind the box.
+ *
+ * A `box-shadow` cannot take a gradient, and a `filter: blur()` on the composer
+ * itself would blur the text inside it. A copy on its own layer, pushed behind
+ * with a negative z-index, is the only way to spill the edge's colours onto the
+ * page.
+ */
+.composer::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--composer-edge);
+  filter: blur(14px);
+  opacity: 0.55;
+  transition: opacity 220ms ease, filter 220ms ease;
+}
+
+.composer:focus-within {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.14);
+}
+
+.composer:focus-within::before {
+  opacity: 0.85;
+  filter: blur(18px);
+}
+
+/* A brighter edge on a dark ground — the same hues at the light weight read as
+   grey once there is no white page for them to sit against. */
+:global([data-mantine-color-scheme='dark']) .composer {
+  --composer-edge: linear-gradient(
+    108deg,
+    #a78bfa 0%,
+    #c084fc 18%,
+    #f5b8fb 32%,
+    #fcd34d 55%,
+    #bef264 78%,
+    #34d399 100%
+  );
+
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.55);
+}
+
+:global([data-mantine-color-scheme='dark']) .composer::before {
+  opacity: 0.4;
+}
+
+:global([data-mantine-color-scheme='dark']) .composer:focus-within::before {
+  opacity: 0.65;
+}
+
+/*
+ * The input's own surface has to stay out of the way.
+ *
+ * `variant="unstyled"` already drops the border, but Mantine still paints a
+ * background on the input, which would cover the composer's fill with a
+ * straight-edged rectangle inside the rounded border.
+ */
+.composer textarea,
+.composerCompact textarea {
+  background: transparent;
+}
+
+/*
+ * The same composer, sized for the Orbit panel.
+ *
+ * No green ring and no lift here: inside a panel that already has its own
+ * border, the ring reads as a second frame around a frame.
+ */
+.composerCompact {
+  margin: 0 10px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: color-mix(in srgb, var(--mantine-color-default) 50%, var(--mantine-color-body));
+  transition: border-color 160ms ease;
+}
+
+.composerCompact:focus-within {
+  border-color: color-mix(in srgb, var(--mantine-color-emerald-5) 55%, transparent);
+}
+
+.composerCompact .composerFoot {
+  padding: 0 8px 8px;
+}
+
+.composerFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px 12px;
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: min(720px, 100%);
+}
+
+/*
+ * A pill, and it has to look like one on its own.
+ *
+ * The previous fill was mixed towards `transparent`, which on a dark ground
+ * left nothing but the label — three bare sentences stacked under the composer,
+ * with no edge to say they were pressable. This keeps a real surface and a real
+ * border in both schemes.
+ */
+/*
+ * The doubled class is deliberate, here and on the other two surfaces below.
+ *
+ * These are all `UnstyledButton`s, whose own rule zeroes padding, background
+ * and border. That rule is a single class, so a single class of ours only ties
+ * with it — and Mantine's stylesheet is injected after the CSS modules, so the
+ * tie goes to Mantine and the pill renders as bare text. Repeating the selector
+ * wins on specificity without reaching for `!important`.
+ */
+/*
+ * Small, quiet chips.
+ *
+ * The doubled class is deliberate, here and on the deck cards: both are
+ * `UnstyledButton`s, whose own rule zeroes padding, background and border. That
+ * rule is a single class, so a single class of ours only ties with it — and
+ * Mantine's stylesheet is injected after the CSS modules, so the tie goes to
+ * Mantine and the chip renders as bare text.
+ */
+.suggestion.suggestion {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 5px 13px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mantine-color-emerald-5) 30%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 7%, var(--mantine-color-body));
+  color: var(--mantine-color-dimmed);
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: nowrap;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.suggestion.suggestion:hover:not(:disabled) {
+  color: var(--mantine-color-text);
+  border-color: color-mix(in srgb, var(--mantine-color-emerald-5) 60%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 14%, var(--mantine-color-body));
+}
+
+.suggestion:disabled {
+  opacity: 0.5;
+}
+
+:global([data-mantine-color-scheme='dark']) .suggestion.suggestion {
+  border-color: color-mix(in srgb, var(--mantine-color-emerald-5) 26%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 10%, var(--mantine-color-body));
+}
+
+/* ---------------------------------------------------------------- deck --- */
+
+.deck {
+  /*
+   * Grounded by a fade, not by a slab.
+   *
+   * A flat fill with a border across the top cut the page in half and killed
+   * the aurora dead along a straight line. This starts fully transparent, so
+   * the wash runs down into the row and only firms up under the cards, where
+   * the text actually needs a ground to sit on.
+   */
+  flex: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--mantine-color-body) 55%, transparent) 38%,
+    color-mix(in srgb, var(--mantine-color-body) 88%, transparent) 100%
+  );
+  padding: 40px 20px 30px;
+}
+
+.deckGrid {
+  max-width: 940px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .deckGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .deckGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.deckCard.deckCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-default-border);
+  /* Same trick as the composer: a top-lit gradient rather than a flat fill, so
+     the card has a direction of light instead of reading as a cut-out. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mantine-color-default) 55%, var(--mantine-color-body)) 0%,
+    var(--mantine-color-body) 100%
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+/*
+ * The hover glow.
+ *
+ * A pseudo-element rather than a background swap, because the card's own
+ * background is a gradient and cross-fading two gradients is not something CSS
+ * will interpolate. This one just fades in over the top of it.
+ */
+.deckCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+  background: radial-gradient(
+    120% 80% at 50% 0%,
+    color-mix(in srgb, var(--mantine-color-emerald-5) 22%, transparent) 0%,
+    transparent 70%
+  );
+}
+
+.deckCard.deckCard:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--mantine-color-emerald-5) 60%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent),
+    0 14px 32px rgba(0, 0, 0, 0.28),
+    0 0 0 1px color-mix(in srgb, var(--mantine-color-emerald-5) 18%, transparent);
+}
+
+.deckCard:hover:not(:disabled)::after {
+  opacity: 1;
+}
+
+.deckCard:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.deckCard:disabled {
+  opacity: 0.55;
+}
+
+:global([data-mantine-color-scheme='dark']) .deckCard.deckCard {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #fff 6%, var(--mantine-color-body)) 0%,
+    color-mix(in srgb, #fff 1%, var(--mantine-color-body)) 100%
+  );
+}
+
+.deckArt {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The artwork is drawn on its own near-black ground, so the tile behind it
+     has to be dark too or a light seam shows around the illustration. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mantine-color-default) 80%, var(--mantine-color-body)) 0%,
+    var(--mantine-color-default) 100%
+  );
+  overflow: hidden;
+}
+
+/* The art itself lifts a touch on hover, so the whole tile does not feel like
+   one flat sticker sliding upward. */
+.deckCard:hover:not(:disabled) .deckArt img {
+  transform: scale(1.04);
+}
+
+.deckArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+
+.deckBody {
+  position: relative;
+  z-index: 1;
+  padding: 12px 14px 14px;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- build -- */
+
+/*
+ * Two panes: Orbit on the left, the preview on the right.
+ *
+ * `min-height: 0` on the row is what lets either pane scroll — without it a
+ * flex child is sized by its content and the whole page grows a scrollbar
+ * instead, which would take the device frame off screen.
+ */
+.build {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: 14px;
+  padding: 4px 16px 16px;
+}
+
+@media (max-width: 980px) {
+  .build {
+    /* Below this the two panes are each too narrow to be worth having. The
+       preview goes on top, where the reveal is still the thing being watched,
+       and Orbit sits under it. */
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(240px, 1fr) auto;
+  }
+
+  .orbitPane {
+    order: 2;
+    max-height: 320px;
+  }
+
+  .previewPane {
+    order: 1;
+  }
+}
+
+/* ----------------------------------------------------------- left pane -- */
+
+.orbitPane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-default-border);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mantine-color-default) 45%, var(--mantine-color-body)) 0%,
+    var(--mantine-color-body) 240px
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent);
+}
+
+:global([data-mantine-color-scheme='dark']) .orbitPane {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #fff 5%, var(--mantine-color-body)) 0%,
+    var(--mantine-color-body) 240px
+  );
+}
+
+.paneHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.thread {
+  flex: 1;
+  min-height: 0;
+}
+
+/* What was asked, in the person's own words. Aligned right and tinted, so a
+   long conversation still reads as a conversation at a glance. */
+.askBubble {
+  align-self: flex-end;
+  max-width: 88%;
+  padding: 8px 12px;
+  border-radius: 12px 12px 4px 12px;
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 16%, var(--mantine-color-body));
+  border: 1px solid color-mix(in srgb, var(--mantine-color-emerald-5) 26%, transparent);
+}
+
+/* What came back: the shape of the form, rather than a sentence about it. */
+.fieldSummary {
+  padding: 10px 12px;
+  border-radius: 12px 12px 12px 4px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: color-mix(in srgb, var(--mantine-color-default) 40%, var(--mantine-color-body));
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fieldType {
+  flex: none;
+  min-width: 62px;
+  font-size: 10px;
+  text-transform: lowercase;
+  color: var(--mantine-color-dimmed);
+}
+
+/* ---------------------------------------------------------- right pane -- */
+
+.previewPane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-default-border);
+  background: color-mix(in srgb, var(--mantine-color-body) 55%, transparent);
+}
+
+.previewBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+/* The device mock is rendered at its true CSS width and scaled to fit, so the
+   layout inside the frame is the real one. */
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.emptyStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.buildStatus {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mantine-color-body) 88%, transparent);
+  border: 1px solid var(--mantine-color-default-border);
+  backdrop-filter: blur(8px);
+}
+
+.thinking {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Each field drops in as it is dealt. Applied to the renderer's wrapper rather
+   than to fields individually: the renderer owns its own markup, and this only
+   needs to animate the newly added tail. */
+.revealed > * {
+  animation: riseIn 260ms ease both;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------ ready bar -- */
+
+.readyBar {
+  /* A flex child of a fixed-height column, so it is already pinned to the foot
+     of the page — sticky would be positioning it against a scroll that no
+     longer happens. */
+  flex: none;
+  z-index: 4;
+  width: 100%;
+  padding: 14px 20px;
+  background: color-mix(in srgb, var(--mantine-color-body) 90%, transparent);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--mantine-color-default-border);
+  animation: slideUp 280ms ease both;
+}
+
+.readyInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroMark,
+  .thinking,
+  .revealed > *,
+  .readyBar {
+    animation: none;
+  }
+
+  .deckCard:hover:not(:disabled),
+  .deckCard:active:not(:disabled),
+  .deckCard:hover:not(:disabled) .deckArt img,
+  .suggestion:hover:not(:disabled) {
+    transform: none;
+  }
+}

@@ -30,9 +30,18 @@ interface Props {
   resume?: { name: string; scope: NonNullable<FormTheme['scope']> } | null;
   /** Hand off to the Orbit modal, carrying the name and scope already chosen. */
   onUseAi: (name: string, scope: NonNullable<FormTheme['scope']>) => void;
+  /**
+   * Where step one leads, when the caller wants to take over after it.
+   *
+   * Supplied by the form list, which sends people on to the full-screen create
+   * screen rather than to this modal's own method chooser. Left undefined, the
+   * modal keeps its original behaviour and advances to step two itself — which
+   * is what the `?start=` deep links still rely on.
+   */
+  onContinue?: (name: string, scope: NonNullable<FormTheme['scope']>) => void;
 }
 
-export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
+export function NewFormModal({ opened, onClose, onUseAi, onContinue, resume }: Props) {
   const navigate = useNavigate();
   const workspaceId = useWorkspaceId();
   // 4 is the paste step, reached only from the import card on step two.
@@ -104,6 +113,17 @@ export function NewFormModal({ opened, onClose, onUseAi, resume }: Props) {
   function handleContinue(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+
+    // The caller takes over after step one when it has somewhere else to send
+    // people. Reset first: this modal is kept mounted, and leaving it on a
+    // filled-in step one means reopening it onto the previous form's name.
+    if (onContinue) {
+      const chosen = { name: name.trim(), scope };
+      reset();
+      onContinue(chosen.name, chosen.scope);
+      return;
+    }
+
     // Step one already asked where the form will live, so the picker opens on
     // the matching set instead of making the same choice twice.
     setScopeFilter(scope === 'card' ? 'card' : 'page');

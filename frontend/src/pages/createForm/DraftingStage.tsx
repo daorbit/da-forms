@@ -1,107 +1,57 @@
 import { useEffect, useState } from 'react';
 import { Text } from '@mantine/core';
+import type { Draft } from './types';
 import classes from './createForm.module.css';
 
-/**
- * What Orbit is doing, in the order it does it.
- *
- * Honest about the shape of the work without pretending to report on it: the
- * model answers in one call, so these are the stages of that call rather than
- * events being observed. They advance on a timer and the last one holds until
- * the reply actually lands.
- */
-const STAGES = [
-  'Reading your description',
+const STEPS = [
+  'Understanding your description',
   'Choosing the fields',
   'Writing the labels',
   'Picking a theme',
-  'Laying it out',
 ];
 
-/** How long each stage holds before the next takes over. */
-const STAGE_MS = 1500;
-
-/**
- * The wireframe's rows.
- *
- * Two half-width rows first, the way a name field splits, then full-width ones
- * and a taller box for a message. A stack of identical bars reads as a spinner
- * stretched out; uneven ones read as a form.
- */
-const ROWS: { half?: boolean; tall?: boolean }[] = [
-  { half: true },
-  { half: true },
-  {},
-  {},
-  { tall: true },
-];
+const STEP_MS = 1300;
 
 interface Props {
-  /** The ask being answered, shown back so it stays readable through the wait. */
   prompt: string;
-  /** True once the reply has landed. */
-  done: boolean;
+  draft: Draft | null;
 }
 
-/**
- * The wait, as a wireframe of what is coming.
- *
- * Everything is on screen from the first frame and nothing moves except a slow
- * shimmer across the bars — the shape of the form is the message, and anything
- * that assembles, spins or travels was noise on top of it.
- */
-export function DraftingStage({ prompt, done }: Props) {
-  const [stage, setStage] = useState(0);
+export function DraftingStage({ prompt, draft }: Props) {
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (done) return;
-    // Stops one short of the end: the final stage holds until the reply lands
-    // rather than completing and leaving the line looking finished while the
-    // request is still out.
+    if (draft) return;
     const id = window.setInterval(() => {
-      setStage((s) => Math.min(s + 1, STAGES.length - 1));
-    }, STAGE_MS);
+      setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    }, STEP_MS);
     return () => clearInterval(id);
-  }, [done]);
+  }, [draft]);
+
+  const progress = draft ? 1 : (step + 1) / (STEPS.length + 1);
 
   return (
     <div className={classes.drafting}>
-      {/* Decorative: it is a picture of the form, and the line below says what
-          is actually happening. */}
-      <div className={classes.wire} aria-hidden="true">
-        <div className={classes.wireHead}>
-          <span className={`${classes.wireBar} ${classes.wireTitle}`} />
-          <span className={`${classes.wireBar} ${classes.wireSub}`} />
-        </div>
-
-        <div className={classes.wireRows}>
-          {ROWS.map((row, i) => (
-            <div
-              key={i}
-              className={`${classes.wireRow} ${row.half ? classes.wireRowHalf : ''}`}
-            >
-              <span className={`${classes.wireBar} ${classes.wireLabel}`} />
-              <span
-                className={`${classes.wireBar} ${classes.wireInput} ${
-                  row.tall ? classes.wireInputTall : ''
-                }`}
-              />
-            </div>
-          ))}
-        </div>
-
-        <span className={`${classes.wireBar} ${classes.wireButton}`} />
+      <div className={classes.orb}>
+        <span className={classes.orbRing} />
+        <span className={classes.orbRingInner} />
+        <span className={classes.orbCore} />
       </div>
 
-      <div className={classes.wireStatus}>
-        {/* One live region, so a screen reader hears each stage as it becomes
-            current rather than all of them at once. */}
-        <Text size="sm" fw={500} aria-live="polite">
-          {done ? 'Opening your form' : STAGES[stage]}
+      <div className={classes.draftingText}>
+        <Text size="lg" fw={650} className={classes.draftingStep} key={draft ? 'done' : step}>
+          {draft ? 'Your form is ready' : STEPS[step]}
         </Text>
-        <Text size="xs" c="dimmed" className={classes.wirePrompt}>
+        <Text size="sm" c="dimmed" mt={6}>
           {prompt}
         </Text>
+      </div>
+
+      <div className={classes.draftingMeter}>
+        <span
+          className={classes.draftingMeterFill}
+          style={{ transform: `scaleX(${progress})` }}
+        />
       </div>
     </div>
   );

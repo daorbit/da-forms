@@ -6,7 +6,8 @@ import { isPlanLimit } from '@/lib/planLimit';
 import { fromGenerated, toSnapshot, withEdit } from './draft';
 import type { Draft, Turn } from './types';
 
-const HANDOVER_MS = 620;
+const FIELD_MS = 180;
+const HANDOVER_TAIL_MS = 700;
 
 export function useOrbitDraft(workspaceId: string) {
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -32,9 +33,9 @@ export function useOrbitDraft(workspaceId: string) {
     setTurns((t) => [...t, { prompt: asked, draft: null }]);
     setPrompt('');
 
-    try {
-      let next: Draft;
+    let next: Draft | null = null;
 
+    try {
       if (template) {
         const { ops } = await requestFormEdit(asked, toSnapshot(template), workspaceId);
         const result = applyEditOps(ops, template.fields);
@@ -68,7 +69,8 @@ export function useOrbitDraft(workspaceId: string) {
     }
 
     if (first) {
-      await new Promise((resolve) => setTimeout(resolve, HANDOVER_MS));
+      const streamed = (next?.fields.length ?? 0) * FIELD_MS;
+      await new Promise((resolve) => setTimeout(resolve, streamed + HANDOVER_TAIL_MS));
       setDrafting(null);
     }
   }

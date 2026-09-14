@@ -141,7 +141,7 @@ export function CreateFormPage() {
           />
         ) : orbit.drafting ? (
           <div className={classes.hero}>
-            <DraftingStage prompt={orbit.drafting} done={Boolean(orbit.template)} />
+            <DraftingStage prompt={orbit.drafting} draft={orbit.template} />
           </div>
         ) : orbit.turns.length > 0 ? (
           <div className={classes.build}>

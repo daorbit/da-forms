@@ -372,152 +372,126 @@
 /* ------------------------------------------------------------ drafting -- */
 
 /*
- * The wait, as a wireframe of what is coming.
+ * The same mark the rest of the app loads with.
  *
- * Everything is on screen from the first frame. Nothing assembles, spins or
- * travels — the only motion is a slow shimmer across the bars, because the
- * shape of the form is the message and anything on top of it was noise.
+ * `FormLoader` already established the language — two rings turning against
+ * each other around a breathing core — and inventing a different one for this
+ * screen would make the product's two longest waits look like two products.
+ * Larger here, because this one holds the whole page rather than a card.
  */
 .drafting {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  animation: riseIn 360ms ease both;
+  gap: 26px;
+  width: min(440px, 100%);
+  animation: riseIn 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.wire {
-  width: 420px;
-  max-width: 100%;
-  padding: 28px;
-  border-radius: 14px;
-  border: 1px solid var(--mantine-color-default-border);
-  background: color-mix(in srgb, var(--mantine-color-body) 75%, transparent);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 14px 36px rgba(16, 24, 40, 0.08);
+.orb {
+  position: relative;
+  width: 86px;
+  height: 86px;
 }
 
-:global([data-mantine-color-scheme='dark']) .wire {
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+.orbRing,
+.orbRingInner {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
 }
 
-.wireHead {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 9px;
-  padding-bottom: 22px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--mantine-color-default-border);
+.orbRing {
+  border-top-color: var(--mantine-color-emerald-5);
+  border-right-color: var(--mantine-color-emerald-5);
+  animation: orbSpin 900ms cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
 }
 
-.wireTitle {
-  width: 44%;
+.orbRingInner {
+  inset: 13px;
+  border-bottom-color: var(--mantine-color-emerald-5);
+  opacity: 0.45;
+  animation: orbSpinBack 1300ms linear infinite;
+}
+
+.orbCore {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
   height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: var(--mantine-color-emerald-5);
+  animation: orbPulse 900ms ease-in-out infinite;
 }
 
-.wireSub {
-  width: 70%;
-  height: 7px;
-}
-
-/* Wrapping, so the two half rows sit side by side the way a name field does. */
-.wireRows {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 12px;
-}
-
-.wireRow {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.wireRowHalf {
-  width: calc(50% - 6px);
-}
-
-.wireLabel {
-  width: 52%;
-  height: 7px;
-}
-
-.wireInput {
-  width: 100%;
-  height: 34px;
-  border-radius: 7px;
-}
-
-.wireInputTall {
-  height: 66px;
-}
-
-.wireButton {
-  display: block;
-  width: 100%;
-  height: 38px;
-  margin-top: 24px;
-  border-radius: 8px;
-}
-
-/*
- * One shimmer, shared.
- *
- * A sweep across a flat base rather than a fade of the whole bar: the moving
- * highlight reads as work in progress, where a pulse reads as waiting. Every
- * bar runs the same animation on the same clock, so the sweep crosses the card
- * as one band instead of each bar blinking on its own.
- */
-/*
- * The two tones are set as plain values per scheme rather than through
- * `light-dark()` in a custom property: a custom property holding `light-dark()`
- * is substituted as text before the function is evaluated, so the gradient ends
- * up with something it cannot parse and the bar paints nothing at all.
- */
-.wireBar {
-  --wire-base: rgba(16, 24, 40, 0.08);
-  --wire-peak: rgba(16, 24, 40, 0.15);
-
-  display: block;
-  border-radius: 5px;
-  background: linear-gradient(
-    90deg,
-    var(--wire-base) 0%,
-    var(--wire-peak) 50%,
-    var(--wire-base) 100%
-  );
-  background-size: 200% 100%;
-  animation: wireSweep 1.6s ease-in-out infinite;
-}
-
-:global([data-mantine-color-scheme='dark']) .wireBar {
-  --wire-base: rgba(255, 255, 255, 0.06);
-  --wire-peak: rgba(255, 255, 255, 0.12);
-}
-
-@keyframes wireSweep {
-  from {
-    background-position: 150% 0;
-  }
+@keyframes orbSpin {
   to {
-    background-position: -50% 0;
+    transform: rotate(360deg);
   }
 }
 
-.wireStatus {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
+@keyframes orbSpinBack {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes orbPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.55);
+    opacity: 0.5;
+  }
+}
+
+.draftingText {
   text-align: center;
 }
 
-.wirePrompt {
-  max-width: 420px;
-  line-height: 1.5;
+/* Keyed on the step in the markup, so each line replaces the last rather than
+   the text swapping in place. */
+.draftingStep {
+  animation: stepIn 300ms ease both;
+}
+
+@keyframes stepIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The same meter the plan dialog uses, filling a step at a time. */
+.draftingMeter {
+  width: 220px;
+  height: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--mantine-color-default-border);
+}
+
+.draftingMeterFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--mantine-color-emerald-6),
+    var(--mantine-color-emerald-4)
+  );
+  transform-origin: left center;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ---------------------------------------------------------------- deck --- */
@@ -1227,6 +1201,14 @@
      still advances, so there is no doubt work is happening. */
   .wireBar {
     animation: none;
+  }
+
+  /* The rings keep turning — a progress indicator that freezes reads as a hang
+     — but the step line stops sliding and the meter stops easing. */
+  .draftingStep,
+  .draftingMeterFill {
+    animation: none;
+    transition: none;
   }
 
   .rise,

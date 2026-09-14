@@ -13,8 +13,10 @@ import {
   Center,
   ThemeIcon,
   Skeleton,
+  ActionIcon,
 } from '@mantine/core';
 import {
+  IconX,
   IconAlertTriangle,
   IconCircleCheck,
   IconCircleDashed,
@@ -25,8 +27,7 @@ import {
 import type { WebhookSettings } from '@/types';
 import { getWebhookApp } from '@/lib/api';
 import { AppLogo } from './AppLogos';
-// The same shell `AppConnectDialog` uses, so a per-form connection reads as
-// one more app in the same grid rather than a bespoke dialog of its own.
+
 import classes from '../builder/PaymentsModal.module.css';
 
 interface Props {
@@ -58,9 +59,7 @@ export function WebhookConnectDialog({
 }: Props) {
   const [url, setUrl] = useState('');
   const [secret, setSecret] = useState('');
-  // `null` while loading, so the gate doesn't flash "off" before the real
-  // answer arrives — a form that IS wired up shouldn't look disconnected for
-  // a moment every time this opens.
+
   const [appEnabled, setAppEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -182,6 +181,9 @@ export function WebhookConnectDialog({
           <Box className={classes.pane}>
             <Group px={28} className={classes.paneHeader} align="center" justify="space-between">
               <Text fw={600}>Connect webhook — {formName}</Text>
+              <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
+                <IconX size={18} />
+              </ActionIcon>
             </Group>
 
             <Box className={classes.paneBody}>

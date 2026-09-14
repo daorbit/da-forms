@@ -180,6 +180,7 @@ export function BuilderDrawers({
         theme={state.theme}
         notifications={state.emailNotifications}
         onChange={(patch) => state.setEmailNotifications((prev) => ({ ...prev, ...patch }))}
+        workspaceId={workspaceId}
       />
 
       <IntegrationsModal

@@ -21,6 +21,7 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
+  IconX,
   IconAlertTriangle,
   IconCircleCheck,
   IconCircleDashed,
@@ -335,21 +336,33 @@ export function AppConnectDialog({
           <Box className={classes.pane}>
             <Group px={28} className={classes.paneHeader} align="center" justify="space-between">
               <Text fw={600}>Connect {app.name}</Text>
-              {app.docsUrl && (
-                <Tooltip label="Where to find these" withArrow position="left">
-                  <ActionIcon
-                    component="a"
-                    href={app.docsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    variant="subtle"
-                    color="gray"
-                    aria-label="Where to find these"
-                  >
-                    <IconExternalLink size={16} />
-                  </ActionIcon>
-                </Tooltip>
-              )}
+              <Group gap={4} wrap="nowrap">
+                {app.docsUrl && (
+                  <Tooltip label="Where to find these" withArrow position="left">
+                    <ActionIcon
+                      component="a"
+                      href={app.docsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      variant="subtle"
+                      color="gray"
+                      aria-label="Where to find these"
+                    >
+                      <IconExternalLink size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="lg"
+                  onClick={onClose}
+                  disabled={busy !== null}
+                  aria-label="Close"
+                >
+                  <IconX size={18} />
+                </ActionIcon>
+              </Group>
             </Group>
 
             <Box className={classes.paneBody}>

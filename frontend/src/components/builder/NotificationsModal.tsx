@@ -46,6 +46,7 @@ interface Props {
   theme?: FormTheme;
   notifications: NotificationSettings;
   onChange: (patch: Partial<NotificationSettings>) => void;
+  workspaceId: string;
 }
 
 /** Every field in document order, grids included — matches the backend's own flatten. */
@@ -55,15 +56,7 @@ function flattenFields(fields: FormField[]): FormField[] {
   );
 }
 
-/**
- * A stand-in answer per field type, so the preview reads like a real message
- * rather than a template.
- *
- * The field's own placeholder is deliberately not used as a fallback: a
- * placeholder is prompting text ("Enter Multi Line"), and printing it in the
- * answers column made every preview look like a form nobody had filled in.
- * A choice field answers with one of its real options instead.
- */
+
 function sampleValue(field: FormField): string {
   const firstOption = field.options?.[0];
 
@@ -187,26 +180,33 @@ export function NotificationsModal({
   theme,
   notifications,
   onChange,
+  workspaceId,
 }: Props) {
   const [tab, setTab] = useState<TabId>('respondent');
   const [previewing, setPreviewing] = useState(false);
   const [bodyEditor, setBodyEditor] = useState<Editor | null>(null);
  
   const [emailAppLive, setEmailAppLive] = useState<boolean | null>(null);
+
+  const [warningHidden, setWarningHidden] = useState(false);
   useEffect(() => {
     if (!opened) return;
     let active = true;
-    listApps()
+
+    setEmailAppLive(null);
+    listApps(workspaceId)
       .then((apps) => {
         if (active) {
           setEmailAppLive(apps.some((a) => a.category === 'email' && a.enabled));
         }
       })
-      .catch(() => active && setEmailAppLive(null));
+      // A failed lookup must not nag about a connection that may well exist.
+      .catch(() => active && setEmailAppLive(null))
+      .finally(() => active && setWarningHidden(false));
     return () => {
       active = false;
     };
-  }, [opened]);
+  }, [opened, workspaceId]);
   const emailFields = flattenFields(fields).filter((f) => f.type === 'email');
   const placeholderFields = flattenFields(fields).filter((f) => f.label && f.type !== 'grid');
   const respondentEmailField = emailFields.find((f) => f.id === notifications.respondentEmailFieldId);
@@ -303,17 +303,20 @@ export function NotificationsModal({
           </Group>
 
           <Box className={classes.panelBody}>
-            {emailAppLive === false && (
+            {emailAppLive === false && !warningHidden && (
               <Alert
                 color="orange"
                 variant="light"
                 icon={<IconAlertTriangle size={16} />}
+                withCloseButton
+                onClose={() => setWarningHidden(true)}
+                closeButtonLabel="Dismiss"
                 mb="lg"
               >
                 <Text size="sm">
-                  No email app is switched on for this workspace, so nothing here will send.
-                  Open <b>Integrations</b>, pick Custom SMTP or Brevo, and press{' '}
-                  <b>Connect</b> — saving or testing the details is not enough on its own.
+                  We can&apos;t see an email app switched on for this workspace, so these
+                  messages may not send. Check <b>Integrations</b> — if you have just
+                  connected one, reopen this panel and the notice will clear.
                 </Text>
               </Alert>
             )}

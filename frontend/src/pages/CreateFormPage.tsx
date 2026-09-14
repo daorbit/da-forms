@@ -18,14 +18,21 @@ import {
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft, IconArrowUp, IconCheck, IconPlus } from '@tabler/icons-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
-import type { FormTheme } from '@/types';
+import type { FormField, FormTheme } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
 import { OrbitMark } from '@/components/OrbitMark';
 import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
 import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
 import { useFitScale } from '@/hooks/useFitScale';
-import { ApiError, createForm, generateFormDraft, importFormConfig } from '@/lib/api';
+import {
+  ApiError,
+  createForm,
+  generateFormDraft,
+  importFormConfig,
+  requestFormEdit,
+} from '@/lib/api';
+import { applyEditOps, toEditSnapshotFields, type EditSnapshot } from '@/lib/editOps';
 import { formTemplates } from '@/lib/templates';
 import { generatedToTemplate, type GeneratedForm } from '@/lib/generatedForm';
 import { isPlanLimit } from '@/lib/planLimit';
@@ -39,10 +46,25 @@ import classes from './createForm/createForm.module.css';
 
 type Scope = NonNullable<FormTheme['scope']>;
 
-/** One exchange: what was asked, and the form it produced. */
+/**
+ * The form as it currently stands.
+ *
+ * Held as a template rather than as the wire shape the model answers with,
+ * because edits arrive as operations against the fields already on screen — so
+ * the fields, with their ids, are the thing being carried forward.
+ */
+interface Draft {
+  title: string;
+  formDescription?: string;
+  submitLabel?: string;
+  fields: FormField[];
+  theme?: FormTheme;
+}
+
+/** One exchange: what was asked, and the form as it stood after it. */
 interface Turn {
   prompt: string;
-  form: GeneratedForm | null;
+  draft: Draft | null;
 }
 
 interface DeckCard {
@@ -110,19 +132,18 @@ export function CreateFormPage() {
    */
   const [turns, setTurns] = useState<Turn[]>([]);
 
-  // The live draft is just the most recent turn that produced a form.
-  const draft = useMemo(
-    () => [...turns].reverse().find((t) => t.form)?.form ?? null,
+  // The live form is just the most recent turn that produced one.
+  const template = useMemo(
+    () => [...turns].reverse().find((t) => t.draft)?.draft ?? null,
     [turns]
   );
-  const template = useMemo(() => (draft ? generatedToTemplate(draft) : null), [draft]);
 
   /**
    * The reveal plays for the first form only. Replaying it on every revision
    * would mean tearing the whole form down to watch it rebuild over a one-word
    * change.
    */
-  const firstDraft = turns.filter((t) => t.form).length <= 1;
+  const firstDraft = turns.filter((t) => t.draft).length <= 1;
   const { shown, done } = useFieldReveal({
     total: template?.fields.length ?? 0,
     enabled: firstDraft,
@@ -171,11 +192,69 @@ export function CreateFormPage() {
     setGenerating(true);
     // The pending turn shows its ask immediately; its summary fills in when the
     // reply lands.
-    setTurns((t) => [...t, { prompt: asked, form: null }]);
+    setTurns((t) => [...t, { prompt: asked, draft: null }]);
     setPrompt('');
     try {
-      const next = await generateFormDraft(asked, workspaceId, draft ?? undefined);
-      setTurns((t) => [...t.slice(0, -1), { prompt: asked, form: next }]);
+      let next: Draft;
+
+      if (template) {
+        /*
+         * An existing form is edited, not regenerated.
+         *
+         * The model answers with operations against the ids it was shown, and
+         * those are applied to the fields already on screen. Asking for a whole
+         * form back instead means everything the prompt did not mention is
+         * rewritten from scratch — which is how "add an email field" ended up
+         * replacing the fields that were already there.
+         */
+        const snapshot: EditSnapshot = {
+          title: template.title,
+          formDescription: template.formDescription,
+          submitLabel: template.submitLabel,
+          theme: template.theme as unknown as Record<string, unknown>,
+          fields: toEditSnapshotFields(template.fields),
+        };
+
+        const { ops } = await requestFormEdit(asked, snapshot, workspaceId);
+        const result = applyEditOps(ops, template.fields);
+
+        if (!result.applied) {
+          setTurns((t) => t.slice(0, -1));
+          notifications.show({
+            message: 'Orbit did not find anything to change',
+            color: 'yellow',
+          });
+          return;
+        }
+
+        next = {
+          title: result.form.title ?? template.title,
+          formDescription:
+            result.form.formDescription !== undefined
+              ? result.form.formDescription
+              : template.formDescription,
+          submitLabel:
+            result.form.submitLabel !== undefined
+              ? result.form.submitLabel
+              : template.submitLabel,
+          fields: result.fields,
+          theme: result.theme
+            ? { ...(template.theme ?? {}), ...(result.theme as FormTheme) }
+            : template.theme,
+        };
+      } else {
+        const generated = await generateFormDraft(asked, workspaceId);
+        const built = generatedToTemplate(generated);
+        next = {
+          title: built.title,
+          formDescription: built.formDescription,
+          submitLabel: built.submitLabel,
+          fields: built.fields,
+          theme: built.theme,
+        };
+      }
+
+      setTurns((t) => [...t.slice(0, -1), { prompt: asked, draft: next }]);
     } catch (err) {
       setTurns((t) => t.slice(0, -1));
       setDrafting(null);
@@ -338,7 +417,7 @@ export function CreateFormPage() {
         <Textarea
           id={compact ? undefined : 'create-prompt'}
           placeholder={
-            draft ? 'Ask for a change — “add a phone field”' : 'Describe the form you need'
+            template ? 'Ask for a change — “add a phone field”' : 'Describe the form you need'
           }
           value={prompt}
           onChange={(e) => setPrompt(e.currentTarget.value)}
@@ -454,8 +533,8 @@ export function CreateFormPage() {
               <ScrollArea className={classes.thread} type="hover" scrollbarSize={6} px="sm" py="sm">
                 <Stack gap="lg">
                   {turns.map((turn, i) => {
-                    const turnTemplate = turn.form ? generatedToTemplate(turn.form) : null;
-                    const pending = generating && i === turns.length - 1 && !turn.form;
+                    const turnTemplate = turn.draft;
+                    const pending = generating && i === turns.length - 1 && !turn.draft;
                     return (
                       <Stack key={i} gap={10} className={classes.turn}>
                         <div className={classes.askRow}>

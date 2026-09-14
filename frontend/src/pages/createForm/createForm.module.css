@@ -71,14 +71,24 @@
  * rather than an approximation of it.
  */
 .composer {
+  /*
+   * The hue sequence, ending on the colour it starts with so the animated slide
+   * below wraps invisibly — a different colour at each end would show a hard
+   * seam once per loop.
+   */
   --composer-edge: linear-gradient(
-    108deg,
+    90deg,
     #8b5cf6 0%,
-    #a855f7 18%,
-    #f0abfc 32%,
-    #fbbf24 55%,
-    #a3e635 78%,
-    #22c55e 100%
+    #a855f7 9%,
+    #f0abfc 16%,
+    #fbbf24 27%,
+    #a3e635 39%,
+    #22c55e 50%,
+    #a855f7 59%,
+    #f0abfc 66%,
+    #fbbf24 77%,
+    #a3e635 89%,
+    #8b5cf6 100%
   );
 
   position: relative;
@@ -98,6 +108,14 @@
   background:
     linear-gradient(var(--mantine-color-body), var(--mantine-color-body)) padding-box,
     var(--composer-edge) border-box;
+  /*
+   * The gradient layer is drawn at triple width and its position animated, so
+   * the colours travel left to right around the edge. A gradient's own stops
+   * cannot be transitioned — sliding an oversized copy is what makes the motion
+   * possible at all.
+   */
+  background-size: 100% 100%, 300% 100%;
+  animation: composer-drift 9s linear infinite;
 
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
   transition: box-shadow 220ms ease, transform 220ms ease;
@@ -118,9 +136,32 @@
   z-index: -1;
   border-radius: inherit;
   background: var(--composer-edge);
+  /* Travels with the border, on the same clock, so the spilled light stays the
+     same colour as the edge above it rather than drifting out of step. */
+  background-size: 300% 100%;
+  animation: glow-drift 9s linear infinite;
   filter: blur(14px);
   opacity: 0.55;
   transition: opacity 220ms ease, filter 220ms ease;
+}
+
+/* Only the second layer moves; the fill stays put under it. */
+@keyframes composer-drift {
+  from { background-position: 0 0, 0% 50%; }
+  to   { background-position: 0 0, 100% 50%; }
+}
+
+@keyframes glow-drift {
+  from { background-position: 0% 50%; }
+  to   { background-position: 100% 50%; }
+}
+
+/* A permanently moving edge is exactly what this setting is for. */
+@media (prefers-reduced-motion: reduce) {
+  .composer,
+  .composer::before {
+    animation: none;
+  }
 }
 
 .composer:focus-within {
@@ -136,13 +177,18 @@
    grey once there is no white page for them to sit against. */
 :global([data-mantine-color-scheme='dark']) .composer {
   --composer-edge: linear-gradient(
-    108deg,
+    90deg,
     #a78bfa 0%,
-    #c084fc 18%,
-    #f5b8fb 32%,
-    #fcd34d 55%,
-    #bef264 78%,
-    #34d399 100%
+    #c084fc 9%,
+    #f5b8fb 16%,
+    #fcd34d 27%,
+    #bef264 39%,
+    #34d399 50%,
+    #c084fc 59%,
+    #f5b8fb 66%,
+    #fcd34d 77%,
+    #bef264 89%,
+    #a78bfa 100%
   );
 
   box-shadow: 0 20px 52px rgba(0, 0, 0, 0.55);

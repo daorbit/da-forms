@@ -26,6 +26,10 @@
       "handle": "filesystem"
     },
     {
+      "src": "/(.*)\\.(png|jpe?g|webp|gif|svg|ico|avif|woff2?|ttf)$",
+      "dest": "frontend/$1.$2"
+    },
+    {
       "src": "/(.*)",
       "dest": "frontend/index.html"
     }

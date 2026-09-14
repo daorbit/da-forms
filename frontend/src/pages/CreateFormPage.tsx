@@ -150,7 +150,7 @@ export function CreateFormPage() {
               generating={orbit.generating}
               prompt={orbit.prompt}
               onPromptChange={orbit.setPrompt}
-              onSend={orbit.run}
+              onSend={() => orbit.run()}
             />
             <PreviewPane
               template={orbit.template}
@@ -167,7 +167,7 @@ export function CreateFormPage() {
             deck={deck}
             prompt={orbit.prompt}
             onPromptChange={orbit.setPrompt}
-            onSend={orbit.run}
+            onSend={() => orbit.run()}
             generating={orbit.generating}
             creating={creation.creating}
           />

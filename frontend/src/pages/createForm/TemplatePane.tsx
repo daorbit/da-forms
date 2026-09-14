@@ -74,7 +74,7 @@ export function TemplatePane({ scope, creating, onCreate }: Props) {
 
   return (
     <div className={classes.build}>
-      <section className={classes.orbitPane}>
+      <section className={`${classes.orbitPane} ${classes.listPane}`}>
         <div className={classes.pickerHead}>
           <TextInput
             placeholder="Search templates"
@@ -113,14 +113,16 @@ export function TemplatePane({ scope, creating, onCreate }: Props) {
                 }`}
               >
                 <Group justify="space-between" gap="xs" wrap="nowrap">
-                  <Text size="sm" fw={600}>
+                  <Text size="sm" fw={600} truncate>
                     {tpl.name}
                   </Text>
                   <Text size="10px" c="dimmed" className={classes.categoryTag}>
                     {tpl.category}
                   </Text>
                 </Group>
-                <Text size="xs" c="dimmed" mt={2}>
+                {/* Clamped to two lines: a few descriptions run to three and
+                    the uneven rows were most of why the list looked busy. */}
+                <Text size="xs" c="dimmed" mt={2} lineClamp={2}>
                   {tpl.description}
                 </Text>
               </UnstyledButton>

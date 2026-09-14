@@ -215,22 +215,13 @@
  * border in both schemes.
  */
 /*
- * The doubled class is deliberate, here and on the other two surfaces below.
- *
- * These are all `UnstyledButton`s, whose own rule zeroes padding, background
- * and border. That rule is a single class, so a single class of ours only ties
- * with it — and Mantine's stylesheet is injected after the CSS modules, so the
- * tie goes to Mantine and the pill renders as bare text. Repeating the selector
- * wins on specificity without reaching for `!important`.
- */
-/*
  * Small, quiet chips.
  *
- * The doubled class is deliberate, here and on the deck cards: both are
- * `UnstyledButton`s, whose own rule zeroes padding, background and border. That
- * rule is a single class, so a single class of ours only ties with it — and
- * Mantine's stylesheet is injected after the CSS modules, so the tie goes to
- * Mantine and the chip renders as bare text.
+ * The doubled class is deliberate, here and on the deck cards and template
+ * rows: all are `UnstyledButton`s, whose own rule zeroes padding, background
+ * and border. That rule is a single class, so a single class of ours only ties
+ * with it — and Mantine's stylesheet is injected after the CSS modules, so the
+ * tie goes to Mantine and the chip renders as bare text.
  */
 .suggestion.suggestion {
   display: inline-flex;
@@ -447,6 +438,15 @@
 
 /* ----------------------------------------------------------- left pane -- */
 
+/*
+ * Both panes are glass rather than paint.
+ *
+ * An opaque fill cut two flat rectangles out of the wash behind them, which is
+ * what made the screen read as panels bolted onto a background instead of
+ * sitting on one. These are translucent and blurred: the aurora carries through
+ * both, tinted differently on each side of the screen, so the two stay clearly
+ * separate without either becoming a hole.
+ */
 .orbitPane {
   display: flex;
   flex-direction: column;
@@ -454,20 +454,15 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--mantine-color-default-border);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--mantine-color-default) 45%, var(--mantine-color-body)) 0%,
-    var(--mantine-color-body) 240px
-  );
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent);
+  /* Flat glass, not a gradient. A fade that ends partway down the pane draws a
+     horizontal band across it wherever the content happens to stop, which on a
+     short conversation lands in the middle of empty space. */
+  background: color-mix(in srgb, var(--mantine-color-body) 55%, transparent);
+  backdrop-filter: blur(18px);
 }
 
 :global([data-mantine-color-scheme='dark']) .orbitPane {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, #fff 5%, var(--mantine-color-body)) 0%,
-    var(--mantine-color-body) 240px
-  );
+  background: color-mix(in srgb, var(--mantine-color-body) 62%, transparent);
 }
 
 .paneHead {
@@ -519,6 +514,19 @@
 
 /* ------------------------------------------------------ template pane -- */
 
+/*
+ * The picker's left pane is flatter than Orbit's.
+ *
+ * The gradient and the lit top edge give the chat panel a sense of depth, which
+ * is right when it holds a conversation and wrong when it holds a list — there
+ * it is one more surface treatment on a column that already has fifteen rows
+ * asking for attention.
+ */
+.listPane.listPane,
+:global([data-mantine-color-scheme='dark']) .listPane.listPane {
+  background: color-mix(in srgb, var(--mantine-color-body) 48%, transparent);
+}
+
 /* The search and scope filter, pinned above the scrolling list. */
 .pickerHead {
   display: flex;
@@ -528,44 +536,71 @@
   border-bottom: 1px solid var(--mantine-color-default-border);
 }
 
+/*
+ * A list, not a stack of cards.
+ *
+ * Every row carrying its own border and fill meant fifteen boxes competing for
+ * the same attention, and the one that mattered — the selected template — had
+ * no way left to stand out. Rows are plain text separated by hairlines; hover
+ * is a tint, and only the selection is drawn.
+ */
 .templateList {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  padding-top: 9px;
+  /* Clear of the search header above, which the first row was sitting flush
+     against. */
+  padding-top: 8px;
 }
 
 /* Doubled, like the other `UnstyledButton`s on this screen: Mantine's own rule
    zeroes padding and background, ties on specificity, and wins on order. */
 .templateItem.templateItem {
+  position: relative;
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 11px 13px;
-  border-radius: 11px;
-  border: 1px solid var(--mantine-color-default-border);
-  background: color-mix(in srgb, var(--mantine-color-default) 35%, transparent);
+  padding: 10px 12px;
+  border-radius: 8px;
   text-align: left;
-  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+  transition: background 120ms ease;
+}
+
+/* A hairline between rows rather than a border around each: one line where two
+   rows meet, instead of two. The last row has nothing after it to separate. */
+.templateItem.templateItem + .templateItem.templateItem::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: var(--mantine-color-default-border);
 }
 
 .templateItem.templateItem:hover {
-  border-color: color-mix(in srgb, var(--mantine-color-emerald-5) 40%, transparent);
-  background: color-mix(in srgb, var(--mantine-color-default) 70%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-default) 55%, transparent);
 }
 
+/* The selected row is the only one with a fill, and that is all it needs. */
 .templateItemActive.templateItemActive,
 .templateItemActive.templateItemActive:hover {
-  border-color: var(--mantine-color-emerald-5);
-  background: color-mix(in srgb, var(--mantine-color-emerald-5) 13%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-emerald-5) 12%, transparent);
+}
+
+/*
+ * A hairline touching a filled row collides with it, so it is dropped both
+ * above the filled row and below it — the latter being the `::before` of the
+ * row that follows.
+ */
+.templateItemActive.templateItemActive::before,
+.templateItem.templateItem:hover::before,
+.templateItemActive.templateItemActive + .templateItem.templateItem::before,
+.templateItem.templateItem:hover + .templateItem.templateItem::before {
+  display: none;
 }
 
 .categoryTag {
   flex: none;
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--mantine-color-default-border);
-  background: color-mix(in srgb, var(--mantine-color-default) 60%, transparent);
 }
 
 /*
@@ -604,6 +639,8 @@
 
 /* ---------------------------------------------------------- right pane -- */
 
+/* Thinner glass than the left pane: what matters here is the form inside the
+   device mock, and a heavier fill behind it flattens the wash it sits on. */
 .previewPane {
   display: flex;
   flex-direction: column;
@@ -611,7 +648,9 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--mantine-color-default-border);
-  background: color-mix(in srgb, var(--mantine-color-body) 55%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-body) 42%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent);
 }
 
 .previewBar {
@@ -635,6 +674,30 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+/*
+ * Let a standalone form fill the device screen.
+ *
+ * `da-frame-set` gives its viewport `min-height: 100%`, which is enough for the
+ * viewport itself but does not hand the page inside a definite height to
+ * resolve against — so `FormPage`'s own `min-height: 100%` computes to `auto`,
+ * the form stops at its natural height, and what shows below it is the screen
+ * element's white background.
+ *
+ * Making the viewport a flex column and letting its child grow gives the page
+ * the rest of the screen without either element needing to know how tall that
+ * is. Scoped to this stage so the builder's previews are left alone.
+ */
+.stage :global(.dfs__viewport) {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Grow only — `flex: 1` would also set `flex-basis: 0`, which lets a form
+   taller than the screen be squeezed rather than scrolled to. */
+.stage :global(.dfs__viewport) > * {
+  flex-grow: 1;
 }
 
 .emptyStage {
@@ -670,11 +733,17 @@
   }
 }
 
-/* Each field drops in as it is dealt. Applied to the renderer's wrapper rather
-   than to fields individually: the renderer owns its own markup, and this only
-   needs to animate the newly added tail. */
-.revealed > * {
-  animation: riseIn 260ms ease both;
+/*
+ * The field that has just arrived drops in.
+ *
+ * `FormRenderer` is remounted on every step of the reveal, so animating its
+ * wrapper would replay the whole form each time. What has to move is only the
+ * newest field — which, because the list is sliced to whatever has been dealt
+ * so far, is always the last one in the stack. Reaching two levels in gets past
+ * the renderer's own wrapper and the Stack it lays the fields out in.
+ */
+.revealed > * > * > *:last-child {
+  animation: riseIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes riseIn {

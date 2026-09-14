@@ -1,9 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 
-/** Gap between two fields arriving, in ms. */
-const STEP_MS = 140;
+/**
+ * Gap between two fields arriving, in ms.
+ *
+ * Slow enough to read as one field being written after another. Below about
+ * 200ms the whole form is on screen inside half a second and the effect is
+ * indistinguishable from it simply appearing.
+ */
+const STEP_MS = 260;
 /** Beat before the first field, so the header lands on its own. */
-const LEAD_MS = 260;
+const LEAD_MS = 420;
 
 interface Options {
   /** How many fields the finished form has. 0 while nothing is drafted. */

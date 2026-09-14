@@ -359,15 +359,7 @@ export function CreateFormPage() {
           >
             Back
           </Button>
-          <Group gap={10}>
-            <Text size="sm" fw={600}>
-              {formName}
-            </Text>
-            <Text size="xs" c="dimmed">
-              {scope === 'card' ? 'Embedded' : 'Standalone link'}
-            </Text>
-            <CloseButton size="lg" radius="xl" onClick={backToList} aria-label="Close" />
-          </Group>
+          <CloseButton size="lg" radius="xl" onClick={backToList} aria-label="Close" />
         </header>
 
         {mode === 'template' ? (

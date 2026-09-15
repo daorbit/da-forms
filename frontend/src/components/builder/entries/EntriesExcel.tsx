@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import {
   AllCommunityModule,
@@ -17,25 +17,7 @@ import { parseRepeaterRows } from '@/lib/repeater';
 import { formatAnswer, formatDateTime } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
-/**
- * Responses as a spreadsheet.
- *
- * The list view is for reading one response — roomy rows, thumbnails, an
- * actions column. This is for scanning a thousand of them: every answer in a
- * dense grid, columns you can drag, resize and pin, and a cell cursor you can
- * walk with the arrow keys. Anyone who has used a spreadsheet already knows how
- * to read it.
- *
- * Read-only, deliberately. A response is what somebody actually submitted, and
- * a grid that looks editable invites correcting a typo in someone else's
- * answer — which silently rewrites the record of what they said. Copy out with
- * Ctrl+C, or edit the entry properly from the list view, where it is an
- * explicit action against one submission.
- */
 
-// Community features only, registered once for the application. AG Grid v33
-// onwards is modular: without this the grid renders an empty frame and logs a
-// module error rather than throwing, which is easy to mistake for no data.
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 /** Columns that are not one of the form's own fields. */

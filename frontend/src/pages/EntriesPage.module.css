@@ -214,6 +214,37 @@
 
 /* The spreadsheet view.
  *
+ * Padded like `.tableWrap` above, so switching between List and Excel does not
+ * shift the content sideways — the two views sit in the same place on the page
+ * and only their contents differ. */
+.excelCard {
+  padding: 16px;
+}
+
+.excelGrid {
+  height: calc(100vh - 330px);
+  min-height: 360px;
+  width: 100%;
+}
+
+/* Inside the card and against the grid's own bottom border, so the caption
+   belongs to the table rather than floating on the page beneath it. */
+.excelFooter {
+  padding: 7px 10px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-top: none;
+  border-radius: 0 0 var(--mantine-radius-sm) var(--mantine-radius-sm);
+  background-color: var(--mantine-color-default-hover);
+}
+
+/* The grid's own corners, squared where the footer meets it so the two read as
+   one object rather than two stacked boxes. */
+.excelGrid :global(.ag-root-wrapper) {
+  border-radius: var(--mantine-radius-sm) var(--mantine-radius-sm) 0 0;
+}
+
+/* The spreadsheet view — cell styles.
+ *
  * Global rather than composed, because AG Grid owns the class names on the
  * elements these apply to — a CSS-module hash on `.ag-row-unread` would never
  * match the class the grid actually writes. */

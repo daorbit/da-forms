@@ -15,6 +15,7 @@ import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
 import { parseRepeaterRows } from '@/lib/repeater';
 import { formatAnswer, formatDateTime } from './entriesTypes';
+import classes from '../../../pages/EntriesPage.module.css';
 
 /**
  * Responses as a spreadsheet.
@@ -168,6 +169,11 @@ export function EntriesExcel({
         field: '__added',
         headerName: 'Added Time',
         minWidth: 170,
+        // Takes up whatever width the columns before it did not. Without this
+        // the grid stops at its natural width and leaves a band of empty
+        // background to the right of the last column, which reads as the table
+        // having failed to load rather than as a table that is simply narrow.
+        flex: 1,
         valueFormatter: (p) => (p.value ? formatDateTime(p.value as string) : ''),
       },
       {
@@ -213,12 +219,10 @@ export function EntriesExcel({
     [],
   );
 
-  const onGridReady = useCallback(() => {
-    // Only when the columns would not already fill the width. Stretching six
-    // columns across a wide screen gives cells the size of billboards; leaving
-    // forty at their natural width is what the horizontal scrollbar is for.
-    gridRef.current?.api?.sizeColumnsToFit({ defaultMinWidth: 120 });
-  }, []);
+  // No `sizeColumnsToFit` here. The "Added Time" column carries `flex`, which
+  // already absorbs any leftover width, and calling both makes them fight —
+  // the fit pass sets explicit widths that the flex column then overrides on
+  // the next resize, so columns jump on the first drag.
 
   if (!loading && submissions.length === 0) {
     return (
@@ -247,15 +251,17 @@ export function EntriesExcel({
   }
 
   return (
-    <Stack gap={6} px="md" pb="md">
-      <div style={{ height: 'calc(100vh - 300px)', minHeight: 360, width: '100%' }}>
+    // One bordered card holding the grid and its footer, so the view reads as
+    // a single object the way the list view's table does — rather than a grid
+    // with a caption floating on the page background under it.
+    <div className={classes.excelCard}>
+      <div className={classes.excelGrid}>
         <AgGridReact<Row>
           ref={gridRef}
           theme={theme}
           rowData={rows}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
-          onGridReady={onGridReady}
           loading={loading}
           // Excel's own selection model: drag a range, Ctrl+C, paste it
           // somewhere real. This is the whole reason the view exists, so it is
@@ -272,7 +278,7 @@ export function EntriesExcel({
           aria-label={`${form?.title ?? 'Form'} responses, spreadsheet view`}
         />
       </div>
-      <Group justify="space-between">
+      <Group justify="space-between" className={classes.excelFooter}>
         <Text size="xs" c="dimmed">
           Read-only. Drag a range and press Ctrl+C to copy; drag a column heading to reorder.
         </Text>
@@ -280,6 +286,6 @@ export function EntriesExcel({
           {submissions.length} {submissions.length === 1 ? 'response' : 'responses'}
         </Text>
       </Group>
-    </Stack>
+    </div>
   );
 }

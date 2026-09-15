@@ -14,6 +14,8 @@ interface Props {
   onSend: () => void;
   generating: boolean;
   creating: boolean;
+  pendingImage: string | null;
+  onAttachImage: (dataUrl: string | null) => void;
 }
 
 export function HeroPane({
@@ -24,6 +26,8 @@ export function HeroPane({
   onSend,
   generating,
   creating,
+  pendingImage,
+  onAttachImage,
 }: Props) {
   return (
     <>
@@ -56,6 +60,8 @@ export function HeroPane({
             onSend={onSend}
             busy={generating}
             editing={false}
+            pendingImage={pendingImage}
+            onAttachImage={onAttachImage}
           />
         </div>
 

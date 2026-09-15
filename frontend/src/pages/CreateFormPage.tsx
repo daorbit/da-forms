@@ -151,6 +151,8 @@ export function CreateFormPage() {
               prompt={orbit.prompt}
               onPromptChange={orbit.setPrompt}
               onSend={() => orbit.run()}
+              pendingImage={orbit.pendingImage}
+              onAttachImage={orbit.attachImage}
             />
             <PreviewPane
               template={orbit.template}
@@ -170,6 +172,8 @@ export function CreateFormPage() {
             onSend={() => orbit.run()}
             generating={orbit.generating}
             creating={creation.creating}
+            pendingImage={orbit.pendingImage}
+            onAttachImage={orbit.attachImage}
           />
         )}
       </div>

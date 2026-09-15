@@ -3,6 +3,7 @@ import { notifications } from '@mantine/notifications';
 import { applyEditOps } from '@/lib/editOps';
 import { generateFormDraft, requestFormEdit } from '@/lib/api';
 import { isPlanLimit } from '@/lib/planLimit';
+import type { GeneratedForm } from '@/lib/generatedForm';
 import { fromGenerated, toSnapshot, withEdit } from './draft';
 import type { Draft, Turn } from './types';
 
@@ -14,6 +15,8 @@ export function useOrbitDraft(workspaceId: string) {
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
   const [drafting, setDrafting] = useState<string | null>(null);
+  /** A photo of a form staged for the next run, as a data URL. */
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
 
   const template = useMemo(
     () => [...turns].reverse().find((t) => t.draft)?.draft ?? null,
@@ -24,19 +27,34 @@ export function useOrbitDraft(workspaceId: string) {
 
   async function run(text?: string) {
     const asked = (typeof text === 'string' ? text : prompt).trim();
-    if (!asked || generating) return;
+    const image = pendingImage;
+    if ((!asked && !image) || generating) return;
 
     const first = turns.length === 0;
-    if (first) setDrafting(asked);
+    if (first) setDrafting(asked || 'Reading the image…');
 
     setGenerating(true);
     setTurns((t) => [...t, { prompt: asked, draft: null }]);
     setPrompt('');
+    setPendingImage(null);
 
     let next: Draft | null = null;
 
     try {
-      if (template) {
+      if (image) {
+        // An attached photo always goes through the generator, even on a
+        // follow-up turn — the vision model reads the image once and, given
+        // the current draft as JSON, edits it the same way a typed follow-up
+        // would. The edit-ops path has no way to take an image at all.
+        next = fromGenerated(
+          await generateFormDraft(
+            asked,
+            workspaceId,
+            template ? (toSnapshot(template) as unknown as GeneratedForm) : undefined,
+            image
+          )
+        );
+      } else if (template) {
         const { ops } = await requestFormEdit(asked, toSnapshot(template), workspaceId);
         const result = applyEditOps(ops, template.fields);
 
@@ -78,6 +96,7 @@ export function useOrbitDraft(workspaceId: string) {
   function reset() {
     setTurns([]);
     setPrompt('');
+    setPendingImage(null);
     setDrafting(null);
   }
 
@@ -87,6 +106,8 @@ export function useOrbitDraft(workspaceId: string) {
     firstDraft,
     prompt,
     setPrompt,
+    pendingImage,
+    attachImage: setPendingImage,
     generating,
     drafting,
     run,

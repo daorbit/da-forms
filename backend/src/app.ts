@@ -50,6 +50,9 @@ export function createApp() {
    * to spare while still being a bound: uploads go to Cloudinary through their
    * own multipart route, so nothing legitimate needs more than this.
    */
+  // A form generated from a photo carries the image as a base64 data URL,
+  // well past the 2mb default below.
+  app.use('/api/workspaces/:workspaceId/forms/generate', express.json({ limit: '8mb' }));
   app.use(express.json({ limit: '2mb' }));
 
   // Serverless has no startup phase to connect in, so every request makes sure

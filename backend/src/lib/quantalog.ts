@@ -273,7 +273,9 @@ export async function generateForm(
    * fields and theme unless the prompt asks otherwise. "create" (default) — a
    * draft in the generator modal.
    */
-  mode: 'create' | 'edit' = 'create'
+  mode: 'create' | 'edit' = 'create',
+  /** A photo of a form to build from, as a base64 data URL. */
+  image?: string
 ): Promise<GenerateOutcome> {
   if (!isConfigured()) {
     return { ok: false, status: 503, error: 'Form generation is not configured.' };
@@ -292,6 +294,7 @@ export async function generateForm(
           prompt,
           ...(previous ? { previous } : {}),
           ...(mode === 'edit' ? { mode } : {}),
+          ...(image ? { image } : {}),
         }),
         // Generous next to the other calls: two model attempts run behind this,
         // and giving up at four seconds would abandon work already paid for.

@@ -10,9 +10,19 @@ interface Props {
   prompt: string;
   onPromptChange: (value: string) => void;
   onSend: () => void;
+  pendingImage: string | null;
+  onAttachImage: (dataUrl: string | null) => void;
 }
 
-export function OrbitThread({ turns, generating, prompt, onPromptChange, onSend }: Props) {
+export function OrbitThread({
+  turns,
+  generating,
+  prompt,
+  onPromptChange,
+  onSend,
+  pendingImage,
+  onAttachImage,
+}: Props) {
   return (
     <section className={`${classes.orbitPane} ${classes.paneEnterLeft}`}>
       <div className={classes.paneHead}>
@@ -96,6 +106,8 @@ export function OrbitThread({ turns, generating, prompt, onPromptChange, onSend 
         onSend={onSend}
         busy={generating}
         editing
+        pendingImage={pendingImage}
+        onAttachImage={onAttachImage}
       />
     </section>
   );

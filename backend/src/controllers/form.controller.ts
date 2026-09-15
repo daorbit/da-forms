@@ -1152,8 +1152,10 @@ export const generateForm: RequestHandler = async (req, res) => {
   const workspaceId = workspaceIdOf(req);
   const prompt =
     typeof req.body?.prompt === "string" ? req.body.prompt.trim() : "";
+  const image =
+    typeof req.body?.image === "string" ? req.body.image : undefined;
 
-  if (!prompt) {
+  if (!prompt && !image) {
     return res
       .status(400)
       .json({
@@ -1169,7 +1171,7 @@ export const generateForm: RequestHandler = async (req, res) => {
 
   const mode = req.body?.mode === "edit" ? "edit" : "create";
 
-  const result = await quantalogGenerate(workspaceId, prompt, previous, mode);
+  const result = await quantalogGenerate(workspaceId, prompt, previous, mode, image);
 
   if (!result.ok) {
     return res.status(result.status).json({

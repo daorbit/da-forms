@@ -136,13 +136,16 @@ export function generateFormDraft(
   prompt: string,
   workspaceId = DEFAULT_WORKSPACE,
 
-  previous?: GeneratedForm
+  previous?: GeneratedForm,
+  /** A photo of a form to build from — a base64 data URL. */
+  image?: string
 ) {
   return authedRequest<GeneratedForm>(`${ws(workspaceId)}/generate`, {
     method: 'POST',
     body: JSON.stringify({
       prompt,
       ...(previous ? { previous } : {}),
+      ...(image ? { image } : {}),
     }),
   });
 }

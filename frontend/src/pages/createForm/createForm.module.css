@@ -244,6 +244,31 @@
   padding: 0 12px 12px;
 }
 
+/* The staged photo, above the textarea, before anything is sent — a pill
+   rather than filling the composer's width, so it reads as an attachment
+   rather than the thing being edited. */
+.imageChip {
+  position: relative;
+  display: inline-flex;
+  margin: 10px 0 0 14px;
+}
+
+.imageChip img {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--mantine-color-default-border);
+}
+
+.imageChip button {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+}
+
 .suggestions {
   display: flex;
   flex-wrap: wrap;

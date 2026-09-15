@@ -22,6 +22,7 @@ import type { Form, FormField, Submission } from "@/types";
 import { staticTypes } from "@/lib/fieldPalette";
 import { valueFields } from "@/lib/fieldTree";
 import { EntriesKanban } from "@/components/builder/EntriesKanban";
+import { EntriesExcel } from "@/components/builder/entries/EntriesExcel";
 import { AnalyticsBar } from "@/components/builder/AnalyticsBar";
 import { paymentCellText } from "@/lib/payment";
 import { repeaterSummaryText } from "@/lib/repeater";
@@ -43,6 +44,7 @@ import {
   PAGE_SIZE,
   type CustomRange,
   type DayFilter,
+  type EntriesView,
   type StatusFilter,
 } from "@/components/builder/entries/entriesTypes";
 import classes from "./EntriesPage.module.css";
@@ -60,7 +62,7 @@ export function EntriesPage() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [day, setDay] = useState<DayFilter>("all");
   const [customRange, setCustomRange] = useState<CustomRange>([null, null]);
-  const [view, setView] = useState<"list" | "kanban">("list");
+  const [view, setView] = useState<EntriesView>("list");
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [viewing, setViewing] = useState<Submission | null>(null);
@@ -81,10 +83,15 @@ export function EntriesPage() {
   const loadSubmissions = useCallback(() => {
     if (!id) return;
     setLoading(true);
+    // Kanban and the spreadsheet both show the whole set at once: one moves
+    // cards between stages, the other is scrolled and sorted as a grid, and
+    // neither makes sense a page at a time. Only the list view paginates.
+    const wholeSet = view === "kanban" || view === "excel";
+
     listSubmissions(id, workspaceId, {
-      page: view === "kanban" ? 1 : page,
-      limit: view === "kanban" ? 200 : PAGE_SIZE,
-      status: view === "kanban" ? "all" : status,
+      page: wholeSet ? 1 : page,
+      limit: wholeSet ? 200 : PAGE_SIZE,
+      status: wholeSet ? "all" : status,
       q: debouncedSearch,
       ...dayFilterToRange(day, customRange),
     })
@@ -404,6 +411,15 @@ export function EntriesPage() {
           submissions={submissions}
           columns={columns}
           onMove={moveSubmission}
+        />
+      ) : view === "excel" ? (
+        <EntriesExcel
+          form={form}
+          columns={columns}
+          submissions={submissions}
+          loading={loading}
+          onView={setViewing}
+          onCopyShareLink={copyShareLink}
         />
       ) : (
         <EntriesTable

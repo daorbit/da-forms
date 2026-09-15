@@ -7,6 +7,7 @@ import {
   IconFileExport,
   IconLayoutList,
   IconLayoutKanban,
+  IconTable,
   IconCheck,
   IconRefresh,
   IconCalendar,
@@ -14,7 +15,14 @@ import {
   IconX,
   IconPaperclip,
 } from '@tabler/icons-react';
-import { DAY_LABEL, STATUS_LABEL, type CustomRange, type DayFilter, type StatusFilter } from './entriesTypes';
+import {
+  DAY_LABEL,
+  STATUS_LABEL,
+  type CustomRange,
+  type DayFilter,
+  type EntriesView,
+  type StatusFilter,
+} from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
 /** "Sep 1 – Sep 8", or just the start once only that's picked. `start`/`end`
@@ -46,11 +54,11 @@ export function EntriesFilterBar({
   status: StatusFilter;
   day: DayFilter;
   customRange: CustomRange;
-  view: 'list' | 'kanban';
+  view: EntriesView;
   loading: boolean;
   onFilter: (patch: Partial<{ status: StatusFilter; day: DayFilter }>) => void;
   onCustomRangeChange: (range: CustomRange) => void;
-  onSetView: (view: 'list' | 'kanban') => void;
+  onSetView: (view: EntriesView) => void;
   onCopyShareLink: () => void;
   onRefresh: () => void;
   onExportCsv: () => void;
@@ -188,7 +196,13 @@ export function EntriesFilterBar({
           <Menu.Target>
             <Tooltip label="View" withArrow>
               <ActionIcon variant="subtle" color="gray">
-                {view === 'list' ? <IconLayoutList size={17} /> : <IconLayoutKanban size={17} />}
+                {view === 'list' ? (
+                  <IconLayoutList size={17} />
+                ) : view === 'kanban' ? (
+                  <IconLayoutKanban size={17} />
+                ) : (
+                  <IconTable size={17} />
+                )}
               </ActionIcon>
             </Tooltip>
           </Menu.Target>
@@ -206,6 +220,13 @@ export function EntriesFilterBar({
               onClick={() => onSetView('kanban')}
             >
               Kanban View
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<IconTable size={15} />}
+              rightSection={view === 'excel' ? <IconCheck size={14} color="var(--mantine-color-emerald-6)" /> : undefined}
+              onClick={() => onSetView('excel')}
+            >
+              Excel View
             </Menu.Item>
           </Menu.Dropdown>
         </Menu>

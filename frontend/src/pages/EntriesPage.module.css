@@ -211,3 +211,26 @@
     grid-column: auto;
   }
 }
+
+/* The spreadsheet view.
+ *
+ * Global rather than composed, because AG Grid owns the class names on the
+ * elements these apply to — a CSS-module hash on `.ag-row-unread` would never
+ * match the class the grid actually writes. */
+:global(.ag-row-unread) {
+  font-weight: 600;
+}
+
+/* The row-number gutter: a label, not data. Dimmed and centred so it reads as
+   the spreadsheet's margin rather than as a first column of answers. */
+:global(.ag-cell-rownum) {
+  color: var(--mantine-color-dimmed);
+  justify-content: center;
+  font-size: 11px;
+}
+
+/* A column whose field was deleted from the form. Its answers are still real
+   and still worth reading; the heading already says "(removed)". */
+:global(.ag-cell-retired) {
+  color: var(--mantine-color-dimmed);
+}

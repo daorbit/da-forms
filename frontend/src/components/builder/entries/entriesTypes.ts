@@ -1,3 +1,11 @@
+/** How the responses are laid out.
+ *
+ * `list` reads one response at a time, `kanban` moves them through stages, and
+ * `excel` scans many at once in a spreadsheet. They differ in how much they
+ * fetch as well as how they draw: kanban and excel want the whole set, while
+ * list pages through it. */
+export type EntriesView = 'list' | 'kanban' | 'excel';
+
 export type StatusFilter = 'all' | 'unread' | 'read';
 export type DayFilter = 'all' | 'today' | '7' | '30' | 'custom';
 /** A picked [start, end] pair, or either half still unset while the range

@@ -108,6 +108,34 @@ function brandRow(brand: { name: string; logoUrl?: string }, accent: string): st
 }
 
 
+/**
+ * A very pale version of the accent, for the wash behind the header.
+ *
+ * Mixed towards white in sRGB rather than taken from a fixed palette, because
+ * the accent is whatever colour the form owner picked — there is no set of
+ * hand-tuned tints to look one up in. `amount` is how much of the accent
+ * survives; at 0.06 even a saturated red lands as a blush rather than a colour
+ * in its own right, which is the point: the wash should read as warmth on the
+ * page, not as a second brand colour competing with the banner.
+ *
+ * Returns null for anything that is not a plain 3- or 6-digit hex, so a stored
+ * `rgb()` or a named colour falls back to no gradient instead of emitting
+ * broken CSS into a mail client.
+ */
+function tintOf(hex: string, amount = 0.06): string | null {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+
+  const raw = m[1].length === 3 ? m[1].replace(/./g, (c) => c + c) : m[1];
+  const mix = (channel: number) => Math.round(255 - (255 - channel) * amount);
+
+  const r = mix(parseInt(raw.slice(0, 2), 16));
+  const g = mix(parseInt(raw.slice(2, 4), 16));
+  const b = mix(parseInt(raw.slice(4, 6), 16));
+
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
 function shell(
   formName: string,
   inner: string,
@@ -119,12 +147,10 @@ function shell(
   banner?: BannerName
 ): string {
   const footer = poweredBy
-    ? `<p style="margin:${S.block}px 0 0;font-size:11.5px;line-height:1.5;color:${C.faint};text-align:center">${escapeHtml(poweredBy)}</p>`
+    ? `<p style="margin:${S.section}px 0 0;font-size:11.5px;line-height:1.5;color:${C.faint}">${escapeHtml(poweredBy)}</p>`
     : '';
 
-  // With a banner the accent rule is redundant — the image already separates
-  // the header from the message, and two dividers a few pixels apart is the
-  // kind of thing that makes a template look assembled rather than designed.
+
   const divider = banner
     ? bannerImg(banner)
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 ${S.section}px">
@@ -134,12 +160,21 @@ function shell(
         </tr>
       </table>`;
 
-  return `<div style="background:${C.page};padding:32px 16px;font-family:${FONT}">
-  <!--[if mso]>
-  <style>.card, .panel { border-radius: 0 !important; }</style>
-  <![endif]-->
+  // A wash behind the header, fading out by the time the message starts.
+  //
+  // `background-color` is set first as the fallback: Outlook's Word engine
+  // drops `background-image` entirely, and a gradient with nothing flat behind
+  // it would fail to the client's own white. The stop is in pixels rather than
+  // a percentage so the fade ends at the same place whether the message is four
+  // lines or forty.
+  const wash = tintOf(accent);
+  const page = wash
+    ? `background-color:${wash};background-image:linear-gradient(180deg,${wash} 0%,${C.card} 260px)`
+    : `background:${C.card}`;
+
+  return `<div style="${page};padding:28px 16px;font-family:${FONT}">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;margin:0 auto">
-    <tr><td class="card" style="background:${C.card};border:1px solid ${C.line};border-radius:14px;padding:${S.major}px">
+    <tr><td style="padding:0">
 
       ${brandRow(brand, accent)}
 
@@ -147,13 +182,13 @@ function shell(
 
       ${inner}
 
-      <div style="margin-top:${S.major}px;padding-top:${S.block}px;border-top:1px solid ${C.lineSoft}">
+      <div style="margin-top:${S.major}px;padding-top:${S.block}px;border-top:1px solid ${C.line}">
         <p style="margin:0;font-size:12px;line-height:1.55;color:${C.faint}">
           Sent from <span style="color:${C.dim};font-weight:600">${escapeHtml(formName)}</span>
         </p>
+        ${footer}
       </div>
     </td></tr>
-    <tr><td>${footer}</td></tr>
   </table>
 </div>`;
 }
@@ -243,29 +278,20 @@ function tick(accent: string): string {
 
 function answerRow(label: string, value: string, last: boolean): string {
   return `<tr>
-    <td style="padding:${last ? '11px 0 0' : '11px 0'}">
-      <p style="margin:0 0 3px;font-size:10.5px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:${C.faint}">${escapeHtml(label)}</p>
-      <p style="margin:0;font-size:14.5px;line-height:1.5;color:${C.text}">${escapeHtml(value).replace(/\n/g, '<br>')}</p>
-    </td>
-  </tr>${last ? '' : `<tr><td style="padding:0"><div style="height:1px;background:${C.lineSoft}"></div></td></tr>`}`;
+    <td style="padding:10px 18px 10px 0;vertical-align:top;font-size:12.5px;line-height:1.5;color:${C.faint};white-space:nowrap">${escapeHtml(label)}</td>
+    <td style="padding:10px 0;vertical-align:top;font-size:14.5px;line-height:1.55;color:${C.text};text-align:right">${escapeHtml(value).replace(/\n/g, '<br>')}</td>
+  </tr>${last ? '' : `<tr><td colspan="2" style="padding:0"><div style="height:1px;background:${C.lineSoft}"></div></td></tr>`}`;
 }
 
-/**
- * The copy of what someone submitted.
- *
- * An outlined block rather than a filled grey card: the fill fought the message
- * above it for attention, and a tinted panel is the first thing a dark-mode
- * client inverts into something muddy.
- */
+
 export function answersPanel(answers: { label: string; value: string }[]): string {
   if (answers.length === 0) return '';
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:${S.section}px 0 0">
-    <tr><td class="panel" style="border:1px solid ${C.line};border-radius:12px;padding:16px 18px">
+    <tr><td colspan="2" style="padding:0 0 ${S.tight}px">
       <p style="margin:0;font-size:10.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:${C.faint}">What you sent</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-        ${answers.map((a, i) => answerRow(a.label, a.value, i === answers.length - 1)).join('')}
-      </table>
     </td></tr>
+    <tr><td colspan="2" style="padding:0"><div style="height:1px;background:${C.line}"></div></td></tr>
+    ${answers.map((a, i) => answerRow(a.label, a.value, i === answers.length - 1)).join('')}
   </table>`;
 }
 

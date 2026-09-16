@@ -232,6 +232,15 @@ export function NotificationsModal({
 
   // The same renderer the backend sends with, so what is previewed here is the
   // markup that actually arrives.
+  //
+  // Two things differ, and both are browser concessions. The banner is loaded
+  // over HTTP because a browser cannot resolve the cid a delivered message
+  // uses; and the brand falls back to the form's own name, because workspace
+  // branding is resolved per request on the public form and the builder has
+  // none to hand — a real send fills in the workspace logo and name here.
+  const bannerUrl = (name: string) =>
+    `${(import.meta.env.VITE_API_URL ?? '/api').replace(/\/api\/?$/, '')}/email-banners/${name}.jpg`;
+
   const previewHtml = isRespondent
     ? renderEmail({
         layout: notifications.respondentLayout,
@@ -245,6 +254,8 @@ export function NotificationsModal({
           ? { label: notifications.respondentCtaLabel || 'Continue', href: notifications.respondentCtaHref }
           : undefined,
         accent: theme?.accentColor,
+        banner: 'submission-received',
+        bannerUrl: bannerUrl('submission-received'),
       })
     : renderEmail({
         layout: 'receipt',
@@ -252,6 +263,8 @@ export function NotificationsModal({
         body: `A new response came in on ${formTitle || 'your form'}.`,
         answers: sampleAnswers,
         accent: theme?.accentColor,
+        banner: 'new-submission',
+        bannerUrl: bannerUrl('new-submission'),
       });
 
   return (

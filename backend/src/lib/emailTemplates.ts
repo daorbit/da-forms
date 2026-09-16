@@ -83,10 +83,13 @@ export function bannerCid(name: BannerName): string {
  * a grey box. The caller has to put the matching part on the message; see
  * `bannerAttachment` in the mailer-side helper.
  */
-function bannerImg(name: BannerName): string {
+function bannerImg(name: BannerName, src?: string): string {
+  // `src` is the composer's escape hatch: a browser cannot resolve a cid, so
+  // the preview passes an http URL for the same file and a real send leaves it
+  // unset to keep the attachment reference.
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 ${S.section}px">
     <tr><td style="font-size:0;line-height:0">
-      <img src="cid:${bannerCid(name)}" width="600" alt=""
+      <img src="${src ? escapeAttr(src) : `cid:${bannerCid(name)}`}" width="600" alt=""
         style="display:block;border:0;outline:none;text-decoration:none;width:100%;max-width:600px;height:auto;border-radius:10px">
     </td></tr>
   </table>`;
@@ -144,7 +147,9 @@ function shell(
   /** Caption under the message. Absent for workspaces whose plan removed it. */
   poweredBy?: string,
   /** The illustrated header, when the message has one. */
-  banner?: BannerName
+  banner?: BannerName,
+  /** An http source for that header, for a preview rendered in a browser. */
+  bannerUrl?: string
 ): string {
   const footer = poweredBy
     ? `<p style="margin:${S.section}px 0 0;font-size:11.5px;line-height:1.5;color:${C.faint}">${escapeHtml(poweredBy)}</p>`
@@ -152,7 +157,7 @@ function shell(
 
 
   const divider = banner
-    ? bannerImg(banner)
+    ? bannerImg(banner, bannerUrl)
     : `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 ${S.section}px">
         <tr>
           <td width="36" style="height:2px;background:${accent};border-radius:2px;font-size:0;line-height:0">&nbsp;</td>
@@ -326,6 +331,14 @@ export interface RenderOptions {
    * and the layout only decides what sits under it.
    */
   banner?: BannerName;
+  /**
+   * Where to load the banner from instead of the cid reference.
+   *
+   * Only the composer sets this. A delivered message must keep the cid, so
+   * that the image resolves against its own attachment rather than a request
+   * the reader's mail client may refuse to make.
+   */
+  bannerUrl?: string;
 }
 
 const DEFAULT_ACCENT = '#059669';
@@ -341,6 +354,7 @@ export function renderEmail({
   brand,
   poweredBy,
   banner,
+  bannerUrl,
 }: RenderOptions): string {
   const resolved = normalizeLayout(layout);
 
@@ -379,5 +393,5 @@ export function renderEmail({
     parts.push(button(cta.label || 'Continue', cta.href, tone, centered ? 'center' : 'left'));
   }
 
-  return shell(formName, parts.join(''), tone, brand ?? { name: formName }, poweredBy, banner);
+  return shell(formName, parts.join(''), tone, brand ?? { name: formName }, poweredBy, banner, bannerUrl);
 }

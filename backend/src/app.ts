@@ -1,10 +1,14 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { env } from './config/env.js';
 import { connectDb } from './config/db.js';
 import { routes } from './routes/index.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { notFound } from './middleware/not-found.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export function createApp() {
   const app = express();
@@ -54,6 +58,20 @@ export function createApp() {
   // well past the 2mb default below.
   app.use('/api/workspaces/:workspaceId/forms/generate', express.json({ limit: '8mb' }));
   app.use(express.json({ limit: '2mb' }));
+
+  // The email header illustrations, for the composer's preview only.
+  //
+  // A real notification carries them as CID attachments, because a mail client
+  // blocks remote images until the reader allows them. A browser cannot resolve
+  // a cid, so the preview needs the same files over HTTP — served before the
+  // database middleware below, since an image has no reason to wait on Mongo.
+  app.use(
+    '/email-banners',
+    express.static(path.join(__dirname, '..', 'public', 'email-banners'), {
+      maxAge: '7d',
+      fallthrough: false,
+    })
+  );
 
   // Serverless has no startup phase to connect in, so every request makes sure
   // the connection is up. After the first one this resolves immediately — see

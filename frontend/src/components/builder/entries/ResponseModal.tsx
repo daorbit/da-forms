@@ -7,7 +7,7 @@ import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
 import { FileSizeBadge } from './FileSizeBadge';
-import { formatAnswer, formatDateTime, isImageUrl } from './entriesTypes';
+import { answerText, formatAnswer, formatDateTime, isImageUrl } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
 export function ResponseModal({
@@ -78,7 +78,7 @@ export function ResponseModal({
                 );
               }
               if (field.type === 'repeater') {
-                const rows = repeaterDisplayRows(field, viewing.data[field.id] ?? '');
+                const rows = repeaterDisplayRows(field, answerText(viewing.data[field.id]));
                 const subFields = field.subFields ?? [];
                 return (
                   <div key={field.id} className={classes.responseField} style={{ gridColumn: '1 / -1' }}>
@@ -114,7 +114,7 @@ export function ResponseModal({
                   </div>
                 );
               }
-              const raw = viewing.data[field.id] ?? '';
+              const raw = answerText(viewing.data[field.id]);
               const isFileLink = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
               const isImage = isFileLink && (field.type === 'imageUpload' || field.type === 'signature' || isImageUrl(raw));
               const fileName = raw.split('/').pop() || 'Attachment';

@@ -14,7 +14,7 @@ import { IconMailOpened, IconShare2 } from '@tabler/icons-react';
 import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
 import { parseRepeaterRows } from '@/lib/repeater';
-import { formatAnswer, formatDateTime } from './entriesTypes';
+import { answerText, formatAnswer, formatDateTime } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
 
@@ -96,7 +96,7 @@ export function EntriesExcel({
             continue;
           }
 
-          const raw = submission.data[field.id] ?? '';
+          const raw = answerText(submission.data[field.id]);
 
           // A file cell holds a URL, which is unreadable at this density and
           // useless to copy in bulk. The filename is what someone scanning the

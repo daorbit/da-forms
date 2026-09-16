@@ -12,7 +12,7 @@ import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
 import { FileSizeBadge } from './FileSizeBadge';
-import { formatAnswer, formatDateTime, isImageUrl, PAGE_SIZE } from './entriesTypes';
+import { answerText, formatAnswer, formatDateTime, isImageUrl, PAGE_SIZE } from './entriesTypes';
 import classes from '../../../pages/EntriesPage.module.css';
 
 export function EntriesTable({
@@ -169,7 +169,7 @@ export function EntriesTable({
                         </Table.Td>
                       );
                     }
-                    const raw = submission.data[field.id] ?? '';
+                    const raw = answerText(submission.data[field.id]);
                     // Older submissions (or builder-preview edits) may only hold a bare
                     // filename from before uploads were wired to Cloudinary — link only
                     // what's actually a URL.

@@ -78,7 +78,8 @@ function fmtMonth(iso: string) {
 
 /** A stored answer as it should read in the entries table, modal, CSV and PDF.
  *  Only date/time-shaped types are reshaped; everything else is returned as-is. */
-export function formatAnswer(type: string, raw: string): string {
+export function formatAnswer(type: string, input: unknown): string {
+  const raw = answerText(input);
   if (!raw) return raw;
   switch (type) {
     case 'date':
@@ -97,6 +98,29 @@ export function formatAnswer(type: string, raw: string): string {
     }
     default:
       return raw;
+  }
+}
+
+/**
+ * One stored answer, as a string that is safe to call string methods on.
+ *
+ * `data` is typed as `Record<string, string>`, but it is whatever was written
+ * to Mongo — and a submission posted with the answers nested a level too deep,
+ * or a number sent unquoted, stores an object or a number under a field id.
+ * `?? ''` does not catch either, so the first `raw.split('/')` downstream threw
+ * and took the whole entries table down with it: one malformed row, no list.
+ *
+ * Objects and arrays render as JSON rather than `[object Object]`, since the
+ * point of seeing a bad row at all is to work out what arrived.
+ */
+export function answerText(raw: unknown): string {
+  if (raw === null || raw === undefined) return '';
+  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'number' || typeof raw === 'boolean') return String(raw);
+  try {
+    return JSON.stringify(raw);
+  } catch {
+    return '';
   }
 }
 

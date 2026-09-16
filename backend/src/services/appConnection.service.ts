@@ -230,10 +230,20 @@ function decryptConnection(
   for (const field of descriptor.fields) {
     if (!field.secret) continue;
     const enc = doc.secrets?.[field.key];
-    if (!enc) return null;
+    if (!enc) {
+      console.warn(
+        `[apps] ${doc.appId}: no stored value for secret "${field.key}" — treating the connection as unconfigured`
+      );
+      return null;
+    }
     try {
       secrets[field.key] = decrypt(enc);
-    } catch {
+    } catch (err) {
+
+      console.error(
+        `[apps] ${doc.appId}: could not decrypt secret "${field.key}" — check ENCRYPTION_KEY matches the key this connection was saved with:`,
+        err instanceof Error ? err.message : err
+      );
       return null;
     }
   }

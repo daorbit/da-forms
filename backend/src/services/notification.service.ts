@@ -79,8 +79,9 @@ export async function sendSubmissionNotifications(
  
   if (!(await mailConfigured(form.workspaceId))) {
     if (notifications.respondentEnabled || notifications.ownerEnabled) {
+ 
       console.warn(
-        `[notifications] workspace ${form.workspaceId} has notifications on but no enabled email app — nothing sent`
+        `[notifications] workspace ${form.workspaceId} has notifications on but no usable email app — nothing sent (see [apps] logs above for whether a connection failed to decrypt)`
       );
     }
     return;

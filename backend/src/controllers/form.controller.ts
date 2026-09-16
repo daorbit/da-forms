@@ -900,12 +900,9 @@ export const submitForm: RequestHandler = async (req, res) => {
       fileMeta,
       typeof _partialKey === "string" ? _partialKey : undefined,
     );
-    res.status(201).json(submission);
-
-    void recordSubmission(form.workspaceId);
 
     if (!limits || limits.notificationEmails) {
-      void sendSubmissionNotifications(
+      await sendSubmissionNotifications(
         form,
         data,
         undefined,
@@ -913,6 +910,12 @@ export const submitForm: RequestHandler = async (req, res) => {
         String(form._id),
       );
     }
+
+    await recordSubmission(form.workspaceId).catch((e: unknown) => {
+      console.error("[submit] recordSubmission failed:", e instanceof Error ? e.message : e);
+    });
+
+    res.status(201).json(submission);
   } catch (err) {
     if (err instanceof formService.DuplicateValueError) {
       return res.status(409).json({
@@ -986,12 +989,16 @@ async function applyPaymentEvent(
 
   if (!submission) return "already";
 
-  void workspaceSettingsService.markCharged(workspaceId, provider);
-  void recordSubmission(workspaceId);
   const limits = await getFormLimits(workspaceId);
   if (!limits || limits.notificationEmails) {
-    void sendSubmissionNotifications(form, submission.data, submission.payment);
+    await sendSubmissionNotifications(form, submission.data, submission.payment);
   }
+
+  await Promise.allSettled([
+    workspaceSettingsService.markCharged(workspaceId, provider),
+    recordSubmission(workspaceId),
+  ]);
+
   return "paid";
 }
 

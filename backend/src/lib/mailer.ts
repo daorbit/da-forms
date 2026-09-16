@@ -111,13 +111,28 @@ export async function sendMail(
   to: string,
   subject: string,
   html: string,
-  text: string
+  text: string,
+  /**
+   * Inline images the HTML references by cid — the header banner, in practice.
+   *
+   * Passed through rather than resolved here: which banner a message carries is
+   * a template decision, and the mailer's job is only to put the part on the
+   * wire beside it.
+   */
+  attachments: { filename: string; content: Buffer; cid: string; contentType?: string }[] = []
 ): Promise<void> {
   const entry = await getCached(workspaceId);
   if (!entry) throw new Error(`No email app connected for workspace ${workspaceId}`);
 
-  await entry.transporter.sendMail({ from: entry.from, to, subject, html, text });
-  void markUsed(workspaceId, entry.appId);
+  await entry.transporter.sendMail({
+    from: entry.from,
+    to,
+    subject,
+    html,
+    text,
+    ...(attachments.length ? { attachments } : {}),
+  });
+  await markUsed(workspaceId, entry.appId);
 }
 
 /**

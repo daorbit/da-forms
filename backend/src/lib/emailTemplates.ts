@@ -60,6 +60,38 @@ function escapeAttr(s: string): string {
 
 const FONT = `Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif`;
 
+/**
+ * Which illustrated header a message carries.
+ *
+ * Two, because there are only two audiences: the person who filled the form in
+ * and the person who owns it. Deliberately wordless about the product — these
+ * go out under someone else's name, so the art says "a form was submitted" and
+ * nothing about who built the form service.
+ */
+export type BannerName = 'submission-received' | 'new-submission';
+
+export function bannerCid(name: BannerName): string {
+  return `forms-banner-${name}`;
+}
+
+/**
+ * The banner as markup, referenced by cid.
+ *
+ * A CID attachment rather than a hosted URL: Gmail strips `data:` URIs out of
+ * `<img src>`, and a remote image is blocked until the reader allows it — which
+ * for the element that sets the tone of the whole message means most people see
+ * a grey box. The caller has to put the matching part on the message; see
+ * `bannerAttachment` in the mailer-side helper.
+ */
+function bannerImg(name: BannerName): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 ${S.section}px">
+    <tr><td style="font-size:0;line-height:0">
+      <img src="cid:${bannerCid(name)}" width="600" alt=""
+        style="display:block;border:0;outline:none;text-decoration:none;width:100%;max-width:600px;height:auto;border-radius:10px">
+    </td></tr>
+  </table>`;
+}
+
 
 function brandRow(brand: { name: string; logoUrl?: string }, accent: string): string {
   const logo = brand.logoUrl
@@ -82,35 +114,41 @@ function shell(
   accent: string,
   brand: { name: string; logoUrl?: string },
   /** Caption under the message. Absent for workspaces whose plan removed it. */
-  poweredBy?: string
+  poweredBy?: string,
+  /** The illustrated header, when the message has one. */
+  banner?: BannerName
 ): string {
   const footer = poweredBy
     ? `<p style="margin:${S.block}px 0 0;font-size:11.5px;line-height:1.5;color:${C.faint};text-align:center">${escapeHtml(poweredBy)}</p>`
     : '';
 
-  return `<div style="background:${C.page};padding:32px 16px;font-family:${FONT}">
-  <!--[if mso]>
-  <style>.card, .panel { border-radius: 0 !important; }</style>
-  <![endif]-->
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto">
-    <tr><td class="card" style="background:${C.card};border:1px solid ${C.line};border-radius:14px;padding:${S.major}px">
-
-      ${brandRow(brand, accent)}
-
-      <!-- A two-tone rule: a short accent segment against the full-width
-           hairline. A band of colour across the whole card competed with the
-           message; a stub of it reads as a mark rather than a header. -->
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 ${S.section}px">
+  // With a banner the accent rule is redundant — the image already separates
+  // the header from the message, and two dividers a few pixels apart is the
+  // kind of thing that makes a template look assembled rather than designed.
+  const divider = banner
+    ? bannerImg(banner)
+    : `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 ${S.section}px">
         <tr>
           <td width="36" style="height:2px;background:${accent};border-radius:2px;font-size:0;line-height:0">&nbsp;</td>
           <td style="height:1px;background:${C.line};font-size:0;line-height:0">&nbsp;</td>
         </tr>
-      </table>
+      </table>`;
+
+  return `<div style="background:${C.page};padding:32px 16px;font-family:${FONT}">
+  <!--[if mso]>
+  <style>.card, .panel { border-radius: 0 !important; }</style>
+  <![endif]-->
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;margin:0 auto">
+    <tr><td class="card" style="background:${C.card};border:1px solid ${C.line};border-radius:14px;padding:${S.major}px">
+
+      ${brandRow(brand, accent)}
+
+      ${divider}
 
       ${inner}
 
       <div style="margin-top:${S.major}px;padding-top:${S.block}px;border-top:1px solid ${C.lineSoft}">
-        <p style="margin:0;font-size:12px;line-height:1.5;color:${C.faint}">
+        <p style="margin:0;font-size:12px;line-height:1.55;color:${C.faint}">
           Sent from <span style="color:${C.dim};font-weight:600">${escapeHtml(formName)}</span>
         </p>
       </div>
@@ -254,6 +292,14 @@ export interface RenderOptions {
   accent?: string;
   brand?: { name: string; logoUrl?: string; accentColor?: string };
   poweredBy?: string;
+  /**
+   * The illustrated header this message carries.
+   *
+   * Set by the sender, not by the layout: which banner belongs on a message is
+   * a question about who is reading it — the respondent or the form's owner —
+   * and the layout only decides what sits under it.
+   */
+  banner?: BannerName;
 }
 
 const DEFAULT_ACCENT = '#059669';
@@ -268,6 +314,7 @@ export function renderEmail({
   accent,
   brand,
   poweredBy,
+  banner,
 }: RenderOptions): string {
   const resolved = normalizeLayout(layout);
 
@@ -306,5 +353,5 @@ export function renderEmail({
     parts.push(button(cta.label || 'Continue', cta.href, tone, centered ? 'center' : 'left'));
   }
 
-  return shell(formName, parts.join(''), tone, brand ?? { name: formName }, poweredBy);
+  return shell(formName, parts.join(''), tone, brand ?? { name: formName }, poweredBy, banner);
 }

@@ -6,6 +6,7 @@ import { flattenFields, fillPlaceholders, repeaterText } from '../lib/pipe.js';
 import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
 import { getBranding } from '../lib/quantalog.js';
+import { bannerAttachment } from '../lib/email-banner.js';
 
 
  
@@ -142,8 +143,12 @@ export async function sendSubmissionNotifications(
         accent: form.theme?.accentColor,
         brand: sender,
         poweredBy,
+        banner: 'submission-received',
       });
-      jobs.push(sendMail(form.workspaceId, to, subject, html, body));
+      const banner = bannerAttachment('submission-received');
+      jobs.push(
+        sendMail(form.workspaceId, to, subject, html, body, banner ? [banner] : [])
+      );
     }
   }
 
@@ -161,9 +166,13 @@ export async function sendSubmissionNotifications(
       accent: form.theme?.accentColor,
       brand: sender,
       poweredBy,
+      banner: 'new-submission',
     });
+    const banner = bannerAttachment('new-submission');
     for (const to of notifications.ownerEmails) {
-      jobs.push(sendMail(form.workspaceId, to, subject, html, text));
+      jobs.push(
+        sendMail(form.workspaceId, to, subject, html, text, banner ? [banner] : [])
+      );
     }
   }
 

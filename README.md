@@ -47,7 +47,7 @@ cp backend/.env.example backend/.env
 
 ## Run
 
-```bash
+```bash 
 npm run dev
 ```
 

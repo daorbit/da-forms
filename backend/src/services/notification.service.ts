@@ -89,6 +89,8 @@ export async function sendSubmissionNotifications(
  
   const brand = await getBranding(form.workspaceId);
   const poweredBy = brand.showPoweredBy ? brand.poweredByLabel : undefined;
+  // What opens the card: the workspace's mark and name, not the form's title.
+  const sender = { name: brand.name, logoUrl: brand.logoUrl, accentColor: brand.accentColor };
 
   const jobs: Promise<void>[] = [];
 
@@ -137,6 +139,7 @@ export async function sendSubmissionNotifications(
             ? { label: 'Edit your response', href: editHref }
             : undefined,
         accent: form.theme?.accentColor,
+        brand: sender,
         poweredBy,
       });
       jobs.push(sendMail(form.workspaceId, to, subject, html, body));
@@ -155,6 +158,8 @@ export async function sendSubmissionNotifications(
       body: `A new response came in on ${form.title}.`,
       answers,
       accent: form.theme?.accentColor,
+      brand: sender,
+      poweredBy,
     });
     for (const to of notifications.ownerEmails) {
       jobs.push(sendMail(form.workspaceId, to, subject, html, text));

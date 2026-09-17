@@ -30,9 +30,30 @@ import type { Form } from '@/types';
 import { useFitScale } from '@/hooks/useFitScale';
 import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
 import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
+import {
+  WhatsAppIcon, XIcon, FacebookIcon, LinkedInIcon, TelegramIcon, MailIcon,
+  RedditIcon, PinterestIcon,
+} from './SocialIcons';
 import classes from './ShareModal.module.css';
 
 type TabId = 'link' | 'embed';
+
+/** Each platform's own share-intent URL — opening one hands off to that
+ * site's native share flow rather than us reimplementing posting. */
+function socialTargets(url: string, title: string) {
+  const u = encodeURIComponent(url);
+  const t = encodeURIComponent(title);
+  return [
+    { id: 'whatsapp', label: 'WhatsApp', Icon: WhatsAppIcon, bg: '#25D366', fg: '#fff', href: `https://wa.me/?text=${t}%20${u}` },
+    { id: 'x', label: 'X', Icon: XIcon, bg: '#000000', fg: '#fff', href: `https://twitter.com/intent/tweet?text=${t}&url=${u}` },
+    { id: 'facebook', label: 'Facebook', Icon: FacebookIcon, bg: '#1877F2', fg: '#fff', href: `https://www.facebook.com/sharer/sharer.php?u=${u}` },
+    { id: 'linkedin', label: 'LinkedIn', Icon: LinkedInIcon, bg: '#0A66C2', fg: '#fff', href: `https://www.linkedin.com/sharing/share-offsite/?url=${u}` },
+    { id: 'telegram', label: 'Telegram', Icon: TelegramIcon, bg: '#26A5E4', fg: '#fff', href: `https://t.me/share/url?url=${u}&text=${t}` },
+    { id: 'reddit', label: 'Reddit', Icon: RedditIcon, bg: '#FF4500', fg: '#fff', href: `https://reddit.com/submit?url=${u}&title=${t}` },
+    { id: 'pinterest', label: 'Pinterest', Icon: PinterestIcon, bg: '#E60023', fg: '#fff', href: `https://pinterest.com/pin/create/button/?url=${u}&description=${t}` },
+    { id: 'email', label: 'Email', Icon: MailIcon, bg: '#6b7280', fg: '#fff', href: `mailto:?subject=${t}&body=${u}` },
+  ] as const;
+}
 
 const TABS: { id: TabId; label: string; icon: typeof IconLink; color: string }[] = [
   { id: 'link', label: 'Public link', icon: IconLink, color: '#0ca678' },
@@ -64,6 +85,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
   const [height, setHeight] = useState<number | string>(600);
 
   const shareUrl = publicFormUrl(form._id);
+  const socials = useMemo(() => socialTargets(shareUrl, form.title || 'Fill out this form'), [shareUrl, form.title]);
 
   const frameDims = frameSize(device);
   const { ref: stageRef, scale, measured } = useFitScale({
@@ -239,6 +261,36 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                 <Text size="xs" c="dimmed" mt="xs">
                   Append query parameters to prefill fields, e.g. <code>?{form.fields[0]?.id ?? 'fieldId'}=value</code>.
                 </Text>
+
+                <Divider mt="sm" mb={2} />
+
+                <Text size="sm" fw={600}>
+                  Share to
+                </Text>
+                <Group gap="sm">
+                  {socials.map(({ id, label, Icon, bg, fg, href }) => (
+                    <Tooltip key={id} label={label} withArrow>
+                      <ActionIcon
+                        component="a"
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="filled"
+                        size={44}
+                        radius="xl"
+                        aria-label={`Share on ${label}`}
+                        style={{
+                          backgroundColor: bg,
+                          color: fg,
+                          transition: 'transform 120ms ease, box-shadow 120ms ease',
+                        }}
+                        className={classes.socialButton}
+                      >
+                        <Icon size={22} />
+                      </ActionIcon>
+                    </Tooltip>
+                  ))}
+                </Group>
               </Stack>
             )}
 

@@ -225,6 +225,9 @@ export interface NotificationSettings {
   ownerEnabled?: boolean;
   ownerEmails?: string[];
   ownerSubject?: string;
+
+  /** Drops a row into the Quantalog notification bell for every submission — separate from `ownerEnabled`, which only sends email. */
+  ownerInAppEnabled?: boolean;
 }
 
 export interface WebhookSettings {
@@ -416,6 +419,7 @@ const formSchema = new Schema<FormDocument>(
           ownerEnabled: { type: Boolean },
           ownerEmails: { type: [String], default: undefined },
           ownerSubject: { type: String },
+          ownerInAppEnabled: { type: Boolean },
         },
         { _id: false }
       ),

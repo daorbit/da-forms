@@ -332,6 +332,38 @@ export async function generateForm(
  * inside one TTL window still sees the number climbing rather than reading the
  * same stale figure until it expires.
  */
+/**
+ * Drop a row into the Quantalog notification bell for a new submission.
+ *
+ * Fire and forget, like `recordSubmission`: the submission is already saved,
+ * and a failure here costs a notification, not data.
+ */
+export async function notifyFormSubmission(
+  workspaceId: string,
+  formId: string,
+  formTitle: string,
+  answers: { label: string; value: string }[]
+): Promise<void> {
+  if (!isConfigured()) return;
+
+  try {
+    await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/notify/${encodeURIComponent(workspaceId)}`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${env.formsServiceSecret}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ formId, formTitle, answers }),
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+  } catch (err) {
+    console.error('[quantalog] could not send submission notification:', err);
+  }
+}
+
 export async function recordSubmission(workspaceId: string): Promise<void> {
   if (!isConfigured()) return;
 

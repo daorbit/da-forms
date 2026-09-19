@@ -5,7 +5,7 @@ import type { SubmissionPayment } from '../models/submission.model.js';
 import { flattenFields, fillPlaceholders, repeaterText } from '../lib/pipe.js';
 import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
-import { getBranding } from '../lib/quantalog.js';
+import { getBranding, notifyFormSubmission } from '../lib/quantalog.js';
 import { bannerAttachment } from '../lib/email-banner.js';
 
 
@@ -65,7 +65,7 @@ function answersOf(
 
  
 export async function sendSubmissionNotifications(
-  form: FormDocument,
+  form: FormDocument & { _id: unknown },
   data: Record<string, string>,
   /** Present for a paid form — shown as a line in the emailed summary. */
   payment?: SubmissionPayment,
@@ -77,7 +77,19 @@ export async function sendSubmissionNotifications(
   const notifications = form.notifications;
   if (!notifications) return;
 
- 
+  // Independent of the email path below: it goes to the Quantalog bell, not
+  // through the workspace's connected mail app, so an unconfigured inbox must
+  // not silently swallow it too.
+  if (notifications.ownerInAppEnabled) {
+    void notifyFormSubmission(
+      form.workspaceId,
+      formId ?? String(form._id),
+      form.title,
+      answersOf(form.fields, data, payment)
+    );
+  }
+
+
   if (!(await mailConfigured(form.workspaceId))) {
     if (notifications.respondentEnabled || notifications.ownerEnabled) {
  

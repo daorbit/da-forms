@@ -350,6 +350,8 @@ export interface NotificationSettings {
   ownerEnabled?: boolean;
   ownerEmails?: string[];
   ownerSubject?: string;
+  /** Drops a row into the Quantalog notification bell on every submission — independent of `ownerEnabled`, which only sends email. */
+  ownerInAppEnabled?: boolean;
 }
 
 /**

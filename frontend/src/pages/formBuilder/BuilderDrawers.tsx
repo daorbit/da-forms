@@ -10,6 +10,7 @@ import { ThemeDrawer } from '@/components/builder/ThemeDrawer';
 import { StepsDrawer } from '@/components/builder/StepsDrawer';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
 import { NotificationsModal } from '@/components/builder/NotificationsModal';
+import { DrawerNotifyModal } from '@/components/builder/DrawerNotifyModal';
 import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
 import { WebhookConnectDialog } from '@/components/apps/WebhookConnectDialog';
 import { PreviewModal } from '@/components/builder/PreviewModal';
@@ -181,6 +182,13 @@ export function BuilderDrawers({
         notifications={state.emailNotifications}
         onChange={(patch) => state.setEmailNotifications((prev) => ({ ...prev, ...patch }))}
         workspaceId={workspaceId}
+      />
+
+      <DrawerNotifyModal
+        opened={railPanel === 'drawerNotify'}
+        onClose={() => setRailPanel(null)}
+        enabled={state.emailNotifications.ownerInAppEnabled ?? false}
+        onChange={(enabled) => state.setEmailNotifications((prev) => ({ ...prev, ownerInAppEnabled: enabled }))}
       />
 
       <IntegrationsModal

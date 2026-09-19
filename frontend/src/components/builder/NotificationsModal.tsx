@@ -464,26 +464,6 @@ export function NotificationsModal({
                     Add at least one address or nothing will be sent.
                   </Text>
                 )}
-
-                <Divider />
-
-                <Group justify="space-between" align="center" wrap="nowrap">
-                  <div>
-                    <Text size="sm" fw={600}>
-                      Notification drawer
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      Drops a row into your Quantalog notification bell on every submission —
-                      independent of the email above
-                    </Text>
-                  </div>
-                  <Switch
-                    checked={notifications.ownerInAppEnabled ?? false}
-                    onChange={(e) => onChange({ ownerInAppEnabled: e.currentTarget.checked })}
-                    color="emerald"
-                    size="md"
-                  />
-                </Group>
               </Stack>
             )}
           </Box>

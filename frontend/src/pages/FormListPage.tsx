@@ -26,8 +26,11 @@ import {
   IconX,
   IconInfoCircle,
   IconPlugConnected,
+  IconBell,
 } from '@tabler/icons-react';
 import { BookOpen } from 'lucide-react';
+import { IS_EMBEDDED } from '@/lib/bootParams';
+import { requestOpenNotifications } from '@/lib/planLimit';
 import {
   listForms,
   deleteForm,
@@ -94,39 +97,14 @@ export function FormListPage() {
   const [copyingConfigId, setCopyingConfigId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<Form | null>(null);
 
-  /**
-   * The first step is a dialog.
-   *
-   * The name and the scope are asked here, before anything is described,
-   * because the create screen wants both by the time it creates the form and
-   * asking for them afterwards means interrupting someone who has just watched
-   * their form appear. Continue navigates on to the create screen, which owns
-   * every way of starting from there.
-   */
   function startCreate() {
     setNewFormOpen(true);
   }
 
-  /**
-   * Whether the row has folded its buttons into the overflow menu.
-   *
-   * The same 640px the stylesheet's container query uses, measured in JS
-   * because the menu's dropdown renders in a portal at the document root:
-   * outside this element, the container query can never match it, so the
-   * duplicated items showed on every width — including desktop, next to the
-   * very buttons they stand in for.
-   */
   const { ref: pageRef, width: pageWidth } = useElementSize();
   const narrowRow = pageWidth > 0 && pageWidth <= 640;
 
-  /**
-   * The filters as one value, so a change to any of them is a single update.
-   *
-   * Page lives in here rather than in its own state because a new search, sort
-   * or status has to reset it — and doing that in a separate effect meant two
-   * renders with two different `page` values, which fired the list request
-   * twice for one interaction.
-   */
+
   const setFilter = (patch: Partial<{ q: string; sort: SortOption; status: StatusFilter }>) => {
     setSearch(patch.q ?? search);
     if (patch.sort) setSort(patch.sort);
@@ -135,8 +113,7 @@ export function FormListPage() {
   };
 
   const load = useCallback(() => {
-    // The demo workspace's forms are built into the app, not stored — there is
-    // nothing to fetch, and nothing a visitor does here changes them.
+
     if (isDemo) {
       const res = listDemoForms({
         page,
@@ -165,9 +142,6 @@ export function FormListPage() {
       .finally(() => setLoading(false));
   }, [isDemo, workspaceId, page, debouncedSearch, sort, status]);
 
-  // Keyed on the location as well as the loader, so returning from the builder
-  // refetches rather than showing the list as it was before the edit — however
-  // the page is reached, our own link or the browser's back button.
   useEffect(() => {
     load();
   }, [location.key, load]);
@@ -184,15 +158,7 @@ export function FormListPage() {
     });
   }
 
-  /**
-   * Copy a form, server-side.
-   *
-   * Was assembled here from the fields the list happened to hold, which meant a
-   * copy silently lost everything this page does not read — steps, notification
-   * settings, header and button alignment — and shared the original's uploaded
-   * background, so deleting either form destroyed the other's image. The server
-   * copies the whole document and drops the parts that must not be shared.
-   */
+
   async function duplicateForm(form: Form) {
     setDuplicatingId(form._id);
     try {
@@ -204,13 +170,7 @@ export function FormListPage() {
     }
   }
 
-  /**
-   * Put a form's config on the clipboard, to be pasted into another workspace.
-   *
-   * Duplicate copies within one workspace; this crosses the boundary, so the
-   * server strips what cannot travel — uploaded backgrounds, the webhook
-   * secret, the schedule — and hands back a portable envelope.
-   */
+
   async function copyConfig(form: Form) {
     setCopyingConfigId(form._id);
     try {
@@ -221,16 +181,12 @@ export function FormListPage() {
         color: 'emerald',
       });
     } catch {
-      // Either the export failed or the browser refused clipboard access; the
-      // distinction does not change what they can do about it.
       notifications.show({ message: 'Could not copy the config', color: 'red' });
     } finally {
       setCopyingConfigId(null);
     }
   }
 
-  // Applying a preset from the list has no builder state to land in, so it is
-  // saved straight away — the preview then keeps showing the saved theme.
   async function applyTheme(form: Form, patch: Partial<FormTheme>) {
     const theme = { ...form.theme, ...patch, scope: form.theme?.scope ?? 'page' } as FormTheme;
     const updated = await updateForm(form._id, { theme }, workspaceId);
@@ -263,6 +219,19 @@ export function FormListPage() {
           )}
         </Group>
         <Group gap="xs" wrap="nowrap">
+          {IS_EMBEDDED && (
+            <Tooltip label="Notifications">
+              <ActionIcon
+                variant="default"
+                size="lg"
+                radius="md"
+                aria-label="Notifications"
+                onClick={requestOpenNotifications}
+              >
+                <IconBell size={17} />
+              </ActionIcon>
+            </Tooltip>
+          )}
           <Tooltip label="Docs">
             <ActionIcon
               component="a"

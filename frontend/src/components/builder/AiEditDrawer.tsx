@@ -102,6 +102,14 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
             paddingTop: 5,
             paddingBottom: 5,
             background: 'var(--mantine-color-default)',
+            // Pinned alongside the background: this drawer renders in
+            // Mantine's own body-level portal, and the management chrome's
+            // dark-mode text colour is only re-asserted for `.mantine-Drawer-*`
+            // in global.css, with no light-mode counterpart — leaving the
+            // input to whatever Mantine's default portal cascade resolves,
+            // which does not reliably match this app's own token. Pinning it
+            // here the same way as the background removes that dependency.
+            color: 'var(--mantine-color-text)',
             borderColor: 'var(--mantine-color-default-border)',
           },
           section: { alignItems: 'center' },

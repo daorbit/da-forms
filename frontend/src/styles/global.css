@@ -137,6 +137,48 @@ html[data-mantine-color-scheme='dark'] .mantine-Menu-item[data-color='red']:hove
   color: #ff8787 !important;
 }
 
+/* The light-mode counterpart of the dark-only block above. Without it, a
+   Modal/Drawer in light mode fell back to Mantine's own portal defaults
+   instead of this app's tokens — usually harmless since the two happen to
+   agree, but not guaranteed, and it is what let the AI edit drawer's
+   composer end up with mismatched text and background colour in light mode
+   (see AiEditDrawer.tsx). Pinning both modes here is what keeps every
+   Drawer/Modal's content on this app's own token, in either colour scheme. */
+html[data-mantine-color-scheme='light'] .mantine-Modal-content,
+html[data-mantine-color-scheme='light'] .mantine-Drawer-content {
+  background-color: #ffffff !important;
+  color: #111418 !important;
+  box-shadow: 0 20px 48px rgba(17, 20, 24, 0.16) !important;
+}
+
+html[data-mantine-color-scheme='light'] .mantine-Modal-header,
+html[data-mantine-color-scheme='light'] .mantine-Drawer-header {
+  background-color: #ffffff !important;
+  color: #111418 !important;
+  border-bottom-color: #e5e7eb !important;
+}
+
+html[data-mantine-color-scheme='light'] .mantine-Modal-title,
+html[data-mantine-color-scheme='light'] .mantine-Drawer-title {
+  color: #111418 !important;
+}
+
+html[data-mantine-color-scheme='light'] .mantine-Modal-body,
+html[data-mantine-color-scheme='light'] .mantine-Drawer-body {
+  color: #111418 !important;
+}
+
+html[data-mantine-color-scheme='light'] .mantine-Modal-close,
+html[data-mantine-color-scheme='light'] .mantine-Drawer-close {
+  color: #4b5563 !important;
+}
+
+html[data-mantine-color-scheme='light'] .mantine-Modal-close:hover,
+html[data-mantine-color-scheme='light'] .mantine-Drawer-close:hover {
+  background-color: #f1f3f5 !important;
+  color: #111418 !important;
+}
+
 .analytics-source-arrow {
   color: var(--mantine-color-dimmed);
   transition: color 120ms ease, transform 120ms ease;

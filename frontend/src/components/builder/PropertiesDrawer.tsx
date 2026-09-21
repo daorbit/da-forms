@@ -213,12 +213,9 @@ export function PropertiesDrawer({
       // header and body insets — set to 0 and controlled entirely by our own
       // .header/.body classes below instead, so the two never fight.
       padding={0}
-      // The canvas must stay visible and clickable while properties are edited,
-      // so changes can be watched as they are typed.
-      withOverlay={false}
-      lockScroll={false}
-      trapFocus={false}
-      shadow="lg"
+      radius="lg"
+      overlayProps={{ backgroundOpacity: 0.35 }}
+      transitionProps={{ duration: 180, transition: 'slide-left' }}
       title={
         meta && (
           <div className={classes.headerBar}>

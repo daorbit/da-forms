@@ -54,6 +54,8 @@ export function StepsDrawer({ opened, onClose, fields, settings, onChange, accen
       size={480}
       title="Steps & progress"
       padding="lg"
+      radius="lg"
+      transitionProps={{ duration: 180, transition: 'slide-left' }}
       classNames={classes}
     >
       {count < 2 ? (

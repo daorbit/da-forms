@@ -26,6 +26,8 @@ export function ThankYouDrawer({
       size={480}
       title="Thank You Page & Redirection"
       padding="lg"
+      radius="lg"
+      transitionProps={{ duration: 180, transition: 'slide-left' }}
       classNames={classes}
     >
       <Stack gap="md">

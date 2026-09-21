@@ -39,6 +39,8 @@ export function ThemeDrawer({ opened, onClose, theme, onChange }: Props) {
       size={480}
       title="Theme"
       padding="lg"
+      radius="lg"
+      transitionProps={{ duration: 180, transition: 'slide-left' }}
       classNames={classes}
     >
       <Tabs defaultValue="colors" keepMounted={false}>

@@ -143,13 +143,10 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
       onClose={onClose}
       position="right"
       size={440}
-      // Same as PropertiesDrawer: the canvas stays visible and clickable so an
-      // author watches the AI's change land in place.
       padding={0}
-      withOverlay={false}
-      lockScroll={false}
-      trapFocus={false}
-      shadow="lg"
+      radius="lg"
+      overlayProps={{ backgroundOpacity: 0.35 }}
+      transitionProps={{ duration: 180, transition: 'slide-left' }}
       title={
         <div className={drawerShared.headerBar}>
           <OrbitMark size={18} />

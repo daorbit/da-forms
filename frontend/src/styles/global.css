@@ -90,6 +90,28 @@ html[data-mantine-color-scheme='light'] {
   --mantine-color-placeholder: #9ca3af !important;
 }
 
+/*
+ * The rounded corner every drawer in the builder now has is set with
+ * Mantine's own `radius` prop, per drawer (see AiEditDrawer.tsx,
+ * PropertiesDrawer.tsx, drawer.module.css's consumers) — not here.
+ *
+ * A CSS override on `.mantine-Drawer-content` was tried first, adding
+ * `border-radius` plus padding on `.mantine-Drawer-inner` to inset it from
+ * the edge. That broke scrolling: Mantine sizes `.mantine-Drawer-content`
+ * with an inline `height: calc(100vh - var(--drawer-offset) * 2)`, computed
+ * from its own `offset` prop — padding added from outside that calculation
+ * shrinks the visible box without shrinking the height Mantine thinks it has,
+ * so the content overflowed its own container and fields past the bottom
+ * were unreachable. `radius` doesn't have this problem since Mantine applies
+ * it as part of the same layout Mantine already accounts for.
+ *
+ * No shadow and no overlay blur on Drawer, by design — kept plain rather than
+ * matching Quantalog's own drop shadow and blurred backdrop.
+ */
+.mantine-Drawer-content {
+  box-shadow: none !important;
+}
+
 /* Dialogs render in Mantine's portal, outside page-level wrappers. Give the
    management chrome its own raised surface so it remains distinct from the
    Quantalog page ground; light preview stages inside dialogs keep their local
@@ -99,6 +121,9 @@ html[data-mantine-color-scheme='dark'] .mantine-Drawer-content {
   background-color: #16181b !important;
   color: #f2f4f6 !important;
   /* border: 1px solid #34383e !important; */
+}
+
+html[data-mantine-color-scheme='dark'] .mantine-Modal-content {
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55) !important;
 }
 
@@ -148,6 +173,9 @@ html[data-mantine-color-scheme='light'] .mantine-Modal-content,
 html[data-mantine-color-scheme='light'] .mantine-Drawer-content {
   background-color: #ffffff !important;
   color: #111418 !important;
+}
+
+html[data-mantine-color-scheme='light'] .mantine-Modal-content {
   box-shadow: 0 20px 48px rgba(17, 20, 24, 0.16) !important;
 }
 

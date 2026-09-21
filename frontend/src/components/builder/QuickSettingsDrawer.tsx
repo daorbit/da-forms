@@ -93,6 +93,8 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange }: Pro
       // header and body insets — set to 0 and controlled entirely by our own
       // .header/.body classes below instead, so the two never fight.
       padding={0}
+      radius="lg"
+      transitionProps={{ duration: 180, transition: 'slide-left' }}
       classNames={{
         header: classes.header,
         title: classes.title,

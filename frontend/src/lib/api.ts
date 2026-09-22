@@ -165,7 +165,7 @@ export function requestFormEdit(
   snapshot: EditSnapshot,
   workspaceId = DEFAULT_WORKSPACE
 ) {
-  return authedRequest<{ ops: EditOp[] }>(`${ws(workspaceId)}/edit`, {
+  return authedRequest<{ ops: EditOp[]; summary?: string }>(`${ws(workspaceId)}/edit`, {
     method: 'POST',
     body: JSON.stringify({ prompt, snapshot }),
   });

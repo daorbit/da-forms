@@ -190,7 +190,7 @@ export interface EditSnapshot {
 export type EditOp = Record<string, unknown>;
 
 export type EditOutcome =
-  | { ok: true; ops: EditOp[] }
+  | { ok: true; ops: EditOp[]; summary?: string }
   | { ok: false; status: number; error: string; code?: string };
 
 /**
@@ -227,7 +227,7 @@ export async function editForm(
     );
 
     const body = (await res.json().catch(() => null)) as
-      | { ops?: EditOp[]; error?: string; code?: string }
+      | { ops?: EditOp[]; error?: string; code?: string; summary?: string }
       | null;
 
     if (!res.ok) {
@@ -241,7 +241,7 @@ export async function editForm(
     if (!Array.isArray(body?.ops)) {
       return { ok: false, status: 502, error: "The editor returned nothing usable." };
     }
-    return { ok: true, ops: body.ops };
+    return { ok: true, ops: body.ops, summary: body.summary };
   } catch (err) {
     console.error("[quantalog] edit failed:", err);
     return { ok: false, status: 504, error: "The editor took too long to answer." };

@@ -1229,5 +1229,5 @@ export const editForm: RequestHandler = async (req, res) => {
     });
   }
 
-  res.json({ ops: result.ops });
+  res.json({ ops: result.ops, summary: result.summary });
 };

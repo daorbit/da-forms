@@ -46,6 +46,7 @@ const SUGGESTIONS = [
 interface Turn {
   prompt: string;
   changes?: number;
+  summary?: string;
 }
 
 export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, disabled }: Props) {
@@ -60,11 +61,11 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
     setBusy(true);
     setTurns((t) => [...t, { prompt: asked }]);
     try {
-      const { ops } = await requestFormEdit(asked, snapshot, workspaceId);
+      const { ops, summary } = await requestFormEdit(asked, snapshot, workspaceId);
       const changes = onApply(ops);
       setTurns((t) => {
         const copy = [...t];
-        copy[copy.length - 1] = { prompt: asked, changes };
+        copy[copy.length - 1] = { prompt: asked, changes, summary };
         return copy;
       });
       setPrompt('');
@@ -218,6 +219,11 @@ export function AiEditDrawer({ opened, onClose, workspaceId, snapshot, onApply, 
                       <Text size="xs" c="dimmed">
                         {turn.changes === 0 ? (
                           <>Nothing to change for that. Try naming the field.</>
+                        ) : turn.summary ? (
+                          <>
+                            {turn.summary.charAt(0).toUpperCase() + turn.summary.slice(1)}. Ctrl+Z to
+                            undo.
+                          </>
                         ) : (
                           <>
                             Applied to the canvas — {turn.changes} change

@@ -28,6 +28,7 @@ import { rememberPayuPayment, takePayuPayment } from '@/lib/payu';
 import type { Form } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { PoweredBy } from '@/components/public/PoweredBy';
+import { BrandHeader } from '@/components/public/BrandHeader';
 import { FormPage } from '@/components/FormPage';
 import { FormLoader } from '@/components/FormLoader';
 
@@ -470,6 +471,7 @@ export function PublicFormPage() {
         initialData={editData ?? undefined}
         needsPayerPhone={form.needsPayerPhone}
         onSubmit={handleSubmit}
+        header={<BrandHeader branding={form.branding} />}
         footer={<PoweredBy branding={form.branding} />}
       />
     </FormPage>

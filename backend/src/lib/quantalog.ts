@@ -67,13 +67,7 @@ export async function getFormLimits(workspaceId: string): Promise<FormLimits | n
   }
 }
 
-/**
- * How a workspace presents itself, as Quantalog resolves it.
- *
- * Already reconciled against the plan on that side — a workspace whose plan
- * does not include branding comes back with ours. This service renders what it
- * is given and does not re-decide.
- */
+
 export interface Branding {
   name: string;
   logoUrl?: string;
@@ -82,6 +76,7 @@ export interface Branding {
   showPoweredBy: boolean;
   poweredByLabel: string;
   editable: boolean;
+  header: { name?: string; logoUrl?: string } | null;
 }
 
 /** Used when Quantalog cannot be reached, and for unconfigured installs. */
@@ -93,6 +88,7 @@ const FALLBACK_BRANDING: Branding = {
   showPoweredBy: true,
   poweredByLabel: process.env.BRAND_POWERED_BY?.trim() || 'Powered by Quantalog Forms',
   editable: false,
+  header: null,
 };
 
 const brandingCache = new Map<string, { at: number; branding: Branding }>();

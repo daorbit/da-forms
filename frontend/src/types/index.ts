@@ -448,6 +448,7 @@ export interface FormBranding {
   accentColor?: string;
   showPoweredBy: boolean;
   poweredByLabel: string;
+  header?: { name?: string; logoUrl?: string } | null;
 }
 
 export type PaymentProvider = 'razorpay' | 'cashfree' | 'payu';

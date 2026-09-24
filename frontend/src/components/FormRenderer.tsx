@@ -64,6 +64,7 @@ interface Props {
     payerPhone?: string
   ) => void | boolean | Promise<void | boolean>;
 
+  header?: React.ReactNode;
   footer?: React.ReactNode;
 }
 
@@ -142,6 +143,7 @@ export function FormRenderer({
   onSaveForLater,
   initialData,
   onSubmit,
+  header,
   footer,
 }: Props) {
 
@@ -421,6 +423,7 @@ export function FormRenderer({
       }}
     >
       <form onSubmit={handleSubmit} ref={formRef} noValidate>
+        {header}
         {!hideHeader && (
           <>
             <Title order={3} ta={headerAlign ?? 'center'} mb={4} c={textColor}>

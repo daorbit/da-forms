@@ -1,4 +1,4 @@
-import { Group, Text, UnstyledButton } from '@mantine/core';
+import { Text, UnstyledButton } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
 import type { FormTheme } from '@/types';
 import classes from './ScopePicker.module.css';
@@ -30,7 +30,7 @@ interface Props {
 
 export function ScopePicker({ value, onChange }: Props) {
   return (
-    <Group grow align="stretch" gap="sm" wrap="nowrap">
+    <div className={classes.grid}>
       {CHOICES.map((choice) => (
         <UnstyledButton
           key={choice.value}
@@ -56,6 +56,6 @@ export function ScopePicker({ value, onChange }: Props) {
           </span>
         </UnstyledButton>
       ))}
-    </Group>
+    </div>
   );
 }

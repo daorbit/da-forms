@@ -93,15 +93,7 @@ const FALLBACK_BRANDING: Branding = {
 
 const brandingCache = new Map<string, { at: number; branding: Branding }>();
 
-/**
- * This workspace's branding, never null.
- *
- * Unlike limits, an unknown answer here has an obvious safe default — our own
- * name — so callers are spared a null check on a value they need to render
- * inline. A workspace that pays to remove the caption briefly gets it back
- * during an outage; the alternative is a form that renders with no branding at
- * all, which looks broken rather than merely generic.
- */
+
 export async function getBranding(workspaceId: string): Promise<Branding> {
   if (!isConfigured()) return FALLBACK_BRANDING;
 
@@ -175,29 +167,14 @@ export interface EditSnapshot {
   theme?: Record<string, unknown>;
 }
 
-/**
- * A change to make, rather than the form to replace.
- *
- * Passed through unread: this service is a courier between the builder and
- * Quantalog, and the operations are checked on the far side against the ids the
- * builder actually sent. Re-validating them here would mean keeping a second
- * copy of the field schema in step with the first.
- */
+
 export type EditOp = Record<string, unknown>;
 
 export type EditOutcome =
   | { ok: true; ops: EditOp[]; summary?: string }
   | { ok: false; status: number; error: string; code?: string };
 
-/**
- * Ask what should change about a form that already exists.
- *
- * Separate from `generateForm` because the answers are different in kind: a
- * generation is a whole form, and applying one to a live canvas overwrites
- * everything the author did not ask about — including the layout, which this
- * wire shape has never been able to describe. An edit comes back as operations
- * naming existing fields by id, and the builder applies them in place.
- */
+
 export async function editForm(
   workspaceId: string,
   prompt: string,

@@ -14,10 +14,10 @@ interface Props {
  
 const items: { id: RailPanel; label: string; icon: () => ReactNode }[] = [
   { id: 'ai', label: 'Edit with AI', icon: () => <OrbitMark size={19} /> },
-  { id: 'quickSettings', label: 'Quick Settings', icon: () => <IconAdjustmentsHorizontal size={19} stroke={1.6} /> },
+  { id: 'quickSettings', label: 'Quick settings', icon: () => <IconAdjustmentsHorizontal size={19} stroke={1.6} /> },
   { id: 'theme', label: 'Theme', icon: () => <IconPalette size={19} stroke={1.6} /> },
   { id: 'steps', label: 'Steps & Progress', icon: () => <IconListNumbers size={19} stroke={1.6} /> },
-  { id: 'thankYou', label: 'Thank You Page & Redirection', icon: () => <IconCircleCheck size={19} stroke={1.6} /> },
+  { id: 'thankYou', label: 'After submission', icon: () => <IconCircleCheck size={19} stroke={1.6} /> },
   { id: 'notifications', label: 'Email Notifications', icon: () => <IconMail size={19} stroke={1.6} /> },
   { id: 'drawerNotify', label: 'Notification Drawer', icon: () => <IconBellRinging size={19} stroke={1.6} /> },
   { id: 'webhook', label: 'Webhook', icon: () => <IconWebhook size={19} stroke={1.6} /> },

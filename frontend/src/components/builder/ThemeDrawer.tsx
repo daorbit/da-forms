@@ -1,8 +1,12 @@
-import { Drawer, Stack, Text, SegmentedControl, ColorInput, Divider, Tabs, Slider, Select } from '@mantine/core';
+import { SegmentedControl, Select, Slider, Tabs, Text } from '@mantine/core';
+import { IconPalette } from '@tabler/icons-react';
 import type { BackgroundLayer, FontFamilyId, FormTheme } from '@/types';
 import { BackgroundEditor } from './BackgroundEditor';
 import { FONT_OPTIONS } from '@/lib/formBackground';
-import classes from './drawer.module.css';
+import { SettingsDrawer } from './settings/SettingsDrawer';
+import { SettingsGroup, SettingRow, SettingsStack } from './settings/SettingsGroup';
+import { ChoiceCards } from './settings/ChoiceCards';
+import { ColorRow, SwatchPicker } from './settings/ColorRow';
 
 interface Props {
   opened: boolean;
@@ -11,265 +15,237 @@ interface Props {
   onChange: (patch: Partial<FormTheme>) => void;
 }
 
-const SWATCHES = [
-  '#0f1115',
-  '#1a1b1e',
-  '#0b3d2e',
-  '#0ca678',
-  '#1971c2',
-  '#7048e8',
-  '#e64980',
-  '#f08c00',
-  '#ffffff',
-  '#f8f9fa',
+const ACCENTS = [
+  { color: '#0ca678', name: 'Emerald' },
+  { color: '#1971c2', name: 'Blue' },
+  { color: '#7048e8', name: 'Violet' },
+  { color: '#e64980', name: 'Pink' },
+  { color: '#f08c00', name: 'Orange' },
+  { color: '#e03131', name: 'Red' },
+  { color: '#0f1115', name: 'Black' },
 ];
+
+const SCOPES = [
+  { value: 'page' as const, label: 'Standalone link', hint: 'A full page with its own background.' },
+  { value: 'card' as const, label: 'Embedded on a site', hint: "Only the card. Your site's background shows behind it." },
+];
+
+function SliderRow({
+  label,
+  hint,
+  value,
+  unit,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  value: number;
+  unit: string;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <SettingRow stacked label={`${label} · ${value}${unit}`} hint={hint}>
+      <Slider value={value} onChange={onChange} min={min} max={max} step={step} color="emerald" label={null} />
+    </SettingRow>
+  );
+}
 
 export function ThemeDrawer({ opened, onClose, theme, onChange }: Props) {
   const scope = theme.scope ?? 'page';
 
-  /** Merges into one background layer without disturbing the other. */
   const patchLayer = (key: 'pageBackground' | 'cardBackground') => (patch: Partial<BackgroundLayer>) =>
     onChange({ [key]: { ...(theme[key] ?? {}), ...patch } });
 
   return (
-    <Drawer
+    <SettingsDrawer
       opened={opened}
       onClose={onClose}
-      position="right"
-      size={480}
       title="Theme"
-      padding="lg"
-      radius="lg"
-      transitionProps={{ duration: 180, transition: 'slide-left' }}
-      classNames={classes}
+      subtitle="Colours, background and style of your form."
+      icon={<IconPalette size={18} stroke={1.7} />}
     >
+      <SettingsGroup title="Where will this form live?">
+        <SettingRow stacked>
+          <ChoiceCards
+            ariaLabel="Where this form lives"
+            value={scope}
+            onChange={(value) => onChange({ scope: value })}
+            choices={SCOPES}
+          />
+        </SettingRow>
+      </SettingsGroup>
+
       <Tabs defaultValue="colors" keepMounted={false}>
-        <Tabs.List grow mb="lg">
-          <Tabs.Tab value="colors">Colors</Tabs.Tab>
+        <Tabs.List grow mb="md">
+          <Tabs.Tab value="colors">Colours</Tabs.Tab>
           <Tabs.Tab value="background">Background</Tabs.Tab>
-          <Tabs.Tab value="card">Card &amp; type</Tabs.Tab>
+          <Tabs.Tab value="style">Style</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="colors">
-          <Stack gap="xl">
-            <div>
-              <Text size="sm" fw={500} mb={8}>
-                Where this form lives
-              </Text>
-              <SegmentedControl
-                fullWidth
-                value={scope}
-                onChange={(value) => onChange({ scope: value as FormTheme['scope'] })}
-                data={[
-                  { value: 'page', label: 'Standalone link' },
-                  { value: 'card', label: 'Embedded on a site' },
-                ]}
+          <SettingsStack>
+            <SettingsGroup title="Button" hint="Also used for focus rings and other highlights.">
+              <SettingRow stacked>
+                <SwatchPicker
+                  value={theme.accentColor}
+                  options={ACCENTS}
+                  onChange={(value) => onChange({ accentColor: value })}
+                />
+              </SettingRow>
+              <ColorRow
+                label="Custom colour"
+                value={theme.accentColor}
+                placeholder="#0ca678"
+                onChange={(value) => onChange({ accentColor: value })}
               />
-              <Text size="xs" c="dimmed" mt={6}>
-                {scope === 'page'
-                  ? 'The page background applies to the full share-link page.'
-                  : "Embedded forms sit on the host page's own background — only the card itself is themed."}
-              </Text>
-            </div>
+            </SettingsGroup>
 
-            <Divider />
-
-            {scope === 'page' && (
-              <ColorInput
-                label="Page background"
-                description="Behind the card, on the standalone share-link page"
-                placeholder="#0f1115"
-                value={theme.pageBg ?? ''}
-                onChange={(value) => onChange({ pageBg: value })}
-                swatches={SWATCHES}
+            <SettingsGroup title="Form card">
+              {scope === 'page' && (
+                <ColorRow
+                  label="Page"
+                  hint="Behind the card on the share link."
+                  value={theme.pageBg}
+                  onChange={(value) => onChange({ pageBg: value })}
+                />
+              )}
+              <ColorRow label="Card" value={theme.cardBg} onChange={(value) => onChange({ cardBg: value })} />
+              <ColorRow
+                label="Border"
+                value={theme.cardBorder}
+                onChange={(value) => onChange({ cardBorder: value })}
               />
-            )}
+            </SettingsGroup>
 
-            <ColorInput
-              label="Card background"
-              value={theme.cardBg ?? ''}
-              onChange={(value) => onChange({ cardBg: value })}
-              swatches={SWATCHES}
-            />
-
-            <ColorInput
-              label="Card border"
-              value={theme.cardBorder ?? ''}
-              onChange={(value) => onChange({ cardBorder: value })}
-              swatches={SWATCHES}
-            />
-
-            <ColorInput
-              label="Submit button color"
-              description="Also used for focus rings and other interactive highlights"
-              placeholder="#0ca678"
-              value={theme.accentColor ?? ''}
-              onChange={(value) => onChange({ accentColor: value })}
-              swatches={SWATCHES}
-            />
-
-            <ColorInput
-              label="Label color"
-              description="Field labels — leave empty to match the text color below"
-              value={theme.labelColor ?? ''}
-              onChange={(value) => onChange({ labelColor: value })}
-              swatches={SWATCHES}
-            />
-
-            <Divider label="Input fields" labelPosition="left" />
-
-            <ColorInput
-              label="Input background"
-              value={theme.inputBg ?? ''}
-              onChange={(value) => onChange({ inputBg: value })}
-              swatches={SWATCHES}
-            />
-
-            <ColorInput
-              label="Input border"
-              value={theme.inputBorder ?? ''}
-              onChange={(value) => onChange({ inputBorder: value })}
-              swatches={SWATCHES}
-            />
-
-            <ColorInput
-              label="Input text color"
-              description="Text typed into fields — leave empty to match the text color below"
-              value={theme.inputTextColor ?? ''}
-              onChange={(value) => onChange({ inputTextColor: value })}
-              swatches={SWATCHES}
-            />
-
-            <div>
-              <Text size="sm" fw={500} mb={8}>
-                Text color
-              </Text>
-              <SegmentedControl
-                fullWidth
-                value={theme.textMode ?? 'auto'}
-                onChange={(value) => onChange({ textMode: value as FormTheme['textMode'] })}
-                data={[
-                  { value: 'auto', label: 'Auto' },
-                  { value: 'light', label: 'Light' },
-                  { value: 'dark', label: 'Dark' },
-                ]}
+            <SettingsGroup title="Text">
+              <SettingRow label="Text colour" hint="Auto picks light or dark based on the card.">
+                <SegmentedControl
+                  size="xs"
+                  value={theme.textMode ?? 'auto'}
+                  onChange={(value) => onChange({ textMode: value as FormTheme['textMode'] })}
+                  data={[
+                    { value: 'auto', label: 'Auto' },
+                    { value: 'light', label: 'Light' },
+                    { value: 'dark', label: 'Dark' },
+                  ]}
+                />
+              </SettingRow>
+              <ColorRow
+                label="Labels"
+                hint="Empty matches the text colour."
+                value={theme.labelColor}
+                onChange={(value) => onChange({ labelColor: value })}
               />
-              <Text size="xs" c="dimmed" mt={6}>
-                Auto picks light or dark text based on the card background's brightness.
-              </Text>
-            </div>
-          </Stack>
+            </SettingsGroup>
+
+            <SettingsGroup title="Fields">
+              <ColorRow label="Background" value={theme.inputBg} onChange={(value) => onChange({ inputBg: value })} />
+              <ColorRow
+                label="Border"
+                value={theme.inputBorder}
+                onChange={(value) => onChange({ inputBorder: value })}
+              />
+              <ColorRow
+                label="Typed text"
+                hint="Empty matches the text colour."
+                value={theme.inputTextColor}
+                onChange={(value) => onChange({ inputTextColor: value })}
+              />
+            </SettingsGroup>
+          </SettingsStack>
         </Tabs.Panel>
 
         <Tabs.Panel value="background">
-          <Stack gap="xl">
+          <SettingsStack>
             {scope === 'page' ? (
-              <div>
-                <Text size="sm" fw={600} mb={4}>
-                  Page background
-                </Text>
-                <Text size="xs" c="dimmed" mb="md">
-                  Painted over the page color, behind the form card.
-                </Text>
-                <BackgroundEditor
-                  layer={theme.pageBackground ?? {}}
-                  onChange={patchLayer('pageBackground')}
-                  allowFixed
-                />
-              </div>
+              <SettingsGroup title="Page background" hint="Painted behind the form card.">
+                <SettingRow stacked>
+                  <BackgroundEditor layer={theme.pageBackground ?? {}} onChange={patchLayer('pageBackground')} allowFixed />
+                </SettingRow>
+              </SettingsGroup>
             ) : (
               <Text size="xs" c="dimmed">
-                An embedded form has no page of its own — the host site's background shows behind it. Style the card
-                background below instead.
+                Embedded forms have no page of their own. Your site's background shows behind the card.
               </Text>
             )}
-
-            <Divider />
-
-            <div>
-              <Text size="sm" fw={600} mb={4}>
-                Card background
-              </Text>
-              <Text size="xs" c="dimmed" mb="md">
-                Painted over the card color, behind the fields.
-              </Text>
-              <BackgroundEditor layer={theme.cardBackground ?? {}} onChange={patchLayer('cardBackground')} />
-            </div>
-          </Stack>
+            <SettingsGroup title="Card background" hint="Painted behind the questions.">
+              <SettingRow stacked>
+                <BackgroundEditor layer={theme.cardBackground ?? {}} onChange={patchLayer('cardBackground')} />
+              </SettingRow>
+            </SettingsGroup>
+          </SettingsStack>
         </Tabs.Panel>
 
-        <Tabs.Panel value="card">
-          <Stack gap="xl">
-            <Select
-              label="Font"
-              description="Applied across the whole form"
-              value={theme.fontFamily ?? 'system'}
-              onChange={(value) => onChange({ fontFamily: (value ?? 'system') as FontFamilyId })}
-              data={FONT_OPTIONS}
-              allowDeselect={false}
-            />
+        <Tabs.Panel value="style">
+          <SettingsStack>
+            <SettingsGroup title="Typography">
+              <SettingRow label="Font">
+                <Select
+                  size="xs"
+                  w={180}
+                  value={theme.fontFamily ?? 'system'}
+                  onChange={(value) => onChange({ fontFamily: (value ?? 'system') as FontFamilyId })}
+                  data={FONT_OPTIONS}
+                  allowDeselect={false}
+                  aria-label="Font"
+                />
+              </SettingRow>
+            </SettingsGroup>
 
-            <Select
-              label="Card shadow"
-              value={theme.cardShadow ?? 'none'}
-              onChange={(value) => onChange({ cardShadow: (value ?? 'none') as FormTheme['cardShadow'] })}
-              data={[
-                { value: 'none', label: 'None' },
-                { value: 'sm', label: 'Subtle' },
-                { value: 'md', label: 'Medium' },
-                { value: 'lg', label: 'Large' },
-                { value: 'xl', label: 'Dramatic' },
-              ]}
-              allowDeselect={false}
-            />
-
-            <div>
-              <Text size="sm" fw={500} mb={8}>
-                Corner radius — {theme.cardRadius ?? 8}px
-              </Text>
-              <Slider
+            <SettingsGroup title="Card">
+              <SettingRow label="Shadow">
+                <SegmentedControl
+                  size="xs"
+                  value={theme.cardShadow ?? 'none'}
+                  onChange={(value) => onChange({ cardShadow: value as FormTheme['cardShadow'] })}
+                  data={[
+                    { value: 'none', label: 'None' },
+                    { value: 'sm', label: 'S' },
+                    { value: 'md', label: 'M' },
+                    { value: 'lg', label: 'L' },
+                    { value: 'xl', label: 'XL' },
+                  ]}
+                />
+              </SettingRow>
+              <SliderRow
+                label="Corner radius"
                 value={theme.cardRadius ?? 8}
-                onChange={(value) => onChange({ cardRadius: value })}
+                unit="px"
                 min={0}
                 max={48}
                 step={1}
+                onChange={(value) => onChange({ cardRadius: value })}
               />
-            </div>
-
-            <div>
-              <Text size="sm" fw={500} mb={8}>
-                Card opacity — {theme.cardOpacity ?? 100}%
-              </Text>
-              <Slider
+              <SliderRow
+                label="Opacity"
+                hint="Below 100% the page background shows through."
                 value={theme.cardOpacity ?? 100}
-                onChange={(value) => onChange({ cardOpacity: value })}
+                unit="%"
                 min={20}
                 max={100}
                 step={5}
+                onChange={(value) => onChange({ cardOpacity: value })}
               />
-              <Text size="xs" c="dimmed" mt={6}>
-                Below 100% the page background shows through the card.
-              </Text>
-            </div>
-
-            <div>
-              <Text size="sm" fw={500} mb={8}>
-                Frosted glass blur — {theme.cardBlur ?? 0}px
-              </Text>
-              <Slider
+              <SliderRow
+                label="Glass blur"
+                hint="Blurs what's behind a see-through card. No effect at 100% opacity."
                 value={theme.cardBlur ?? 0}
-                onChange={(value) => onChange({ cardBlur: value })}
+                unit="px"
                 min={0}
                 max={40}
                 step={1}
+                onChange={(value) => onChange({ cardBlur: value })}
               />
-              <Text size="xs" c="dimmed" mt={6}>
-                Blurs whatever sits behind a translucent card. No effect at 100% opacity.
-              </Text>
-            </div>
-          </Stack>
+            </SettingsGroup>
+          </SettingsStack>
         </Tabs.Panel>
       </Tabs>
-    </Drawer>
+    </SettingsDrawer>
   );
 }

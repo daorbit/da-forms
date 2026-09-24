@@ -109,6 +109,7 @@ export function BuilderDrawers({
       <QuickSettingsDrawer
         opened={railPanel === 'quickSettings'}
         onClose={() => setRailPanel(null)}
+        accentColor={state.theme.accentColor}
         settings={{
           hideHeader: state.hideHeader,
           labelPlacement: state.labelPlacement,

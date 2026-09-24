@@ -7,11 +7,10 @@ import {
   IconArrowLeft,
   IconArrowBackUp,
   IconArrowForwardUp,
-  IconBell,
 } from '@tabler/icons-react';
 import { BookOpen } from 'lucide-react';
 import type { Form } from '@/types';
-import { requestOpenNotifications } from '@/lib/planLimit';
+import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import classes from '../FormBuilderPage.module.css';
 
 interface Props {
@@ -145,19 +144,6 @@ export function BuilderHeader({
               <IconEye size={18} />
             </ActionIcon>
           </Tooltip>
-          {embedded && (
-            <Tooltip label="Notifications" position="bottom" withArrow>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="lg"
-                aria-label="Notifications"
-                onClick={requestOpenNotifications}
-              >
-                <IconBell size={18} />
-              </ActionIcon>
-            </Tooltip>
-          )}
           <Tooltip label="Docs">
             <ActionIcon
               component="a"
@@ -217,6 +203,7 @@ export function BuilderHeader({
               </Button>
             </>
           )}
+          {embedded && <HostNotificationsBell variant="subtle" iconSize={18} />}
         </Group>
       </Group>
     </AppShell.Header>

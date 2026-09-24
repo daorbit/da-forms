@@ -26,11 +26,10 @@ import {
   IconX,
   IconInfoCircle,
   IconPlugConnected,
-  IconBell,
 } from '@tabler/icons-react';
 import { BookOpen } from 'lucide-react';
 import { IS_EMBEDDED } from '@/lib/bootParams';
-import { requestOpenNotifications } from '@/lib/planLimit';
+import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import {
   listForms,
   deleteForm,
@@ -219,19 +218,6 @@ export function FormListPage() {
           )}
         </Group>
         <Group gap="xs" wrap="nowrap">
-          {IS_EMBEDDED && (
-            <Tooltip label="Notifications">
-              <ActionIcon
-                variant="default"
-                size="lg"
-                radius="md"
-                aria-label="Notifications"
-                onClick={requestOpenNotifications}
-              >
-                <IconBell size={17} />
-              </ActionIcon>
-            </Tooltip>
-          )}
           <Tooltip label="Docs">
             <ActionIcon
               component="a"
@@ -271,6 +257,7 @@ export function FormListPage() {
               New Form
             </Button>
           )}
+          {IS_EMBEDDED && <HostNotificationsBell />}
         </Group>
       </Group>
 

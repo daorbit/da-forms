@@ -303,6 +303,8 @@ export interface Analytics {
    * list otherwise.
    */
   partialsEnabled: boolean;
+  /** Complete responses per day, last 14 days, oldest first. */
+  daily?: { date: string; count: number }[];
 }
 
 export function getAnalytics(id: string, workspaceId = DEFAULT_WORKSPACE) {

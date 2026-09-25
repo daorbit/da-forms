@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Text, Group, Stack, Progress, Modal } from '@mantine/core';
+import { Text, Group, Stack, Progress, Modal, SimpleGrid } from '@mantine/core';
 import {
   IconEye,
   IconInbox,
@@ -10,7 +10,7 @@ import {
 import type { Analytics } from '@/lib/api';
 import type { FormField } from '@/types';
 import { valueFields } from '@/lib/fieldTree';
-import { StatCards } from '@/components/ui/StatCards';
+import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
 
 function SourceBreakdown({ sources }: { sources: Analytics['sources'] }) {
   if (sources.length === 0) {
@@ -115,6 +115,17 @@ export function AnalyticsBar({
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [dropOffOpen, setDropOffOpen] = useState(false);
 
+  // Last 7 days against the 7 before, from the daily series; null when the
+  // earlier week had nothing to compare against.
+  const weekDelta = (() => {
+    const d = analytics?.daily;
+    if (!d || d.length < 14) return undefined;
+    const sum = (xs: typeof d) => xs.reduce((n, x) => n + x.count, 0);
+    const recent = sum(d.slice(7));
+    const before = sum(d.slice(0, 7));
+    return before === 0 ? null : Math.round(((recent - before) / before) * 100);
+  })();
+
   const dropOffLabel =
     analytics && analytics.partialsEnabled && analytics.dropOff.length > 0
       ? valueFields(fields).find((f) => f.id === analytics.dropOff[0].fieldId)?.label ?? 'Deleted question'
@@ -124,34 +135,48 @@ export function AnalyticsBar({
 
   return (
     <>
-      <StatCards
-        count={5}
-        items={
-          analytics
-            ? [
-                { label: 'views', icon: <IconEye size={18} />, value: analytics.viewCount.toLocaleString() },
-                { label: 'responses', icon: <IconInbox size={18} />, value: analytics.submissionCount.toLocaleString() },
-                {
-                  label: 'completion rate',
-                  icon: <IconTrendingUp size={18} />,
-                  value: `${Math.round(analytics.completionRate * 100)}%`,
-                },
-                {
-                  label: 'top traffic source',
-                  icon: <IconWorld size={18} />,
-                  value: analytics.sources[0]?.source ?? '—',
-                  onClick: () => setSourcesOpen(true),
-                },
-                {
-                  label: analytics.partialsEnabled ? 'where most gave up' : 'drop-off',
-                  icon: <IconUserOff size={18} />,
-                  value: dropOffLabel,
-                  onClick: () => setDropOffOpen(true),
-                },
-              ]
-            : null
-        }
-      />
+      {!analytics ? (
+        <SimpleGrid cols={{ base: 2, sm: 3, lg: 5 }} spacing="lg">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </SimpleGrid>
+      ) : (
+        <SimpleGrid cols={{ base: 2, sm: 3, lg: 5 }} spacing="lg">
+          <StatCard
+            icon={<IconEye size={14} />}
+            label="Views"
+            value={analytics.viewCount.toLocaleString()}
+            hint="Times the form was opened. Repeat opens by the same visitor within 30 minutes count once."
+          />
+          <StatCard
+            icon={<IconInbox size={14} />}
+            label="Responses"
+            value={analytics.submissionCount.toLocaleString()}
+            hint="Complete submissions. The change compares the last 7 days with the 7 before."
+            delta={weekDelta}
+            spark={analytics.daily?.map((d) => ({ v: d.count }))}
+          />
+          <StatCard
+            icon={<IconTrendingUp size={14} />}
+            label="Completion rate"
+            value={`${Math.round(analytics.completionRate * 100)}%`}
+            hint="Responses divided by views."
+          />
+          <StatCard
+            icon={<IconWorld size={14} />}
+            label="Top source"
+            value={analytics.sources[0]?.source ?? '—'}
+            onClick={() => setSourcesOpen(true)}
+          />
+          <StatCard
+            icon={<IconUserOff size={14} />}
+            label="Gave up at"
+            value={dropOffLabel}
+            onClick={() => setDropOffOpen(true)}
+          />
+        </SimpleGrid>
+      )}
 
       <Modal
         opened={sourcesOpen}

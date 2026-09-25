@@ -774,6 +774,29 @@ export function submissionCount(formId: string) {
   return SubmissionModel.countDocuments({ formId, status: 'complete' });
 }
 
+/**
+ * Complete responses per UTC day for the last `days` days, oldest first, with
+ * empty days filled in as zero — the responses card draws its trend from this.
+ */
+export async function dailySubmissions(formId: string, days = 14) {
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() - (days - 1));
+
+  const rows = await SubmissionModel.aggregate<{ _id: string; count: number }>([
+    { $match: { formId: new Types.ObjectId(formId), status: 'complete', createdAt: { $gte: start } } },
+    { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
+  ]);
+  const byDay = new Map(rows.map((r) => [r._id, r.count]));
+
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date(start);
+    d.setUTCDate(start.getUTCDate() + i);
+    const date = d.toISOString().slice(0, 10);
+    return { date, count: byDay.get(date) ?? 0 };
+  });
+}
+
 export interface UploadedFile {
   url: string;
 

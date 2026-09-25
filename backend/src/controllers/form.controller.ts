@@ -394,12 +394,13 @@ export const getAnalytics: RequestHandler = async (req, res) => {
       .status(404)
       .json({ error: "not_found", message: "Form not found" });
   }
-  const [submissionCount, sources, dropOff] = await Promise.all([
+  const [submissionCount, sources, dropOff, daily] = await Promise.all([
     formService.submissionCount(req.params.id),
     formService.sourceBreakdown(req.params.id),
     // Empty for a form with autosave off — there is no record of where anyone
     // stopped, and an empty list says that more honestly than a zero would.
     formService.dropOffBreakdown(req.params.id),
+    formService.dailySubmissions(req.params.id, 14),
   ]);
   const viewCount = form.viewCount ?? 0;
   const completionRate = viewCount > 0 ? submissionCount / viewCount : 0;
@@ -409,6 +410,8 @@ export const getAnalytics: RequestHandler = async (req, res) => {
     completionRate,
     sources,
     dropOff,
+    // Responses per day, last 14 days — the card's trend and week-on-week change.
+    daily,
     // So the page can tell "nobody abandoned this form" from "we were never
     // watching", which are the same empty list otherwise.
     partialsEnabled: Boolean(form.collectPartials),

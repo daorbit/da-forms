@@ -26,7 +26,6 @@ import {
   IconInfoCircle,
   IconPlugConnected,
   IconInbox,
-  IconTrendingUp,
   IconCheck,
 } from '@tabler/icons-react';
 import { BookOpen } from 'lucide-react';
@@ -45,12 +44,10 @@ import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { isDemoWorkspace, listDemoForms } from '@/lib/demoWorkspace';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form, FormTheme } from '@/types';
-import type { WorkspaceStats } from '@/lib/api';
 import { NewFormModal } from '@/components/NewFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
-import { StatCards } from '@/components/ui/StatCards';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { relativeTime } from '@/lib/relativeTime';
@@ -88,7 +85,6 @@ export function FormListPage() {
   const navigate = useNavigate();
   const [forms, setForms] = useState<Form[]>([]);
   const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState<WorkspaceStats | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 300);
@@ -145,7 +141,6 @@ export function FormListPage() {
       .then((res) => {
         setForms(res.items);
         setTotal(res.total);
-        setStats(res.stats ?? null);
       })
       .finally(() => setLoading(false));
   }, [isDemo, workspaceId, page, debouncedSearch, sort, status]);
@@ -287,29 +282,6 @@ export function FormListPage() {
       )}
 
       <Stack gap="xl">
-        {!isDemo && (
-          <StatCards
-            items={
-              stats
-                ? [
-                    {
-                      label: `forms · ${stats.publishedForms} live`,
-                      icon: <IconFileText size={18} />,
-                      value: stats.totalForms.toLocaleString(),
-                    },
-                    { label: 'total views', icon: <IconEye size={18} />, value: stats.totalViews.toLocaleString() },
-                    { label: 'responses', icon: <IconInbox size={18} />, value: stats.totalSubmissions.toLocaleString() },
-                    {
-                      label: 'conversion rate',
-                      icon: <IconTrendingUp size={18} />,
-                      value: conversion(stats.totalViews, stats.totalSubmissions),
-                    },
-                  ]
-                : null
-            }
-          />
-        )}
-
         <div>
           {/* Search, filter and sort sit with the list they act on. */}
           <Group justify="space-between" gap="sm" mb="sm" wrap="wrap" className={classes.toolbar}>

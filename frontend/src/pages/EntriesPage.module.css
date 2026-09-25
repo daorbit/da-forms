@@ -320,12 +320,19 @@
 
 @container (max-width: 640px) {
 
-  .filterSearch {
-    width: 100%;
+  .filterbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
   }
 
-  .filterLeft > * {
-    flex: 1 1 auto;
+  .filterLeft {
+    width: 100% !important;
+    flex: none !important;
+  }
+
+  .filterSearch {
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .topbarSecondary {

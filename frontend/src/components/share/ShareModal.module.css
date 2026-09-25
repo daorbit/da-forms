@@ -9,12 +9,9 @@
   overflow: hidden;
 }
 
-.socialButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgb(0 0 0 / 0.18);
-}
-
-/* ---- Left panel ---- */
+/* ---- Left panel ----
+   Built from the same grouped cards as the builder's settings drawers, so
+   sharing reads like every other panel in the editor. */
 
 .panel {
   width: var(--panel-width);
@@ -22,39 +19,72 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background-color: var(--mantine-color-body);
+  background-color: var(--mantine-color-default);
   border-right: 1px solid var(--mantine-color-default-border);
 }
 
 .panelHeader {
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  flex-shrink: 0;
-}
-
-.tabs {
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  padding: 0 12px;
-  flex-shrink: 0;
-}
-
-.tab {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
+  gap: 12px;
+  min-height: 64px;
+  padding: 14px 16px 14px 20px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  flex-shrink: 0;
+}
+
+.headIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-default-hover);
+  color: var(--mantine-color-dimmed);
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--mantine-color-default-border);
+  font-size: 11.5px;
+  font-weight: 550;
+  line-height: 20px;
+  color: var(--mantine-color-dimmed);
+}
+
+.statusPill[data-live] {
+  color: var(--mantine-color-text);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mantine-color-yellow-6);
+}
+
+.statusPill[data-live] .statusDot {
+  background: var(--mantine-color-green-6);
+}
+
+.tabLabel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
 }
 
 .panelBody {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 20px;
+  padding: 16px 20px 20px;
 }
 
 .actionBar {
@@ -62,68 +92,92 @@
   flex-shrink: 0;
 }
 
-.codeBox {
-  padding: 12px;
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: var(--mantine-radius-md);
-  background-color: var(--mantine-color-default);
+.mono {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 12.5px !important;
+}
+
+.socialGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.social {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  border-radius: 10px;
   color: var(--mantine-color-text);
-  word-break: break-all;
+  text-decoration: none;
+  transition: background-color 120ms ease;
+}
+
+.social:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.socialIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.socialLabel {
+  font-size: 11.5px;
+  color: var(--mantine-color-dimmed);
+}
+
+.qr {
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--mantine-color-default-border);
+}
+
+.qr img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.codeWrap {
+  position: relative;
+}
+
+.code {
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 12px 44px 12px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+  color: var(--mantine-color-text);
+}
+
+.codeCopy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 .shell :global(.mantine-Input-input),
-.shell :global(.mantine-Textarea-input),
 .shell :global(.mantine-NumberInput-input) {
-  background-color: var(--mantine-color-default) !important;
+  background-color: var(--mantine-color-body) !important;
   color: var(--mantine-color-text) !important;
   border-color: var(--mantine-color-default-border) !important;
-}
-
-.shell :global(.mantine-Input-input)::placeholder,
-.shell :global(.mantine-Textarea-input)::placeholder {
-  color: var(--mantine-color-dimmed) !important;
-}
-
-.infoBox {
-  background-color: color-mix(in srgb, var(--mantine-color-emerald-6) 16%, var(--mantine-color-body)) !important;
-  border-color: color-mix(in srgb, var(--mantine-color-emerald-6) 36%, var(--mantine-color-default-border)) !important;
-}
-
-.infoIcon {
-  margin-top: 2px;
-  flex-shrink: 0;
-  color: var(--mantine-color-emerald-4);
-}
-
-.infoText {
-  color: var(--mantine-color-text);
-}
-
-:global(html[data-mantine-color-scheme='light']) .infoBox {
-  background-color: #e7f5ff !important;
-  border-color: #a5d8ff !important;
-}
-
-:global(html[data-mantine-color-scheme='light']) .infoIcon {
-  color: #1971c2;
-}
-
-.mono {
-  font-family: var(--mantine-font-family-monospace);
-}
-
-.langTabs {
-  border-bottom: 1px solid var(--mantine-color-default-border);
-}
-
-.langTab {
-  padding: 6px 10px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
 }
 
 /* ---- Right preview ---- */

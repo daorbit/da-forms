@@ -34,3 +34,17 @@ export const WORKSPACE_TOKEN = params.get('wt') ?? '';
  * transparent so that background shows through, as on every host page.
  */
 export const HOST_TEXTURED_BG = IS_EMBEDDED && params.get('bg') === 'textured';
+
+/**
+ * The host's background as a CSS value (gradients over its ground colour),
+ * for the full-screen dialogs that cover the frame and so hide what the page
+ * lets through. Only gradients and colours are accepted — nothing that could
+ * fetch a resource or break out of the declaration.
+ */
+export const HOST_BG_WASH: string | null = (() => {
+  if (!HOST_TEXTURED_BG) return null;
+  const raw = params.get('bgwash');
+  if (!raw || raw.length > 4000) return null;
+  if (/url\(|expression|image-set|[;{}<>@\\]/i.test(raw)) return null;
+  return raw;
+})();

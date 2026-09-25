@@ -6,13 +6,10 @@ import {
   Text,
   Button,
   ActionIcon,
-  Divider,
   CopyButton,
-  Textarea,
   NumberInput,
-  Switch,
-  Paper,
-  Stack,
+  SegmentedControl,
+  TextInput,
   Tooltip,
 } from '@mantine/core';
 import {
@@ -22,8 +19,15 @@ import {
   IconExternalLink,
   IconLink,
   IconCode,
-  IconInfoCircle,
+  IconShare2,
 } from '@tabler/icons-react';
+import {
+  SettingsGroup,
+  SettingsStack,
+  SettingRow,
+  SwitchRow,
+} from '@/components/builder/settings/SettingsGroup';
+import { QrCard } from './QrCard';
 import { notifications } from '@mantine/notifications';
 import { updateForm, publicFormUrl } from '@/lib/api';
 import type { Form } from '@/types';
@@ -55,9 +59,9 @@ function socialTargets(url: string, title: string) {
   ] as const;
 }
 
-const TABS: { id: TabId; label: string; icon: typeof IconLink; color: string }[] = [
-  { id: 'link', label: 'Public link', icon: IconLink, color: '#0ca678' },
-  { id: 'embed', label: 'Embed', icon: IconCode, color: '#7048e8' },
+const TABS: { id: TabId; label: string; icon: typeof IconLink }[] = [
+  { id: 'link', label: 'Public link', icon: IconLink },
+  { id: 'embed', label: 'Embed', icon: IconCode },
 ];
 
 interface Props {
@@ -166,228 +170,187 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
       <Group gap={0} align="stretch" wrap="nowrap" className={classes.shell}>
         {/* ---- Panel ---- */}
         <Box className={classes.panel}>
-          <Group gap="sm" px={20} py="md" wrap="nowrap" className={classes.panelHeader}>
+          <div className={classes.panelHeader}>
+            <span className={classes.headIcon}>
+              <IconShare2 size={17} />
+            </span>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <Group gap={8} wrap="nowrap">
+                <Text fw={600} size="md">
+                  Share form
+                </Text>
+                <span className={classes.statusPill} data-live={published || undefined}>
+                  <span className={classes.statusDot} />
+                  {published ? 'Live' : 'Draft'}
+                </span>
+              </Group>
+              <Text size="xs" c="dimmed" truncate>
+                {form.name || form.title}
+              </Text>
+            </div>
             <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
               <IconX size={18} />
             </ActionIcon>
-            <Divider orientation="vertical" my={6} />
-            <Text fw={600}>Share "{form.title}"</Text>
-          </Group>
+          </div>
 
-          <Group gap={0} wrap="nowrap" className={classes.tabs}>
-            {TABS.map((item) => {
-              const on = item.id === tab;
-              return (
-                <Box
-                  key={item.id}
-                  component="button"
-                  type="button"
-                  onClick={() => setTab(item.id)}
-                  aria-current={on}
-                  className={classes.tab}
-                  style={{
-                    color: on ? item.color : 'var(--mantine-color-dimmed)',
-                    borderBottomColor: on ? item.color : 'transparent',
-                    fontWeight: on ? 600 : 500,
-                  }}
-                >
-                  <item.icon size={16} />
-                  {item.label}
-                </Box>
-              );
-            })}
-          </Group>
-
-          <Box className={classes.panelBody}>
-            {!published && (
-              <Paper withBorder radius="md" p="sm" mb="lg" bg="var(--mantine-color-yellow-light)">
-                <Text size="sm" c="var(--mantine-color-yellow-light-color)">
-                  This form is a draft. Turn on <strong>Share publicly</strong> below before sending
-                  the link out.
-                </Text>
-              </Paper>
-            )}
-
-            <Group justify="space-between" align="center" mb="lg" wrap="nowrap">
-              <div>
-                <Text size="sm" fw={600}>
-                  Share publicly
-                </Text>
-                <Text size="xs" c="dimmed">
-                  Anyone with the link can open and submit this form.
-                </Text>
-              </div>
-              <Switch
-                checked={published}
-                onChange={(e) => togglePublished(e.target.checked)}
-                color="emerald"
-                size="md"
-              />
-            </Group>
-
-            <Divider mb="lg" />
-
-            {tab === 'link' && (
-              <Stack gap="sm">
-                <Text size="sm" fw={600}>
-                  Form link
-                </Text>
-                <Box className={classes.codeBox}>
-                  <Text size="sm" className={classes.mono}>
-                    {shareUrl}
-                  </Text>
-                </Box>
-                <Group gap="sm">
-                  <CopyButton value={shareUrl}>
-                    {({ copied, copy }) => (
-                      <Button
-                        variant={copied ? 'light' : 'filled'}
-                        color={copied ? 'emerald' : 'emerald'}
-                        onClick={copy}
-                        leftSection={copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
-                      >
-                        {copied ? 'Copied' : 'Copy link'}
-                      </Button>
-                    )}
-                  </CopyButton>
-                  <Button
-                    variant="default"
-                    leftSection={<IconExternalLink size={15} />}
-                    onClick={() => window.open(shareUrl, '_blank', 'noopener,noreferrer')}
-                  >
-                    Open form
-                  </Button>
-                </Group>
-                <Text size="xs" c="dimmed" mt="xs">
-                  Append query parameters to prefill fields, e.g. <code>?{form.fields[0]?.id ?? 'fieldId'}=value</code>.
-                </Text>
-
-                <Divider mt="sm" mb={2} />
-
-                <Text size="sm" fw={600}>
-                  Share to
-                </Text>
-                <Group gap="sm">
-                  {socials.map(({ id, label, Icon, bg, fg, href }) => (
-                    <Tooltip key={id} label={label} withArrow>
-                      <ActionIcon
-                        component="a"
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        variant="filled"
-                        size={44}
-                        radius="xl"
-                        aria-label={`Share on ${label}`}
-                        style={{
-                          backgroundColor: bg,
-                          color: fg,
-                          transition: 'transform 120ms ease, box-shadow 120ms ease',
-                        }}
-                        className={classes.socialButton}
-                      >
-                        <Icon size={22} />
-                      </ActionIcon>
-                    </Tooltip>
-                  ))}
-                </Group>
-              </Stack>
-            )}
-
-            {tab === 'embed' && (
-              <Stack gap="sm">
-                <Paper withBorder radius="md" p="sm" className={classes.infoBox}>
-                  <Group gap="xs" wrap="nowrap" align="flex-start">
-                    <IconInfoCircle size={16} className={classes.infoIcon} />
-                    <Text size="xs" className={classes.infoText}>
-                      The snippet below auto-resizes the iframe to fit the form — no need to tune a
-                      fixed height, and it keeps working as fields, pages, or conditional logic
-                      change how tall the form is. The height below is only the size shown for a
-                      moment before the first resize message arrives.
-                    </Text>
-                  </Group>
-                </Paper>
-
-                <Group justify="space-between" align="flex-end">
-                  <Text size="sm" fw={600}>
-                    Embed code
-                  </Text>
-                  <NumberInput
-                    label="Starting height (px)"
-                    size="xs"
-                    w={140}
-                    value={height}
-                    onChange={(value) => setHeight(value === '' ? 600 : value)}
-                  />
-                </Group>
-
-                <Group gap={4} className={classes.langTabs}>
-                  {embedSnippets.map((snippet) => (
-                    <Box
-                      key={snippet.id}
-                      component="button"
-                      type="button"
-                      onClick={() => setEmbedLang(snippet.id)}
-                      className={classes.langTab}
-                      aria-current={embedLang === snippet.id}
-                      style={{
-                        fontWeight: embedLang === snippet.id ? 600 : 500,
-                        color: embedLang === snippet.id ? 'var(--mantine-color-emerald-7)' : 'var(--mantine-color-dimmed)',
-                        borderColor: embedLang === snippet.id ? 'var(--mantine-color-emerald-6)' : 'transparent',
-                      }}
-                    >
-                      {EMBED_LANG_LABEL[snippet.id]}
-                    </Box>
-                  ))}
-                </Group>
-
-                <Textarea
-                  readOnly
-                  value={embedCode}
-                  autosize
-                  minRows={6}
-                  onFocus={(e) => e.target.select()}
-                  classNames={{ input: classes.mono }}
-                />
-                <CopyButton value={embedCode}>
-                  {({ copied, copy }) => (
-                    <Button
-                      variant={copied ? 'light' : 'filled'}
-                      color="emerald"
-                      onClick={copy}
-                      leftSection={copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
-                    >
-                      {copied ? 'Copied' : 'Copy embed code'}
-                    </Button>
-                  )}
-                </CopyButton>
-                <Text size="xs" c="dimmed">
-                  {embedLang === 'html' &&
-                    'Paste this into any page of your site — the HTML and the resize script go together.'}
-                  {embedLang === 'react' &&
-                    'Drop this component into your app and render it wherever the form should appear.'}
-                  {embedLang === 'vue' &&
-                    'Drop this single-file component into your app and use it as a regular component.'}
-                  {' '}The iframe scales to its container width and its height auto-fits the form.
-                </Text>
-              </Stack>
-            )}
-
+          <Box px={20} pt="md">
+            <SegmentedControl
+              fullWidth
+              value={tab}
+              onChange={(v) => setTab(v as TabId)}
+              data={TABS.map((item) => ({
+                value: item.id,
+                label: (
+                  <span className={classes.tabLabel}>
+                    <item.icon size={15} />
+                    {item.label}
+                  </span>
+                ),
+              }))}
+            />
           </Box>
 
-          <Group justify="space-between" px={20} py="md" wrap="nowrap" className={classes.actionBar}>
-            <CopyButton value={shareUrl}>
-              {({ copied, copy }) => (
-                <Button
-                  variant="subtle"
-                  color="gray"
-                  onClick={copy}
-                  leftSection={copied ? <IconCheck size={15} /> : <IconLink size={15} />}
-                >
-                  {copied ? 'Copied' : 'Copy link'}
-                </Button>
+          <Box className={classes.panelBody}>
+            <SettingsStack>
+              <SettingsGroup title="Visibility">
+                <SwitchRow
+                  label="Share publicly"
+                  hint={
+                    published
+                      ? 'Anyone with the link can open and submit this form.'
+                      : 'This form is a draft — nobody can open the link until you turn this on.'
+                  }
+                  checked={published}
+                  onChange={togglePublished}
+                />
+              </SettingsGroup>
+
+              {tab === 'link' && (
+                <>
+                  <SettingsGroup title="Form link" hint="Add ?fieldId=value to the link to prefill an answer.">
+                    <SettingRow stacked>
+                      <TextInput
+                        readOnly
+                        value={shareUrl}
+                        onFocus={(e) => e.currentTarget.select()}
+                        classNames={{ input: classes.mono }}
+                        rightSectionWidth={36}
+                        rightSection={
+                          <Tooltip label="Open form" withArrow>
+                            <ActionIcon
+                              variant="subtle"
+                              color="gray"
+                              onClick={() => window.open(shareUrl, '_blank', 'noopener,noreferrer')}
+                              aria-label="Open form"
+                            >
+                              <IconExternalLink size={15} />
+                            </ActionIcon>
+                          </Tooltip>
+                        }
+                      />
+                      <CopyButton value={shareUrl}>
+                        {({ copied, copy }) => (
+                          <Button
+                            fullWidth
+                            mt={10}
+                            variant={copied ? 'light' : 'filled'}
+                            onClick={copy}
+                            leftSection={copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                          >
+                            {copied ? 'Link copied' : 'Copy link'}
+                          </Button>
+                        )}
+                      </CopyButton>
+                    </SettingRow>
+                  </SettingsGroup>
+
+                  <SettingsGroup title="Share to" hint="Opens each app's own share screen with the link filled in.">
+                    <SettingRow stacked>
+                      <div className={classes.socialGrid}>
+                        {socials.map(({ id, label, Icon, bg, fg, href }) => (
+                          <a
+                            key={id}
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={classes.social}
+                            aria-label={`Share on ${label}`}
+                          >
+                            <span className={classes.socialIcon} style={{ backgroundColor: bg, color: fg }}>
+                              <Icon size={18} />
+                            </span>
+                            <span className={classes.socialLabel}>{label}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </SettingRow>
+                  </SettingsGroup>
+
+                  <SettingsGroup title="QR code" hint="For print, posters and slides — it opens the same link.">
+                    <SettingRow stacked>
+                      <QrCard url={shareUrl} name={form.name || form.title || 'form'} />
+                    </SettingRow>
+                  </SettingsGroup>
+                </>
               )}
-            </CopyButton>
+
+              {tab === 'embed' && (
+                <SettingsGroup
+                  title="Embed code"
+                  hint="The iframe fits its container's width and resizes its own height to the form."
+                >
+                  <SettingRow stacked>
+                    <SegmentedControl
+                      size="xs"
+                      value={embedLang}
+                      onChange={(v) => setEmbedLang(v as EmbedLang)}
+                      data={embedSnippets.map((snippet) => ({ value: snippet.id, label: EMBED_LANG_LABEL[snippet.id] }))}
+                      style={{ alignSelf: 'flex-start' }}
+                    />
+                    <div className={classes.codeWrap}>
+                      <pre className={classes.code}>{embedCode}</pre>
+                      <CopyButton value={embedCode}>
+                        {({ copied, copy }) => (
+                          <div className={classes.codeCopy}>
+                            <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow>
+                              <ActionIcon variant="default" onClick={copy} aria-label="Copy embed code">
+                                {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                              </ActionIcon>
+                            </Tooltip>
+                          </div>
+                        )}
+                      </CopyButton>
+                    </div>
+                  </SettingRow>
+                  <SettingRow label="Starting height" hint="Shown for a moment, before the first resize arrives.">
+                    <NumberInput
+                      size="xs"
+                      w={110}
+                      suffix=" px"
+                      value={height}
+                      onChange={(value) => setHeight(value === '' ? 600 : value)}
+                    />
+                  </SettingRow>
+                  <SettingRow stacked>
+                    <CopyButton value={embedCode}>
+                      {({ copied, copy }) => (
+                        <Button
+                          fullWidth
+                          variant={copied ? 'light' : 'filled'}
+                          onClick={copy}
+                          leftSection={copied ? <IconCheck size={15} /> : <IconCode size={15} />}
+                        >
+                          {copied ? 'Embed code copied' : `Copy ${EMBED_LANG_LABEL[embedLang]} code`}
+                        </Button>
+                      )}
+                    </CopyButton>
+                  </SettingRow>
+                </SettingsGroup>
+              )}
+            </SettingsStack>
+          </Box>
+
+          <Group justify="flex-end" px={20} py="md" wrap="nowrap" className={classes.actionBar}>
             <Button variant="default" onClick={onClose}>
               Done
             </Button>

@@ -141,6 +141,8 @@
 }
 
 .swatch {
+  appearance: none;
+  padding: 0;
   width: 26px;
   height: 26px;
   border-radius: 50%;
@@ -157,6 +159,13 @@
 
 .swatch[data-active] {
   box-shadow: 0 0 0 2px var(--swatch);
+  transform: scale(1.08);
+}
+
+.swatch:focus-visible,
+.choice:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
 }
 
 .choiceGrid {
@@ -166,6 +175,11 @@
 }
 
 .choice {
+  appearance: none;
+  margin: 0;
+  font: inherit;
+  color: var(--mantine-color-text);
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -182,8 +196,8 @@
 }
 
 .choice[data-active] {
-  border-color: var(--mantine-color-emerald-6);
-  box-shadow: 0 0 0 1px var(--mantine-color-emerald-6);
+  border-color: var(--mantine-primary-color-filled);
+  box-shadow: 0 0 0 1px var(--mantine-primary-color-filled);
 }
 
 .choiceHead {
@@ -204,7 +218,7 @@
 }
 
 .choice[data-active] .radio {
-  border: 5px solid var(--mantine-color-emerald-6);
+  border: 5px solid var(--mantine-primary-color-filled);
 }
 
 .choiceHint {
@@ -254,7 +268,7 @@
   width: var(--btn-width);
   padding: 0 14px;
   border-radius: 8px;
-  background: var(--btn-color, var(--mantine-color-emerald-6));
+  background: var(--btn-color, var(--mantine-primary-color-filled));
   color: #fff;
   font-weight: 600;
   white-space: nowrap;
@@ -296,7 +310,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--mantine-color-emerald-6);
+  background: var(--mantine-primary-color-filled);
   color: #fff;
 }
 

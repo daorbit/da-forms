@@ -1,4 +1,5 @@
-import { ColorInput, Tooltip, UnstyledButton } from '@mantine/core';
+import type { CSSProperties } from 'react';
+import { ColorInput, Tooltip } from '@mantine/core';
 import { SettingRow } from './SettingsGroup';
 import classes from './settings.module.css';
 
@@ -56,10 +57,11 @@ export function SwatchPicker({
     <div className={classes.swatches}>
       {options.map((option) => (
         <Tooltip key={option.color} label={option.name} withArrow>
-          <UnstyledButton
+          <button
+            type="button"
             className={classes.swatch}
             data-active={value?.toLowerCase() === option.color.toLowerCase() || undefined}
-            __vars={{ '--swatch': option.color }}
+            style={{ '--swatch': option.color } as CSSProperties}
             onClick={() => onChange(option.color)}
             aria-label={option.name}
           />

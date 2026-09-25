@@ -69,7 +69,6 @@ export function SwitchRow({
         checked={checked}
         onChange={(e) => onChange(e.currentTarget.checked)}
         disabled={disabled}
-        color="emerald"
         aria-label={label}
       />
     </SettingRow>

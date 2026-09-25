@@ -1,4 +1,3 @@
-import { UnstyledButton } from '@mantine/core';
 import classes from './settings.module.css';
 
 export interface Choice<T extends string> {
@@ -23,7 +22,8 @@ export function ChoiceCards<T extends string>({
       {choices.map((choice) => {
         const active = choice.value === value;
         return (
-          <UnstyledButton
+          <button
+            type="button"
             key={choice.value}
             className={classes.choice}
             data-active={active || undefined}
@@ -36,7 +36,7 @@ export function ChoiceCards<T extends string>({
               <span className={classes.radio} aria-hidden />
             </span>
             <span className={classes.choiceHint}>{choice.hint}</span>
-          </UnstyledButton>
+          </button>
         );
       })}
     </div>

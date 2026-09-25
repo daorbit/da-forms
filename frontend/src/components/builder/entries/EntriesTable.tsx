@@ -137,8 +137,7 @@ export function EntriesTable({
                   className={classes.tr}
                   data-unread={!submission.read || undefined}
                 >
-                  <Table.Td onClick={(e) => e.stopPropagation()} className={classes.checkCell}>
-                    {!submission.read && <span className={classes.unreadDot} aria-label="Unread" />}
+                  <Table.Td onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       size="sm"
                       checked={selected.has(submission._id)}

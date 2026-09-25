@@ -146,18 +146,17 @@ export function AnalyticsBar({
   return (
     <>
       {!analytics ? (
-        <SimpleGrid cols={{ base: 2, sm: 3, lg: 5 }} spacing="lg">
+        <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="lg">
           {Array.from({ length: 5 }).map((_, i) => (
             <StatCardSkeleton key={i} />
           ))}
         </SimpleGrid>
       ) : (
-        <SimpleGrid cols={{ base: 2, sm: 3, lg: 5 }} spacing="lg">
+        <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="lg">
           <StatCard
             icon={<IconEye size={14} />}
             label="Views"
             value={analytics.viewCount.toLocaleString()}
-            hint="Times the form was opened. Repeat opens by the same visitor within 30 minutes count once."
             color="#22d3ee"
             delta={weekDelta((d) => d.views)}
             spark={series((d) => d.views)}
@@ -166,7 +165,6 @@ export function AnalyticsBar({
             icon={<IconInbox size={14} />}
             label="Responses"
             value={analytics.submissionCount.toLocaleString()}
-            hint="Complete submissions. The change compares the last 7 days with the 7 before."
             delta={weekDelta((d) => d.responses)}
             spark={series((d) => d.responses)}
           />
@@ -174,7 +172,6 @@ export function AnalyticsBar({
             icon={<IconTrendingUp size={14} />}
             label="Completion"
             value={`${Math.round(analytics.completionRate * 100)}%`}
-            hint="Responses divided by views. The change compares this week's rate with last week's."
             color="#f59e0b"
             delta={rateDelta}
             spark={series((d) => (d.views ? d.responses / d.views : 0))}

@@ -27,3 +27,10 @@ export const IS_EMBEDDED = params.get('embedded') === '1';
  * rewrites the URL, and the token would otherwise vanish on the first click.
  */
 export const WORKSPACE_TOKEN = params.get('wt') ?? '';
+
+/**
+ * True when the host paints a textured background (a gradient, mesh, grid or
+ * starfield) behind this frame. The page then leaves its own ground
+ * transparent so that background shows through, as on every host page.
+ */
+export const HOST_TEXTURED_BG = IS_EMBEDDED && params.get('bg') === 'textured';

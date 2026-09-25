@@ -1,10 +1,9 @@
-import { Button, Card, Text } from '@mantine/core';
-import { IconPlugConnected, IconSettings } from '@tabler/icons-react';
-import { StatusPill } from '@/components/ui/StatusPill';
+import { Anchor, Button, Group, Text } from '@mantine/core';
+import { IconCheck, IconPlayerPause, IconPlugConnected } from '@tabler/icons-react';
 import { relativeTime } from '@/lib/relativeTime';
 import classes from './apps.module.css';
 import type { AppCard as AppCardData } from '@/types';
-import { AppLogo, isWordmark } from './AppLogos';
+import { AppMark, APP_TINT } from './AppLogos';
 
 /** A payment gateway shown as a card — state comes from the payment settings, not `listApps`. */
 export interface PaymentCardData {
@@ -37,64 +36,92 @@ interface Props {
   busy?: boolean;
 }
 
-function statusOf(card: AnyCard): { tone: 'live' | 'idle' | 'warn'; label: string } {
-  if (card.enabled) return { tone: 'live', label: card.kind === 'webhook' ? 'On' : 'Connected' };
-  if (card.connected) return { tone: 'warn', label: 'Saved, off' };
-  return { tone: 'idle', label: 'Not connected' };
-}
+const ACTION_HINT: Record<string, string> = {
+  email: 'Connect it to send notification emails from your own domain.',
+  payments: 'Connect your account to take payments on forms with a payment field.',
+  automation: 'Turn it on, then set a URL from any form’s Webhook panel.',
+};
 
-function footNote(card: AnyCard): string {
-  if (card.kind === 'generic') {
-    if (card.lastUsedAt) return `Last used ${relativeTime(card.lastUsedAt)}`;
-    if (card.verifiedAt) return `Verified ${relativeTime(card.verifiedAt)}`;
-  }
-  if (card.enabled) return 'Active on this workspace';
-  if (card.connected) return 'Credentials saved';
-  return 'Not set up yet';
-}
-
+/**
+ * One integration, drawn like Quantalog's own connection cards: a tinted logo
+ * tile, the name and what it does, then either a Connect button or — once it
+ * works — a quiet line saying so, with Manage as a link.
+ */
 export function AppCard({ card, onOpen, busy = false }: Props) {
-  const wordmark = isWordmark(card.id);
-  const status = statusOf(card);
+  const tint = APP_TINT[card.id] ?? 'var(--mantine-primary-color-filled)';
+  const lastUsed = card.kind === 'generic' ? card.lastUsedAt : undefined;
 
   return (
-    <Card withBorder radius="md" padding="md" className={classes.card}>
-      <div className={classes.cardTop}>
-        <span className={classes.logo} data-wordmark={wordmark || undefined}>
-          <AppLogo appId={card.id} height={wordmark ? 18 : 24} />
-        </span>
-        <StatusPill tone={status.tone} label={status.label} />
-      </div>
+    <div className={classes.card}>
+      <span
+        aria-hidden
+        className={classes.mark}
+        style={{ background: `color-mix(in srgb, ${tint} 16%, transparent)` }}
+      >
+        <AppMark appId={card.id} size={26} />
+      </span>
 
-      <div>
-        <Text fw={650} size="md">
-          {card.name}
-        </Text>
-        <Text size="sm" c="dimmed" mt={4} className={classes.desc}>
-          {card.description}
-        </Text>
-      </div>
+      <Text fw={600} mt="md">
+        {card.name}
+      </Text>
+      <Text size="sm" c="dimmed" mt={4} style={{ flex: 1 }}>
+        {card.description}
+      </Text>
 
-      <div className={classes.cardFoot}>
-        <Text size="xs" c="dimmed" truncate>
-          {footNote(card)}
-        </Text>
-        <Button
-          size="xs"
-          variant={card.connected ? 'default' : 'filled'}
-          loading={busy}
-          leftSection={card.connected ? <IconSettings size={14} /> : <IconPlugConnected size={14} />}
-          onClick={() => onOpen(card)}
-        >
-          {card.kind === 'webhook'
-            ? card.enabled
-              ? 'Turn off'
-              : 'Turn on'
-            : card.connected
-              ? 'Manage'
-              : 'Connect'}
-        </Button>
+      <div className={classes.action}>
+        {card.enabled ? (
+          <Group gap={8} wrap="nowrap">
+            <IconCheck size={14} color="var(--mantine-color-teal-6)" style={{ flexShrink: 0 }} />
+            <Text size="xs" c="dimmed" truncate>
+              {card.kind === 'webhook' ? 'On for this workspace' : 'Connected'}
+              {lastUsed ? ` · last used ${relativeTime(lastUsed)}` : ''}
+            </Text>
+            <Anchor
+              component="button"
+              type="button"
+              size="xs"
+              c="dimmed"
+              underline="always"
+              disabled={busy}
+              onClick={() => onOpen(card)}
+              style={{ flexShrink: 0 }}
+            >
+              {card.kind === 'webhook' ? 'Turn off' : 'Manage'}
+            </Anchor>
+          </Group>
+        ) : card.connected ? (
+          <Group gap={8} wrap="nowrap">
+            <IconPlayerPause size={14} color="var(--mantine-color-yellow-6)" style={{ flexShrink: 0 }} />
+            <Text size="xs" c="dimmed" truncate>
+              Saved, but switched off
+            </Text>
+            <Anchor
+              component="button"
+              type="button"
+              size="xs"
+              underline="always"
+              onClick={() => onOpen(card)}
+              style={{ flexShrink: 0 }}
+            >
+              Turn on
+            </Anchor>
+          </Group>
+        ) : (
+          <>
+            <Text size="xs" c="dimmed" mb={10}>
+              {ACTION_HINT[card.category] ?? 'Connect it to use it from your forms.'}
+            </Text>
+            <Button
+              size="sm"
+              loading={busy}
+              leftSection={<IconPlugConnected size={15} />}
+              onClick={() => onOpen(card)}
+            >
+              {card.kind === 'webhook' ? 'Turn on webhooks' : `Connect ${card.name}`}
+            </Button>
+          </>
+        )}
       </div>
-    </Card>
+    </div>
   );
 }

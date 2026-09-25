@@ -61,6 +61,60 @@ export function SmtpLogo({ height = 20 }: LogoProps) {
   );
 }
 
+/** Razorpay's mark alone — the two slashes from its logo, without the name. */
+function RazorpayMark({ size = 24 }: { size?: number }) {
+  return (
+    <svg height={size} width={size} viewBox="-1 -1 21 24" role="img" aria-label="Razorpay" style={{ display: "block" }}>
+      <polygon fill="currentColor" points="11.19,9.03 7.94,21.47 0,21.47 1.61,15.35 11.19,9.03" />
+      <polygon fill="#3395FF" points="18.4,0 12.76,21.47 8.89,21.47 12.7,6.93 6.86,10.78 7.9,6.95 18.4,0" />
+    </svg>
+  );
+}
+
+/** Cashfree's mark alone — the green and amber brackets from its logo. */
+function CashfreeMark({ size = 24 }: { size?: number }) {
+  return (
+    <svg height={size} width={size} viewBox="-2 -2 70 70" role="img" aria-label="Cashfree" style={{ display: "block" }}>
+      <path fill="#04AB61" d="M25.3,0.4c-5.9,0-10.8,4.8-10.8,10.7l0,0h39.9c5.9,0,10.8-4.8,10.8-10.8l0,0L25.3,0.4L25.3,0.4z" />
+      <path fill="#04AB61" d="M14.5,11.1c0-5.9,4.8-10.8,10.8-10.8l0,0v39.9c0,5.9-4.8,10.8-10.8,10.8l0,0V11.1z" />
+      <path fill="#FBB016" d="M28.7,14.7v10.8h12.5c5.9,0,10.8-4.8,10.8-10.8l0,0H28.7z" />
+      <path fill="#FBB016" d="M0,25.5c0-5.9,4.8-10.8,10.8-10.8l0,0v39.9C10.8,60.5,6,65.4,0,65.4l0,0C0,65.4,0,25.5,0,25.5z" />
+    </svg>
+  );
+}
+
+/** PayU has no redistributable mark, so the tile carries its name in type. */
+function PayuMark({ size = 24 }: { size?: number }) {
+  return (
+    <svg height={size} width={size * 1.6} viewBox="0 0 42 16" role="img" aria-label="PayU" style={{ display: "block" }}>
+      <text x="0" y="13" fill="currentColor" fontFamily="system-ui, sans-serif" fontSize="14" fontWeight="700">
+        Pay
+      </text>
+      <text x="27" y="13" fill="#A2D045" fontFamily="system-ui, sans-serif" fontSize="14" fontWeight="700">
+        U
+      </text>
+    </svg>
+  );
+}
+
+/** A square mark for an app's tile — the brand's symbol, not its wordmark. */
+export function AppMark({ appId, size = 24 }: { appId: string; size?: number }) {
+  if (appId === "razorpay") return <RazorpayMark size={size} />;
+  if (appId === "cashfree") return <CashfreeMark size={size} />;
+  if (appId === "payu") return <PayuMark size={size * 0.7} />;
+  return <AppLogo appId={appId} height={size} />;
+}
+
+/** The colour an app's tile is tinted with. */
+export const APP_TINT: Record<string, string> = {
+  brevo: "#0B996E",
+  smtp: "#64748B",
+  razorpay: "#3395FF",
+  cashfree: "#04AB61",
+  payu: "#A2D045",
+  webhook: "#8B5CF6",
+};
+
 export function isWordmark(appId: string): boolean {
   return appId === "razorpay" || appId === "cashfree" || appId === "payu";
 }

@@ -1,64 +1,38 @@
+/* Quantalog's `.connection-grid` / `.connection-card`, so the forms app's
+   integrations read like the host app's own Connections page. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: var(--mantine-spacing-md);
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-bottom: 0 !important;
-  transition: border-color 140ms ease;
-}
-
-.card:hover {
-  border-color: var(--mantine-color-dark-3);
-}
-
-:global(html[data-mantine-color-scheme='light']) .card:hover {
-  border-color: var(--mantine-color-gray-4);
-}
-
-.cardTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--mantine-radius-md);
+  padding: 20px;
   border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
   background: var(--mantine-color-body);
+}
+
+.mark {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
   color: var(--mantine-color-text);
 }
 
-.logo[data-wordmark] {
-  width: auto;
-  padding: 0 12px;
+.action {
+  margin-top: var(--mantine-spacing-md);
 }
 
-.desc {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 2.9em;
+.section + .section {
+  margin-top: 36px;
 }
 
-.cardFoot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: auto calc(var(--mantine-spacing-md) * -1) 0;
-  padding: 10px var(--mantine-spacing-md);
-  border-top: 1px solid var(--mantine-color-default-border);
+:global(html[data-mantine-color-scheme='light']) .card {
+  background: #fff;
 }
-

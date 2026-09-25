@@ -115,16 +115,26 @@ export function AnalyticsBar({
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [dropOffOpen, setDropOffOpen] = useState(false);
 
-  // Last 7 days against the 7 before, from the daily series; null when the
-  // earlier week had nothing to compare against.
-  const weekDelta = (() => {
-    const d = analytics?.daily;
-    if (!d || d.length < 14) return undefined;
-    const sum = (xs: typeof d) => xs.reduce((n, x) => n + x.count, 0);
-    const recent = sum(d.slice(7));
-    const before = sum(d.slice(0, 7));
+  const daily = analytics?.daily ?? [];
+  // Last 7 days against the 7 before. Null when the earlier week had nothing
+  // to compare against; undefined (no badge) without two full weeks of data.
+  const weekDelta = (pick: (d: (typeof daily)[number]) => number) => {
+    if (daily.length < 14) return undefined;
+    const sum = (xs: typeof daily) => xs.reduce((n, x) => n + pick(x), 0);
+    const recent = sum(daily.slice(7));
+    const before = sum(daily.slice(0, 7));
     return before === 0 ? null : Math.round(((recent - before) / before) * 100);
+  };
+  const rateOf = (xs: typeof daily) => {
+    const v = xs.reduce((n, x) => n + x.views, 0);
+    return v ? xs.reduce((n, x) => n + x.responses, 0) / v : 0;
+  };
+  const rateDelta = (() => {
+    if (daily.length < 14) return undefined;
+    const before = rateOf(daily.slice(0, 7));
+    return before === 0 ? null : Math.round(((rateOf(daily.slice(7)) - before) / before) * 100);
   })();
+  const series = (pick: (d: (typeof daily)[number]) => number) => daily.map((d) => ({ v: pick(d) }));
 
   const dropOffLabel =
     analytics && analytics.partialsEnabled && analytics.dropOff.length > 0
@@ -148,31 +158,41 @@ export function AnalyticsBar({
             label="Views"
             value={analytics.viewCount.toLocaleString()}
             hint="Times the form was opened. Repeat opens by the same visitor within 30 minutes count once."
+            color="#22d3ee"
+            delta={weekDelta((d) => d.views)}
+            spark={series((d) => d.views)}
           />
           <StatCard
             icon={<IconInbox size={14} />}
             label="Responses"
             value={analytics.submissionCount.toLocaleString()}
             hint="Complete submissions. The change compares the last 7 days with the 7 before."
-            delta={weekDelta}
-            spark={analytics.daily?.map((d) => ({ v: d.count }))}
+            delta={weekDelta((d) => d.responses)}
+            spark={series((d) => d.responses)}
           />
           <StatCard
             icon={<IconTrendingUp size={14} />}
-            label="Completion rate"
+            label="Completion"
             value={`${Math.round(analytics.completionRate * 100)}%`}
-            hint="Responses divided by views."
+            hint="Responses divided by views. The change compares this week's rate with last week's."
+            color="#f59e0b"
+            delta={rateDelta}
+            spark={series((d) => (d.views ? d.responses / d.views : 0))}
           />
           <StatCard
             icon={<IconWorld size={14} />}
             label="Top source"
             value={analytics.sources[0]?.source ?? '—'}
+            color="#34d399"
+            spark={series((d) => d.topSource)}
             onClick={() => setSourcesOpen(true)}
           />
           <StatCard
             icon={<IconUserOff size={14} />}
             label="Gave up at"
             value={dropOffLabel}
+            color="#f472b6"
+            spark={analytics.partialsEnabled ? series((d) => d.abandoned) : undefined}
             onClick={() => setDropOffOpen(true)}
           />
         </SimpleGrid>

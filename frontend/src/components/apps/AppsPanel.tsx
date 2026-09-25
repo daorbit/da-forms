@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Stack, Skeleton, Alert, Text, SegmentedControl } from '@mantine/core';
-import { IconInfoCircle, IconAlertTriangle, IconPlugConnected, IconMail, IconCreditCard } from '@tabler/icons-react';
-import { StatCards } from '@/components/ui/StatCards';
+import { Box, Skeleton, Alert, Text } from '@mantine/core';
+import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import classes from './apps.module.css';
 import { listApps, getPaymentSettings, getWebhookApp, saveWebhookApp, ApiError } from '@/lib/api';
 import type { AppCard as AppCardData, PaymentSettings, PaymentProvider } from '@/types';
@@ -10,7 +9,7 @@ import { AppConnectDialog } from './AppConnectDialog';
 import { PaymentsModal } from '../builder/PaymentsModal';
 
 const CATEGORY_TITLE = {
-  email: 'Email',
+  email: 'Email delivery',
   payments: 'Payments',
   notification: 'Notifications',
   crm: 'CRM',
@@ -18,6 +17,14 @@ const CATEGORY_TITLE = {
 } as const;
 
 type Category = keyof typeof CATEGORY_TITLE;
+
+const CATEGORY_HINT: Record<Category, string> = {
+  email: 'Where this workspace’s notification emails are sent from. One provider is active at a time.',
+  payments: 'Gateways your forms can charge through. Keys stay encrypted on the server.',
+  notification: 'Places a new response can be announced.',
+  crm: 'Tools a response can be copied into.',
+  automation: 'Send each submission on to your own systems.',
+};
 
 const CATEGORY_ORDER: Category[] = ['email', 'payments', 'notification', 'crm', 'automation'];
 
@@ -60,7 +67,6 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [payFocus, setPayFocus] = useState<PaymentProvider | null>(null);
   const [webhookBusy, setWebhookBusy] = useState(false);
-  const [filter, setFilter] = useState('all');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -126,82 +132,37 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
       .finally(() => setWebhookBusy(false));
   }
 
-  const allCards = grouped.flatMap((g) => g.cards);
-  const connectedCount = allCards.filter((c) => c.enabled).length;
-  const shown = grouped
-    .map((g) => ({
-      ...g,
-      cards: g.cards.filter((c) =>
-        filter === 'all' ? true : filter === 'connected' ? c.connected || c.enabled : c.category === filter
-      ),
-    }))
-    .filter((g) => g.cards.length > 0);
-
   return (
-    <Stack gap="xl">
+    <div>
       {isDemo && (
-        <Alert color="blue" variant="light" icon={<IconInfoCircle size={18} />}>
+        <Alert color="blue" variant="light" mb="lg" icon={<IconInfoCircle size={18} />}>
           Integrations are configured in your own workspace, not the demo.
         </Alert>
       )}
 
       {error && (
-        <Alert color="red" variant="light" icon={<IconAlertTriangle size={16} />}>
+        <Alert color="red" variant="light" mb="lg" icon={<IconAlertTriangle size={16} />}>
           {error}
         </Alert>
       )}
 
-      <StatCards
-        count={3}
-        items={
-          loading
-            ? null
-            : [
-                { label: 'apps connected', icon: <IconPlugConnected size={18} />, value: `${connectedCount} of ${allCards.length}` },
-                {
-                  label: 'email delivery',
-                  icon: <IconMail size={18} />,
-                  value: allCards.find((c) => c.category === 'email' && c.enabled)?.name ?? 'Quantalog default',
-                },
-                {
-                  label: 'payments',
-                  icon: <IconCreditCard size={18} />,
-                  value: allCards.find((c) => c.category === 'payments' && c.enabled)?.name ?? 'Not set up',
-                },
-              ]
-        }
-      />
-
-      <SegmentedControl
-        value={filter}
-        onChange={setFilter}
-        style={{ alignSelf: 'flex-start' }}
-        data={[
-          { value: 'all', label: 'All' },
-          { value: 'connected', label: 'Connected' },
-          ...CATEGORY_ORDER.filter((c) => grouped.some((g) => g.category === c)).map((c) => ({
-            value: c,
-            label: CATEGORY_TITLE[c],
-          })),
-        ]}
-      />
-
       {loading ? (
         <div className={classes.grid}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} height={180} radius="md" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} height={230} radius="md" />
           ))}
         </div>
-      ) : shown.length === 0 ? (
-        <Text size="sm" c="dimmed" ta="center" py="xl">
-          Nothing connected yet — pick an app under All to get started.
-        </Text>
       ) : (
-        shown.map(({ category, cards }) => (
-          <div key={category}>
-            <Text fw={600} size="sm" mb="sm">
-              {CATEGORY_TITLE[category]}
-            </Text>
+        grouped.map(({ category, cards }) => (
+          <section key={category} className={classes.section}>
+            <Box mb="lg">
+              <Text fw={650} size="sm" style={{ letterSpacing: '-0.01em' }}>
+                {CATEGORY_TITLE[category]}
+              </Text>
+              <Text c="dimmed" size="xs" mt={2}>
+                {CATEGORY_HINT[category]}
+              </Text>
+            </Box>
             <div className={classes.grid}>
               {cards.map((card) => (
                 <AppCard
@@ -216,7 +177,7 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
                 />
               ))}
             </div>
-          </div>
+          </section>
         ))
       )}
 
@@ -243,6 +204,6 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
           />
         </>
       )}
-    </Stack>
+    </div>
   );
 }

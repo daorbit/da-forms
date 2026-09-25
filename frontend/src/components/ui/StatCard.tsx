@@ -17,8 +17,14 @@ export function StatCard({
   hint,
   delta,
   spark,
+  color = 'var(--mantine-primary-color-filled)',
+  inverseDelta,
   onClick,
 }: {
+  /** The trend's colour — each card keeps its own, as on Quantalog's Analytics. */
+  color?: string;
+  /** True when a rise is bad (people giving up), which flips the badge colour. */
+  inverseDelta?: boolean;
   icon: ReactNode;
   label: string;
   value: ReactNode;
@@ -51,7 +57,7 @@ export function StatCard({
           {onClick ? (
             <IconChevronRight size={15} className={classes.icon} />
           ) : delta !== undefined ? (
-            <Delta delta={delta} />
+            <Delta delta={delta} inverse={inverseDelta} />
           ) : null}
         </Group>
         <div className={classes.value}>{value}</div>
@@ -63,14 +69,14 @@ export function StatCard({
             <AreaChart data={spark} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--mantine-primary-color-filled)" stopOpacity={0.22} />
-                  <stop offset="100%" stopColor="var(--mantine-primary-color-filled)" stopOpacity={0} />
+                  <stop offset="0%" stopColor={color} stopOpacity={0.22} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <Area
                 type="monotone"
                 dataKey="v"
-                stroke="var(--mantine-primary-color-filled)"
+                stroke={color}
                 strokeWidth={2}
                 fill={`url(#${id})`}
                 dot={false}
@@ -92,8 +98,7 @@ export function StatCard({
   );
 }
 
-/** Up is good here, as it is for every metric on this page. */
-function Delta({ delta }: { delta: number | null }) {
+function Delta({ delta, inverse }: { delta: number | null; inverse?: boolean }) {
   if (delta === null) {
     return (
       <Text size="xs" c="dimmed" fw={500}>
@@ -103,7 +108,10 @@ function Delta({ delta }: { delta: number | null }) {
   }
   const Icon = delta === 0 ? IconMinus : delta > 0 ? IconTrendingUp : IconTrendingDown;
   return (
-    <span className={classes.delta} data-dir={delta === 0 ? 'flat' : delta > 0 ? 'up' : 'down'}>
+    <span
+      className={classes.delta}
+      data-dir={delta === 0 ? 'flat' : (delta > 0) !== !!inverse ? 'good' : 'bad'}
+    >
       <Icon size={11} />
       {delta > 0 ? '+' : ''}
       {delta}%

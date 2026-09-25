@@ -30,6 +30,7 @@ export function IntegrationsModal({ opened, onClose, workspaceId, isDemo }: Prop
       padding={0}
       transitionProps={{ transition: 'fade', duration: 150 }}
       styles={{ body: { padding: 0 } }}
+      classNames={{ content: 'integrations-page' }}
     >
       <Box px="md" py="lg">
         <PageHeader

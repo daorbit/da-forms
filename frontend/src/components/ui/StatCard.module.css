@@ -78,11 +78,11 @@
   color: var(--mantine-color-dimmed);
 }
 
-.delta[data-dir='up'] {
+.delta[data-dir='good'] {
   color: var(--mantine-color-teal-5);
 }
 
-.delta[data-dir='down'] {
+.delta[data-dir='bad'] {
   color: var(--mantine-color-red-5);
 }
 

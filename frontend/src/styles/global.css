@@ -489,3 +489,12 @@ html[data-host-bg='textured'] #root {
   background: transparent !important;
   background-color: transparent !important;
 }
+
+/* A full-screen dialog covers the page, and with it the host background the
+   page lets through — so it paints that background itself (passed in as
+   --host-bg-wash). Its own panes go clear on top; cards and inputs keep their
+   surfaces. */
+html[data-host-bg='textured'] .mantine-Modal-content[data-full-screen] {
+  background: var(--host-bg-wash, var(--mantine-color-body)) !important;
+  box-shadow: none !important;
+}

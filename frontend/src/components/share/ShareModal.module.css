@@ -282,3 +282,9 @@
 :global(html[data-mantine-color-scheme='light']) .deviceToggle {
   background-color: #e9ecef;
 }
+
+/* Clear over the host's background — see global.css. */
+:global(html[data-host-bg='textured']) .panel,
+:global(html[data-host-bg='textured']) .preview {
+  background-color: transparent !important;
+}

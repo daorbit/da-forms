@@ -436,3 +436,9 @@
 :global(html[data-mantine-color-scheme='light']) .composerPane {
   background-color: #f1f3f5;
 }
+
+/* Clear over the host's background — see global.css. */
+:global(html[data-host-bg='textured']) .panel,
+:global(html[data-host-bg='textured']) .composerPane {
+  background-color: transparent !important;
+}

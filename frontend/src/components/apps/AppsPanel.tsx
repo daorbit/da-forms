@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { SimpleGrid, Stack, Skeleton, Alert, Title, Text } from '@mantine/core';
+import { Box, Skeleton, Alert, Text } from '@mantine/core';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
+import classes from './apps.module.css';
 import { listApps, getPaymentSettings, getWebhookApp, saveWebhookApp, ApiError } from '@/lib/api';
 import type { AppCard as AppCardData, PaymentSettings, PaymentProvider } from '@/types';
 import { AppCard, type PaymentCardData, type WebhookCardData } from './AppCard';
@@ -11,11 +12,19 @@ const CATEGORY_TITLE = {
   email: 'Email delivery',
   payments: 'Payments',
   notification: 'Notifications',
-  crm: 'Marketing & CRM',
+  crm: 'CRM',
   automation: 'Automation',
 } as const;
 
 type Category = keyof typeof CATEGORY_TITLE;
+
+const CATEGORY_HINT: Record<Category, string> = {
+  email: 'Where this workspace’s notification emails are sent from. One provider is active at a time.',
+  payments: 'Gateways your forms can charge through. Keys stay encrypted on the server.',
+  notification: 'Places a new response can be announced.',
+  crm: 'Tools a response can be copied into.',
+  automation: 'Send each submission on to your own systems.',
+};
 
 const CATEGORY_ORDER: Category[] = ['email', 'payments', 'notification', 'crm', 'automation'];
 
@@ -124,35 +133,37 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
   }
 
   return (
-    <Stack gap="xl">
+    <div>
       {isDemo && (
-        <Alert color="blue" variant="light" icon={<IconInfoCircle size={18} />}>
+        <Alert color="blue" variant="light" mb="lg" icon={<IconInfoCircle size={18} />}>
           Integrations are configured in your own workspace, not the demo.
         </Alert>
       )}
 
-      <Text size="sm" c="dimmed" maw={640}>
-        Connect an email provider so this workspace sends its own notification emails, and a payment
-        gateway to charge on your forms. Notification and CRM apps follow.
-      </Text>
-
       {error && (
-        <Alert color="red" variant="light" icon={<IconAlertTriangle size={16} />}>
+        <Alert color="red" variant="light" mb="lg" icon={<IconAlertTriangle size={16} />}>
           {error}
         </Alert>
       )}
 
       {loading ? (
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} height={190} radius="md" />
+        <div className={classes.grid}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} height={230} radius="md" />
           ))}
-        </SimpleGrid>
+        </div>
       ) : (
         grouped.map(({ category, cards }) => (
-          <Stack key={category} gap="sm">
-            <Title order={5}>{CATEGORY_TITLE[category]}</Title>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+          <section key={category} className={classes.section}>
+            <Box mb="lg">
+              <Text fw={650} size="sm" style={{ letterSpacing: '-0.01em' }}>
+                {CATEGORY_TITLE[category]}
+              </Text>
+              <Text c="dimmed" size="xs" mt={2}>
+                {CATEGORY_HINT[category]}
+              </Text>
+            </Box>
+            <div className={classes.grid}>
               {cards.map((card) => (
                 <AppCard
                   key={card.id}
@@ -165,8 +176,8 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
                   }}
                 />
               ))}
-            </SimpleGrid>
-          </Stack>
+            </div>
+          </section>
         ))
       )}
 
@@ -193,6 +204,6 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
           />
         </>
       )}
-    </Stack>
+    </div>
   );
 }

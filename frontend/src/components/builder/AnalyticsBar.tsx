@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import { SimpleGrid, Box, Text, Group, Stack, Progress, Modal, UnstyledButton } from '@mantine/core';
+import { Text, Group, Stack, Progress, Modal, SimpleGrid } from '@mantine/core';
 import {
   IconEye,
   IconInbox,
   IconTrendingUp,
   IconWorld,
-  IconChevronRight,
   IconUserOff,
 } from '@tabler/icons-react';
 import type { Analytics } from '@/lib/api';
 import type { FormField } from '@/types';
 import { valueFields } from '@/lib/fieldTree';
-import { StatTile, StatTileSkeleton, decorativeSpark } from './StatTile';
-import classes from './StatTile.module.css';
+import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
 
 function SourceBreakdown({ sources }: { sources: Analytics['sources'] }) {
   if (sources.length === 0) {
@@ -37,7 +35,7 @@ function SourceBreakdown({ sources }: { sources: Analytics['sources'] }) {
           <Progress
             value={(count / total) * 100}
             size="sm"
-            color="cyan"
+            color="gray"
             styles={{ root: { backgroundColor: 'var(--mantine-color-default-hover)' } }}
           />
         </div>
@@ -97,7 +95,7 @@ function DropOffBreakdown({
           <Progress
             value={(abandoned / total) * 100}
             size="sm"
-            color="orange"
+            color="gray"
             styles={{ root: { backgroundColor: 'var(--mantine-color-default-hover)' } }}
           />
         </div>
@@ -117,88 +115,88 @@ export function AnalyticsBar({
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [dropOffOpen, setDropOffOpen] = useState(false);
 
-  if (!analytics) {
-    return (
-      <SimpleGrid cols={{ base: 1, sm: 5 }} spacing="md" px="md" py="md">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <StatTileSkeleton key={i} />
-        ))}
-      </SimpleGrid>
-    );
-  }
+  const daily = analytics?.daily ?? [];
+  // Last 7 days against the 7 before. Null when the earlier week had nothing
+  // to compare against; undefined (no badge) without two full weeks of data.
+  const weekDelta = (pick: (d: (typeof daily)[number]) => number) => {
+    if (daily.length < 14) return undefined;
+    const sum = (xs: typeof daily) => xs.reduce((n, x) => n + pick(x), 0);
+    const recent = sum(daily.slice(7));
+    const before = sum(daily.slice(0, 7));
+    return before === 0 ? null : Math.round(((recent - before) / before) * 100);
+  };
+  const rateOf = (xs: typeof daily) => {
+    const v = xs.reduce((n, x) => n + x.views, 0);
+    return v ? xs.reduce((n, x) => n + x.responses, 0) / v : 0;
+  };
+  const rateDelta = (() => {
+    if (daily.length < 14) return undefined;
+    const before = rateOf(daily.slice(0, 7));
+    return before === 0 ? null : Math.round(((rateOf(daily.slice(7)) - before) / before) * 100);
+  })();
+  const series = (pick: (d: (typeof daily)[number]) => number) => daily.map((d) => ({ v: pick(d) }));
+
+  const dropOffLabel =
+    analytics && analytics.partialsEnabled && analytics.dropOff.length > 0
+      ? valueFields(fields).find((f) => f.id === analytics.dropOff[0].fieldId)?.label ?? 'Deleted question'
+      : analytics && !analytics.partialsEnabled
+        ? 'Not tracked'
+        : '—';
 
   return (
     <>
-      <SimpleGrid cols={{ base: 1, sm: 5 }} spacing="md" px="md" py="md">
-        <StatTile
-          icon={IconEye}
-          label="Views"
-          value={analytics.viewCount.toLocaleString()}
-          accent="#22d3ee"
-          spark={decorativeSpark(analytics.viewCount)}
-        />
-        <StatTile
-          icon={IconInbox}
-          label="Submissions"
-          value={analytics.submissionCount.toLocaleString()}
-          accent="#34d399"
-          spark={decorativeSpark(analytics.submissionCount)}
-        />
-        <StatTile
-          icon={IconTrendingUp}
-          label="Completion rate"
-          value={`${Math.round(analytics.completionRate * 100)}%`}
-          accent="#c084fc"
-          spark={decorativeSpark(Math.round(analytics.completionRate * 100))}
-        />
-        <UnstyledButton className={classes.cardButton} onClick={() => setSourcesOpen(true)}>
-          <Box className={classes.card}>
-            <Box px="md" pt="md">
-              <Group justify="space-between" align="flex-start" wrap="nowrap" mb={6}>
-                <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                  <IconWorld size={14} className={classes.icon} />
-                  <Text size="xs" c="dimmed" fw={500} truncate className={classes.label}>
-                    Traffic sources
-                  </Text>
-                </Group>
-                <IconChevronRight size={16} className={classes.icon} />
-              </Group>
-              <Text className={classes.value} truncate>
-                {analytics.sources[0]?.source ?? '—'}
-              </Text>
-            </Box>
-            {/* Empty, but the same reserved track as every other tile — without
-                it this card is 26px shorter than the three beside it. */}
-            <div className={classes.spark} />
-          </Box>
-        </UnstyledButton>
-
-        <UnstyledButton className={classes.cardButton} onClick={() => setDropOffOpen(true)}>
-          <Box className={classes.card}>
-            <Box px="md" pt="md">
-              <Group justify="space-between" align="flex-start" wrap="nowrap" mb={6}>
-                <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                  <IconUserOff size={14} className={classes.icon} />
-                  <Text size="xs" c="dimmed" fw={500} truncate className={classes.label}>
-                    Gave up at
-                  </Text>
-                </Group>
-                <IconChevronRight size={16} className={classes.icon} />
-              </Group>
-              <Text className={classes.value} truncate>
-                {/* An em dash for both "not tracking" and "nobody quit" — the
-                    modal is where that distinction is worth the words. */}
-                {analytics.partialsEnabled && analytics.dropOff.length > 0
-                  ? (fields.length
-                      ? valueFields(fields).find((f) => f.id === analytics.dropOff[0].fieldId)?.label
-                      : undefined) ?? 'Deleted question'
-                  : '—'}
-              </Text>
-            </Box>
-            <div className={classes.spark} />
-          </Box>
-        </UnstyledButton>
-      </SimpleGrid>
+      {!analytics ? (
+        <SimpleGrid cols={{ base: 2, sm: 3, lg: 5 }} spacing="lg">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </SimpleGrid>
+      ) : (
+        <SimpleGrid cols={{ base: 2, sm: 3, lg: 5 }} spacing="lg">
+          <StatCard
+            icon={<IconEye size={14} />}
+            label="Views"
+            value={analytics.viewCount.toLocaleString()}
+            hint="Times the form was opened. Repeat opens by the same visitor within 30 minutes count once."
+            color="#22d3ee"
+            delta={weekDelta((d) => d.views)}
+            spark={series((d) => d.views)}
+          />
+          <StatCard
+            icon={<IconInbox size={14} />}
+            label="Responses"
+            value={analytics.submissionCount.toLocaleString()}
+            hint="Complete submissions. The change compares the last 7 days with the 7 before."
+            delta={weekDelta((d) => d.responses)}
+            spark={series((d) => d.responses)}
+          />
+          <StatCard
+            icon={<IconTrendingUp size={14} />}
+            label="Completion"
+            value={`${Math.round(analytics.completionRate * 100)}%`}
+            hint="Responses divided by views. The change compares this week's rate with last week's."
+            color="#f59e0b"
+            delta={rateDelta}
+            spark={series((d) => (d.views ? d.responses / d.views : 0))}
+          />
+          <StatCard
+            icon={<IconWorld size={14} />}
+            label="Top source"
+            value={analytics.sources[0]?.source ?? '—'}
+            color="#34d399"
+            spark={series((d) => d.topSource)}
+            onClick={() => setSourcesOpen(true)}
+          />
+          <StatCard
+            icon={<IconUserOff size={14} />}
+            label="Gave up at"
+            value={dropOffLabel}
+            color="#f472b6"
+            spark={analytics.partialsEnabled ? series((d) => d.abandoned) : undefined}
+            onClick={() => setDropOffOpen(true)}
+          />
+        </SimpleGrid>
+      )}
 
       <Modal
         opened={sourcesOpen}
@@ -208,7 +206,7 @@ export function AnalyticsBar({
         radius="lg"
         overlayProps={{ backgroundOpacity: 0.65, blur: 2 }}
       >
-        <SourceBreakdown sources={analytics.sources} />
+        <SourceBreakdown sources={analytics?.sources ?? []} />
       </Modal>
 
       <Modal
@@ -220,9 +218,9 @@ export function AnalyticsBar({
         overlayProps={{ backgroundOpacity: 0.65, blur: 2 }}
       >
         <DropOffBreakdown
-          dropOff={analytics.dropOff}
+          dropOff={analytics?.dropOff ?? []}
           fields={fields}
-          enabled={analytics.partialsEnabled}
+          enabled={analytics?.partialsEnabled ?? false}
         />
       </Modal>
     </>

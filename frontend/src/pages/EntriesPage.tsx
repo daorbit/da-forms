@@ -209,6 +209,19 @@ export function EntriesPage() {
     }
   }
 
+  /** Opening a response is reading it. */
+  function openResponse(submission: Submission) {
+    setViewing(submission);
+    void markRead(submission);
+  }
+
+  async function toggleRead(submission: Submission) {
+    if (!id) return;
+    const updated = await updateSubmission(id, submission._id, { read: !submission.read }, workspaceId);
+    setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
+    setViewing((current) => (current?._id === updated._id ? updated : current));
+  }
+
   function toggleSelect(submissionId: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -347,7 +360,7 @@ export function EntriesPage() {
   ];
 
   return (
-    <Box className={classes.page}>
+    <Box className={classes.page} px="md" py="lg">
       <EntriesTopbar
         form={form}
         workspaceId={workspaceId}
@@ -359,9 +372,11 @@ export function EntriesPage() {
         onSaveName={saveName}
         onCancelEditingName={() => setEditingName(false)}
         onCopyShareLink={copyShareLink}
+        total={analytics?.submissionCount}
       />
 
       <AnalyticsBar analytics={analytics} fields={form?.fields ?? []} />
+      <Box h="xl" />
 
       <EntriesFilterBar
         search={search}
@@ -418,7 +433,7 @@ export function EntriesPage() {
           columns={columns}
           submissions={submissions}
           loading={loading}
-          onView={setViewing}
+          onView={openResponse}
           onCopyShareLink={copyShareLink}
         />
       ) : (
@@ -434,7 +449,7 @@ export function EntriesPage() {
           onToggleSelectAll={toggleSelectAll}
           onPageChange={setPage}
           onMarkRead={markRead}
-          onView={setViewing}
+          onView={openResponse}
           onDelete={setPendingDelete}
           onCopyShareLink={copyShareLink}
           onOpenAttachment={setAttachment}
@@ -454,8 +469,11 @@ export function EntriesPage() {
         form={form}
         columns={columns}
         viewing={viewing}
+        submissions={submissions}
+        onNavigate={openResponse}
         onClose={() => setViewing(null)}
         onMarkRead={markRead}
+        onToggleRead={toggleRead}
         onDelete={(submission) => {
           setPendingDelete(submission);
           setViewing(null);

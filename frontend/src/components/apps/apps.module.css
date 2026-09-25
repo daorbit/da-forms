@@ -1,0 +1,38 @@
+/* Quantalog's `.connection-grid` / `.connection-card`, so the forms app's
+   integrations read like the host app's own Connections page. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--mantine-spacing-md);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--mantine-color-body);
+}
+
+.mark {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--mantine-color-text);
+}
+
+.action {
+  margin-top: var(--mantine-spacing-md);
+}
+
+.section + .section {
+  margin-top: 36px;
+}
+
+:global(html[data-mantine-color-scheme='light']) .card {
+  background: #fff;
+}

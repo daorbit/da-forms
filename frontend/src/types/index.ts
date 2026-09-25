@@ -308,6 +308,10 @@ export interface Form {
    * stored on the form.
    */
   branding?: FormBranding;
+  /** Times the public form was opened. */
+  viewCount?: number;
+  /** Complete responses — only set on the forms list. */
+  submissionCount?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -401,6 +401,7 @@ export const getAnalytics: RequestHandler = async (req, res) => {
     // stopped, and an empty list says that more honestly than a zero would.
     formService.dropOffBreakdown(req.params.id),
   ]);
+  const daily = await formService.dailyAnalytics(req.params.id, sources[0]?.source ?? null, 14);
   const viewCount = form.viewCount ?? 0;
   const completionRate = viewCount > 0 ? submissionCount / viewCount : 0;
   res.json({
@@ -409,6 +410,9 @@ export const getAnalytics: RequestHandler = async (req, res) => {
     completionRate,
     sources,
     dropOff,
+    // Per-day views, responses, top-source responses and abandons for the last
+    // 14 days — the stat cards' trends and week-on-week changes.
+    daily,
     // So the page can tell "nobody abandoned this form" from "we were never
     // watching", which are the same empty list otherwise.
     partialsEnabled: Boolean(form.collectPartials),

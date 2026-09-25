@@ -303,6 +303,16 @@ export interface Analytics {
    * list otherwise.
    */
   partialsEnabled: boolean;
+  /** The last 14 days, oldest first — the stat cards' trends. */
+  daily?: {
+    date: string;
+    views: number;
+    responses: number;
+    /** Responses from the top source that day. */
+    topSource: number;
+    /** Partial responses started that day and never sent. */
+    abandoned: number;
+  }[];
 }
 
 export function getAnalytics(id: string, workspaceId = DEFAULT_WORKSPACE) {

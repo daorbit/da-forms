@@ -1,7 +1,9 @@
-import { Card, Group, Text, Badge, Button, Stack, Box } from '@mantine/core';
-import { IconPlugConnected } from '@tabler/icons-react';
+import { Anchor, Button, Group, Text } from '@mantine/core';
+import { IconCheck, IconPlayerPause, IconPlugConnected } from '@tabler/icons-react';
+import { relativeTime } from '@/lib/relativeTime';
+import classes from './apps.module.css';
 import type { AppCard as AppCardData } from '@/types';
-import { AppLogo, isWordmark } from './AppLogos';
+import { AppMark, APP_TINT } from './AppLogos';
 
 /** A payment gateway shown as a card — state comes from the payment settings, not `listApps`. */
 export interface PaymentCardData {
@@ -34,105 +36,92 @@ interface Props {
   busy?: boolean;
 }
 
-function StatusBadge({ connected, enabled }: { connected: boolean; enabled: boolean }) {
-  if (enabled)
-    return (
-      <Badge color="teal" variant="light" radius="sm">
-        Connected
-      </Badge>
-    );
-  if (connected)
-    return (
-      <Badge color="gray" variant="light" radius="sm">
-        Saved, off
-      </Badge>
-    );
-  return (
-    <Badge color="gray" variant="outline" radius="sm">
-      Not connected
-    </Badge>
-  );
-}
+const ACTION_HINT: Record<string, string> = {
+  email: 'Connect it to send notification emails from your own domain.',
+  payments: 'Connect your account to take payments on forms with a payment field.',
+  automation: 'Turn it on, then set a URL from any form’s Webhook panel.',
+};
 
+/**
+ * One integration, drawn like Quantalog's own connection cards: a tinted logo
+ * tile, the name and what it does, then either a Connect button or — once it
+ * works — a quiet line saying so, with Manage as a link.
+ */
 export function AppCard({ card, onOpen, busy = false }: Props) {
-  const wordmark = isWordmark(card.id);
+  const tint = APP_TINT[card.id] ?? 'var(--mantine-primary-color-filled)';
+  const lastUsed = card.kind === 'generic' ? card.lastUsedAt : undefined;
 
   return (
-    <Card withBorder radius="md" padding="lg">
-      <Stack gap="sm" h="100%">
-        <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
-          <Group gap="sm" wrap="nowrap" align="center" style={{ minWidth: 0 }}>
-            {wordmark ? (
-              // A wordmark carries its own name — show it at a readable height,
-              // no square tile to squash it into.
-              <Box
-                style={{
-                  height: 30,
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexShrink: 0,
-                  color: 'var(--mantine-color-text)',
-                }}
-              >
-                <AppLogo appId={card.id} height={22} />
-              </Box>
-            ) : (
-              <Box
-                style={{
-                  width: 44,
-                  height: 44,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid var(--mantine-color-default-border)',
-                  borderRadius: 'var(--mantine-radius-md)',
-                  flexShrink: 0,
-                }}
-              >
-                <AppLogo appId={card.id} height={24} />
-              </Box>
-            )}
-            {/* The wordmark already says the name, so it is not repeated. */}
-            {!wordmark && (
-              <div style={{ minWidth: 0 }}>
-                <Text fw={600} truncate>
-                  {card.name}
-                </Text>
-                <Text size="xs" c="dimmed" tt="capitalize">
-                  {card.category}
-                </Text>
-              </div>
-            )}
+    <div className={classes.card}>
+      <span
+        aria-hidden
+        className={classes.mark}
+        style={{ background: `color-mix(in srgb, ${tint} 16%, transparent)` }}
+      >
+        <AppMark appId={card.id} size={26} />
+      </span>
+
+      <Text fw={600} mt="md">
+        {card.name}
+      </Text>
+      <Text size="sm" c="dimmed" mt={4} style={{ flex: 1 }}>
+        {card.description}
+      </Text>
+
+      <div className={classes.action}>
+        {card.enabled ? (
+          <Group gap={8} wrap="nowrap">
+            <IconCheck size={14} color="var(--mantine-color-teal-6)" style={{ flexShrink: 0 }} />
+            <Text size="xs" c="dimmed" truncate>
+              {card.kind === 'webhook' ? 'On for this workspace' : 'Connected'}
+              {lastUsed ? ` · last used ${relativeTime(lastUsed)}` : ''}
+            </Text>
+            <Anchor
+              component="button"
+              type="button"
+              size="xs"
+              c="dimmed"
+              underline="always"
+              disabled={busy}
+              onClick={() => onOpen(card)}
+              style={{ flexShrink: 0 }}
+            >
+              {card.kind === 'webhook' ? 'Turn off' : 'Manage'}
+            </Anchor>
           </Group>
-          <StatusBadge connected={card.connected} enabled={card.enabled} />
-        </Group>
-
-        {wordmark && (
-          <Text size="xs" c="dimmed" tt="capitalize" mt={-4}>
-            {card.category}
-          </Text>
+        ) : card.connected ? (
+          <Group gap={8} wrap="nowrap">
+            <IconPlayerPause size={14} color="var(--mantine-color-yellow-6)" style={{ flexShrink: 0 }} />
+            <Text size="xs" c="dimmed" truncate>
+              Saved, but switched off
+            </Text>
+            <Anchor
+              component="button"
+              type="button"
+              size="xs"
+              underline="always"
+              onClick={() => onOpen(card)}
+              style={{ flexShrink: 0 }}
+            >
+              Turn on
+            </Anchor>
+          </Group>
+        ) : (
+          <>
+            <Text size="xs" c="dimmed" mb={10}>
+              {ACTION_HINT[card.category] ?? 'Connect it to use it from your forms.'}
+            </Text>
+            <Button
+              size="sm"
+              loading={busy}
+              leftSection={<IconPlugConnected size={15} />}
+              onClick={() => onOpen(card)}
+            >
+              {card.kind === 'webhook' ? 'Turn on webhooks' : `Connect ${card.name}`}
+            </Button>
+          </>
         )}
-
-        <Text size="sm" c="dimmed" style={{ flex: 1 }}>
-          {card.description}
-        </Text>
-
-        <Button
-          variant="default"
-          fullWidth
-          loading={busy}
-          leftSection={<IconPlugConnected size={16} />}
-          onClick={() => onOpen(card)}
-        >
-          {card.kind === 'webhook'
-            ? card.enabled
-              ? 'Turn off'
-              : 'Turn on'
-            : card.connected
-              ? 'Manage'
-              : 'Connect'}
-        </Button>
-      </Stack>
-    </Card>
+      </div>
+    </div>
   );
 }

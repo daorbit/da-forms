@@ -19,13 +19,13 @@ export type DayFilter = 'all' | 'today' | '7' | '30' | 'custom';
 export type CustomRange = [string | null, string | null];
 
 export const STATUS_LABEL: Record<StatusFilter, string> = {
-  all: 'All Entries',
+  all: 'All',
   unread: 'Unread',
   read: 'Read',
 };
 
 export const DAY_LABEL: Record<DayFilter, string> = {
-  all: 'All Days',
+  all: 'All time',
   today: 'Today',
   '7': 'Last 7 Days',
   '30': 'Last 30 Days',

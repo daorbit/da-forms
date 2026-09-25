@@ -464,3 +464,16 @@ body[data-mantine-scroll-locked] {
   background-color: var(--mantine-color-body);
 }
 
+
+/* The integrations dialog is full-screen and stands in for a page, so it takes
+   the page's ground rather than the raised dialog surface — its cards then sit
+   on it the way Quantalog's own Connections cards do. */
+html[data-mantine-color-scheme='dark'] .mantine-Modal-content.integrations-page {
+  background-color: #0b0c0e !important;
+  box-shadow: none !important;
+}
+
+html[data-mantine-color-scheme='light'] .mantine-Modal-content.integrations-page {
+  background-color: #f4f5f7 !important;
+  box-shadow: none !important;
+}

@@ -4,6 +4,7 @@ import { Types } from 'mongoose';
 import { FormModel } from '../models/form.model.js';
 import { SubmissionModel, type SubmissionPayment } from '../models/submission.model.js';
 import { FormViewModel } from '../models/formView.model.js';
+import { FormDailyViewModel } from '../models/formDailyView.model.js';
 import { evaluateFormula, numericValues } from '../lib/formula.js';
 import {
   claimUploads,
@@ -52,7 +53,7 @@ export interface WorkspaceStats {
   totalSubmissions: number;
 }
 
-export interface FormListResult extends Paginated<InstanceType<typeof FormModel>> {
+export interface FormListResult extends Paginated<Record<string, unknown>> {
 
   stats: WorkspaceStats;
 }
@@ -86,15 +87,23 @@ export async function listForms(
   ]);
 
   const formIds = allForms.map((f) => f._id);
-  const [totalSubmissions, publishedForms] = await Promise.all([
+  const [totalSubmissions, publishedForms, pageCounts] = await Promise.all([
     formIds.length
       ? SubmissionModel.countDocuments({ formId: { $in: formIds }, status: 'complete' })
       : 0,
     allForms.filter((f) => f.status === 'published').length,
+    // Responses per form, for this page only — the list shows a count on each row.
+    items.length
+      ? SubmissionModel.aggregate<{ _id: unknown; count: number }>([
+          { $match: { formId: { $in: items.map((f) => f._id) }, status: 'complete' } },
+          { $group: { _id: '$formId', count: { $sum: 1 } } },
+        ])
+      : [],
   ]);
+  const countByForm = new Map(pageCounts.map((c) => [String(c._id), c.count]));
 
   return {
-    items,
+    items: items.map((f) => ({ ...f.toJSON(), submissionCount: countByForm.get(String(f._id)) ?? 0 })),
     total,
     page,
     limit,
@@ -448,6 +457,7 @@ export async function deleteForm(id: string, workspaceId: string) {
   await SubmissionModel.deleteMany({ formId: form._id });
 
   await FormViewModel.deleteMany({ formId: String(form._id) });
+  await FormDailyViewModel.deleteMany({ formId: String(form._id) });
 
   await FormModel.deleteOne({ _id: form._id });
   return form;
@@ -460,7 +470,14 @@ export async function recordView(id: string, fingerprint: string) {
     if ((err as { code?: number }).code === 11000) return; 
     throw err;
   }
-  await FormModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } });
+  await Promise.all([
+    FormModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } }),
+    FormDailyViewModel.updateOne(
+      { formId: id, date: new Date().toISOString().slice(0, 10) },
+      { $inc: { count: 1 } },
+      { upsert: true }
+    ),
+  ]);
 }
 
 export function flattenFieldsPublic(fields: FormField[]): FormField[] {
@@ -766,6 +783,71 @@ export function submissionCount(formId: string) {
   return SubmissionModel.countDocuments({ formId, status: 'complete' });
 }
 
+export interface DailyPoint {
+  /** `YYYY-MM-DD`, UTC. */
+  date: string;
+  views: number;
+  responses: number;
+  /** Responses that came from `topSource`. */
+  topSource: number;
+  /** Partial responses started that day and never sent. */
+  abandoned: number;
+}
+
+function sourceOf(sourceUrl?: string | null): string {
+  if (!sourceUrl) return 'Direct';
+  try {
+    return new URL(sourceUrl).hostname;
+  } catch {
+    return 'Other';
+  }
+}
+
+/**
+ * The last `days` UTC days for one form, oldest first, empty days as zero —
+ * what the responses page draws its stat-card trends from. Views only exist
+ * from the day daily counting began; earlier days read as zero.
+ */
+export async function dailyAnalytics(formId: string, topSource: string | null, days = 14): Promise<DailyPoint[]> {
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() - (days - 1));
+  const startDate = start.toISOString().slice(0, 10);
+
+  const [views, submissions] = await Promise.all([
+    FormDailyViewModel.find({ formId, date: { $gte: startDate } }, { date: 1, count: 1 }),
+    SubmissionModel.find(
+      { formId, status: { $in: ['complete', 'partial'] }, createdAt: { $gte: start } },
+      { status: 1, sourceUrl: 1, createdAt: 1 }
+    ),
+  ]);
+
+  const points = new Map<string, DailyPoint>();
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start);
+    d.setUTCDate(start.getUTCDate() + i);
+    const date = d.toISOString().slice(0, 10);
+    points.set(date, { date, views: 0, responses: 0, topSource: 0, abandoned: 0 });
+  }
+
+  for (const v of views) {
+    const p = points.get(v.date);
+    if (p) p.views = v.count;
+  }
+  for (const s of submissions) {
+    const p = points.get(new Date(s.get('createdAt')).toISOString().slice(0, 10));
+    if (!p) continue;
+    if (s.status === 'partial') {
+      p.abandoned += 1;
+    } else {
+      p.responses += 1;
+      if (topSource && sourceOf(s.sourceUrl) === topSource) p.topSource += 1;
+    }
+  }
+
+  return [...points.values()];
+}
+
 export interface UploadedFile {
   url: string;
 
@@ -818,15 +900,7 @@ export async function sourceBreakdown(formId: string): Promise<SourceBreakdownEn
   const submissions = await SubmissionModel.find({ formId, status: 'complete' }, { sourceUrl: 1 });
   const counts = new Map<string, number>();
   for (const submission of submissions) {
-    let source = 'Direct';
-    if (submission.sourceUrl) {
-      try {
-        source = new URL(submission.sourceUrl).hostname;
-      } catch {
-
-        source = 'Other';
-      }
-    }
+    const source = sourceOf(submission.sourceUrl);
     counts.set(source, (counts.get(source) ?? 0) + 1);
   }
   return [...counts.entries()]

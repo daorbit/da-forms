@@ -16,16 +16,101 @@
 }
 
 .filterbar {
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  background-color: var(--mantine-color-body);
+  padding: 0 0 12px !important;
 }
 
-.filterItem {
-  cursor: pointer;
+.titleRow {
+  min-width: 0;
+}
+
+.titleText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filterLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.filterSearch {
+  width: 240px;
+}
+
+.viewLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ------------------------------------------------ response side panel --- */
+
+.drawerBody {
+  height: 100%;
+  padding: 0;
+}
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drawerHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.drawerSource {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-default);
+  color: var(--mantine-color-dimmed);
+  min-width: 0;
+}
+
+.drawerScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 20px 20px;
+}
+
+.responseList .responseField {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.responseList .responseField:last-child {
+  border-bottom: 0;
+}
+
+.responseList .responseField > p:last-child,
+.responseList .responseField > .mantine-Text-root:last-child {
+  font-size: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.drawerFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
 }
 
 .tableWrap {
-  padding: 16px;
+  padding: 0;
 }
 
 /* Mantine draws its own scrollbar element here rather than the native one, so
@@ -54,9 +139,46 @@
 }
 
 .table {
-  background-color: var(--mantine-color-body);
+  background-color: var(--mantine-color-default);
   width: 100%;
   table-layout: fixed;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-lg);
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+.table td {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tr {
+  cursor: pointer;
+}
+
+.tr[data-unread] td {
+  font-weight: 600;
+}
+
+.checkCell {
+  position: relative;
+}
+
+/* Unread: a small dot in the gutter beside the checkbox. */
+.unreadDot {
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: var(--mantine-primary-color-filled);
 }
 
 .tableLoading {
@@ -74,12 +196,18 @@
 }
 
 .thead {
-  background-color: var(--mantine-color-default);
+  background-color: var(--mantine-color-default-hover);
 }
 
 .th {
   white-space: nowrap;
   width: 180px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.th :global(.mantine-Text-root) {
+  font-size: 12px;
+  color: var(--mantine-color-dimmed);
 }
 
 /* A row is as tall as its tallest value (a wrapped email, a two-line answer).
@@ -93,13 +221,13 @@
 .actionsCol {
   position: sticky;
   right: 0;
-  width: 90px;
-  background-color: var(--mantine-color-body);
+  width: 108px;
+  background-color: var(--mantine-color-default);
   box-shadow: -1px 0 0 var(--mantine-color-default-border);
 }
 
 .thead .actionsCol {
-  background-color: var(--mantine-color-default);
+  background-color: var(--mantine-color-default-hover);
   z-index: 1;
 }
 
@@ -184,9 +312,31 @@
   container-type: inline-size;
 }
 
+@container (max-width: 900px) {
+  .viewText {
+    display: none;
+  }
+}
+
 @container (max-width: 640px) {
-  .tableWrap {
-    padding: 12px;
+
+  .filterbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .filterLeft {
+    width: 100% !important;
+    flex: none !important;
+  }
+
+  .filterSearch {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .topbarSecondary {
+    display: none !important;
   }
 
   /* The toolbar rows stack their two halves instead of forcing them onto one
@@ -218,7 +368,7 @@
  * shift the content sideways — the two views sit in the same place on the page
  * and only their contents differ. */
 .excelCard {
-  padding: 16px;
+  padding: 0;
 }
 
 .excelGrid {

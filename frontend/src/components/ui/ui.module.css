@@ -1,0 +1,63 @@
+/* ------------------------------------------------------------ status --- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--mantine-color-default-border);
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 20px;
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+}
+
+.pill[data-tone='live'] {
+  color: var(--mantine-color-text);
+}
+
+.dot {
+  position: relative;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mantine-color-dimmed);
+}
+
+.pill[data-tone='live'] .dot {
+  background: var(--mantine-color-green-6);
+}
+
+.pill[data-tone='warn'] .dot {
+  background: var(--mantine-color-yellow-6);
+}
+
+.pill[data-tone='live'] .dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  animation: pill-pulse 1.8s ease-out infinite;
+}
+
+@keyframes pill-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill[data-tone='live'] .dot::after {
+    animation: none;
+  }
+}
+

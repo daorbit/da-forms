@@ -1,46 +1,86 @@
-.topbar {
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  background-color: var(--mantine-color-body);
+.page {
+  container-type: inline-size;
 }
 
- 
-.searchInput:focus-within {
-  --input-bg: var(--mantine-color-default-hover);
-  --input-bd: var(--mantine-color-emerald-7);
+.sectionTitle {
+  margin-right: 4px;
 }
 
- 
 .searchIcon {
   color: var(--mantine-color-placeholder);
 }
 
+.search {
+  width: 240px;
+}
+
+/* --------------------------------------------------------------- rows --- */
+
 .row {
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: 8px;
-  padding: 14px 20px;
-  background-color: var(--mantine-color-body);
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition: border-color 140ms ease, transform 140ms ease;
 }
 
 .row:hover {
+  border-color: var(--mantine-color-dark-3);
+}
+
+:global(html[data-mantine-color-scheme='light']) .row:hover {
   border-color: var(--mantine-color-gray-4);
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+}
+
+.rowInner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
 }
 
 .title {
-  display: inline-block;
-  font-weight: 500;
-  font-size: 15px;
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--mantine-color-text);
   text-decoration: none;
 }
 
 .title:hover {
-  color: var(--mantine-color-emerald-7);
+  color: var(--mantine-primary-color-filled);
 }
- 
+
+.metrics {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.metric {
+  width: 92px;
+  padding: 0 14px;
+  text-align: right;
+}
+
+.metric + .metric {
+  border-left: 1px solid var(--mantine-color-default-border);
+}
+
+.rowActions {
+  flex-shrink: 0;
+}
+
+/* -------------------------------------------------------------- empty --- */
+
+/* Floating on the page, as Quantalog's own empty states do — no frame
+   around empty space. */
 .emptyState {
-  min-height: 52vh;
+  min-height: 46vh;
   text-align: center;
 }
 
@@ -50,14 +90,13 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  color: var(--mantine-color-emerald-6);
-  /* Tinted toward the accent — a grey disc on a grey page reads as a failed
-     load rather than as a state. */
+  color: var(--mantine-primary-color-filled);
   background: radial-gradient(
     circle at 50% 35%,
-    color-mix(in srgb, var(--mantine-color-emerald-6) 22%, transparent),
-    color-mix(in srgb, var(--mantine-color-emerald-6) 8%, transparent) 70%
+    color-mix(in srgb, var(--mantine-primary-color-filled) 22%, transparent),
+    color-mix(in srgb, var(--mantine-primary-color-filled) 8%, transparent) 70%
   );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mantine-primary-color-filled) 26%, transparent);
 }
 
 .emptyText {
@@ -65,63 +104,36 @@
   line-height: 1.6;
 }
 
- 
-.page {
-  container-type: inline-size;
-}
+/* ------------------------------------------------------------ narrow --- */
 
-.search {
-  width: 260px;
-}
-
-.rowInner {
-  gap: 12px;
-}
-
- 
-.title {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rowActions {
-  flex-wrap: nowrap;
-  align-items: center;
+@container (max-width: 980px) {
+  .metrics {
+    display: none;
+  }
 }
 
 @container (max-width: 640px) {
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
+  .toolbar,
   .toolbarPrimary {
-    width: 100%;
     flex-direction: column;
     align-items: stretch;
-  }
-  .search {
-    width: 100%;
-  }
-  .statusTabs {
     width: 100%;
   }
 
-  /* The row stacks: name block, then a full-width Edit button and the
-     overflow menu. Entries / Preview / Share fold into that menu. */
   .rowInner {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 10px;
   }
+
+  .rowMain {
+    flex-basis: 100%;
+  }
+
   .rowActions {
-    justify-content: space-between;
+    width: 100%;
   }
+
   .editBtn {
     flex: 1;
-  }
-  .secondaryBtn,
-  .shareBtn {
-    display: none;
   }
 }

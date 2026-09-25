@@ -52,7 +52,7 @@ export interface WorkspaceStats {
   totalSubmissions: number;
 }
 
-export interface FormListResult extends Paginated<InstanceType<typeof FormModel>> {
+export interface FormListResult extends Paginated<Record<string, unknown>> {
 
   stats: WorkspaceStats;
 }
@@ -86,15 +86,23 @@ export async function listForms(
   ]);
 
   const formIds = allForms.map((f) => f._id);
-  const [totalSubmissions, publishedForms] = await Promise.all([
+  const [totalSubmissions, publishedForms, pageCounts] = await Promise.all([
     formIds.length
       ? SubmissionModel.countDocuments({ formId: { $in: formIds }, status: 'complete' })
       : 0,
     allForms.filter((f) => f.status === 'published').length,
+    // Responses per form, for this page only — the list shows a count on each row.
+    items.length
+      ? SubmissionModel.aggregate<{ _id: unknown; count: number }>([
+          { $match: { formId: { $in: items.map((f) => f._id) }, status: 'complete' } },
+          { $group: { _id: '$formId', count: { $sum: 1 } } },
+        ])
+      : [],
   ]);
+  const countByForm = new Map(pageCounts.map((c) => [String(c._id), c.count]));
 
   return {
-    items,
+    items: items.map((f) => ({ ...f.toJSON(), submissionCount: countByForm.get(String(f._id)) ?? 0 })),
     total,
     page,
     limit,

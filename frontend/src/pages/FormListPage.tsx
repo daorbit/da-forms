@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Box, Group, Text, Button, Stack, ActionIcon, ThemeIcon, Menu, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl, Alert, Badge,
+  Box, Group, Text, Button, Stack, ActionIcon, Menu, Card, ThemeIcon, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl, Alert, Badge,
 } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -11,7 +11,6 @@ import {
   IconArrowsSort,
   IconFileText,
   IconPencil,
-  IconGridDots,
   IconShare2,
   IconDots,
   IconTrash,
@@ -26,6 +25,9 @@ import {
   IconX,
   IconInfoCircle,
   IconPlugConnected,
+  IconInbox,
+  IconTrendingUp,
+  IconCheck,
 } from '@tabler/icons-react';
 import { BookOpen } from 'lucide-react';
 import { IS_EMBEDDED } from '@/lib/bootParams';
@@ -43,10 +45,15 @@ import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { isDemoWorkspace, listDemoForms } from '@/lib/demoWorkspace';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form, FormTheme } from '@/types';
+import type { WorkspaceStats } from '@/lib/api';
 import { NewFormModal } from '@/components/NewFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
+import { StatCards } from '@/components/ui/StatCards';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { relativeTime } from '@/lib/relativeTime';
 import classes from './FormListPage.module.css';
 
 function formatDate(iso: string) {
@@ -81,6 +88,7 @@ export function FormListPage() {
   const navigate = useNavigate();
   const [forms, setForms] = useState<Form[]>([]);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState<WorkspaceStats | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 300);
@@ -137,6 +145,7 @@ export function FormListPage() {
       .then((res) => {
         setForms(res.items);
         setTotal(res.total);
+        setStats(res.stats ?? null);
       })
       .finally(() => setLoading(false));
   }, [isDemo, workspaceId, page, debouncedSearch, sort, status]);
@@ -204,65 +213,68 @@ export function FormListPage() {
     load();
   }
 
+  const conversion = (views?: number, responses?: number) =>
+    views && responses !== undefined ? `${Math.round((responses / views) * 100)}%` : '—';
+
   return (
-    <Box className={classes.page} ref={pageRef}>
-      <Group justify="space-between" px={{ base: "md", sm: "xl" }} py="md" className={classes.topbar}>
-        <Group gap="sm">
-          <Text fw={600} size="lg">
-            Leads Capture
-          </Text>
-          {isDemo && (
-            <Badge color="gray" variant="light" radius="sm">
-              Demo workspace
-            </Badge>
-          )}
-        </Group>
-        <Group gap="xs" wrap="nowrap">
-          <Tooltip label="Docs">
-            <ActionIcon
-              component="a"
-              href="https://quantalog.daorbit.in/docs/lead-capture"
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="default"
-              size="lg"
-              radius="md"
-            >
-              <BookOpen size={17} />
-            </ActionIcon>
-          </Tooltip>
-          <Button
-            variant="default"
-            leftSection={<IconPlugConnected size={16} />}
-            onClick={() => setIntegrationsOpen(true)}
-          >
-            Integrations
-          </Button>
-          {isDemo ? (
-            <Tooltip label="Creating forms is disabled in the demo workspace" withArrow>
-              {/* Wrapped: a disabled Mantine button fires no pointer events, so
-                  the tooltip would never open on the button itself. */}
-              <span>
-                <Button color="emerald" leftSection={<IconPlus size={16} />} disabled>
-                  New Form
-                </Button>
-              </span>
-            </Tooltip>
-          ) : (
+    <Box className={classes.page} ref={pageRef} px="md" py="lg">
+      <PageHeader
+        title={
+          <Group gap="sm" wrap="nowrap" component="span">
+            Lead capture
+            {isDemo && (
+              <Badge color="gray" variant="light" radius="sm">
+                Demo workspace
+              </Badge>
+            )}
+          </Group>
+        }
+        description="Build forms, collect responses, and send them where your team works."
+        actions={
+          <>
+            {isDemo ? (
+              <Tooltip label="Creating forms is disabled in the demo workspace" withArrow>
+                {/* Wrapped: a disabled Mantine button fires no pointer events, so
+                    the tooltip would never open on the button itself. */}
+                <span>
+                  <Button leftSection={<IconPlus size={16} />} disabled>
+                    New form
+                  </Button>
+                </span>
+              </Tooltip>
+            ) : (
+              <Button leftSection={<IconPlus size={16} />} onClick={startCreate}>
+                New form
+              </Button>
+            )}
             <Button
-              color="emerald"
-              leftSection={<IconPlus size={16} />}
-              onClick={startCreate}
+              variant="default"
+              leftSection={<IconPlugConnected size={16} />}
+              onClick={() => setIntegrationsOpen(true)}
             >
-              New Form
+              Integrations
             </Button>
-          )}
-          {IS_EMBEDDED && <HostNotificationsBell />}
-        </Group>
-      </Group>
+            <Tooltip label="Docs">
+              <ActionIcon
+                component="a"
+                href="https://quantalog.daorbit.in/docs/lead-capture"
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="default"
+                size={36}
+                radius="xl"
+                aria-label="Docs"
+              >
+                <BookOpen size={17} />
+              </ActionIcon>
+            </Tooltip>
+            {IS_EMBEDDED && <HostNotificationsBell />}
+          </>
+        }
+      />
 
       {isDemo && (
-        <Alert color="blue" variant="light" radius={0} icon={<IconInfoCircle size={18} />}>
+        <Alert color="blue" variant="light" mb="xl" icon={<IconInfoCircle size={18} />}>
           <Text fw={600} size="sm">
             You are looking at sample forms
           </Text>
@@ -274,329 +286,311 @@ export function FormListPage() {
         </Alert>
       )}
 
-      {/* Search, filter and sort sit with the list they act on rather than in
-          the header — the header holds the page's identity and the one action
-          that creates something. */}
-      <Group
-        justify="space-between"
-        gap="sm"
-        px={{ base: "md", sm: "xl" }}
-        pt="xl"
-        wrap="wrap"
-        className={classes.toolbar}
-      >
-        <Group gap="sm" wrap="wrap" className={classes.toolbarPrimary}>
-          <TextInput
-            placeholder="Search forms"
-            value={search}
-            onChange={(e) => setFilter({ q: e.target.value })}
-            leftSection={<IconSearch size={15} className={classes.searchIcon} />}
-            rightSection={
-              search ? (
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={() => setFilter({ q: '' })}
-                  aria-label="Clear search"
-                >
-                  <IconX size={14} />
-                </ActionIcon>
-              ) : undefined
+      <Stack gap="xl">
+        {!isDemo && (
+          <StatCards
+            items={
+              stats
+                ? [
+                    {
+                      label: `forms · ${stats.publishedForms} live`,
+                      icon: <IconFileText size={18} />,
+                      value: stats.totalForms.toLocaleString(),
+                    },
+                    { label: 'total views', icon: <IconEye size={18} />, value: stats.totalViews.toLocaleString() },
+                    { label: 'responses', icon: <IconInbox size={18} />, value: stats.totalSubmissions.toLocaleString() },
+                    {
+                      label: 'conversion rate',
+                      icon: <IconTrendingUp size={18} />,
+                      value: conversion(stats.totalViews, stats.totalSubmissions),
+                    },
+                  ]
+                : null
             }
-            size="sm"
-            className={classes.search}
-            classNames={{ wrapper: classes.searchInput }}
           />
-          <SegmentedControl
-            value={status}
-            onChange={(value) => setFilter({ status: value as StatusFilter })}
-            data={STATUS_TABS}
-            size="sm"
-            className={classes.statusTabs}
-          />
-        </Group>
-
-        <Group gap="xs" wrap="nowrap">
-          <Menu shadow="md" width={180} position="bottom-end">
-            <Menu.Target>
-              <Button
-                variant="default"
-                size="sm"
-                leftSection={<IconArrowsSort size={15} />}
-              >
-                {SORT_LABEL[sort]}
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {(Object.keys(SORT_LABEL) as SortOption[]).map((key) => (
-                <Menu.Item key={key} onClick={() => setFilter({ sort: key })} fw={sort === key ? 700 : 400}>
-                  {SORT_LABEL[key]}
-                </Menu.Item>
-              ))}
-            </Menu.Dropdown>
-          </Menu>
-          <Tooltip label="Refresh" withArrow>
-            <ActionIcon
-              variant="default"
-              size="input-sm"
-              onClick={() => load()}
-              loading={loading}
-              aria-label="Refresh"
-            >
-              <IconRefresh size={17} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-      </Group>
-
-      <Stack gap="xs" px={{ base: "md", sm: "xl" }} py="md">
-        {loading && forms.length === 0 ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <Box key={i} className={classes.row}>
-              <Group justify="space-between" wrap="nowrap">
-                <Group gap="sm" wrap="nowrap" style={{ flex: 1 }}>
-                  <Skeleton height={38} width={38} radius="md" />
-                  <Stack gap={6} style={{ flex: 1, maxWidth: 320 }}>
-                    <Skeleton height={14} width="60%" />
-                    <Skeleton height={10} width="35%" />
-                  </Stack>
-                </Group>
-                <Group gap="xs" wrap="nowrap">
-                  <Skeleton height={28} width={70} radius="sm" />
-                  <Skeleton height={28} width={90} radius="sm" />
-                  <Skeleton height={28} width={28} radius="xl" />
-                  <Skeleton height={28} width={28} radius="xl" />
-                </Group>
-              </Group>
-            </Box>
-          ))
-        ) : null}
-
-        {forms.length === 0 && !loading && (
-          <Stack align="center" justify="center" gap={0} className={classes.emptyState}>
-            <div className={classes.emptyIcon} aria-hidden>
-              <IconFileText size={38} stroke={1.25} />
-            </div>
-            {/* A filtered empty list is not an empty workspace — offering
-                "create your first form" to someone whose only form is a draft
-                they filtered out would be wrong. */}
-            <Text fw={650} fz="lg" mt="lg">
-              {isFiltered ? 'No forms match these filters' : 'No forms yet'}
-            </Text>
-            <Text size="sm" c="dimmed" mt={6} className={classes.emptyText}>
-              {isFiltered
-                ? 'Try a different search term or status.'
-                : 'Build a form to collect leads, then share its link or embed it on your site.'}
-            </Text>
-            {isFiltered ? (
-              <Button
-                mt="xl"
-                size="md"
-                variant="default"
-                onClick={() => {
-                  setFilter({ q: '', status: 'all' });
-                }}
-              >
-                Clear filters
-              </Button>
-            ) : (
-              !isDemo && (
-                <Button
-                  mt="xl"
-                  size="md"
-                  leftSection={<IconPlus size={16} />}
-                  onClick={startCreate}
-                >
-                  Create your first form
-                </Button>
-              )
-            )}
-          </Stack>
         )}
 
-        {forms.map((form) => (
-          <Box key={form._id} className={classes.row}>
-            <Group justify="space-between" wrap="wrap" className={classes.rowInner}>
-              <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
-                <ThemeIcon variant="light" color="gray" radius="md" size={38}>
-                  <IconFileText size={20} />
-                </ThemeIcon>
-                <div style={{ minWidth: 0 }}>
-                  <Link to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.title}>
-                    {form.name || form.title}
-                  </Link>
-                  <Group gap={6}>
-                    <Text size="sm" c="dimmed">
-                      Created on: {formatDate(form.createdAt)}
-                    </Text>
-                    <Text size="sm" c="dimmed">
-                      &bull;
-                    </Text>
-                    <Text size="sm" c={form.status === 'published' ? 'emerald' : 'dimmed'}>
-                      {form.status}
-                    </Text>
-                  </Group>
-                </div>
-              </Group>
-
-              <Group gap="xs" className={classes.rowActions}>
-                <Button
-                  component={Link}
-                  to={`/${workspaceId}/forms/${form._id}/edit`}
-                  variant="default"
-                  size="xs"
-                  leftSection={<IconPencil size={14} />}
-                  className={classes.editBtn}
-                >
-                  {isDemo ? 'Open in editor' : 'Edit'}
-                </Button>
-                {/* Entries and Preview show as buttons on a wide row and fold
-                    into the menu on a narrow one — see `.secondaryBtn`. A
-                    sample form has no submissions, so its entries link is left
-                    out entirely. */}
-                {!isDemo && (
-                  <Button
-                    component={Link}
-                    to={`/${workspaceId}/forms/${form._id}/entries`}
-                    variant="default"
-                    size="xs"
-                    leftSection={<IconGridDots size={14} />}
-                    className={classes.secondaryBtn}
-                  >
-                    All Entries
-                  </Button>
-                )}
-                <Button
-                  variant="default"
-                  size="xs"
-                  leftSection={<IconEye size={14} />}
-                  onClick={() => setPreviewing(form)}
-                  className={classes.secondaryBtn}
-                >
-                  Preview
-                </Button>
-                {!isDemo && (
-                  <ActionIcon
-                    variant="subtle"
-                    radius="xl"
-                    color="gray"
-                    size="lg"
-                    onClick={() => setSharing(form)}
-                    aria-label="Share"
-                    className={classes.shareBtn}
-                  >
-                    <IconShare2 size={16} />
-                  </ActionIcon>
-                )}
-
-                {!isDemo && (
-                <Menu shadow="md" position="bottom-end" width={200}>
-                  <Menu.Target>
-                    <ActionIcon variant="subtle" color="gray" radius="xl" size="lg">
-                      <IconDots size={16} />
+        <div>
+          {/* Search, filter and sort sit with the list they act on. */}
+          <Group justify="space-between" gap="sm" mb="sm" wrap="wrap" className={classes.toolbar}>
+            <Group gap="sm" wrap="wrap" className={classes.toolbarPrimary}>
+              <Text fw={600} size="sm" className={classes.sectionTitle}>
+                Forms
+              </Text>
+              <TextInput
+                placeholder="Search forms"
+                value={search}
+                onChange={(e) => setFilter({ q: e.target.value })}
+                leftSection={<IconSearch size={15} className={classes.searchIcon} />}
+                rightSection={
+                  search ? (
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      onClick={() => setFilter({ q: '' })}
+                      aria-label="Clear search"
+                    >
+                      <IconX size={14} />
                     </ActionIcon>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    {/* Only on the narrow layout, which hides the row buttons
-                        these stand in for. On a wide row they would repeat
-                        controls sitting inches away. */}
-                    {narrowRow && (
-                      <>
-                        <Menu.Item
-                          component={Link}
-                          to={`/${workspaceId}/forms/${form._id}/entries`}
-                          leftSection={<IconGridDots size={15} />}
-                        >
-                          All Entries
-                        </Menu.Item>
-                        <Menu.Item
-                          leftSection={<IconEye size={15} />}
-                          onClick={() => setPreviewing(form)}
-                        >
-                          Preview
-                        </Menu.Item>
-                        <Menu.Item
-                          leftSection={<IconShare2 size={15} />}
-                          onClick={() => setSharing(form)}
-                        >
-                          Share
-                        </Menu.Item>
-                        <Menu.Divider />
-                      </>
-                    )}
-                    <Menu.Item
-                      leftSection={
-                        form.status === 'published' ? (
-                          <IconEyeOff size={15} />
-                        ) : (
-                          <IconWorldUpload size={15} />
-                        )
-                      }
-                      onClick={() => toggleStatus(form)}
-                    >
-                      {form.status === 'published' ? 'Unpublish' : 'Publish'}
-                    </Menu.Item>
-                    <Menu.Divider />
-                    <Menu.Item
-                      component="a"
-                      href={publicFormPath(form._id)}
-                      target="_blank"
-                      leftSection={<IconExternalLink size={15} />}
-                    >
-                      Open live form
-                    </Menu.Item>
-                    <Menu.Item
-                      leftSection={<IconCopy size={15} />}
-                      onClick={() => {
-                        navigator.clipboard.writeText(publicFormUrl(form._id));
-                        notifications.show({ message: 'Link copied', color: 'emerald' });
-                      }}
-                    >
-                      Copy link
-                    </Menu.Item>
-                    <Menu.Divider />
-                    <Menu.Item
-                      leftSection={<IconCopyPlus size={15} />}
-                      disabled={duplicatingId === form._id}
-                      onClick={() => duplicateForm(form)}
-                    >
-                      Duplicate
-                    </Menu.Item>
-                    <Menu.Item
-                      leftSection={<IconClipboardCopy size={15} />}
-                      disabled={copyingConfigId === form._id}
-                      onClick={() => copyConfig(form)}
-                    >
-                      Copy config
-                    </Menu.Item>
-                    <Menu.Divider />
-                    <Menu.Item
-                      color="red"
-                      leftSection={<IconTrash size={15} />}
-                      onClick={() => setPendingDelete(form)}
-                    >
-                      Delete
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-                )}
-              </Group>
+                  ) : undefined
+                }
+                size="sm"
+                className={classes.search}
+                style={narrowRow ? { width: '100%' } : undefined}
+              />
+              <SegmentedControl
+                value={status}
+                onChange={(value) => setFilter({ status: value as StatusFilter })}
+                data={STATUS_TABS}
+                size="sm"
+                fullWidth={narrowRow}
+                style={narrowRow ? { width: '100%' } : undefined}
+              />
             </Group>
-          </Box>
-        ))}
-      </Stack>
 
-      {total > 0 && (
-        <Group justify="flex-end" px={{ base: "md", sm: "xl" }} py="md">
-          <Pagination
-            total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
-            value={page}
-            onChange={setPage}
-            color="emerald"
-            disabled={total <= PAGE_SIZE}
-          />
-        </Group>
-      )}
+            <Group gap="xs" wrap="nowrap">
+              <Menu shadow="md" width={180} position="bottom-end">
+                <Menu.Target>
+                  <Button variant="default" size="sm" leftSection={<IconArrowsSort size={15} />}>
+                    {SORT_LABEL[sort]}
+                  </Button>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  {(Object.keys(SORT_LABEL) as SortOption[]).map((key) => (
+                    <Menu.Item
+                      key={key}
+                      onClick={() => setFilter({ sort: key })}
+                      rightSection={sort === key ? <IconCheck size={14} /> : undefined}
+                    >
+                      {SORT_LABEL[key]}
+                    </Menu.Item>
+                  ))}
+                </Menu.Dropdown>
+              </Menu>
+              <Tooltip label="Refresh" withArrow>
+                <ActionIcon
+                  variant="default"
+                  size="input-sm"
+                  onClick={() => load()}
+                  loading={loading}
+                  aria-label="Refresh"
+                >
+                  <IconRefresh size={17} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+          </Group>
+
+          {forms.length === 0 && !loading ? (
+            <Stack align="center" justify="center" gap={0} className={classes.emptyState}>
+              <div className={classes.emptyIcon} aria-hidden>
+                <IconFileText size={36} stroke={1.25} />
+              </div>
+              {/* A filtered empty list is not an empty workspace — offering
+                  "create your first form" to someone whose only form is a draft
+                  they filtered out would be wrong. */}
+              <Text fw={650} fz="lg" mt="lg">
+                {isFiltered ? 'No forms match these filters' : 'No forms yet'}
+              </Text>
+              <Text size="sm" c="dimmed" mt={6} className={classes.emptyText}>
+                {isFiltered
+                  ? 'Try a different search term or status.'
+                  : 'Build a form to collect leads, then share its link or embed it on your site.'}
+              </Text>
+              {isFiltered ? (
+                <Button mt="xl" size="md" variant="default" onClick={() => setFilter({ q: '', status: 'all' })}>
+                  Clear filters
+                </Button>
+              ) : (
+                !isDemo && (
+                  <Button mt="xl" size="md" leftSection={<IconPlus size={16} />} onClick={startCreate}>
+                    Create your first form
+                  </Button>
+                )
+              )}
+            </Stack>
+          ) : (
+            <Stack gap="xs">
+              {loading && forms.length === 0
+                ? Array.from({ length: 5 }).map((_, i) => (
+                    <Card key={i} withBorder radius="md" padding="sm">
+                      <Group justify="space-between" wrap="nowrap">
+                        <Group gap="sm" wrap="nowrap" style={{ flex: 1 }}>
+                          <Skeleton height={40} width={40} radius="md" />
+                          <Stack gap={6} style={{ flex: 1, maxWidth: 300 }}>
+                            <Skeleton height={13} width="60%" />
+                            <Skeleton height={10} width="40%" />
+                          </Stack>
+                        </Group>
+                        <Skeleton height={28} width={180} radius="md" />
+                      </Group>
+                    </Card>
+                  ))
+                : null}
+
+              {forms.map((form) => {
+                const live = form.status === 'published';
+                const responses = form.submissionCount;
+                return (
+                  <Card key={form._id} withBorder radius="md" padding="sm" className={classes.row}>
+                    <div className={classes.rowInner}>
+                      <Group gap="sm" wrap="nowrap" className={classes.rowMain}>
+                        <ThemeIcon variant="light" size={40} radius="md">
+                          <IconFileText size={20} />
+                        </ThemeIcon>
+                        <div style={{ minWidth: 0 }}>
+                          <Group gap={8} wrap="nowrap">
+                            <Link to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.title}>
+                              {form.name || form.title}
+                            </Link>
+                            <StatusPill tone={live ? 'live' : 'idle'} label={live ? 'Live' : 'Draft'} />
+                          </Group>
+                          <Text size="xs" c="dimmed" truncate>
+                            <Tooltip label={`Created ${formatDate(form.createdAt)}`} withArrow openDelay={300}>
+                              <span>Edited {relativeTime(form.updatedAt || form.createdAt)}</span>
+                            </Tooltip>
+                            {narrowRow && responses !== undefined && ` · ${responses.toLocaleString()} responses`}
+                          </Text>
+                        </div>
+                      </Group>
+
+                      {!narrowRow && !isDemo && (
+                        <div className={classes.metrics}>
+                          <Metric label="Responses" value={responses?.toLocaleString() ?? '—'} />
+                          <Metric label="Views" value={(form.viewCount ?? 0).toLocaleString()} />
+                          <Metric label="Conversion" value={conversion(form.viewCount, responses)} />
+                        </div>
+                      )}
+
+                      <Group gap={6} wrap="nowrap" className={classes.rowActions}>
+                        {!isDemo && !narrowRow && (
+                          <Button
+                            component={Link}
+                            to={`/${workspaceId}/forms/${form._id}/entries`}
+                            variant="default"
+                            size="xs"
+                            leftSection={<IconInbox size={14} />}
+                          >
+                            Responses
+                          </Button>
+                        )}
+                        <Button
+                          component={Link}
+                          to={`/${workspaceId}/forms/${form._id}/edit`}
+                          variant="default"
+                          size="xs"
+                          leftSection={<IconPencil size={14} />}
+                          className={classes.editBtn}
+                        >
+                          {isDemo ? 'Open in editor' : 'Edit'}
+                        </Button>
+                        {!narrowRow && (
+                          <Tooltip label="Preview" withArrow>
+                            <ActionIcon variant="subtle" color="gray" size="lg" onClick={() => setPreviewing(form)} aria-label="Preview">
+                              <IconEye size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )}
+                        {!isDemo && !narrowRow && (
+                          <Tooltip label="Share" withArrow>
+                            <ActionIcon variant="subtle" color="gray" size="lg" onClick={() => setSharing(form)} aria-label="Share">
+                              <IconShare2 size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )}
+
+                        {!isDemo && (
+                        <Menu shadow="md" position="bottom-end" width={200}>
+                          <Menu.Target>
+                            <ActionIcon variant="subtle" color="gray" size="lg" aria-label="More actions">
+                              <IconDots size={16} />
+                            </ActionIcon>
+                          </Menu.Target>
+                          <Menu.Dropdown>
+                            {/* Only on the narrow layout, which hides the row buttons
+                                these stand in for. */}
+                            {narrowRow && (
+                              <>
+                                <Menu.Item
+                                  component={Link}
+                                  to={`/${workspaceId}/forms/${form._id}/entries`}
+                                  leftSection={<IconInbox size={15} />}
+                                >
+                                  Responses
+                                </Menu.Item>
+                                <Menu.Item leftSection={<IconEye size={15} />} onClick={() => setPreviewing(form)}>
+                                  Preview
+                                </Menu.Item>
+                                <Menu.Item leftSection={<IconShare2 size={15} />} onClick={() => setSharing(form)}>
+                                  Share
+                                </Menu.Item>
+                                <Menu.Divider />
+                              </>
+                            )}
+                            <Menu.Item
+                              leftSection={live ? <IconEyeOff size={15} /> : <IconWorldUpload size={15} />}
+                              onClick={() => toggleStatus(form)}
+                            >
+                              {live ? 'Unpublish' : 'Publish'}
+                            </Menu.Item>
+                            <Menu.Divider />
+                            <Menu.Item
+                              component="a"
+                              href={publicFormPath(form._id)}
+                              target="_blank"
+                              leftSection={<IconExternalLink size={15} />}
+                            >
+                              Open live form
+                            </Menu.Item>
+                            <Menu.Item
+                              leftSection={<IconCopy size={15} />}
+                              onClick={() => {
+                                navigator.clipboard.writeText(publicFormUrl(form._id));
+                                notifications.show({ message: 'Link copied', color: 'emerald' });
+                              }}
+                            >
+                              Copy link
+                            </Menu.Item>
+                            <Menu.Divider />
+                            <Menu.Item
+                              leftSection={<IconCopyPlus size={15} />}
+                              disabled={duplicatingId === form._id}
+                              onClick={() => duplicateForm(form)}
+                            >
+                              Duplicate
+                            </Menu.Item>
+                            <Menu.Item
+                              leftSection={<IconClipboardCopy size={15} />}
+                              disabled={copyingConfigId === form._id}
+                              onClick={() => copyConfig(form)}
+                            >
+                              Copy config
+                            </Menu.Item>
+                            <Menu.Divider />
+                            <Menu.Item color="red" leftSection={<IconTrash size={15} />} onClick={() => setPendingDelete(form)}>
+                              Delete
+                            </Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
+                        )}
+                      </Group>
+                    </div>
+                  </Card>
+                );
+              })}
+
+              {total > PAGE_SIZE && (
+                <Group justify="space-between" mt="sm">
+                  <Text size="xs" c="dimmed">
+                    Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+                  </Text>
+                  <Pagination size="sm" total={Math.ceil(total / PAGE_SIZE)} value={page} onChange={setPage} />
+                </Group>
+              )}
+            </Stack>
+          )}
+        </div>
+      </Stack>
 
       <NewFormModal
         opened={newFormOpen}
@@ -672,5 +666,18 @@ export function FormListPage() {
         </Group>
       </Modal>
     </Box>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={classes.metric}>
+      <Text size="sm" fw={650} style={{ fontVariantNumeric: 'tabular-nums' }}>
+        {value}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {label}
+      </Text>
+    </div>
   );
 }

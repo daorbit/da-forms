@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import { SimpleGrid, Box, Text, Group, Stack, Progress, Modal, UnstyledButton } from '@mantine/core';
+import { Text, Group, Stack, Progress, Modal } from '@mantine/core';
 import {
   IconEye,
   IconInbox,
   IconTrendingUp,
   IconWorld,
-  IconChevronRight,
   IconUserOff,
 } from '@tabler/icons-react';
 import type { Analytics } from '@/lib/api';
 import type { FormField } from '@/types';
 import { valueFields } from '@/lib/fieldTree';
-import { StatTile, StatTileSkeleton, decorativeSpark } from './StatTile';
-import classes from './StatTile.module.css';
+import { StatCards } from '@/components/ui/StatCards';
 
 function SourceBreakdown({ sources }: { sources: Analytics['sources'] }) {
   if (sources.length === 0) {
@@ -37,7 +35,7 @@ function SourceBreakdown({ sources }: { sources: Analytics['sources'] }) {
           <Progress
             value={(count / total) * 100}
             size="sm"
-            color="cyan"
+            color="gray"
             styles={{ root: { backgroundColor: 'var(--mantine-color-default-hover)' } }}
           />
         </div>
@@ -97,7 +95,7 @@ function DropOffBreakdown({
           <Progress
             value={(abandoned / total) * 100}
             size="sm"
-            color="orange"
+            color="gray"
             styles={{ root: { backgroundColor: 'var(--mantine-color-default-hover)' } }}
           />
         </div>
@@ -117,88 +115,43 @@ export function AnalyticsBar({
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [dropOffOpen, setDropOffOpen] = useState(false);
 
-  if (!analytics) {
-    return (
-      <SimpleGrid cols={{ base: 1, sm: 5 }} spacing="md" px="md" py="md">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <StatTileSkeleton key={i} />
-        ))}
-      </SimpleGrid>
-    );
-  }
+  const dropOffLabel =
+    analytics && analytics.partialsEnabled && analytics.dropOff.length > 0
+      ? valueFields(fields).find((f) => f.id === analytics.dropOff[0].fieldId)?.label ?? 'Deleted question'
+      : analytics && !analytics.partialsEnabled
+        ? 'Not tracked'
+        : '—';
 
   return (
     <>
-      <SimpleGrid cols={{ base: 1, sm: 5 }} spacing="md" px="md" py="md">
-        <StatTile
-          icon={IconEye}
-          label="Views"
-          value={analytics.viewCount.toLocaleString()}
-          accent="#22d3ee"
-          spark={decorativeSpark(analytics.viewCount)}
-        />
-        <StatTile
-          icon={IconInbox}
-          label="Submissions"
-          value={analytics.submissionCount.toLocaleString()}
-          accent="#34d399"
-          spark={decorativeSpark(analytics.submissionCount)}
-        />
-        <StatTile
-          icon={IconTrendingUp}
-          label="Completion rate"
-          value={`${Math.round(analytics.completionRate * 100)}%`}
-          accent="#c084fc"
-          spark={decorativeSpark(Math.round(analytics.completionRate * 100))}
-        />
-        <UnstyledButton className={classes.cardButton} onClick={() => setSourcesOpen(true)}>
-          <Box className={classes.card}>
-            <Box px="md" pt="md">
-              <Group justify="space-between" align="flex-start" wrap="nowrap" mb={6}>
-                <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                  <IconWorld size={14} className={classes.icon} />
-                  <Text size="xs" c="dimmed" fw={500} truncate className={classes.label}>
-                    Traffic sources
-                  </Text>
-                </Group>
-                <IconChevronRight size={16} className={classes.icon} />
-              </Group>
-              <Text className={classes.value} truncate>
-                {analytics.sources[0]?.source ?? '—'}
-              </Text>
-            </Box>
-            {/* Empty, but the same reserved track as every other tile — without
-                it this card is 26px shorter than the three beside it. */}
-            <div className={classes.spark} />
-          </Box>
-        </UnstyledButton>
-
-        <UnstyledButton className={classes.cardButton} onClick={() => setDropOffOpen(true)}>
-          <Box className={classes.card}>
-            <Box px="md" pt="md">
-              <Group justify="space-between" align="flex-start" wrap="nowrap" mb={6}>
-                <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                  <IconUserOff size={14} className={classes.icon} />
-                  <Text size="xs" c="dimmed" fw={500} truncate className={classes.label}>
-                    Gave up at
-                  </Text>
-                </Group>
-                <IconChevronRight size={16} className={classes.icon} />
-              </Group>
-              <Text className={classes.value} truncate>
-                {/* An em dash for both "not tracking" and "nobody quit" — the
-                    modal is where that distinction is worth the words. */}
-                {analytics.partialsEnabled && analytics.dropOff.length > 0
-                  ? (fields.length
-                      ? valueFields(fields).find((f) => f.id === analytics.dropOff[0].fieldId)?.label
-                      : undefined) ?? 'Deleted question'
-                  : '—'}
-              </Text>
-            </Box>
-            <div className={classes.spark} />
-          </Box>
-        </UnstyledButton>
-      </SimpleGrid>
+      <StatCards
+        count={5}
+        items={
+          analytics
+            ? [
+                { label: 'views', icon: <IconEye size={18} />, value: analytics.viewCount.toLocaleString() },
+                { label: 'responses', icon: <IconInbox size={18} />, value: analytics.submissionCount.toLocaleString() },
+                {
+                  label: 'completion rate',
+                  icon: <IconTrendingUp size={18} />,
+                  value: `${Math.round(analytics.completionRate * 100)}%`,
+                },
+                {
+                  label: 'top traffic source',
+                  icon: <IconWorld size={18} />,
+                  value: analytics.sources[0]?.source ?? '—',
+                  onClick: () => setSourcesOpen(true),
+                },
+                {
+                  label: analytics.partialsEnabled ? 'where most gave up' : 'drop-off',
+                  icon: <IconUserOff size={18} />,
+                  value: dropOffLabel,
+                  onClick: () => setDropOffOpen(true),
+                },
+              ]
+            : null
+        }
+      />
 
       <Modal
         opened={sourcesOpen}
@@ -208,7 +161,7 @@ export function AnalyticsBar({
         radius="lg"
         overlayProps={{ backgroundOpacity: 0.65, blur: 2 }}
       >
-        <SourceBreakdown sources={analytics.sources} />
+        <SourceBreakdown sources={analytics?.sources ?? []} />
       </Modal>
 
       <Modal
@@ -220,9 +173,9 @@ export function AnalyticsBar({
         overlayProps={{ backgroundOpacity: 0.65, blur: 2 }}
       >
         <DropOffBreakdown
-          dropOff={analytics.dropOff}
+          dropOff={analytics?.dropOff ?? []}
           fields={fields}
-          enabled={analytics.partialsEnabled}
+          enabled={analytics?.partialsEnabled ?? false}
         />
       </Modal>
     </>

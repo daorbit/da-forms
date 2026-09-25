@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { SimpleGrid, Stack, Skeleton, Alert, Title, Text } from '@mantine/core';
-import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
+import { Stack, Skeleton, Alert, Text, SegmentedControl } from '@mantine/core';
+import { IconInfoCircle, IconAlertTriangle, IconPlugConnected, IconMail, IconCreditCard } from '@tabler/icons-react';
+import { StatCards } from '@/components/ui/StatCards';
+import classes from './apps.module.css';
 import { listApps, getPaymentSettings, getWebhookApp, saveWebhookApp, ApiError } from '@/lib/api';
 import type { AppCard as AppCardData, PaymentSettings, PaymentProvider } from '@/types';
 import { AppCard, type PaymentCardData, type WebhookCardData } from './AppCard';
@@ -8,10 +10,10 @@ import { AppConnectDialog } from './AppConnectDialog';
 import { PaymentsModal } from '../builder/PaymentsModal';
 
 const CATEGORY_TITLE = {
-  email: 'Email delivery',
+  email: 'Email',
   payments: 'Payments',
   notification: 'Notifications',
-  crm: 'Marketing & CRM',
+  crm: 'CRM',
   automation: 'Automation',
 } as const;
 
@@ -58,6 +60,7 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [payFocus, setPayFocus] = useState<PaymentProvider | null>(null);
   const [webhookBusy, setWebhookBusy] = useState(false);
+  const [filter, setFilter] = useState('all');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -123,6 +126,17 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
       .finally(() => setWebhookBusy(false));
   }
 
+  const allCards = grouped.flatMap((g) => g.cards);
+  const connectedCount = allCards.filter((c) => c.enabled).length;
+  const shown = grouped
+    .map((g) => ({
+      ...g,
+      cards: g.cards.filter((c) =>
+        filter === 'all' ? true : filter === 'connected' ? c.connected || c.enabled : c.category === filter
+      ),
+    }))
+    .filter((g) => g.cards.length > 0);
+
   return (
     <Stack gap="xl">
       {isDemo && (
@@ -131,28 +145,64 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
         </Alert>
       )}
 
-      <Text size="sm" c="dimmed" maw={640}>
-        Connect an email provider so this workspace sends its own notification emails, and a payment
-        gateway to charge on your forms. Notification and CRM apps follow.
-      </Text>
-
       {error && (
         <Alert color="red" variant="light" icon={<IconAlertTriangle size={16} />}>
           {error}
         </Alert>
       )}
 
+      <StatCards
+        count={3}
+        items={
+          loading
+            ? null
+            : [
+                { label: 'apps connected', icon: <IconPlugConnected size={18} />, value: `${connectedCount} of ${allCards.length}` },
+                {
+                  label: 'email delivery',
+                  icon: <IconMail size={18} />,
+                  value: allCards.find((c) => c.category === 'email' && c.enabled)?.name ?? 'Quantalog default',
+                },
+                {
+                  label: 'payments',
+                  icon: <IconCreditCard size={18} />,
+                  value: allCards.find((c) => c.category === 'payments' && c.enabled)?.name ?? 'Not set up',
+                },
+              ]
+        }
+      />
+
+      <SegmentedControl
+        value={filter}
+        onChange={setFilter}
+        style={{ alignSelf: 'flex-start' }}
+        data={[
+          { value: 'all', label: 'All' },
+          { value: 'connected', label: 'Connected' },
+          ...CATEGORY_ORDER.filter((c) => grouped.some((g) => g.category === c)).map((c) => ({
+            value: c,
+            label: CATEGORY_TITLE[c],
+          })),
+        ]}
+      />
+
       {loading ? (
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} height={190} radius="md" />
+        <div className={classes.grid}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} height={180} radius="md" />
           ))}
-        </SimpleGrid>
+        </div>
+      ) : shown.length === 0 ? (
+        <Text size="sm" c="dimmed" ta="center" py="xl">
+          Nothing connected yet — pick an app under All to get started.
+        </Text>
       ) : (
-        grouped.map(({ category, cards }) => (
-          <Stack key={category} gap="sm">
-            <Title order={5}>{CATEGORY_TITLE[category]}</Title>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+        shown.map(({ category, cards }) => (
+          <div key={category}>
+            <Text fw={600} size="sm" mb="sm">
+              {CATEGORY_TITLE[category]}
+            </Text>
+            <div className={classes.grid}>
               {cards.map((card) => (
                 <AppCard
                   key={card.id}
@@ -165,8 +215,8 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
                   }}
                 />
               ))}
-            </SimpleGrid>
-          </Stack>
+            </div>
+          </div>
         ))
       )}
 

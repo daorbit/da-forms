@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Modal, Box, Group, Text, ActionIcon, Tooltip, Divider } from '@mantine/core';
+import { Modal, Box, ActionIcon, Tooltip } from '@mantine/core';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { IconX, IconRefresh } from '@tabler/icons-react';
 import { AppsPanel } from './AppsPanel';
 
@@ -30,30 +31,31 @@ export function IntegrationsModal({ opened, onClose, workspaceId, isDemo }: Prop
       transitionProps={{ transition: 'fade', duration: 150 }}
       styles={{ body: { padding: 0 } }}
     >
-      <Group justify="space-between" px={{ base: 'md', sm: 'xl' }} py="md">
-        <Text fw={600} size="lg">
-          Integrations
-        </Text>
-        <Group gap="xs">
-          <Tooltip label="Refresh" withArrow>
-            <ActionIcon
-              variant="default"
-              size="input-sm"
-              onClick={() => setReloadKey((k) => k + 1)}
-              aria-label="Refresh"
-            >
-              <IconRefresh size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <ActionIcon variant="subtle" size="lg" onClick={onClose} aria-label="Close">
-            <IconX size={18} />
-          </ActionIcon>
-        </Group>
-      </Group>
-
-      <Divider />
-
-      <Box px={{ base: 'md', sm: 'xl' }} py="xl">
+      <Box px="md" py="lg">
+        <PageHeader
+          title="Integrations"
+          description="Connect email, payments and automation once — every form in this workspace can use them."
+          actions={
+            <>
+              <Tooltip label="Refresh" withArrow>
+                <ActionIcon
+                  variant="default"
+                  size={36}
+                  radius="md"
+                  onClick={() => setReloadKey((k) => k + 1)}
+                  aria-label="Refresh"
+                >
+                  <IconRefresh size={17} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Close" withArrow>
+                <ActionIcon variant="default" size={36} radius="md" onClick={onClose} aria-label="Close">
+                  <IconX size={18} />
+                </ActionIcon>
+              </Tooltip>
+            </>
+          }
+        />
         <AppsPanel workspaceId={workspaceId} isDemo={isDemo} reloadKey={reloadKey} />
       </Box>
     </Modal>

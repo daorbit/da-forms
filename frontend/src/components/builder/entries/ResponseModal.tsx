@@ -1,5 +1,8 @@
-import { ActionIcon, Anchor, Button, Group, Image, Modal, Paper, Stack, Table, Text, Tooltip } from '@mantine/core';
-import { IconTrash, IconMailOpened } from '@tabler/icons-react';
+import { useEffect } from 'react';
+import { ActionIcon, Anchor, Button, Drawer, Group, Image, Paper, Stack, Table, Text, Tooltip } from '@mantine/core';
+import { IconTrash, IconMail, IconMailOpened, IconChevronUp, IconChevronDown, IconX, IconWorld } from '@tabler/icons-react';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { relativeTime } from '@/lib/relativeTime';
 import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
 import { repeaterDisplayRows } from '@/lib/repeater';
@@ -14,63 +17,117 @@ export function ResponseModal({
   form,
   columns,
   viewing,
+  submissions = [],
+  onNavigate,
   onClose,
   onMarkRead,
+  onToggleRead,
   onDelete,
   onOpenAttachment,
 }: {
   form: Form | null;
   columns: FormField[];
   viewing: Submission | null;
+  /** The responses on screen, for stepping to the previous / next one. */
+  submissions?: Submission[];
+  onNavigate?: (submission: Submission) => void;
   onClose: () => void;
   onMarkRead: (submission: Submission) => void;
+  /** Flips read / unread. Falls back to mark-read only when absent. */
+  onToggleRead?: (submission: Submission) => void;
   onDelete: (submission: Submission) => void;
   onOpenAttachment: (attachment: { url: string; name: string; image: boolean }) => void;
 }) {
+  const index = viewing ? submissions.findIndex((s) => s._id === viewing._id) : -1;
+  const prev = index > 0 ? submissions[index - 1] : null;
+  const next = index >= 0 && index < submissions.length - 1 ? submissions[index + 1] : null;
+
+  // Arrow keys step through responses while the panel is open.
+  useEffect(() => {
+    if (!viewing || !onNavigate) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && /input|textarea|select/i.test(target.tagName)) return;
+      if ((e.key === 'ArrowUp' || e.key === 'k') && prev) onNavigate(prev);
+      if ((e.key === 'ArrowDown' || e.key === 'j') && next) onNavigate(next);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [viewing, prev, next, onNavigate]);
+
   return (
-    <Modal
+    <Drawer
       opened={!!viewing}
       onClose={onClose}
-      title="Response"
-      size="lg"
-      centered
-      radius="lg"
-      classNames={{ content: classes.responseModal, body: classes.responseBody }}
+      position="right"
+      size={560}
+      withCloseButton={false}
+      padding={0}
+      overlayProps={{ backgroundOpacity: 0.45, blur: 1 }}
+      classNames={{ body: classes.drawerBody }}
     >
       {viewing && (
-        <Stack gap="md">
-          <Group justify="space-between" className={classes.responseMeta}>
-            <Text size="sm" c="dimmed">
-              {viewing.read ? 'Read response' : 'Unread response'}
-            </Text>
-            <Group gap="xs">
-              <Tooltip label={viewing.read ? 'Already read' : 'Mark as read'} withArrow>
-                <ActionIcon
-                  variant="light"
-                  color="emerald"
-                  disabled={viewing.read}
-                  aria-label={viewing.read ? 'Response already read' : 'Mark response as read'}
-                  onClick={() => onMarkRead(viewing)}
-                >
-                  <IconMailOpened size={17} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label="Delete response" withArrow>
-                <ActionIcon variant="light" color="red" aria-label="Delete response" onClick={() => onDelete(viewing)}>
-                  <IconTrash size={17} />
-                </ActionIcon>
-              </Tooltip>
+        <div className={classes.drawer}>
+          <div className={classes.drawerHead}>
+            <div style={{ minWidth: 0 }}>
+              <Group gap={8} wrap="nowrap">
+                <Text fw={700} size="lg">
+                  Response
+                </Text>
+                {index >= 0 && submissions.length > 1 && (
+                  <Text size="sm" c="dimmed">
+                    {index + 1} of {submissions.length}
+                  </Text>
+                )}
+              </Group>
+              <Group gap={8} mt={4} wrap="nowrap">
+                <StatusPill tone={viewing.read ? 'idle' : 'live'} label={viewing.read ? 'Read' : 'New'} />
+                <Tooltip label={formatDateTime(viewing.createdAt)} withArrow>
+                  <Text size="xs" c="dimmed" span>
+                    Submitted {relativeTime(viewing.createdAt)}
+                  </Text>
+                </Tooltip>
+              </Group>
+            </div>
+            <Group gap={4} wrap="nowrap">
+              {onNavigate && (
+                <>
+                  <Tooltip label="Previous (↑)" withArrow>
+                    <ActionIcon variant="default" size="lg" disabled={!prev} onClick={() => prev && onNavigate(prev)} aria-label="Previous response">
+                      <IconChevronUp size={17} />
+                    </ActionIcon>
+                  </Tooltip>
+                  <Tooltip label="Next (↓)" withArrow>
+                    <ActionIcon variant="default" size="lg" disabled={!next} onClick={() => next && onNavigate(next)} aria-label="Next response">
+                      <IconChevronDown size={17} />
+                    </ActionIcon>
+                  </Tooltip>
+                </>
+              )}
+              <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
+                <IconX size={18} />
+              </ActionIcon>
             </Group>
-          </Group>
+          </div>
 
-          <div className={classes.responseGrid}>
+          {viewing.sourceUrl && (
+            <div className={classes.drawerSource}>
+              <IconWorld size={13} />
+              <Text size="xs" c="dimmed" truncate>
+                {viewing.sourceUrl}
+              </Text>
+            </div>
+          )}
+
+          <div className={classes.drawerScroll}>
+          <div className={classes.responseList}>
             {columns.map((field) => {
               // A payment is not an answer — it lives on the submission
               // itself, written by the webhook. Matches the table's PaymentCell.
               if (field.type === 'payment') {
                 return (
                   <div key={field.id} className={classes.responseField}>
-                    <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
+                    <Text size="xs" fw={600} c="dimmed" mb={4}>
                       {field.label}
                     </Text>
                     <PaymentCell payment={viewing.payment} />
@@ -82,7 +139,7 @@ export function ResponseModal({
                 const subFields = field.subFields ?? [];
                 return (
                   <div key={field.id} className={classes.responseField} style={{ gridColumn: '1 / -1' }}>
-                    <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
+                    <Text size="xs" fw={600} c="dimmed" mb={4}>
                       {field.label}
                     </Text>
                     {rows.length === 0 ? (
@@ -121,7 +178,7 @@ export function ResponseModal({
               const bytes = viewing.fileMeta?.[field.id]?.bytes;
               return (
                 <div key={field.id} className={`${classes.responseField} ${isImage ? classes.mediaField : ''}`}>
-                  <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
+                  <Text size="xs" fw={600} c="dimmed" mb={4}>
                     {field.label}
                   </Text>
                   {isImage ? (
@@ -165,25 +222,34 @@ export function ResponseModal({
                 </div>
               );
             })}
-            <div className={classes.responseField}>
-              <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>
-                Added Time
-              </Text>
-              <Text size="sm">{formatDateTime(viewing.createdAt)}</Text>
-            </div>
           </div>
 
-          <Group justify="flex-end" className={classes.responseFooter}>
+          </div>
+
+          <div className={classes.drawerFoot}>
+            <Button
+              variant="default"
+              leftSection={viewing.read ? <IconMail size={16} /> : <IconMailOpened size={16} />}
+              onClick={() => (onToggleRead ? onToggleRead(viewing) : onMarkRead(viewing))}
+              disabled={!onToggleRead && viewing.read}
+            >
+              {viewing.read ? 'Mark unread' : 'Mark read'}
+            </Button>
             <Button
               variant="default"
               leftSection={<FileTypeIcon fileName="response.pdf" size={16} />}
               onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, viewing)}
             >
-              Download PDF
+              PDF
             </Button>
-          </Group>
-        </Stack>
+            <Tooltip label="Delete response" withArrow>
+              <ActionIcon variant="default" size="input-sm" color="red" ml="auto" aria-label="Delete response" onClick={() => onDelete(viewing)}>
+                <IconTrash size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </div>
+        </div>
       )}
-    </Modal>
+    </Drawer>
   );
 }

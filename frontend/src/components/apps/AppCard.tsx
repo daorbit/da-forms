@@ -1,5 +1,8 @@
-import { Card, Group, Text, Badge, Button, Stack, Box } from '@mantine/core';
-import { IconPlugConnected } from '@tabler/icons-react';
+import { Button, Card, Text } from '@mantine/core';
+import { IconPlugConnected, IconSettings } from '@tabler/icons-react';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { relativeTime } from '@/lib/relativeTime';
+import classes from './apps.module.css';
 import type { AppCard as AppCardData } from '@/types';
 import { AppLogo, isWordmark } from './AppLogos';
 
@@ -34,94 +37,53 @@ interface Props {
   busy?: boolean;
 }
 
-function StatusBadge({ connected, enabled }: { connected: boolean; enabled: boolean }) {
-  if (enabled)
-    return (
-      <Badge color="teal" variant="light" radius="sm">
-        Connected
-      </Badge>
-    );
-  if (connected)
-    return (
-      <Badge color="gray" variant="light" radius="sm">
-        Saved, off
-      </Badge>
-    );
-  return (
-    <Badge color="gray" variant="outline" radius="sm">
-      Not connected
-    </Badge>
-  );
+function statusOf(card: AnyCard): { tone: 'live' | 'idle' | 'warn'; label: string } {
+  if (card.enabled) return { tone: 'live', label: card.kind === 'webhook' ? 'On' : 'Connected' };
+  if (card.connected) return { tone: 'warn', label: 'Saved, off' };
+  return { tone: 'idle', label: 'Not connected' };
+}
+
+function footNote(card: AnyCard): string {
+  if (card.kind === 'generic') {
+    if (card.lastUsedAt) return `Last used ${relativeTime(card.lastUsedAt)}`;
+    if (card.verifiedAt) return `Verified ${relativeTime(card.verifiedAt)}`;
+  }
+  if (card.enabled) return 'Active on this workspace';
+  if (card.connected) return 'Credentials saved';
+  return 'Not set up yet';
 }
 
 export function AppCard({ card, onOpen, busy = false }: Props) {
   const wordmark = isWordmark(card.id);
+  const status = statusOf(card);
 
   return (
-    <Card withBorder radius="md" padding="lg">
-      <Stack gap="sm" h="100%">
-        <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
-          <Group gap="sm" wrap="nowrap" align="center" style={{ minWidth: 0 }}>
-            {wordmark ? (
-              // A wordmark carries its own name — show it at a readable height,
-              // no square tile to squash it into.
-              <Box
-                style={{
-                  height: 30,
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexShrink: 0,
-                  color: 'var(--mantine-color-text)',
-                }}
-              >
-                <AppLogo appId={card.id} height={22} />
-              </Box>
-            ) : (
-              <Box
-                style={{
-                  width: 44,
-                  height: 44,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid var(--mantine-color-default-border)',
-                  borderRadius: 'var(--mantine-radius-md)',
-                  flexShrink: 0,
-                }}
-              >
-                <AppLogo appId={card.id} height={24} />
-              </Box>
-            )}
-            {/* The wordmark already says the name, so it is not repeated. */}
-            {!wordmark && (
-              <div style={{ minWidth: 0 }}>
-                <Text fw={600} truncate>
-                  {card.name}
-                </Text>
-                <Text size="xs" c="dimmed" tt="capitalize">
-                  {card.category}
-                </Text>
-              </div>
-            )}
-          </Group>
-          <StatusBadge connected={card.connected} enabled={card.enabled} />
-        </Group>
+    <Card withBorder radius="md" padding="md" className={classes.card}>
+      <div className={classes.cardTop}>
+        <span className={classes.logo} data-wordmark={wordmark || undefined}>
+          <AppLogo appId={card.id} height={wordmark ? 18 : 24} />
+        </span>
+        <StatusPill tone={status.tone} label={status.label} />
+      </div>
 
-        {wordmark && (
-          <Text size="xs" c="dimmed" tt="capitalize" mt={-4}>
-            {card.category}
-          </Text>
-        )}
-
-        <Text size="sm" c="dimmed" style={{ flex: 1 }}>
+      <div>
+        <Text fw={650} size="md">
+          {card.name}
+        </Text>
+        <Text size="sm" c="dimmed" mt={4} className={classes.desc}>
           {card.description}
         </Text>
+      </div>
 
+      <div className={classes.cardFoot}>
+        <Text size="xs" c="dimmed" truncate>
+          {footNote(card)}
+        </Text>
         <Button
-          variant="default"
-          fullWidth
+          size="xs"
+          variant={card.connected ? 'default' : 'filled'}
           loading={busy}
-          leftSection={<IconPlugConnected size={16} />}
+          leftSection={card.connected ? <IconSettings size={14} /> : <IconPlugConnected size={14} />}
           onClick={() => onOpen(card)}
         >
           {card.kind === 'webhook'
@@ -132,7 +94,7 @@ export function AppCard({ card, onOpen, busy = false }: Props) {
               ? 'Manage'
               : 'Connect'}
         </Button>
-      </Stack>
+      </div>
     </Card>
   );
 }

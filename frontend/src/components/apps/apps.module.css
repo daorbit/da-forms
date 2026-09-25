@@ -1,0 +1,64 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: var(--mantine-spacing-md);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 0 !important;
+  transition: border-color 140ms ease;
+}
+
+.card:hover {
+  border-color: var(--mantine-color-dark-3);
+}
+
+:global(html[data-mantine-color-scheme='light']) .card:hover {
+  border-color: var(--mantine-color-gray-4);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+}
+
+.logo[data-wordmark] {
+  width: auto;
+  padding: 0 12px;
+}
+
+.desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.9em;
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: auto calc(var(--mantine-spacing-md) * -1) 0;
+  padding: 10px var(--mantine-spacing-md);
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+

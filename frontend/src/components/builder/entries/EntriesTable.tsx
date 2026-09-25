@@ -13,6 +13,7 @@ import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
 import { FileSizeBadge } from './FileSizeBadge';
 import { answerText, formatAnswer, formatDateTime, isImageUrl, PAGE_SIZE } from './entriesTypes';
+import { relativeTime } from '@/lib/relativeTime';
 import classes from '../../../pages/EntriesPage.module.css';
 
 export function EntriesTable({
@@ -26,7 +27,6 @@ export function EntriesTable({
   onToggleSelect,
   onToggleSelectAll,
   onPageChange,
-  onMarkRead,
   onView,
   onDelete,
   onCopyShareLink,
@@ -44,7 +44,8 @@ export function EntriesTable({
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: (checked: boolean) => void;
   onPageChange: (page: number) => void;
-  onMarkRead: (submission: Submission) => void;
+  /** Kept for callers; opening a response is what marks it read now. */
+  onMarkRead?: (submission: Submission) => void;
   onView: (submission: Submission) => void;
   onDelete: (submission: Submission) => void;
   onCopyShareLink: () => void;
@@ -59,8 +60,8 @@ export function EntriesTable({
           instead of crushing the columns into unreadable slivers. */}
       <Table.ScrollContainer minWidth={columns.length * 180 + 90 + 160 + 40} className={classes.tableWrap}>
         <Table
-          withTableBorder
           highlightOnHover
+          verticalSpacing="sm"
           className={`${classes.table} ${loading && submissions.length > 0 ? classes.tableLoading : ''}`}
           aria-busy={loading}
         >
@@ -97,12 +98,12 @@ export function EntriesTable({
               ))}
               <Table.Th className={classes.th}>
                 <Text size="sm" fw={600}>
-                  Added Time
+                  Submitted
                 </Text>
               </Table.Th>
               <Table.Th className={`${classes.th} ${classes.actionsCol}`}>
-                <Text size="sm" fw={600}>
-                  Actions
+                <Text size="sm" fw={600} ta="right">
+                  {' '}
                 </Text>
               </Table.Th>
             </Table.Tr>
@@ -130,8 +131,14 @@ export function EntriesTable({
               </Table.Tr>
             ) : (
               submissions.map((submission) => (
-                <Table.Tr key={submission._id} onClick={() => onMarkRead(submission)} style={{ fontWeight: submission.read ? 400 : 700 }}>
-                  <Table.Td onClick={(e) => e.stopPropagation()}>
+                <Table.Tr
+                  key={submission._id}
+                  onClick={() => onView(submission)}
+                  className={classes.tr}
+                  data-unread={!submission.read || undefined}
+                >
+                  <Table.Td onClick={(e) => e.stopPropagation()} className={classes.checkCell}>
+                    {!submission.read && <span className={classes.unreadDot} aria-label="Unread" />}
                     <Checkbox
                       size="sm"
                       checked={selected.has(submission._id)}
@@ -228,12 +235,14 @@ export function EntriesTable({
                     );
                   })}
                   <Table.Td>
-                    <Text size="sm" c="dimmed">
-                      {formatDateTime(submission.createdAt)}
-                    </Text>
+                    <Tooltip label={formatDateTime(submission.createdAt)} withArrow openDelay={300}>
+                      <Text size="sm" c="dimmed" span>
+                        {relativeTime(submission.createdAt)}
+                      </Text>
+                    </Tooltip>
                   </Table.Td>
                   <Table.Td className={classes.actionsCol} onClick={(e) => e.stopPropagation()}>
-                    <Group gap={4} wrap="nowrap">
+                    <Group gap={2} wrap="nowrap" justify="flex-end">
                       <Tooltip label="View response" withArrow>
                         <ActionIcon variant="subtle" color="gray" onClick={() => onView(submission)}>
                           <IconEye size={16} />
@@ -262,15 +271,21 @@ export function EntriesTable({
         </Table>
       </Table.ScrollContainer>
 
-      <Group justify="flex-end" px="md" py="md">
-        <Pagination
-          total={Math.max(1, Math.ceil(total / PAGE_SIZE))}
-          value={page}
-          onChange={onPageChange}
-          color="emerald"
-          disabled={total <= PAGE_SIZE}
-        />
-      </Group>
+      {total > 0 && (
+        <Group justify="space-between" pt="md" gap="sm">
+          <Text size="xs" c="dimmed">
+            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total.toLocaleString()}
+          </Text>
+          {total > PAGE_SIZE && (
+            <Pagination
+              size="sm"
+              total={Math.ceil(total / PAGE_SIZE)}
+              value={page}
+              onChange={onPageChange}
+            />
+          )}
+        </Group>
+      )}
     </>
   );
 }

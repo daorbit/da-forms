@@ -1,9 +1,8 @@
-import { ActionIcon, Button, Group, Menu, Text, TextInput, Tooltip } from '@mantine/core';
+import type React from 'react';
+import { ActionIcon, Button, Group, Menu, SegmentedControl, TextInput, Tooltip } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import {
   IconChevronDown,
-  IconShare2,
-  IconFilter,
   IconFileExport,
   IconLayoutList,
   IconLayoutKanban,
@@ -11,6 +10,7 @@ import {
   IconCheck,
   IconRefresh,
   IconCalendar,
+  IconCalendarEvent,
   IconSearch,
   IconX,
   IconPaperclip,
@@ -44,7 +44,6 @@ export function EntriesFilterBar({
   onFilter,
   onCustomRangeChange,
   onSetView,
-  onCopyShareLink,
   onRefresh,
   onExportCsv,
   search,
@@ -59,7 +58,8 @@ export function EntriesFilterBar({
   onFilter: (patch: Partial<{ status: StatusFilter; day: DayFilter }>) => void;
   onCustomRangeChange: (range: CustomRange) => void;
   onSetView: (view: EntriesView) => void;
-  onCopyShareLink: () => void;
+  /** Unused here now — the topbar carries the share link. */
+  onCopyShareLink?: () => void;
   onRefresh: () => void;
   onExportCsv: () => void;
   /** Free text across every answer. Debounced by the page, not here. */
@@ -69,16 +69,13 @@ export function EntriesFilterBar({
   onOpenFiles?: () => void;
 }) {
   return (
-    <Group justify="space-between" px="md" py="xs" className={classes.filterbar} wrap="wrap">
-      <Group gap="lg">
-        {/* First in the row, and deliberately narrow: it sits alongside the
-            category filters rather than above them, and a full-width box would
-            read as the bar's main control instead of one of four. */}
+    <Group justify="space-between" className={classes.filterbar} wrap="wrap" gap="sm">
+      <Group gap="sm" wrap="wrap" className={classes.filterLeft}>
         <TextInput
-          size="xs"
-          w={200}
+          size="sm"
+          className={classes.filterSearch}
           placeholder="Search answers…"
-          leftSection={<IconSearch size={14} />}
+          leftSection={<IconSearch size={15} />}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           rightSection={
@@ -95,62 +92,59 @@ export function EntriesFilterBar({
             ) : null
           }
         />
-        <Menu shadow="md" width={160}>
-          <Menu.Target>
-            <Group gap={4} className={classes.filterItem}>
-              <Text fw={600} size="sm">
-                {STATUS_LABEL[status]}
-              </Text>
-              <IconChevronDown size={14} />
-            </Group>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => (
-              <Menu.Item key={key} onClick={() => onFilter({ status: key })}>
-                {STATUS_LABEL[key]}
-              </Menu.Item>
-            ))}
-          </Menu.Dropdown>
-        </Menu>
 
-        <Text c="dimmed">|</Text>
+        {/* Read state as tabs: three options is a choice to see, not to open. */}
+        {view === 'list' && (
+          <SegmentedControl
+            size="sm"
+            value={status}
+            onChange={(value) => onFilter({ status: value as StatusFilter })}
+            data={(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => ({
+              value: key,
+              label: STATUS_LABEL[key],
+            }))}
+          />
+        )}
 
-        <Menu shadow="md" width={160}>
+        <Menu shadow="md" width={170} position="bottom-start">
           <Menu.Target>
-            <Group gap={4} className={classes.filterItem}>
-              <Text fw={600} size="sm">
-                {day === 'custom' ? rangeLabel(customRange) : DAY_LABEL[day]}
-              </Text>
-              <IconChevronDown size={14} />
-            </Group>
+            <Button
+              variant="default"
+              size="sm"
+              leftSection={<IconCalendar size={15} />}
+              rightSection={<IconChevronDown size={14} />}
+            >
+              {day === 'custom' ? rangeLabel(customRange) : DAY_LABEL[day]}
+            </Button>
           </Menu.Target>
           <Menu.Dropdown>
             {(Object.keys(DAY_LABEL) as DayFilter[])
               .filter((key) => key !== 'custom')
               .map((key) => (
-                <Menu.Item key={key} onClick={() => onFilter({ day: key })}>
+                <Menu.Item
+                  key={key}
+                  onClick={() => onFilter({ day: key })}
+                  rightSection={day === key ? <IconCheck size={14} /> : undefined}
+                >
                   {DAY_LABEL[key]}
                 </Menu.Item>
               ))}
           </Menu.Dropdown>
         </Menu>
 
-        {/* Its own button, not another item in the "All Days" menu — a range
-            picker needs to stay open across two clicks (start, then end),
-            which fought the day-menu's own open/close state when the two
-            shared one dropdown. `DatePicker`, not `DatePickerInput`: the
-            input variant opens onto a text field that then has to be clicked
-            a second time to reach the actual calendar — this drops straight
-            into the grid on the one click that opened the menu. */}
+        {/* Its own button, not another item in the day menu — a range picker
+            needs to stay open across two clicks (start, then end), which fought
+            the day-menu's own open/close state when the two shared one
+            dropdown. */}
         <Menu shadow="md" width="auto" closeOnItemClick={false}>
           <Menu.Target>
             <Tooltip label="Custom date range" withArrow>
               <ActionIcon
-                variant={day === 'custom' ? 'light' : 'subtle'}
-                color={day === 'custom' ? 'emerald' : 'gray'}
+                variant={day === 'custom' ? 'light' : 'default'}
+                size="input-sm"
                 aria-label="Custom date range"
               >
-                <IconCalendar size={17} />
+                <IconCalendarEvent size={16} />
               </ActionIcon>
             </Tooltip>
           </Menu.Target>
@@ -167,11 +161,6 @@ export function EntriesFilterBar({
               // Today, not further out — a form only has responses up to now.
               maxDate={new Date()}
             />
-            {/* The bare `DatePicker` (grid only, no text field) has no built-in
-                clear button the way `DatePickerInput` does — this is that
-                control. Resets the day filter back to "All Days" too, not
-                just the picked dates, so the list actually goes back to
-                unfiltered rather than silently staying on an emptied range. */}
             {(customRange[0] || customRange[1]) && (
               <Button
                 variant="subtle"
@@ -191,86 +180,45 @@ export function EntriesFilterBar({
         </Menu>
       </Group>
 
-      <Group gap="xs">
-        <Menu shadow="md" width={160} position="bottom-end">
-          <Menu.Target>
-            <Tooltip label="View" withArrow>
-              <ActionIcon variant="subtle" color="gray">
-                {view === 'list' ? (
-                  <IconLayoutList size={17} />
-                ) : view === 'kanban' ? (
-                  <IconLayoutKanban size={17} />
-                ) : (
-                  <IconTable size={17} />
-                )}
-              </ActionIcon>
-            </Tooltip>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Item
-              leftSection={<IconLayoutList size={15} />}
-              rightSection={view === 'list' ? <IconCheck size={14} color="var(--mantine-color-emerald-6)" /> : undefined}
-              onClick={() => onSetView('list')}
-            >
-              List View
-            </Menu.Item>
-            <Menu.Item
-              leftSection={<IconLayoutKanban size={15} />}
-              rightSection={view === 'kanban' ? <IconCheck size={14} color="var(--mantine-color-emerald-6)" /> : undefined}
-              onClick={() => onSetView('kanban')}
-            >
-              Kanban View
-            </Menu.Item>
-            <Menu.Item
-              leftSection={<IconTable size={15} />}
-              rightSection={view === 'excel' ? <IconCheck size={14} color="var(--mantine-color-emerald-6)" /> : undefined}
-              onClick={() => onSetView('excel')}
-            >
-              Excel View
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
-        <Tooltip label="Copy share link" withArrow>
-          <ActionIcon variant="subtle" color="gray" onClick={onCopyShareLink}>
-            <IconShare2 size={17} />
-          </ActionIcon>
-        </Tooltip>
+      <Group gap="xs" wrap="nowrap">
+        <SegmentedControl
+          size="sm"
+          value={view}
+          onChange={(value) => onSetView(value as EntriesView)}
+          aria-label="View"
+          data={[
+            { value: 'list', label: <ViewLabel icon={<IconLayoutList size={15} />} text="List" /> },
+            { value: 'kanban', label: <ViewLabel icon={<IconLayoutKanban size={15} />} text="Board" /> },
+            { value: 'excel', label: <ViewLabel icon={<IconTable size={15} />} text="Sheet" /> },
+          ]}
+        />
         <Tooltip label="Refresh responses" withArrow>
-          <ActionIcon variant="subtle" color="gray" onClick={onRefresh} loading={loading} aria-label="Refresh responses">
-            <IconRefresh size={17} />
+          <ActionIcon variant="default" size="input-sm" onClick={onRefresh} loading={loading} aria-label="Refresh responses">
+            <IconRefresh size={16} />
           </ActionIcon>
         </Tooltip>
-        <Menu shadow="md" width={160}>
-          <Menu.Target>
-            <Tooltip label="Filter" withArrow>
-              <ActionIcon variant="subtle" color="gray">
-                <IconFilter size={17} />
-              </ActionIcon>
-            </Tooltip>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => (
-              <Menu.Item key={key} onClick={() => onFilter({ status: key })}>
-                {STATUS_LABEL[key]}
-              </Menu.Item>
-            ))}
-          </Menu.Dropdown>
-        </Menu>
         {/* Absent on a form that collects no files, rather than opening an
             empty list. */}
         {onOpenFiles && (
           <Tooltip label="Uploaded files" withArrow>
-            <ActionIcon variant="subtle" color="gray" onClick={onOpenFiles}>
-              <IconPaperclip size={17} />
+            <ActionIcon variant="default" size="input-sm" onClick={onOpenFiles} aria-label="Uploaded files">
+              <IconPaperclip size={16} />
             </ActionIcon>
           </Tooltip>
         )}
-        <Tooltip label="Export CSV" withArrow>
-          <ActionIcon variant="subtle" color="gray" onClick={onExportCsv}>
-            <IconFileExport size={17} />
-          </ActionIcon>
-        </Tooltip>
+        <Button variant="default" size="sm" leftSection={<IconFileExport size={15} />} onClick={onExportCsv}>
+          Export
+        </Button>
       </Group>
     </Group>
+  );
+}
+
+function ViewLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <span className={classes.viewLabel}>
+      {icon}
+      <span className={classes.viewText}>{text}</span>
+    </span>
   );
 }

@@ -24,11 +24,11 @@ export function PageHeader({
         <Group gap="sm" align="flex-start" wrap="nowrap" style={{ flex: '1 1 260px', minWidth: 0 }}>
           {leading}
           <div style={{ minWidth: 0, flex: 1 }}>
-            <Title order={1} style={{ letterSpacing: '-0.02em' }}>
+            <Title order={1} fz={24} lh={1.25} style={{ letterSpacing: '-0.02em' }}>
               {title}
             </Title>
             {description && (
-              <Text c="dimmed" size="sm" mt={6}>
+              <Text c="dimmed" size="sm" mt={4}>
                 {description}
               </Text>
             )}

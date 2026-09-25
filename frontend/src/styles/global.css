@@ -477,3 +477,15 @@ html[data-mantine-color-scheme='light'] .mantine-Modal-content.integrations-page
   background-color: #f4f5f7 !important;
   box-shadow: none !important;
 }
+
+/* Inside Quantalog with a textured background (gradient, mesh, grid, stars),
+   the page's own ground steps aside so the host's background shows through the
+   frame, exactly as it does behind the host's own pages. Cards, tables and
+   dialogs keep their surfaces. Last in the file, so it wins over the solid
+   body colour set above. */
+html[data-host-bg='textured'],
+html[data-host-bg='textured'] body,
+html[data-host-bg='textured'] #root {
+  background: transparent !important;
+  background-color: transparent !important;
+}

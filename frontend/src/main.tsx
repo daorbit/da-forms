@@ -5,7 +5,7 @@ import { Notifications } from '@mantine/notifications';
 import { PlanLimitDialog } from './components/PlanLimitDialog';
 import { App } from '@/app/App';
 import { themeFromParams } from '@/app/themeParams';
-import { BOOT_SEARCH } from '@/lib/bootParams';
+import { BOOT_SEARCH, HOST_TEXTURED_BG } from '@/lib/bootParams';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@mantine/dates/styles.css';
@@ -45,6 +45,9 @@ Object.entries(managementTokens).forEach(([name, value]) => {
 
  
 document.documentElement.style.setProperty('--mantine-color-black', '#0a0b0d', 'important');
+
+// The host's background shows through the page ground — see global.css.
+if (HOST_TEXTURED_BG) document.documentElement.setAttribute('data-host-bg', 'textured');
 
  
 if (accentContrast) {

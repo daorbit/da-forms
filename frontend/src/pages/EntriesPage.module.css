@@ -111,6 +111,9 @@
 
 .tableWrap {
   padding: 0;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-lg);
+  overflow: hidden;
 }
 
 /* Mantine draws its own scrollbar element here rather than the native one, so
@@ -142,11 +145,8 @@
   background-color: var(--mantine-color-default);
   width: 100%;
   table-layout: fixed;
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: var(--mantine-radius-lg);
   border-collapse: separate;
   border-spacing: 0;
-  overflow: hidden;
 }
 
 .table td {
@@ -165,21 +165,6 @@
   font-weight: 600;
 }
 
-.checkCell {
-  position: relative;
-}
-
-/* Unread: a small dot in the gutter beside the checkbox. */
-.unreadDot {
-  position: absolute;
-  left: 3px;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  margin-top: -3px;
-  border-radius: 50%;
-  background: var(--mantine-primary-color-filled);
-}
 
 .tableLoading {
   opacity: 0.58;

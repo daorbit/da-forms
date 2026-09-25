@@ -53,7 +53,7 @@
 }
 
 .value {
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.03em;
@@ -92,6 +92,6 @@
   }
 
   .value {
-    font-size: 22px;
+    font-size: 19px;
   }
 }

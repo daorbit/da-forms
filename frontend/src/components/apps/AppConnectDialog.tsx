@@ -259,7 +259,7 @@ export function AppConnectDialog({
           <Skeleton height={200} width={320} radius="md" />
         </Center>
       ) : (
-        <Group h="100%" gap={0} align="stretch" wrap="nowrap" className={classes.shell}>
+        <Group h="100%" gap={0} align="stretch" wrap="nowrap" className={`${classes.shell} ${classes.formFirst}`}>
           {/* ---- Left panel: identity + status ---- */}
           <Box className={classes.panel}>
             <Group px={20} wrap="nowrap" className={classes.panelHeader} align="center">

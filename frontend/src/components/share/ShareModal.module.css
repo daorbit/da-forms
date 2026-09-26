@@ -73,6 +73,10 @@
   background: var(--mantine-color-green-6);
 }
 
+.tabs {
+  padding: var(--mantine-spacing-md) 20px 0;
+}
+
 .tabLabel {
   display: inline-flex;
   align-items: center;
@@ -287,4 +291,57 @@
 :global(html[data-host-bg='textured']) .panel,
 :global(html[data-host-bg='textured']) .preview {
   background-color: transparent !important;
+}
+
+@media (max-width: 48em) {
+  .shell {
+    --panel-width: 100vw;
+  }
+
+  .panel {
+    border-right: 0;
+  }
+
+  .panelHeader {
+    min-height: 56px;
+    padding: 10px 8px 10px 14px;
+  }
+
+  .headIcon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .tabs {
+    padding: 12px 14px 0;
+  }
+
+  .panelBody {
+    padding: 12px 14px 16px;
+  }
+
+  .socialGrid {
+    gap: 2px;
+  }
+
+  .social {
+    padding: 8px 2px;
+  }
+
+  .code {
+    max-height: 220px;
+    font-size: 11.5px;
+  }
+
+  .actionBar {
+    padding-bottom: calc(var(--mantine-spacing-md) + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .actionBar :global(.mantine-Button-root) {
+    flex: 1;
+  }
+
+  .preview {
+    display: none;
+  }
 }

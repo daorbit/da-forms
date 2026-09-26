@@ -2,6 +2,7 @@ import { ActionIcon, Indicator, Tooltip } from '@mantine/core';
 import { IconBell } from '@tabler/icons-react';
 import { requestOpenNotifications } from '@/lib/planLimit';
 import { useHostUnreadCount } from '@/hooks/useHostUnreadCount';
+import { useHostPhone } from '@/hooks/useHostPhone';
 import classes from './HostNotificationsBell.module.css';
 
 interface Props {
@@ -11,6 +12,8 @@ interface Props {
 
 export function HostNotificationsBell({ variant = 'default', iconSize = 17 }: Props) {
   const count = useHostUnreadCount();
+  const hostPhone = useHostPhone();
+  if (hostPhone) return null;
   const badge = count > 99 ? '99+' : String(count);
   const label = count > 0 ? `Notifications · ${badge} unread` : 'Notifications';
 

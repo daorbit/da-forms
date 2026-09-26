@@ -194,6 +194,72 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 48em) {
+  .shell {
+    flex-direction: column !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .pane {
+    flex: none;
+    min-height: auto;
+  }
+
+  .formFirst .pane {
+    order: -1;
+  }
+
+  .formFirst .panel {
+    border-top: 1px solid var(--mantine-color-default-border);
+  }
+
+  .shell:not(.formFirst) .panel {
+    border-top: 0;
+    border-bottom: 1px solid var(--mantine-color-default-border);
+  }
+
+  .paneHeader {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    height: 56px;
+    padding-inline: 16px !important;
+  }
+
+  .paneBody {
+    flex: none;
+    overflow: visible;
+    padding: 16px;
+  }
+
+  .panel {
+    width: 100%;
+    flex: none;
+    min-height: auto;
+    border-right: 0;
+  }
+
+  .panelHeader {
+    display: none;
+  }
+
+  .panelBody {
+    flex: none;
+    overflow: visible;
+    padding: 16px;
+  }
+
+  .actionBar {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding-inline: 16px !important;
+    padding-bottom: calc(var(--mantine-spacing-md) + env(safe-area-inset-bottom, 0px)) !important;
+    background-color: var(--mantine-color-body);
+  }
+}
+
 /* Clear over the host's background — see global.css. */
 :global(html[data-host-bg='textured']) .panel,
 :global(html[data-host-bg='textured']) .pane,

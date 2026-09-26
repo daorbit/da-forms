@@ -1,4 +1,4 @@
-import { useMediaQuery } from '@mantine/hooks';
+import { useBuilderTooSmall } from '@/hooks/useBuilderTooSmall';
 import { Box, Button, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { IconDeviceDesktop, IconArrowLeft } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +15,7 @@ import { useWorkspaceId } from '@/hooks/useWorkspaceId';
  * narrower gets the message.
  */
 export function SmallScreenGate({ children }: { children: React.ReactNode }) {
-  const tooSmall = useMediaQuery('(max-width: 900px)');
+  const tooSmall = useBuilderTooSmall();
   const navigate = useNavigate();
   const workspaceId = useWorkspaceId();
 

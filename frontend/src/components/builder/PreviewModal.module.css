@@ -71,9 +71,19 @@
   border-bottom: 1px solid var(--preview-border);
 }
 
+.topbarStart {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbarEnd {
+  flex: 1;
+}
+
 .topbarTitle {
   color: var(--preview-text);
 }
+
 
 .deviceGroup {
   padding: 3px;
@@ -222,4 +232,56 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.stagePhone {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 48em) {
+  .topbar {
+    padding: 0 8px 0 14px;
+  }
+
+  .topbarEnd {
+    flex: 0 0 auto;
+  }
+
+  .body {
+    flex-direction: column;
+  }
+
+  .panel {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-left: 0;
+    border-top: 1px solid var(--preview-border);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .panelHeader {
+    padding: 10px 14px 6px;
+    border-bottom: 0;
+  }
+
+  .panelScroll {
+    flex: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 14px 14px;
+  }
+
+  .presetGrid {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: 112px;
+  }
+
+  .panelToggle {
+    display: none;
+  }
 }

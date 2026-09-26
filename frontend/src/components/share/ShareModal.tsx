@@ -193,7 +193,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
             </ActionIcon>
           </div>
 
-          <Box px={20} pt="md">
+          <Box className={classes.tabs}>
             <SegmentedControl
               fullWidth
               value={tab}

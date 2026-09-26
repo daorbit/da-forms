@@ -1,0 +1,71 @@
+.root {
+  container-type: inline-size;
+  margin-bottom: var(--mantine-spacing-xl);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-md);
+}
+
+.main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mantine-spacing-sm);
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  letter-spacing: -0.02em;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mantine-spacing-sm);
+}
+
+@container (max-width: 560px) {
+  .root {
+    margin-bottom: var(--mantine-spacing-lg);
+  }
+
+  .row {
+    gap: var(--mantine-spacing-sm);
+  }
+
+  .row:not(:has(.actions :global(.mantine-Button-root))) {
+    flex-wrap: nowrap;
+  }
+
+  .main {
+    flex-basis: 0;
+  }
+
+  .actions:has(:global(.mantine-Button-root)) {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+
+  .actions > :global(.mantine-Button-root),
+  .actions > span:has(> :global(.mantine-Button-root)) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .actions > span > :global(.mantine-Button-root) {
+    width: 100%;
+  }
+}

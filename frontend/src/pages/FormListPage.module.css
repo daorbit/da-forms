@@ -14,6 +14,10 @@
   width: 240px;
 }
 
+.segmented {
+  flex-shrink: 0;
+}
+
 /* --------------------------------------------------------------- rows --- */
 
 .row {
@@ -120,20 +124,20 @@
     width: 100%;
   }
 
-  .rowInner {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .rowMain {
-    flex-basis: 100%;
-  }
-
-  .rowActions {
+  .search,
+  .segmented {
     width: 100%;
   }
 
-  .editBtn {
+  .sortRow {
+    width: 100%;
+  }
+
+  .sortRow > :first-child {
     flex: 1;
+  }
+
+  .rowInner {
+    gap: 10px;
   }
 }

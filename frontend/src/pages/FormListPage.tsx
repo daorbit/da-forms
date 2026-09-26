@@ -27,6 +27,7 @@ import {
   IconPlugConnected,
   IconInbox,
   IconCheck,
+  IconDeviceDesktop,
 } from '@tabler/icons-react';
 import { BookOpen } from 'lucide-react';
 import { IS_EMBEDDED } from '@/lib/bootParams';
@@ -41,6 +42,8 @@ import {
   publicFormUrl,
 } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
+import { useHostPhone } from '@/hooks/useHostPhone';
+import { useBuilderTooSmall } from '@/hooks/useBuilderTooSmall';
 import { isDemoWorkspace, listDemoForms } from '@/lib/demoWorkspace';
 import { useDebouncedValue } from '@mantine/hooks';
 import type { Form, FormTheme } from '@/types';
@@ -99,13 +102,25 @@ export function FormListPage() {
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [copyingConfigId, setCopyingConfigId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<Form | null>(null);
+  const builderTooSmall = useBuilderTooSmall();
 
   function startCreate() {
+    if (builderTooSmall) {
+      notifications.show({
+        title: 'Create forms on a bigger screen',
+        message:
+          'The form editor needs a tablet or computer. You can still view, share and manage your forms here.',
+        color: 'gray',
+        icon: <IconDeviceDesktop size={16} />,
+      });
+      return;
+    }
     setNewFormOpen(true);
   }
 
   const { ref: pageRef, width: pageWidth } = useElementSize();
   const narrowRow = pageWidth > 0 && pageWidth <= 640;
+  const hostPhone = useHostPhone();
 
 
   const setFilter = (patch: Partial<{ q: string; sort: SortOption; status: StatusFilter }>) => {
@@ -249,20 +264,22 @@ export function FormListPage() {
             >
               Integrations
             </Button>
-            <Tooltip label="Docs">
-              <ActionIcon
-                component="a"
-                href="https://quantalog.daorbit.in/docs/lead-capture"
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="default"
-                size={36}
-                radius="xl"
-                aria-label="Docs"
-              >
-                <BookOpen size={17} />
-              </ActionIcon>
-            </Tooltip>
+            {!hostPhone && (
+              <Tooltip label="Docs">
+                <ActionIcon
+                  component="a"
+                  href="https://quantalog.daorbit.in/docs/lead-capture"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="default"
+                  size={36}
+                  radius="xl"
+                  aria-label="Docs"
+                >
+                  <BookOpen size={17} />
+                </ActionIcon>
+              </Tooltip>
+            )}
             {IS_EMBEDDED && <HostNotificationsBell />}
           </>
         }
@@ -308,7 +325,6 @@ export function FormListPage() {
                 }
                 size="sm"
                 className={classes.search}
-                style={narrowRow ? { width: '100%' } : undefined}
               />
               <SegmentedControl
                 value={status}
@@ -316,11 +332,11 @@ export function FormListPage() {
                 data={STATUS_TABS}
                 size="sm"
                 fullWidth={narrowRow}
-                style={narrowRow ? { width: '100%' } : undefined}
+                className={classes.segmented}
               />
             </Group>
 
-            <Group gap="xs" wrap="nowrap">
+            <Group gap="xs" wrap="nowrap" className={classes.sortRow}>
               <Menu shadow="md" width={180} position="bottom-end">
                 <Menu.Target>
                   <Button variant="default" size="sm" leftSection={<IconArrowsSort size={15} />}>
@@ -446,16 +462,17 @@ export function FormListPage() {
                             Responses
                           </Button>
                         )}
-                        <Button
-                          component={Link}
-                          to={`/${workspaceId}/forms/${form._id}/edit`}
-                          variant="default"
-                          size="xs"
-                          leftSection={<IconPencil size={14} />}
-                          className={classes.editBtn}
-                        >
-                          {isDemo ? 'Open in editor' : 'Edit'}
-                        </Button>
+                        {(!narrowRow || isDemo) && (
+                          <Button
+                            component={Link}
+                            to={`/${workspaceId}/forms/${form._id}/edit`}
+                            variant="default"
+                            size="xs"
+                            leftSection={<IconPencil size={14} />}
+                          >
+                            {isDemo ? (narrowRow ? 'Open' : 'Open in editor') : 'Edit'}
+                          </Button>
+                        )}
                         {!narrowRow && (
                           <Tooltip label="Preview" withArrow>
                             <ActionIcon variant="subtle" color="gray" size="lg" onClick={() => setPreviewing(form)} aria-label="Preview">
@@ -483,6 +500,13 @@ export function FormListPage() {
                                 these stand in for. */}
                             {narrowRow && (
                               <>
+                                <Menu.Item
+                                  component={Link}
+                                  to={`/${workspaceId}/forms/${form._id}/edit`}
+                                  leftSection={<IconPencil size={15} />}
+                                >
+                                  Edit
+                                </Menu.Item>
                                 <Menu.Item
                                   component={Link}
                                   to={`/${workspaceId}/forms/${form._id}/entries`}

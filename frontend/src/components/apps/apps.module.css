@@ -2,7 +2,7 @@
    integrations read like the host app's own Connections page. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: var(--mantine-spacing-md);
 }
 
@@ -35,4 +35,28 @@
 
 :global(html[data-mantine-color-scheme='light']) .card {
   background: #fff;
+}
+
+@media (max-width: 48em) {
+  .grid {
+    gap: var(--mantine-spacing-sm);
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .section + .section {
+    margin-top: 28px;
+  }
+
+  .action :global(.mantine-Button-root) {
+    width: 100%;
+  }
 }

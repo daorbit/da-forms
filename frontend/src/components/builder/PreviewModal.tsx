@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Box } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import type {
   FormField,
   FormStep,
@@ -18,6 +19,8 @@ import { DeviceFrame, frameSize, type DeviceId } from './DeviceFrame';
 import { PreviewTopbar } from './PreviewTopbar';
 import { PreviewThemePanel } from './PreviewThemePanel';
 import classes from './PreviewModal.module.css';
+
+const PHONE_QUERY = '(max-width: 48em)';
 
 interface Props {
   opened: boolean;
@@ -68,8 +71,9 @@ export function PreviewModal({
   showStepHeadings,
   onApplyTheme,
 }: Props) {
+  const phone = useMediaQuery(PHONE_QUERY) ?? false;
   const [device, setDevice] = useState<DeviceId>('macbook');
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(() => !window.matchMedia?.(PHONE_QUERY).matches);
   const [pickedId, setPickedId] = useState<string | null>(null);
 
   // A picked preset is previewed here only; Apply is what reaches the builder.
@@ -93,6 +97,28 @@ export function PreviewModal({
   const shownTheme: FormTheme | undefined = picked
     ? { ...theme, ...picked.theme, scope: theme?.scope ?? 'page' }
     : theme;
+
+  const page = (
+    <FormPage theme={shownTheme} minHeight="100%">
+      <FormRenderer
+        key={`${phone ? 'phone' : device}-${opened}`}
+        title={title}
+        description={description}
+        fields={fields}
+        hideHeader={hideHeader}
+        headerAlign={headerAlign}
+        labelPlacement={labelPlacement}
+        submitLabel={submitLabel}
+        submitButtonSize={submitButtonSize}
+        submitButtonWidth={submitButtonWidth}
+        submitButtonAlign={submitButtonAlign}
+        theme={shownTheme}
+        steps={steps}
+        stepIndicator={stepIndicator}
+        showStepHeadings={showStepHeadings}
+      />
+    </FormPage>
+  );
 
   return (
     <Modal
@@ -121,37 +147,21 @@ export function PreviewModal({
             : undefined
         }
         onClose={onClose}
+        compact={phone}
+        themesOpen={panelOpen}
+        onToggleThemes={onApplyTheme ? () => setPanelOpen((v) => !v) : undefined}
       />
 
       <Box className={classes.body}>
-        {/* The frame is laid out from the first render so the stage has
-            something to size against, and stays unpainted until that fit has
-            been measured. */}
-        <Box className={classes.stage} ref={stageRef}>
-          <DeviceFrame device={device} scale={scale} hidden={!measured}>
-            <FormPage theme={shownTheme} minHeight="100%">
-              {/* Remounted per device so each preview starts from page one
-                  with the initial values, at that device's layout. */}
-              <FormRenderer
-                key={`${device}-${opened}`}
-                title={title}
-                description={description}
-                fields={fields}
-                hideHeader={hideHeader}
-                headerAlign={headerAlign}
-                labelPlacement={labelPlacement}
-                submitLabel={submitLabel}
-                submitButtonSize={submitButtonSize}
-                submitButtonWidth={submitButtonWidth}
-                submitButtonAlign={submitButtonAlign}
-                theme={shownTheme}
-                steps={steps}
-                stepIndicator={stepIndicator}
-                showStepHeadings={showStepHeadings}
-              />
-            </FormPage>
-          </DeviceFrame>
-        </Box>
+        {phone ? (
+          <Box className={classes.stagePhone}>{page}</Box>
+        ) : (
+          <Box className={classes.stage} ref={stageRef}>
+            <DeviceFrame device={device} scale={scale} hidden={!measured}>
+              {page}
+            </DeviceFrame>
+          </Box>
+        )}
 
         {onApplyTheme && (
           <PreviewThemePanel

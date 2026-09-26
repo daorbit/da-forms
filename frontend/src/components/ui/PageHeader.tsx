@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Box, Group, Text, Title } from '@mantine/core';
+import { Text, Title } from '@mantine/core';
+import classes from './PageHeader.module.css';
 
 /**
  * Quantalog's page header: a large title, one dimmed line under it, actions on
@@ -19,12 +20,12 @@ export function PageHeader({
   leading?: ReactNode;
 }) {
   return (
-    <Box mb="xl">
-      <Group justify="space-between" align="flex-start" gap="md" wrap="wrap">
-        <Group gap="sm" align="flex-start" wrap="nowrap" style={{ flex: '1 1 260px', minWidth: 0 }}>
+    <div className={classes.root}>
+      <div className={classes.row}>
+        <div className={classes.main}>
           {leading}
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <Title order={1} fz={24} lh={1.25} style={{ letterSpacing: '-0.02em' }}>
+          <div className={classes.text}>
+            <Title order={1} fz={24} lh={1.25} className={classes.title}>
               {title}
             </Title>
             {description && (
@@ -33,13 +34,9 @@ export function PageHeader({
               </Text>
             )}
           </div>
-        </Group>
-        {actions && (
-          <Group gap="sm" wrap="wrap" justify="flex-end">
-            {actions}
-          </Group>
-        )}
-      </Group>
-    </Box>
+        </div>
+        {actions && <div className={classes.actions}>{actions}</div>}
+      </div>
+    </div>
   );
 }

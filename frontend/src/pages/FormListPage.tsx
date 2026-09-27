@@ -285,8 +285,7 @@ export function FormListPage() {
 
       <Stack gap="xl">
         <div>
-          {/* Search, filter and sort sit with the list they act on. */}
-          <Group justify="space-between" gap="sm" mb="sm" wrap="wrap" className={classes.toolbar}>
+          <Group justify="space-between" gap="sm" mb="xl" wrap="wrap" className={classes.toolbar}>
             <Group gap="sm" wrap="wrap" className={classes.toolbarPrimary}>
               <Text fw={600} size="sm" className={classes.sectionTitle}>
                 Forms
@@ -359,9 +358,7 @@ export function FormListPage() {
               <div className={classes.emptyIcon} aria-hidden>
                 <IconFileText size={36} stroke={1.25} />
               </div>
-              {/* A filtered empty list is not an empty workspace — offering
-                  "create your first form" to someone whose only form is a draft
-                  they filtered out would be wrong. */}
+
               <Text fw={650} fz="lg" mt="lg">
                 {isFiltered ? 'No forms match these filters' : 'No forms yet'}
               </Text>
@@ -481,8 +478,6 @@ export function FormListPage() {
                             </ActionIcon>
                           </Menu.Target>
                           <Menu.Dropdown>
-                            {/* Only on the narrow layout, which hides the row buttons
-                                these stand in for. */}
                             {narrowRow && (
                               <>
                                 <Menu.Item
@@ -602,8 +597,6 @@ export function FormListPage() {
           steps={previewing.steps}
           stepIndicator={previewing.stepIndicator}
           showStepHeadings={previewing.showStepHeadings}
-          // Applying a preset saves it, which the demo workspace cannot do —
-          // the preview stays a preview there.
           onApplyTheme={isDemo ? undefined : (patch) => applyTheme(previewing, patch)}
         />
       )}

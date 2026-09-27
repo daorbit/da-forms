@@ -1,63 +1,46 @@
 /* ------------------------------------------------------------ status --- */
 
 .pill {
+  --pill: var(--mantine-color-gray-5);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 8px;
+  gap: 5px;
+  padding: 2px 9px 2px 7px;
   border-radius: 999px;
-  border: 1px solid var(--mantine-color-default-border);
-  font-size: 12px;
-  font-weight: 550;
-  line-height: 20px;
-  color: var(--mantine-color-dimmed);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 16px;
   white-space: nowrap;
+  color: var(--pill);
+  background: color-mix(in srgb, var(--pill) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pill) 30%, transparent);
 }
 
 .pill[data-tone='live'] {
-  color: var(--mantine-color-text);
+  --pill: var(--mantine-color-teal-5);
+}
+
+.pill[data-tone='warn'] {
+  --pill: var(--mantine-color-yellow-5);
 }
 
 .dot {
-  position: relative;
   flex-shrink: 0;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: var(--mantine-color-dimmed);
+  background: currentColor;
 }
 
-.pill[data-tone='live'] .dot {
-  background: var(--mantine-color-green-6);
+.status {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mantine-color-dimmed);
 }
 
-.pill[data-tone='warn'] .dot {
-  background: var(--mantine-color-yellow-6);
-}
-
-.pill[data-tone='live'] .dot::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: inherit;
-  animation: pill-pulse 1.8s ease-out infinite;
-}
-
-@keyframes pill-pulse {
-  from {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  to {
-    transform: scale(2.6);
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pill[data-tone='live'] .dot::after {
-    animation: none;
-  }
+.status[data-live] {
+  color: var(--mantine-color-teal-5);
 }
 

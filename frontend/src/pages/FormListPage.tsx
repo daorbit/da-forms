@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Box, Group, Text, Button, Stack, ActionIcon, Menu, Card, ThemeIcon, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl, Alert, Badge,
+  Box, Group, Text, Button, Stack, ActionIcon, Menu, Card, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl, Alert, Badge,
 } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -52,7 +52,7 @@ import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { StatusPill } from '@/components/ui/StatusPill';
+import { StatusText } from '@/components/ui/StatusText';
 import { relativeTime } from '@/lib/relativeTime';
 import classes from './FormListPage.module.css';
 
@@ -383,13 +383,13 @@ export function FormListPage() {
               )}
             </Stack>
           ) : (
-            <Stack gap="xs">
+            <Stack gap="sm">
               {loading && forms.length === 0
                 ? Array.from({ length: 5 }).map((_, i) => (
-                    <Card key={i} withBorder radius="md" padding="sm">
+                    <Card key={i} withBorder radius="md" padding="sm" className={classes.row}>
                       <Group justify="space-between" wrap="nowrap">
                         <Group gap="sm" wrap="nowrap" style={{ flex: 1 }}>
-                          <Skeleton height={40} width={40} radius="md" />
+                          <Skeleton height={38} width={38} radius={10} />
                           <Stack gap={6} style={{ flex: 1, maxWidth: 300 }}>
                             <Skeleton height={13} width="60%" />
                             <Skeleton height={10} width="40%" />
@@ -408,15 +408,15 @@ export function FormListPage() {
                   <Card key={form._id} withBorder radius="md" padding="sm" className={classes.row}>
                     <div className={classes.rowInner}>
                       <Group gap="sm" wrap="nowrap" className={classes.rowMain}>
-                        <ThemeIcon variant="light" size={40} radius="md">
-                          <IconFileText size={20} />
-                        </ThemeIcon>
+                        <div className={classes.rowIcon} data-live={live || undefined} aria-hidden>
+                          <IconFileText size={19} stroke={1.6} />
+                        </div>
                         <div style={{ minWidth: 0 }}>
                           <Group gap={8} wrap="nowrap">
                             <Link to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.title}>
                               {form.name || form.title}
                             </Link>
-                            <StatusPill tone={live ? 'live' : 'idle'} label={live ? 'Live' : 'Draft'} />
+                            <StatusText live={live} label={live ? 'Live' : 'Draft'} />
                           </Group>
                           <Text size="xs" c="dimmed" truncate>
                             <Tooltip label={`Created ${formatDate(form.createdAt)}`} withArrow openDelay={300}>

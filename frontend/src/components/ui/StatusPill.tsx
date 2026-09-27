@@ -1,8 +1,8 @@
 import classes from './ui.module.css';
 
 /**
- * A neutral pill with a coloured dot — the colour says the state, the pill
- * stays quiet. `live` pulses softly.
+ * A tinted pill with a matching dot — one colour drives the text, fill and
+ * border, so the state reads at a glance without shouting.
  */
 export function StatusPill({ tone, label }: { tone: 'live' | 'idle' | 'warn'; label: string }) {
   return (

@@ -21,6 +21,7 @@
 /* --------------------------------------------------------------- rows --- */
 
 .row {
+  padding-block: 14px;
   transition: border-color 140ms ease, transform 140ms ease;
 }
 
@@ -41,6 +42,33 @@
 .rowMain {
   flex: 1;
   min-width: 0;
+}
+
+.rowIcon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-default);
+  color: var(--mantine-color-dimmed);
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.rowIcon[data-live] {
+  border-color: color-mix(in oklab, var(--mantine-color-teal-5) 35%, transparent);
+  background: color-mix(in oklab, var(--mantine-color-teal-5) 12%, transparent);
+  color: var(--mantine-color-teal-5);
+}
+
+.row:hover .rowIcon {
+  color: var(--mantine-color-text);
+}
+
+.row:hover .rowIcon[data-live] {
+  color: var(--mantine-color-teal-4);
 }
 
 .title {
@@ -113,6 +141,13 @@
 @container (max-width: 980px) {
   .metrics {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .rowIcon {
+    transition: none;
   }
 }
 

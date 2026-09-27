@@ -1,7 +1,7 @@
 import { ActionIcon, Button, Group, Skeleton, TextInput, Tooltip } from '@mantine/core';
 import { Link } from 'react-router-dom';
 import { IconArrowLeft, IconCheck, IconLink, IconPencil, IconX } from '@tabler/icons-react';
-import { StatusPill } from '@/components/ui/StatusPill';
+import { StatusText } from '@/components/ui/StatusText';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
 import type { Form } from '@/types';
@@ -101,8 +101,8 @@ export function EntriesTopbar({
       }
       description={
         <Group gap={8} component="span" wrap="nowrap">
-          <StatusPill
-            tone={form.status === 'published' ? 'live' : 'idle'}
+          <StatusText
+            live={form.status === 'published'}
             label={form.status === 'published' ? 'Live' : 'Draft'}
           />
           <span>

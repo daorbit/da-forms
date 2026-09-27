@@ -29,7 +29,7 @@ import {
   IconCheck,
   IconDeviceDesktop,
 } from '@tabler/icons-react';
-import { BookOpen } from 'lucide-react';
+import { DocsButton } from '@/components/ui/DocsButton';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import {
@@ -264,22 +264,7 @@ export function FormListPage() {
             >
               Integrations
             </Button>
-            {!hostPhone && (
-              <Tooltip label="Docs">
-                <ActionIcon
-                  component="a"
-                  href="https://quantalog.daorbit.in/docs/lead-capture"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variant="default"
-                  size={36}
-                  radius="xl"
-                  aria-label="Docs"
-                >
-                  <BookOpen size={17} />
-                </ActionIcon>
-              </Tooltip>
-            )}
+            {!hostPhone && <DocsButton path="/lead-capture" />}
             {IS_EMBEDDED && <HostNotificationsBell />}
           </>
         }

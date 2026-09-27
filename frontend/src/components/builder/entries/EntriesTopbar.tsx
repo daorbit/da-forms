@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { IconArrowLeft, IconCheck, IconLink, IconPencil, IconX } from '@tabler/icons-react';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { BookOpen } from 'lucide-react';
+import { DocsButton } from '@/components/ui/DocsButton';
 import type { Form } from '@/types';
 import classes from '../../../pages/EntriesPage.module.css';
 
@@ -120,20 +120,7 @@ export function EntriesTopbar({
           <Button variant="default" leftSection={<IconLink size={16} />} onClick={onCopyShareLink}>
             Copy link
           </Button>
-          <Tooltip label="Docs">
-            <ActionIcon
-              component="a"
-              href="https://quantalog.daorbit.in/docs/forms-entries-and-links"
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="default"
-              size={36}
-              radius="xl"
-              aria-label="Docs"
-            >
-              <BookOpen size={17} />
-            </ActionIcon>
-          </Tooltip>
+          <DocsButton path="/forms-entries-and-links" />
         </>
       }
     />

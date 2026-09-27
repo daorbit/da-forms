@@ -8,7 +8,7 @@ import {
   IconArrowBackUp,
   IconArrowForwardUp,
 } from '@tabler/icons-react';
-import { BookOpen } from 'lucide-react';
+import { DocsButton } from '@/components/ui/DocsButton';
 import type { Form } from '@/types';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import classes from '../FormBuilderPage.module.css';
@@ -144,20 +144,7 @@ export function BuilderHeader({
               <IconEye size={18} />
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Docs">
-            <ActionIcon
-              component="a"
-              href="https://quantalog.daorbit.in/docs/forms-advanced-fields"
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="default"
-              size="lg"
-              radius="md"
-              visibleFrom="sm"
-            >
-              <BookOpen size={17} />
-            </ActionIcon>
-          </Tooltip>
+          <DocsButton path="/forms-advanced-fields" visibleFrom="sm" />
           <Divider orientation="vertical" my={14} />
           {isDemo ? (
             // Nothing here can be saved, so the editor says so once instead

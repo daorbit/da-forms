@@ -9,7 +9,6 @@ import {
   ThemeIcon,
 } from '@mantine/core';
 import { CheckIcon, CirclePauseIcon } from 'lucide-react';
-import { notifications } from '@mantine/notifications';
 import {
   getPublicForm,
   submitForm,
@@ -32,6 +31,10 @@ import { BrandHeader } from '@/components/public/BrandHeader';
 import { FormPage } from '@/components/FormPage';
 import { FormLoader } from '@/components/FormLoader';
 import { notify } from '@/lib/notify';
+
+const PAYMENT_PENDING_MESSAGE =
+  "Your payment went through, but confirming it is taking longer than usual. " +
+  "You'll get an email once it clears — no need to pay again.";
 
 function prefillFrom(form: Form | null, values: Record<string, string>) {
   if (!form) return {};
@@ -163,13 +166,7 @@ export function PublicFormPage() {
           setSubmitted(true);
           return;
         }
-        notifications.show({
-          message:
-            "Your payment went through, but confirming it is taking longer than usual. " +
-            "You'll get an email once it clears — no need to pay again.",
-          color: "yellow",
-          autoClose: false,
-        });
+        notify.warn(PAYMENT_PENDING_MESSAGE, undefined, 12000);
       })
       .catch(() => setSubmitting(false));
   }, [id, searchParams]);
@@ -232,13 +229,7 @@ export function PublicFormPage() {
         );
         if (!confirmed) {
           setSubmitting(false);
-          notifications.show({
-            message:
-              "Your payment went through, but confirming it is taking longer than usual. " +
-              "You'll get an email once it clears — no need to pay again.",
-            color: "yellow",
-            autoClose: false,
-          });
+          notify.warn(PAYMENT_PENDING_MESSAGE, undefined, 12000);
           return true;
         }
       }

@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent, type ClipboardEvent, type DragEvent } from 'react';
-import { ActionIcon, Button, Text, Textarea, Tooltip } from '@mantine/core';
+import { ActionIcon, Text, Textarea, Tooltip } from '@mantine/core';
 import { ArrowUpIcon, ImagePlusIcon, XIcon } from 'lucide-react';
 import classes from './createForm.module.css';
 
@@ -120,7 +120,6 @@ export function Composer({
         pt={compact ? 6 : 'sm'}
         disabled={busy}
         data-autofocus={compact ? undefined : true}
-        styles={{ input: { fontSize: compact ? 13 : 15, lineHeight: 1.55 } }}
       />
 
       {imageError && (
@@ -151,37 +150,25 @@ export function Composer({
           </ActionIcon>
         </Tooltip>
 
-        <Text size="xs" c="dimmed" style={{ flex: 1 }}>
+        <Text size="xs" c="dimmed" className={classes.composerStatus}>
           {busy ? 'Orbit is working…' : ''}
         </Text>
 
-        {compact ? (
-          <Tooltip label="Apply change" withArrow>
-            <ActionIcon
-              variant={empty ? 'subtle' : 'filled'}
-              color={empty ? 'gray' : 'emerald'}
-              radius="xl"
-              size="sm"
-              disabled={empty || busy}
-              onClick={onSend}
-              aria-label="Apply change"
-            >
-              <ArrowUpIcon size={13} />
-            </ActionIcon>
-          </Tooltip>
-        ) : (
-          <Button
+        <Tooltip label={compact ? 'Apply change' : 'Send'} withArrow>
+          <ActionIcon
             color="emerald"
+            variant="filled"
             radius="xl"
-            size="sm"
-            leftSection={<ArrowUpIcon size={15} />}
+            size={compact ? 'md' : 'lg'}
+            className={classes.send}
             disabled={empty || busy}
             loading={busy}
             onClick={onSend}
+            aria-label={compact ? 'Apply change' : 'Send'}
           >
-            Send
-          </Button>
-        )}
+            <ArrowUpIcon size={compact ? 14 : 16} />
+          </ActionIcon>
+        </Tooltip>
       </div>
     </div>
   );

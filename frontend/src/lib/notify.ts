@@ -1,11 +1,20 @@
 import type { ReactNode } from 'react';
 import { notifications } from '@mantine/notifications';
+import classes from '@/components/Toast.module.css';
 
 const DEDUPE_MS = 4000;
 const recent = new Map<string, number>();
 
-function showDeduped(opts: Parameters<typeof notifications.show>[0]) {
-  const key = `${opts.color ?? ''}|${String(opts.title ?? '')}|${String(opts.message ?? '')}`;
+type ToastTone = 'neutral' | 'error' | 'warn';
+
+const TONE_CLASS: Record<ToastTone, string> = {
+  neutral: classes.toast,
+  error: `${classes.toast} ${classes.error}`,
+  warn: `${classes.toast} ${classes.warn}`,
+};
+
+function showDeduped(message: ReactNode, tone: ToastTone, autoClose: number) {
+  const key = `${tone}|${String(message ?? '')}`;
   const now = Date.now();
   const last = recent.get(key);
   if (last && now - last < DEDUPE_MS) return;
@@ -13,19 +22,27 @@ function showDeduped(opts: Parameters<typeof notifications.show>[0]) {
   if (recent.size > 50) {
     for (const [k, t] of recent) if (now - t > DEDUPE_MS) recent.delete(k);
   }
-  notifications.show(opts);
+  notifications.show({
+    message,
+    autoClose,
+    withCloseButton: false,
+    classNames: {
+      root: TONE_CLASS[tone],
+      body: classes.body,
+      description: classes.message,
+    },
+  });
 }
 
 export const notify = {
   success: (message: ReactNode, title?: ReactNode) =>
-    showDeduped({ title, message, color: 'emerald', autoClose: 3000 }),
+    showDeduped(message || title, 'neutral', 3000),
 
-  error: (message: ReactNode, title?: ReactNode) =>
-    showDeduped({ title, message, color: 'red', autoClose: 5000 }),
+  error: (message: ReactNode, title?: ReactNode) => showDeduped(message || title, 'error', 5000),
 
-  warn: (message: ReactNode, title?: ReactNode) =>
-    showDeduped({ title, message, color: 'orange', autoClose: 5000 }),
+  warn: (message: ReactNode, title?: ReactNode, duration = 5000) =>
+    showDeduped(message || title, 'warn', duration),
 
-  info: (message: ReactNode, title?: ReactNode) =>
-    showDeduped({ title, message, color: 'gray', autoClose: 3000 }),
+  info: (message: ReactNode, title?: ReactNode, duration = 3000) =>
+    showDeduped(message || title, 'neutral', duration),
 };

@@ -21,6 +21,17 @@ export function shade(hex: string, amount: number): string {
   return `#${channel(r)}${channel(g)}${channel(b)}`;
 }
 
+const SCALE_STEPS = [0.92, 0.8, 0.64, 0.44, 0.22, 0.08, -0.14, -0.3, -0.46, -0.6];
+
+export function buildScale(hex: string, anchor: number): string[] {
+  const at = SCALE_STEPS[anchor];
+  return SCALE_STEPS.map((s, i) => {
+    if (i === anchor) return hex;
+    const rel = s > at ? (s - at) / (SCALE_STEPS[0] - at) : (s - at) / (at - SCALE_STEPS[9]);
+    return shade(hex, rel * (s > at ? 0.92 : 0.72));
+  });
+}
+
 export function normalizeHex(hex: string): string {
   return `#${hex.replace('#', '').toLowerCase()}`;
 }

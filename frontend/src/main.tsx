@@ -32,7 +32,7 @@ const { colorScheme } = host;
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <MantineProvider theme={theme} defaultColorScheme={colorScheme} forceColorScheme={colorScheme === 'auto' ? undefined : colorScheme}>
-      <Notifications position="top-right" />
+      <Notifications position="top-center" limit={3} />
       <PlanLimitDialog />
       <App />
     </MantineProvider>

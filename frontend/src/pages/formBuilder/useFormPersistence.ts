@@ -1,4 +1,3 @@
-import { notifications } from '@mantine/notifications';
 import { createForm, updateForm } from '@/lib/api';
 import { findPaymentField, paymentFieldProblem, paymentStepProblem } from '@/lib/payment';
 import type { PaymentSettings } from '@/types';

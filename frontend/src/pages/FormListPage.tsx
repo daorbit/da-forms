@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
-import { InfoIcon, MonitorIcon, PlugIcon, PlusIcon } from 'lucide-react';
+import { InfoIcon, PlugIcon, PlusIcon } from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
@@ -47,13 +46,11 @@ export function FormListPage() {
 
   function startCreate() {
     if (builderTooSmall) {
-      notifications.show({
-        title: 'Create forms on a bigger screen',
-        message:
-          'The form editor needs a tablet or computer. You can still view, share and manage your forms here.',
-        color: 'gray',
-        icon: <MonitorIcon size={16} />,
-      });
+      notify.info(
+        'The form editor needs a tablet or computer. You can still view, share and manage your forms here.',
+        undefined,
+        5000,
+      );
       return;
     }
     setNewFormOpen(true);

@@ -24,7 +24,6 @@ import {
   ThemeIcon,
   List,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import {
   CheckIcon,
   ChevronRightIcon,

@@ -19,7 +19,7 @@ import {
   ThemeIcon,
   Skeleton,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
+import { notify } from '@/lib/notify';
 import {
   CircleCheckIcon,
   CircleDashedIcon,

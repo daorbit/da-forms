@@ -34,25 +34,19 @@ export function HeroPane({
       <div className={classes.hero}>
         <div className={`${classes.heroHead} ${classes.rise}`} style={{ animationDelay: '40ms' }}>
           <span className={classes.heroMark}>
-            <OrbitMark size={84} />
+            <OrbitMark size={80} />
           </span>
-          <Stack gap={2}>
-            <Title order={2} fw={750}>
+          <Stack gap={4} align="center">
+            <Title order={2} fw={600}>
               Describe your form
             </Title>
-            <Text c="dimmed">Orbit creates it for you</Text>
+            <Text c="dimmed" size="sm">
+              Orbit creates it for you
+            </Text>
           </Stack>
         </div>
 
-        <div
-          className={classes.rise}
-          style={{
-            animationDelay: '120ms',
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
+        <div className={`${classes.composerSlot} ${classes.rise}`} style={{ animationDelay: '120ms' }}>
           <Composer
             compact={false}
             value={prompt}

@@ -18,7 +18,7 @@
 }
 
 .pill[data-tone='live'] {
-  --pill: var(--mantine-color-teal-5);
+  --pill: var(--text-2);
 }
 
 .pill[data-tone='warn'] {
@@ -41,6 +41,6 @@
 }
 
 .status[data-live] {
-  color: var(--mantine-color-teal-5);
+  color: var(--text-2);
 }
 

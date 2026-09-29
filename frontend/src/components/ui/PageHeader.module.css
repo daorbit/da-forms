@@ -36,6 +36,12 @@
   gap: var(--mantine-spacing-sm);
 }
 
+@media (max-width: 48em) {
+  .title {
+    font-size: 1.5rem;
+  }
+}
+
 @container (max-width: 560px) {
   .root {
     margin-bottom: var(--mantine-spacing-lg);

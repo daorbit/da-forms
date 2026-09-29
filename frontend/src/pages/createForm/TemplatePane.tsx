@@ -10,7 +10,7 @@ import {
   TextInput,
   UnstyledButton,
 } from '@mantine/core';
-import { IconSearch } from '@tabler/icons-react';
+import { SearchIcon } from 'lucide-react';
 import type { FormTheme } from '@/types';
 import { formTemplates, templateCategories, type TemplateCategory } from '@/lib/templates';
 import { filterTemplates, usedCategories, type ScopeFilter } from '@/lib/templates/search';
@@ -80,7 +80,7 @@ export function TemplatePane({ scope, creating, onCreate }: Props) {
             placeholder="Search templates"
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
-            leftSection={<IconSearch size={15} />}
+            leftSection={<SearchIcon size={15} />}
             rightSection={
               query ? (
                 <CloseButton size="sm" onClick={() => setQuery('')} aria-label="Clear search" />

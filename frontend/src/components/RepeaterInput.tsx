@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ActionIcon, Box, Button, Group, Paper, Stack, Text } from '@mantine/core';
-import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { PlusIcon, Trash2Icon } from 'lucide-react';
 import type { FormField, LabelPlacement } from '@/types';
 import { FieldControl } from '@/components/FieldControl';
 import { parseRepeaterRows, validateField } from '@/lib/formValidation';
@@ -98,7 +98,7 @@ export function RepeaterInput({
                 aria-label={`Remove ${rowIndex + 1}`}
                 onClick={() => removeRow(rowIndex)}
               >
-                <IconTrash size={14} />
+                <Trash2Icon size={14} />
               </ActionIcon>
             )}
           </Group>
@@ -132,7 +132,7 @@ export function RepeaterInput({
           <Button
             variant="light"
             size="xs"
-            leftSection={<IconPlus size={14} />}
+            leftSection={<PlusIcon size={14} />}
             color={accentColor ? undefined : 'emerald'}
             style={accentColor ? { color: accentColor } : undefined}
             onClick={addRow}

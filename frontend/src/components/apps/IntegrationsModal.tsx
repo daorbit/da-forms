@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Box, ActionIcon, Tooltip } from '@mantine/core';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { IconX, IconRefresh } from '@tabler/icons-react';
+import { RefreshCwIcon, XIcon } from 'lucide-react';
 import { AppsPanel } from './AppsPanel';
 
 interface Props {
@@ -46,12 +46,12 @@ export function IntegrationsModal({ opened, onClose, workspaceId, isDemo }: Prop
                   onClick={() => setReloadKey((k) => k + 1)}
                   aria-label="Refresh"
                 >
-                  <IconRefresh size={17} />
+                  <RefreshCwIcon size={17} />
                 </ActionIcon>
               </Tooltip>
               <Tooltip label="Close" withArrow>
                 <ActionIcon variant="default" size={36} radius="md" onClick={onClose} aria-label="Close">
-                  <IconX size={18} />
+                  <XIcon size={18} />
                 </ActionIcon>
               </Tooltip>
             </>

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { Box, Group, Modal, Stack, Text, Anchor } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import {
   getForm,
   listSubmissions,
@@ -48,6 +47,7 @@ import {
   type StatusFilter,
 } from "@/components/builder/entries/entriesTypes";
 import classes from "./EntriesPage.module.css";
+import { notify } from "@/lib/notify";
 
 export function EntriesPage() {
   const { id } = useParams<{ id: string }>();
@@ -118,10 +118,7 @@ export function EntriesPage() {
     getAnalytics(id, workspaceId)
       .then(setAnalytics)
       .catch(() =>
-        notifications.show({
-          message: "Could not load analytics",
-          color: "red",
-        }),
+        notify.error("Could not load analytics"),
       );
   }, [id, workspaceId]);
 
@@ -130,10 +127,7 @@ export function EntriesPage() {
     getForm(id, workspaceId)
       .then(setForm)
       .catch(() =>
-        notifications.show({
-          message: "Could not load this form",
-          color: "red",
-        }),
+        notify.error("Could not load this form"),
       );
     loadAnalytics();
   }, [id, workspaceId, loadAnalytics]);
@@ -202,7 +196,7 @@ export function EntriesPage() {
       setSubmissions((prev) => prev.filter((s) => s._id !== pendingDelete._id));
       setTotal((prev) => prev - 1);
       loadAnalytics();
-      notifications.show({ message: "Response deleted", color: "emerald" });
+      notify.success("Response deleted");
       setPendingDelete(null);
     } finally {
       setDeleting(false);
@@ -245,10 +239,7 @@ export function EntriesPage() {
       setTotal((prev) => prev - ids.length);
       setSelected(new Set());
       loadAnalytics();
-      notifications.show({
-        message: `${ids.length} responses deleted`,
-        color: "emerald",
-      });
+      notify.success(`${ids.length} responses deleted`);
       setPendingBulkDelete(false);
     } finally {
       setDeleting(false);
@@ -262,10 +253,7 @@ export function EntriesPage() {
     setSubmissions((prev) =>
       prev.map((s) => (selected.has(s._id) ? { ...s, read } : s)),
     );
-    notifications.show({
-      message: `${ids.length} responses marked ${read ? "read" : "unread"}`,
-      color: "emerald",
-    });
+    notify.success(`${ids.length} responses marked ${read ? "read" : "unread"}`);
   }
 
   function exportSelected() {
@@ -292,7 +280,7 @@ export function EntriesPage() {
       setForm(updated);
       setEditingName(false);
     } catch {
-      notifications.show({ message: "Could not rename form", color: "red" });
+      notify.error("Could not rename form");
     } finally {
       setSavingName(false);
     }
@@ -301,7 +289,7 @@ export function EntriesPage() {
   function copyShareLink() {
     if (!id) return;
     navigator.clipboard.writeText(publicFormUrl(id));
-    notifications.show({ message: "Link copied", color: "emerald" });
+    notify.success("Link copied");
   }
 
   function exportCsv(rows: Submission[] = submissions, filenameSuffix = "") {
@@ -390,10 +378,7 @@ export function EntriesPage() {
                   listUploadedFiles(id, workspaceId)
                     .then((res) => setFiles(res.files))
                     .catch(() =>
-                      notifications.show({
-                        message: "Could not load files",
-                        color: "red",
-                      }),
+                      notify.error("Could not load files"),
                     );
                 }
               }

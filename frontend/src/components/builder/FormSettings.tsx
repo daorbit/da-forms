@@ -1,6 +1,7 @@
-import { Drawer, Stack, TextInput, Textarea, Switch, Divider, Text, SegmentedControl } from '@mantine/core';
+import { TextInput, Textarea, Switch, Divider, Text, SegmentedControl } from '@mantine/core';
+import { HeadingIcon } from 'lucide-react';
 import type { SubmitButtonAlign } from '@/types';
-import classes from './drawer.module.css';
+import { PanelDrawer } from '@/components/ui/PanelDrawer';
 
 interface Props {
   opened: boolean;
@@ -28,61 +29,48 @@ export function FormSettings({
   onHeaderAlignChange,
 }: Props) {
   return (
-    <Drawer
+    <PanelDrawer
       opened={opened}
       onClose={onClose}
-      position="right"
+      title="Form properties"
+      subtitle="Title and header shown at the top of the form"
+      icon={<HeadingIcon size={16} />}
       size={480}
-      title="Form Properties"
-      // Mantine writes this onto the content element, which then drives the
-      // header and body insets — set to 0 and controlled entirely by our own
-      // .header/.body classes below instead, so the two never fight.
-      padding={0}
-      radius="lg"
-      transitionProps={{ duration: 180, transition: 'slide-left' }}
-      classNames={{
-        header: classes.header,
-        title: classes.title,
-        body: classes.body,
-        content: classes.content,
-      }}
     >
-      <Stack gap="md">
-        <TextInput label="Title" value={title} onChange={(e) => onTitleChange(e.target.value)} />
-        <Textarea
-          label="Description"
-          description="Shown under the form title"
-          value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
-          autosize
-          minRows={3}
+      <TextInput label="Title" value={title} onChange={(e) => onTitleChange(e.target.value)} />
+      <Textarea
+        label="Description"
+        description="Shown under the form title"
+        value={description}
+        onChange={(e) => onDescriptionChange(e.target.value)}
+        autosize
+        minRows={3}
+      />
+
+      <div>
+        <Text size="sm" fw={500} mb={8}>
+          Header text alignment
+        </Text>
+        <SegmentedControl
+          fullWidth
+          value={headerAlign}
+          onChange={(value) => onHeaderAlignChange(value as SubmitButtonAlign)}
+          data={[
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' },
+          ]}
         />
+      </div>
 
-        <div>
-          <Text size="sm" fw={500} mb={8}>
-            Header text alignment
-          </Text>
-          <SegmentedControl
-            fullWidth
-            value={headerAlign}
-            onChange={(value) => onHeaderAlignChange(value as SubmitButtonAlign)}
-            data={[
-              { value: 'left', label: 'Left' },
-              { value: 'center', label: 'Center' },
-              { value: 'right', label: 'Right' },
-            ]}
-          />
-        </div>
+      <Divider />
 
-        <Divider />
-
-        <Switch
-          label="Hide header on the form"
-          description="The title and description stay for your reference but are not shown to respondents."
-          checked={hideHeader}
-          onChange={(e) => onHideHeaderChange(e.target.checked)}
-        />
-      </Stack>
-    </Drawer>
+      <Switch
+        label="Hide header on the form"
+        description="The title and description stay for your reference but are not shown to respondents."
+        checked={hideHeader}
+        onChange={(e) => onHideHeaderChange(e.target.checked)}
+      />
+    </PanelDrawer>
   );
 }

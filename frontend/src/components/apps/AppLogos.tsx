@@ -1,4 +1,4 @@
-import { IconWebhook } from "@tabler/icons-react";
+import { WebhookIcon } from 'lucide-react';
 import { GatewayLogo } from "../builder/GatewayLogos";
 
 interface LogoProps {
@@ -128,7 +128,7 @@ export function AppLogo({
 }) {
   if (appId === "brevo") return <BrevoLogo height={height} />;
   if (appId === "smtp") return <SmtpLogo height={height} />;
-  if (appId === "webhook") return <IconWebhook size={height} />;
+  if (appId === "webhook") return <WebhookIcon size={height} />;
   if (isWordmark(appId)) {
     return (
       <GatewayLogo

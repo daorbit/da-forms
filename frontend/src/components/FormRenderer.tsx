@@ -563,8 +563,9 @@ export function FormRenderer({
                   loading={submitting || isUploading}
                   disabled={isUploading}
                   size={buttonSize[submitButtonSize ?? 'medium']}
-                  color={accent ? undefined : 'emerald'}
-                  style={{ flex: 1, backgroundColor: accent }}
+                  color={accent ?? 'emerald'}
+                  autoContrast
+                  style={{ flex: 1 }}
                 >
                   {isUploading ? 'Uploading…' : isMultiPage && !isLastPage ? 'Next' : submitLabel || 'Submit'}
                 </Button>

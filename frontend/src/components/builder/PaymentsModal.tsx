@@ -26,21 +26,21 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconX,
-  IconAlertTriangle,
-  IconCircleCheck,
-  IconCircleDashed,
-  IconCopy,
-  IconCheck,
-  IconChevronRight,
-  IconExternalLink,
-  IconPlugConnected,
-  IconCreditCard,
-  IconKey,
-  IconWebhook,
-  IconRocket,
-  IconFlask,
-} from '@tabler/icons-react';
+  CheckIcon,
+  ChevronRightIcon,
+  CircleCheckIcon,
+  CircleDashedIcon,
+  CopyIcon,
+  CreditCardIcon,
+  ExternalLinkIcon,
+  FlaskConicalIcon,
+  KeyIcon,
+  PlugIcon,
+  RocketIcon,
+  TriangleAlertIcon,
+  WebhookIcon,
+  XIcon,
+} from 'lucide-react';
 import type { PaymentSettings, RazorpayMode, PaymentProvider } from '@/types';
 import {
   getPaymentSettings,
@@ -51,6 +51,7 @@ import {
 } from '@/lib/api';
 import { GatewayLogo } from './GatewayLogos';
 import classes from './PaymentsModal.module.css';
+import { notify } from '@/lib/notify';
 
 interface Props {
   opened: boolean;
@@ -76,7 +77,7 @@ function Crumbs({ steps }: { steps: string[] }) {
     <Box component="span" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
       {steps.map((step, i) => (
         <Box component="span" key={step} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-          {i > 0 && <IconChevronRight size={11} style={{ opacity: 0.5 }} />}
+          {i > 0 && <ChevronRightIcon size={11} style={{ opacity: 0.5 }} />}
           {step}
         </Box>
       ))}
@@ -84,10 +85,10 @@ function Crumbs({ steps }: { steps: string[] }) {
   );
 }
 
-const STEPS: { id: StepId; label: string; hint: string; icon: typeof IconKey }[] = [
-  { id: 'keys', label: 'API keys', hint: 'Connect your gateway account', icon: IconKey },
-  { id: 'webhook', label: 'Webhook', hint: 'So payments get confirmed', icon: IconWebhook },
-  { id: 'golive', label: 'Go live', hint: 'Switch on and start charging', icon: IconRocket },
+const STEPS: { id: StepId; label: string; hint: string; icon: typeof KeyIcon }[] = [
+  { id: 'keys', label: 'API keys', hint: 'Connect your gateway account', icon: KeyIcon },
+  { id: 'webhook', label: 'Webhook', hint: 'So payments get confirmed', icon: WebhookIcon },
+  { id: 'golive', label: 'Go live', hint: 'Switch on and start charging', icon: RocketIcon },
 ];
 
  
@@ -267,7 +268,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
               : null
         );
         if (!code?.startsWith('workspace_token')) {
-          notifications.show({ message: 'Could not load payment settings.', color: 'red' });
+          notify.error('Could not load payment settings.');
         }
       })
       .finally(() => setLoading(false));
@@ -308,12 +309,9 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
       setSettings(saved);
       setKeySecret('');
       setWebhookSecret('');
-      notifications.show({ message: 'Saved.', color: 'teal' });
+      notify.success('Saved.');
     } catch (e) {
-      notifications.show({
-        message: e instanceof ApiError ? e.message : 'Could not save payment settings.',
-        color: 'red',
-      });
+      notify.error(e instanceof ApiError ? e.message : 'Could not save payment settings.');
     } finally {
       setSaving(false);
     }
@@ -324,14 +322,10 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
     try {
       const result = await testPaymentConnection(tab, workspaceId, provider);
       setSettings(result.settings);
-      notifications.show({
-        message: result.ok
-          ? `${tab === 'live' ? 'Live' : 'Test'} keys work.`
-          : (result.message ?? `${current?.label ?? 'The gateway'} rejected these keys.`),
-        color: result.ok ? 'teal' : 'red',
-      });
+      if (result.ok) notify.success(`${tab === 'live' ? 'Live' : 'Test'} keys work.`);
+      else notify.error(result.message ?? `${current?.label ?? 'The gateway'} rejected these keys.`);
     } catch {
-      notifications.show({ message: 'Could not reach the server.', color: 'red' });
+      notify.error('Could not reach the server.');
     } finally {
       setTesting(false);
     }
@@ -343,9 +337,9 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
       const saved = await disconnectPayments(tab, workspaceId, provider);
       setSettings(saved);
       loadTab(saved, tab);
-      notifications.show({ message: `${tab === 'live' ? 'Live' : 'Test'} keys removed.` });
+      notify.success(`${tab === 'live' ? 'Live' : 'Test'} keys removed.`);
     } catch {
-      notifications.show({ message: 'Could not disconnect.', color: 'red' });
+      notify.error('Could not disconnect.');
     } finally {
       setSaving(false);
     }
@@ -388,7 +382,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
         <Center h="100%" px="xl">
           <Stack align="center" gap="sm" maw={420}>
             <ThemeIcon variant="light" color="gray" size={52} radius="md">
-              <IconCreditCard size={24} />
+              <CreditCardIcon size={24} />
             </ThemeIcon>
             <Text fw={600}>Payments unavailable</Text>
             <Text size="sm" c="dimmed" ta="center">
@@ -504,7 +498,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                         color: stepDone[s.id] ? '#fff' : 'var(--mantine-color-dimmed)',
                       }}
                     >
-                      {stepDone[s.id] ? <IconCheck size={13} /> : index + 1}
+                      {stepDone[s.id] ? <CheckIcon size={13} /> : index + 1}
                     </Box>
                     <Box className={classes.stepText}>
                       <Text size="sm" fw={500}>
@@ -534,7 +528,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                         color={item.done ? 'teal' : 'gray'}
                         variant={item.done ? 'filled' : 'light'}
                       >
-                        {item.done ? <IconCircleCheck size={12} /> : <IconCircleDashed size={12} />}
+                        {item.done ? <CircleCheckIcon size={12} /> : <CircleDashedIcon size={12} />}
                       </ThemeIcon>
                     }
                   >
@@ -569,7 +563,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                 )}
               </Group>
               <ActionIcon variant="subtle" color="gray" onClick={onClose} aria-label="Close">
-                <IconX size={18} />
+                <XIcon size={18} />
               </ActionIcon>
             </Group>
 
@@ -580,7 +574,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                     variant="light"
                     color="orange"
                     radius="md"
-                    icon={<IconAlertTriangle size={16} />}
+                    icon={<TriangleAlertIcon size={16} />}
                     mb="lg"
                   >
                     The server has no encryption key configured, so payment credentials cannot
@@ -602,7 +596,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}
                       >
                         {copy.dashboardName}
-                        <IconExternalLink size={11} />
+                        <ExternalLinkIcon size={11} />
                       </Anchor>
                     </Text>
 
@@ -659,7 +653,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
 
                         {pair?.verifiedAt && (
                           <Group gap={6}>
-                            <IconCircleCheck size={15} color="var(--mantine-color-teal-6)" />
+                            <CircleCheckIcon size={15} color="var(--mantine-color-teal-6)" />
                             <Text size="xs" c="dimmed">
                               Verified {new Date(pair.verifiedAt).toLocaleString()}
                               {pair.businessName ? ` · ${pair.businessName}` : ''}
@@ -677,7 +671,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                           </Button>
                           <Button
                             variant="light"
-                            leftSection={<IconPlugConnected size={16} />}
+                            leftSection={<PlugIcon size={16} />}
                             onClick={handleTest}
                             loading={testing}
                             disabled={!pair?.hasKeyId}
@@ -725,7 +719,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                         style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
                       >
                         Open <Crumbs steps={copy.webhookPath} />
-                        <IconExternalLink size={11} />
+                        <ExternalLinkIcon size={11} />
                       </Anchor>
                     </Group>
 
@@ -740,7 +734,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                               {({ copied, copy: doCopy }) => (
                                 <Tooltip label={copied ? 'Copied' : 'Copy'}>
                                   <ActionIcon variant="subtle" onClick={doCopy}>
-                                    {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                                    {copied ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
                                   </ActionIcon>
                                 </Tooltip>
                               )}
@@ -770,7 +764,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                         <Divider />
 
                         {copy.webhookSecretless ? (
-                          <Alert variant="light" color="gray" radius="md" icon={<IconKey size={16} />}>
+                          <Alert variant="light" color="gray" radius="md" icon={<KeyIcon size={16} />}>
                             <Text size="xs">
                               <strong>No webhook secret to paste.</strong> {current?.label} signs
                               with the {copy.secretLabel} from the previous step, so registering
@@ -826,9 +820,9 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                       color={(current?.mode ?? "test") === 'live' ? 'emerald' : 'gray'}
                       icon={
                         (current?.mode ?? "test") === 'live' ? (
-                          <IconCircleCheck size={16} />
+                          <CircleCheckIcon size={16} />
                         ) : (
-                          <IconFlask size={16} />
+                          <FlaskConicalIcon size={16} />
                         )
                       }
                       title={(current?.mode ?? "test") === 'live' ? 'Charging for real' : 'Test mode'}
@@ -860,7 +854,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                         variant="light"
                         color="red"
                         radius="md"
-                        icon={<IconAlertTriangle size={16} />}
+                        icon={<TriangleAlertIcon size={16} />}
                         title="Live mode is not ready"
                       >
                         <Stack gap={4}>
@@ -892,7 +886,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                         variant="light"
                         color="orange"
                         radius="md"
-                        icon={<IconAlertTriangle size={16} />}
+                        icon={<TriangleAlertIcon size={16} />}
                         title={`${current?.label} needs a phone number`}
                       >
                         <Text size="xs">
@@ -921,7 +915,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                         variant="light"
                         color="gray"
                         radius="md"
-                        icon={<IconAlertTriangle size={16} />}
+                        icon={<TriangleAlertIcon size={16} />}
                         title="Still to do"
                       >
                         <Stack gap={4}>
@@ -939,7 +933,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
 
                     {current?.lastChargeAt && (
                       <Group gap={6}>
-                        <IconCircleCheck size={15} color="var(--mantine-color-teal-6)" />
+                        <CircleCheckIcon size={15} color="var(--mantine-color-teal-6)" />
                         <Text size="xs" c="dimmed">
                           Last payment received {new Date(current?.lastChargeAt).toLocaleString()}
                         </Text>

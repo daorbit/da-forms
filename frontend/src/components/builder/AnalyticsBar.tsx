@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import { Text, Group, Stack, Progress, Modal, SimpleGrid } from '@mantine/core';
-import {
-  IconEye,
-  IconInbox,
-  IconTrendingUp,
-  IconWorld,
-  IconUserOff,
-} from '@tabler/icons-react';
+import { EyeIcon, GlobeIcon, InboxIcon, TrendingUpIcon, UserXIcon } from 'lucide-react';
 import type { Analytics } from '@/lib/api';
 import type { FormField } from '@/types';
 import { valueFields } from '@/lib/fieldTree';
@@ -154,7 +148,7 @@ export function AnalyticsBar({
       ) : (
         <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="lg">
           <StatCard
-            icon={<IconEye size={14} />}
+            icon={<EyeIcon size={14} />}
             label="Views"
             value={analytics.viewCount.toLocaleString()}
             color="#22d3ee"
@@ -162,14 +156,14 @@ export function AnalyticsBar({
             spark={series((d) => d.views)}
           />
           <StatCard
-            icon={<IconInbox size={14} />}
+            icon={<InboxIcon size={14} />}
             label="Responses"
             value={analytics.submissionCount.toLocaleString()}
             delta={weekDelta((d) => d.responses)}
             spark={series((d) => d.responses)}
           />
           <StatCard
-            icon={<IconTrendingUp size={14} />}
+            icon={<TrendingUpIcon size={14} />}
             label="Completion"
             value={`${Math.round(analytics.completionRate * 100)}%`}
             color="#f59e0b"
@@ -177,15 +171,15 @@ export function AnalyticsBar({
             spark={series((d) => (d.views ? d.responses / d.views : 0))}
           />
           <StatCard
-            icon={<IconWorld size={14} />}
+            icon={<GlobeIcon size={14} />}
             label="Top source"
             value={analytics.sources[0]?.source ?? '—'}
-            color="#34d399"
+            color="var(--accent)"
             spark={series((d) => d.topSource)}
             onClick={() => setSourcesOpen(true)}
           />
           <StatCard
-            icon={<IconUserOff size={14} />}
+            icon={<UserXIcon size={14} />}
             label="Gave up at"
             value={dropOffLabel}
             color="#f472b6"

@@ -1,5 +1,5 @@
 import { ActionIcon, Divider, Group, Paper, Text, Tooltip } from '@mantine/core';
-import { IconTrash, IconX, IconMail, IconMailOpened, IconFileExport } from '@tabler/icons-react';
+import { FileOutputIcon, MailIcon, MailOpenIcon, Trash2Icon, XIcon } from 'lucide-react';
 
 /**
  * The floating bar that appears once at least one row is checked — a
@@ -33,27 +33,27 @@ export function BulkActionBar({
         <Divider orientation="vertical" />
         <Tooltip label="Mark as read" withArrow>
           <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onMarkRead} aria-label="Mark selected as read">
-            <IconMailOpened size={16} />
+            <MailOpenIcon size={16} />
           </ActionIcon>
         </Tooltip>
         <Tooltip label="Mark as unread" withArrow>
           <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onMarkUnread} aria-label="Mark selected as unread">
-            <IconMail size={16} />
+            <MailIcon size={16} />
           </ActionIcon>
         </Tooltip>
         <Tooltip label="Export selected as CSV" withArrow>
           <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onExport} aria-label="Export selected as CSV">
-            <IconFileExport size={16} />
+            <FileOutputIcon size={16} />
           </ActionIcon>
         </Tooltip>
         <Tooltip label="Delete selected" withArrow>
           <ActionIcon variant="light" color="red" radius="xl" onClick={onDelete} aria-label="Delete selected responses">
-            <IconTrash size={16} />
+            <Trash2Icon size={16} />
           </ActionIcon>
         </Tooltip>
         <Tooltip label="Clear selection" withArrow>
           <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onClear} aria-label="Clear selection">
-            <IconX size={16} />
+            <XIcon size={16} />
           </ActionIcon>
         </Tooltip>
       </Group>

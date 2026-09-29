@@ -1,5 +1,5 @@
 import { SimpleGrid } from '@mantine/core';
-import { IconFiles, IconWorldUpload, IconFilePencil, IconInbox } from '@tabler/icons-react';
+import { CloudUploadIcon, FilePenIcon, FilesIcon, InboxIcon } from 'lucide-react';
 import type { WorkspaceStats } from '@/lib/api';
 import { StatTile, StatTileSkeleton, decorativeSpark } from './StatTile';
 
@@ -17,28 +17,28 @@ export function WorkspaceStatsBar({ stats }: { stats: WorkspaceStats | null }) {
   return (
     <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md" px="xl" pt="lg" pb="lg">
       <StatTile
-        icon={IconFiles}
+        icon={FilesIcon}
         label="Total forms"
         value={stats.totalForms.toLocaleString()}
         accent="#a78bfa"
         spark={decorativeSpark(stats.totalForms)}
       />
       <StatTile
-        icon={IconWorldUpload}
+        icon={CloudUploadIcon}
         label="Live forms"
         value={stats.publishedForms.toLocaleString()}
-        accent="#34d399"
+        accent="var(--accent)"
         spark={decorativeSpark(stats.publishedForms)}
       />
       <StatTile
-        icon={IconFilePencil}
+        icon={FilePenIcon}
         label="Drafts"
         value={stats.draftForms.toLocaleString()}
         accent="#f59e0b"
         spark={decorativeSpark(stats.draftForms)}
       />
       <StatTile
-        icon={IconInbox}
+        icon={InboxIcon}
         label="Total submissions"
         value={stats.totalSubmissions.toLocaleString()}
         accent="#22d3ee"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Button, Group, Stack, Text, Badge } from '@mantine/core';
-import { IconArrowUpCircle, IconLock } from '@tabler/icons-react';
+import { CircleArrowUpIcon, LockIcon } from 'lucide-react';
 import { onPlanLimit, requestUpgrade, type PlanLimitEvent } from '@/lib/planLimit';
 import './PlanLimitDialog.css';
 
@@ -41,7 +41,7 @@ export function PlanLimitDialog() {
         <div className="plan-limit__aurora" />
         <Stack className="plan-limit__body" align="center" gap="lg">
           <div className="plan-limit__seal">
-            <IconLock size={24} stroke={1.8} />
+            <LockIcon size={24} strokeWidth={1.8} />
           </div>
 
           <Stack align="center" gap={10}>
@@ -81,7 +81,7 @@ export function PlanLimitDialog() {
             </Button>
             <Button
               color="emerald"
-              leftSection={<IconArrowUpCircle size={16} />}
+              leftSection={<CircleArrowUpIcon size={16} />}
               onClick={() => {
                 close();
                 requestUpgrade();

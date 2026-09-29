@@ -1,5 +1,5 @@
 import { Box, Group, Progress, Stack, Text } from '@mantine/core';
-import { IconCheck } from '@tabler/icons-react';
+import { CheckIcon } from 'lucide-react';
 import type { FormStep, StepIndicator } from '@/types';
 
 interface Props {
@@ -77,7 +77,7 @@ export function StepIndicatorBar({ variant, steps, current, accent, textColor }:
                     border: active ? `2px solid ${color}` : '2px solid transparent',
                   }}
                 >
-                  {done ? <IconCheck size={15} stroke={3} /> : index + 1}
+                  {done ? <CheckIcon size={15} strokeWidth={3} /> : index + 1}
                 </Box>
                 <Text
                   size="xs"

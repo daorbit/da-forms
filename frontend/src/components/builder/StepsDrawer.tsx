@@ -1,9 +1,10 @@
-import { Alert, Box, Drawer, SegmentedControl, Stack, Switch, Text, TextInput } from '@mantine/core';
-import { IconInfoCircle } from '@tabler/icons-react';
+import { Alert, Box, SegmentedControl, Stack, Switch, Text, TextInput } from '@mantine/core';
+import { InfoIcon, ListOrderedIcon } from 'lucide-react';
 import type { FormField, FormStep, StepIndicator } from '@/types';
 import { StepIndicatorBar } from '@/components/StepIndicatorBar';
+import { PanelDrawer } from '@/components/ui/PanelDrawer';
 import { pageCount, resolveSteps } from '@/lib/formSteps';
-import classes from './drawer.module.css';
+import classes from './StepsDrawer.module.css';
 
 export interface StepSettings {
   steps: FormStep[];
@@ -47,35 +48,30 @@ export function StepsDrawer({ opened, onClose, fields, settings, onChange, accen
   }
 
   return (
-    <Drawer
+    <PanelDrawer
       opened={opened}
       onClose={onClose}
-      position="right"
-      size={480}
       title="Steps & progress"
-      padding="lg"
-      radius="lg"
-      transitionProps={{ duration: 180, transition: 'slide-left' }}
-      classNames={classes}
+      subtitle="Name each step and pick how progress is shown"
+      icon={<ListOrderedIcon size={16} />}
+      size={480}
     >
       {count < 2 ? (
-        <Alert icon={<IconInfoCircle size={18} />} color="blue" variant="light">
+        <Alert icon={<InfoIcon size={18} />} color="gray" variant="light">
           This form is a single page. Drop a <b>Page Break</b> onto the canvas to split it into steps — then come back
           here to name them.
         </Alert>
       ) : (
         <Stack gap="xl">
           <div>
-            <Text size="sm" fw={500} mb={8}>
-              Progress indicator
-            </Text>
+            <div className={classes.label}>Progress indicator</div>
             <SegmentedControl
               fullWidth
               value={settings.stepIndicator}
               onChange={(value) => onChange({ stepIndicator: value as StepIndicator })}
               data={INDICATORS}
             />
-            <Box mt="md" p="md" style={{ border: '1px solid var(--mantine-color-gray-3)', borderRadius: 8 }}>
+            <Box mt="md" className={classes.preview}>
               <StepIndicatorBar
                 variant={settings.stepIndicator}
                 steps={preview}
@@ -98,14 +94,10 @@ export function StepsDrawer({ opened, onClose, fields, settings, onChange, accen
           />
 
           <Stack gap="lg">
-            <Text size="sm" fw={600}>
-              Step names
-            </Text>
+            <div className={classes.label}>Step names</div>
             {Array.from({ length: count }, (_, index) => (
               <Stack key={index} gap={6}>
-                <Text size="xs" fw={600} c="dimmed">
-                  STEP {index + 1}
-                </Text>
+                <span className={classes.stepLabel}>Step {index + 1}</span>
                 <TextInput
                   placeholder={`Step ${index + 1}`}
                   value={settings.steps[index]?.title ?? ''}
@@ -121,6 +113,6 @@ export function StepsDrawer({ opened, onClose, fields, settings, onChange, accen
           </Stack>
         </Stack>
       )}
-    </Drawer>
+    </PanelDrawer>
   );
 }

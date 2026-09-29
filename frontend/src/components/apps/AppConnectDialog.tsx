@@ -21,15 +21,15 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  IconX,
-  IconAlertTriangle,
-  IconCircleCheck,
-  IconCircleDashed,
-  IconExternalLink,
-  IconPlugConnected,
-  IconMail,
-  IconFlask,
-} from '@tabler/icons-react';
+  CircleCheckIcon,
+  CircleDashedIcon,
+  ExternalLinkIcon,
+  FlaskConicalIcon,
+  MailIcon,
+  PlugIcon,
+  TriangleAlertIcon,
+  XIcon,
+} from 'lucide-react';
 import type { AppCard, AppField } from '@/types';
 import { saveApp, testApp, disconnectApp, ApiError } from '@/lib/api';
 import { AppLogo } from './AppLogos';
@@ -128,13 +128,10 @@ export function AppConnectDialog({
     try {
       const card = await saveApp(app.id, { values: payloadValues(), enabled: enable }, workspaceId);
       onSaved(card);
-      notifications.show({
-        color: 'teal',
-        title: enable ? `${app.name} connected` : `${app.name} saved`,
-        message: enable
-          ? 'Notification emails will go out through it.'
-          : 'Turn it on when you are ready.',
-      });
+      notify.success(
+        enable ? 'Notification emails will go out through it.' : 'Turn it on when you are ready.',
+        enable ? `${app.name} connected` : `${app.name} saved`,
+      );
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not save the connection.');
     } finally {
@@ -150,11 +147,8 @@ export function AppConnectDialog({
     try {
       const res = await testApp(app.id, withEmail ? testTo.trim() : undefined, workspaceId);
       onSaved(res.app);
-      notifications.show({
-        color: res.ok ? 'teal' : 'red',
-        title: res.ok ? 'Test succeeded' : 'Test failed',
-        message: res.message,
-      });
+      if (res.ok) notify.success(res.message, 'Test succeeded');
+      else notify.error(res.message, 'Test failed');
       if (!res.ok) setError(res.message);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'The test could not run.');
@@ -170,7 +164,7 @@ export function AppConnectDialog({
     try {
       const cards = await disconnectApp(app.id, workspaceId);
       onDisconnected(cards);
-      notifications.show({ color: 'gray', title: `${app.name} disconnected`, message: '' });
+      notify.info('', `${app.name} disconnected`);
       onClose();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not disconnect.');
@@ -291,11 +285,11 @@ export function AppConnectDialog({
                   <Group key={c.label} gap="sm" wrap="nowrap">
                     {c.done ? (
                       <ThemeIcon color="teal" size="sm" radius="xl" variant="light">
-                        <IconCircleCheck size={14} />
+                        <CircleCheckIcon size={14} />
                       </ThemeIcon>
                     ) : (
                       <ThemeIcon color="gray" size="sm" radius="xl" variant="light">
-                        <IconCircleDashed size={14} />
+                        <CircleDashedIcon size={14} />
                       </ThemeIcon>
                     )}
                     <Text size="sm" c={c.done ? undefined : 'dimmed'}>
@@ -348,7 +342,7 @@ export function AppConnectDialog({
                       color="gray"
                       aria-label="Where to find these"
                     >
-                      <IconExternalLink size={16} />
+                      <ExternalLinkIcon size={16} />
                     </ActionIcon>
                   </Tooltip>
                 )}
@@ -360,7 +354,7 @@ export function AppConnectDialog({
                   disabled={busy !== null}
                   aria-label="Close"
                 >
-                  <IconX size={18} />
+                  <XIcon size={18} />
                 </ActionIcon>
               </Group>
             </Group>
@@ -399,7 +393,7 @@ export function AppConnectDialog({
                   </Group>
 
                   {error && (
-                    <Alert color="red" variant="light" icon={<IconAlertTriangle size={16} />}>
+                    <Alert color="red" variant="light" icon={<TriangleAlertIcon size={16} />}>
                       {error}
                     </Alert>
                   )}
@@ -417,7 +411,7 @@ export function AppConnectDialog({
                       </Button>
                     )}
                     <Button
-                      leftSection={<IconPlugConnected size={16} />}
+                      leftSection={<PlugIcon size={16} />}
                       loading={busy === 'save'}
                       onClick={() => handleSave(true)}
                     >
@@ -432,7 +426,7 @@ export function AppConnectDialog({
                       <Group gap="sm" wrap="nowrap">
                         <Button
                           variant="default"
-                          leftSection={<IconPlugConnected size={16} />}
+                          leftSection={<PlugIcon size={16} />}
                           loading={busy === 'verify'}
                           disabled={dirty || busy !== null}
                           onClick={() => handleTest(false)}
@@ -449,14 +443,14 @@ export function AppConnectDialog({
                           label="Or send a real test email to"
                           placeholder="you@example.com"
                           type="email"
-                          leftSection={<IconMail size={15} />}
+                          leftSection={<MailIcon size={15} />}
                           value={testTo}
                           onChange={(e) => setTestTo(e.currentTarget.value)}
                           style={{ flex: 1 }}
                         />
                         <Button
                           variant="default"
-                          leftSection={<IconFlask size={16} />}
+                          leftSection={<FlaskConicalIcon size={16} />}
                           loading={busy === 'send'}
                           disabled={!testTo.trim() || dirty || busy !== null}
                           onClick={() => handleTest(true)}

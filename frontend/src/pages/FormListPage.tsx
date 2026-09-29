@@ -1,99 +1,37 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import {
-  Box, Group, Text, Button, Stack, ActionIcon, Menu, Card, Modal, Tooltip, TextInput, Pagination, Skeleton, SegmentedControl, Alert, Badge,
-} from '@mantine/core';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Alert, Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import {
-  IconPlus,
-  IconSearch,
-  IconArrowsSort,
-  IconFileText,
-  IconPencil,
-  IconShare2,
-  IconDots,
-  IconTrash,
-  IconCopy,
-  IconCopyPlus,
-  IconClipboardCopy,
-  IconExternalLink,
-  IconRefresh,
-  IconEye,
-  IconEyeOff,
-  IconWorldUpload,
-  IconX,
-  IconInfoCircle,
-  IconPlugConnected,
-  IconInbox,
-  IconCheck,
-  IconDeviceDesktop,
-} from '@tabler/icons-react';
+import { InfoIcon, MonitorIcon, PlugIcon, PlusIcon } from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
-import {
-  listForms,
-  deleteForm,
-  updateForm,
-  duplicateForm as duplicateFormApi,
-  exportFormConfig,
-  publicFormPath,
-  publicFormUrl,
-} from '@/lib/api';
+import { deleteForm, updateForm, duplicateForm as duplicateFormApi, exportFormConfig } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useHostPhone } from '@/hooks/useHostPhone';
 import { useBuilderTooSmall } from '@/hooks/useBuilderTooSmall';
-import { isDemoWorkspace, listDemoForms } from '@/lib/demoWorkspace';
-import { useDebouncedValue } from '@mantine/hooks';
+import { isDemoWorkspace } from '@/lib/demoWorkspace';
+import { notify } from '@/lib/notify';
 import type { Form, FormTheme } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { StatusText } from '@/components/ui/StatusText';
-import { relativeTime } from '@/lib/relativeTime';
+import { FormListToolbar } from './formList/FormListToolbar';
+import { FormList } from './formList/FormList';
+import { FormListEmpty } from './formList/FormListEmpty';
+import { DeleteFormModal } from './formList/DeleteFormModal';
+import { useFormList } from './formList/useFormList';
+import type { FormRowActions } from './formList/FormRow';
 import classes from './FormListPage.module.css';
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-type SortOption = 'date' | 'dateAsc' | 'name' | 'nameDesc' | 'status';
-
-/** Filtered on the server — see `listForms`, which pages the result set. */
-type StatusFilter = 'all' | 'published' | 'draft';
-
-const STATUS_TABS: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'published', label: 'Live' },
-  { value: 'draft', label: 'Drafts' },
-];
-
-const SORT_LABEL: Record<SortOption, string> = {
-  date: 'Newest first',
-  dateAsc: 'Oldest first',
-  name: 'Name (A-Z)',
-  nameDesc: 'Name (Z-A)',
-  status: 'Status',
-};
-
-const PAGE_SIZE = 10;
 
 export function FormListPage() {
   const workspaceId = useWorkspaceId();
   const isDemo = isDemoWorkspace(workspaceId);
-  const location = useLocation();
   const navigate = useNavigate();
-  const [forms, setForms] = useState<Form[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch] = useDebouncedValue(search, 300);
-  const [sort, setSort] = useState<SortOption>('date');
-  const [status, setStatus] = useState<StatusFilter>('all');
-  const [loading, setLoading] = useState(true);
+  const list = useFormList(workspaceId, isDemo);
   const [newFormOpen, setNewFormOpen] = useState(false);
   const [integrationsOpen, setIntegrationsOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
@@ -103,6 +41,9 @@ export function FormListPage() {
   const [copyingConfigId, setCopyingConfigId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<Form | null>(null);
   const builderTooSmall = useBuilderTooSmall();
+  const { ref: pageRef, width: pageWidth } = useElementSize();
+  const compact = pageWidth > 0 && pageWidth <= 640;
+  const hostPhone = useHostPhone();
 
   function startCreate() {
     if (builderTooSmall) {
@@ -111,95 +52,39 @@ export function FormListPage() {
         message:
           'The form editor needs a tablet or computer. You can still view, share and manage your forms here.',
         color: 'gray',
-        icon: <IconDeviceDesktop size={16} />,
+        icon: <MonitorIcon size={16} />,
       });
       return;
     }
     setNewFormOpen(true);
   }
 
-  const { ref: pageRef, width: pageWidth } = useElementSize();
-  const narrowRow = pageWidth > 0 && pageWidth <= 640;
-  const hostPhone = useHostPhone();
-
-
-  const setFilter = (patch: Partial<{ q: string; sort: SortOption; status: StatusFilter }>) => {
-    setSearch(patch.q ?? search);
-    if (patch.sort) setSort(patch.sort);
-    if (patch.status) setStatus(patch.status);
-    setPage(1);
-  };
-
-  const load = useCallback(() => {
-
-    if (isDemo) {
-      const res = listDemoForms({
-        page,
-        limit: PAGE_SIZE,
-        q: debouncedSearch,
-        sort,
-        status: status === 'all' ? undefined : status,
-      });
-      setForms(res.items);
-      setTotal(res.total);
-      setLoading(false);
-      return Promise.resolve();
-    }
-    setLoading(true);
-    return listForms(workspaceId, {
-      page,
-      limit: PAGE_SIZE,
-      q: debouncedSearch,
-      sort,
-      status: status === 'all' ? undefined : status,
-    })
-      .then((res) => {
-        setForms(res.items);
-        setTotal(res.total);
-      })
-      .finally(() => setLoading(false));
-  }, [isDemo, workspaceId, page, debouncedSearch, sort, status]);
-
-  useEffect(() => {
-    load();
-  }, [location.key, load]);
-
-  const isFiltered = debouncedSearch !== '' || status !== 'all';
-
   async function toggleStatus(form: Form) {
     const status = form.status === 'published' ? 'draft' : 'published';
-    const updated = await updateForm(form._id, { status }, workspaceId);
-    setForms((prev) => prev.map((f) => (f._id === form._id ? updated : f)));
-    notifications.show({
-      message: status === 'published' ? 'Form published' : 'Form moved back to draft',
-      color: status === 'published' ? 'emerald' : 'gray',
-    });
+    list.replaceForm(await updateForm(form._id, { status }, workspaceId));
+    if (status === 'published') notify.success('Form published');
+    else notify.info('Form moved back to draft');
   }
-
 
   async function duplicateForm(form: Form) {
     setDuplicatingId(form._id);
     try {
       await duplicateFormApi(form._id, workspaceId);
-      notifications.show({ message: 'Form duplicated', color: 'emerald' });
-      load();
+      notify.success('Form duplicated');
+      list.load();
     } finally {
       setDuplicatingId(null);
     }
   }
-
 
   async function copyConfig(form: Form) {
     setCopyingConfigId(form._id);
     try {
       const config = await exportFormConfig(form._id, workspaceId);
       await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
-      notifications.show({
-        message: 'Config copied — paste it into another workspace',
-        color: 'emerald',
-      });
+      notify.success('Config copied — paste it into another workspace');
     } catch {
-      notifications.show({ message: 'Could not copy the config', color: 'red' });
+      notify.error('Could not copy the config');
     } finally {
       setCopyingConfigId(null);
     }
@@ -208,9 +93,9 @@ export function FormListPage() {
   async function applyTheme(form: Form, patch: Partial<FormTheme>) {
     const theme = { ...form.theme, ...patch, scope: form.theme?.scope ?? 'page' } as FormTheme;
     const updated = await updateForm(form._id, { theme }, workspaceId);
-    setForms((prev) => prev.map((f) => (f._id === form._id ? updated : f)));
+    list.replaceForm(updated);
     setPreviewing(updated);
-    notifications.show({ message: 'Theme applied', color: 'emerald' });
+    notify.success('Theme applied');
   }
 
   async function confirmDelete() {
@@ -219,21 +104,29 @@ export function FormListPage() {
     await deleteForm(pendingDelete._id, workspaceId);
     setDeleting(false);
     setPendingDelete(null);
-    notifications.show({ message: 'Form deleted', color: 'emerald' });
-    load();
+    notify.success('Form deleted');
+    list.load();
   }
 
-  const conversion = (views?: number, responses?: number) =>
-    views && responses !== undefined ? `${Math.round((responses / views) * 100)}%` : '—';
+  const rowActions: FormRowActions = {
+    onPreview: setPreviewing,
+    onShare: setSharing,
+    onToggleStatus: toggleStatus,
+    onDuplicate: duplicateForm,
+    onCopyConfig: copyConfig,
+    onDelete: setPendingDelete,
+  };
+
+  const isEmpty = list.forms.length === 0 && !list.loading;
 
   return (
-    <Box className={classes.page} ref={pageRef} px="md" py="lg">
+    <Box className={classes.page} ref={pageRef}>
       <PageHeader
         title={
           <Group gap="sm" wrap="nowrap" component="span">
             Lead capture
             {isDemo && (
-              <Badge color="gray" variant="light" radius="sm">
+              <Badge color="gray" variant="light">
                 Demo workspace
               </Badge>
             )}
@@ -244,24 +137,18 @@ export function FormListPage() {
           <>
             {isDemo ? (
               <Tooltip label="Creating forms is disabled in the demo workspace" withArrow>
-                {/* Wrapped: a disabled Mantine button fires no pointer events, so
-                    the tooltip would never open on the button itself. */}
                 <span>
-                  <Button leftSection={<IconPlus size={16} />} disabled>
+                  <Button leftSection={<PlusIcon size={16} />} disabled>
                     New form
                   </Button>
                 </span>
               </Tooltip>
             ) : (
-              <Button leftSection={<IconPlus size={16} />} onClick={startCreate}>
+              <Button leftSection={<PlusIcon size={16} />} onClick={startCreate}>
                 New form
               </Button>
             )}
-            <Button
-              variant="default"
-              leftSection={<IconPlugConnected size={16} />}
-              onClick={() => setIntegrationsOpen(true)}
-            >
+            <Button variant="default" leftSection={<PlugIcon size={16} />} onClick={() => setIntegrationsOpen(true)}>
               Integrations
             </Button>
             {!hostPhone && <DocsButton path="/lead-capture" />}
@@ -271,311 +158,59 @@ export function FormListPage() {
       />
 
       {isDemo && (
-        <Alert color="blue" variant="light" mb="xl" icon={<IconInfoCircle size={18} />}>
+        <Alert color="blue" variant="light" mb="xl" icon={<InfoIcon size={18} />}>
           <Text fw={600} size="sm">
             You are looking at sample forms
           </Text>
           <Text size="sm" mt={4}>
-            This workspace is a read-only tour of the builder while it is in testing. Open any form
-            to explore the editor, themes and preview — nothing you change here is saved, and new
-            forms cannot be created. Real forms live in your own workspace.
+            This workspace is a read-only tour of the builder while it is in testing. Open any form to explore the
+            editor, themes and preview — nothing you change here is saved, and new forms cannot be created. Real forms
+            live in your own workspace.
           </Text>
         </Alert>
       )}
 
-      <Stack gap="xl">
-        <div>
-          <Group justify="space-between" gap="sm" mb="xl" wrap="wrap" className={classes.toolbar}>
-            <Group gap="sm" wrap="wrap" className={classes.toolbarPrimary}>
-              <Text fw={600} size="sm" className={classes.sectionTitle}>
-                Forms
-              </Text>
-              <TextInput
-                placeholder="Search forms"
-                value={search}
-                onChange={(e) => setFilter({ q: e.target.value })}
-                leftSection={<IconSearch size={15} className={classes.searchIcon} />}
-                rightSection={
-                  search ? (
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      onClick={() => setFilter({ q: '' })}
-                      aria-label="Clear search"
-                    >
-                      <IconX size={14} />
-                    </ActionIcon>
-                  ) : undefined
-                }
-                size="sm"
-                className={classes.search}
-              />
-              <SegmentedControl
-                value={status}
-                onChange={(value) => setFilter({ status: value as StatusFilter })}
-                data={STATUS_TABS}
-                size="sm"
-                fullWidth={narrowRow}
-                className={classes.segmented}
-              />
-            </Group>
+      <FormListToolbar
+        search={list.search}
+        status={list.status}
+        sort={list.sort}
+        loading={list.loading}
+        narrow={compact}
+        onSearch={(q) => list.setFilter({ q })}
+        onStatus={(status) => list.setFilter({ status })}
+        onSort={(sort) => list.setFilter({ sort })}
+        onRefresh={() => list.load()}
+      />
 
-            <Group gap="xs" wrap="nowrap" className={classes.sortRow}>
-              <Menu shadow="md" width={180} position="bottom-end">
-                <Menu.Target>
-                  <Button variant="default" size="sm" leftSection={<IconArrowsSort size={15} />}>
-                    {SORT_LABEL[sort]}
-                  </Button>
-                </Menu.Target>
-                <Menu.Dropdown>
-                  {(Object.keys(SORT_LABEL) as SortOption[]).map((key) => (
-                    <Menu.Item
-                      key={key}
-                      onClick={() => setFilter({ sort: key })}
-                      rightSection={sort === key ? <IconCheck size={14} /> : undefined}
-                    >
-                      {SORT_LABEL[key]}
-                    </Menu.Item>
-                  ))}
-                </Menu.Dropdown>
-              </Menu>
-              <Tooltip label="Refresh" withArrow>
-                <ActionIcon
-                  variant="default"
-                  size="input-sm"
-                  onClick={() => load()}
-                  loading={loading}
-                  aria-label="Refresh"
-                >
-                  <IconRefresh size={17} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-          </Group>
-
-          {forms.length === 0 && !loading ? (
-            <Stack align="center" justify="center" gap={0} className={classes.emptyState}>
-              <div className={classes.emptyIcon} aria-hidden>
-                <IconFileText size={36} stroke={1.25} />
-              </div>
-
-              <Text fw={650} fz="lg" mt="lg">
-                {isFiltered ? 'No forms match these filters' : 'No forms yet'}
-              </Text>
-              <Text size="sm" c="dimmed" mt={6} className={classes.emptyText}>
-                {isFiltered
-                  ? 'Try a different search term or status.'
-                  : 'Build a form to collect leads, then share its link or embed it on your site.'}
-              </Text>
-              {isFiltered ? (
-                <Button mt="xl" size="md" variant="default" onClick={() => setFilter({ q: '', status: 'all' })}>
-                  Clear filters
-                </Button>
-              ) : (
-                !isDemo && (
-                  <Button mt="xl" size="md" leftSection={<IconPlus size={16} />} onClick={startCreate}>
-                    Create your first form
-                  </Button>
-                )
-              )}
-            </Stack>
-          ) : (
-            <Stack gap="sm">
-              {loading && forms.length === 0
-                ? Array.from({ length: 5 }).map((_, i) => (
-                    <Card key={i} withBorder radius="md" padding="sm" className={classes.row}>
-                      <Group justify="space-between" wrap="nowrap">
-                        <Group gap="sm" wrap="nowrap" style={{ flex: 1 }}>
-                          <Skeleton height={38} width={38} radius={10} />
-                          <Stack gap={6} style={{ flex: 1, maxWidth: 300 }}>
-                            <Skeleton height={13} width="60%" />
-                            <Skeleton height={10} width="40%" />
-                          </Stack>
-                        </Group>
-                        <Skeleton height={28} width={180} radius="md" />
-                      </Group>
-                    </Card>
-                  ))
-                : null}
-
-              {forms.map((form) => {
-                const live = form.status === 'published';
-                const responses = form.submissionCount;
-                return (
-                  <Card key={form._id} withBorder radius="md" padding="sm" className={classes.row}>
-                    <div className={classes.rowInner}>
-                      <Group gap="sm" wrap="nowrap" className={classes.rowMain}>
-                        <div className={classes.rowIcon} data-live={live || undefined} aria-hidden>
-                          <IconFileText size={19} stroke={1.6} />
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <Group gap={8} wrap="nowrap">
-                            <Link to={`/${workspaceId}/forms/${form._id}/edit`} className={classes.title}>
-                              {form.name || form.title}
-                            </Link>
-                            <StatusText live={live} label={live ? 'Live' : 'Draft'} />
-                          </Group>
-                          <Text size="xs" c="dimmed" truncate>
-                            <Tooltip label={`Created ${formatDate(form.createdAt)}`} withArrow openDelay={300}>
-                              <span>Edited {relativeTime(form.updatedAt || form.createdAt)}</span>
-                            </Tooltip>
-                            {narrowRow && responses !== undefined && ` · ${responses.toLocaleString()} responses`}
-                          </Text>
-                        </div>
-                      </Group>
-
-                      {!narrowRow && !isDemo && (
-                        <div className={classes.metrics}>
-                          <Metric label="Responses" value={responses?.toLocaleString() ?? '—'} />
-                          <Metric label="Views" value={(form.viewCount ?? 0).toLocaleString()} />
-                          <Metric label="Conversion" value={conversion(form.viewCount, responses)} />
-                        </div>
-                      )}
-
-                      <Group gap={6} wrap="nowrap" className={classes.rowActions}>
-                        {!isDemo && !narrowRow && (
-                          <Button
-                            component={Link}
-                            to={`/${workspaceId}/forms/${form._id}/entries`}
-                            variant="default"
-                            size="xs"
-                            leftSection={<IconInbox size={14} />}
-                          >
-                            Responses
-                          </Button>
-                        )}
-                        {(!narrowRow || isDemo) && (
-                          <Button
-                            component={Link}
-                            to={`/${workspaceId}/forms/${form._id}/edit`}
-                            variant="default"
-                            size="xs"
-                            leftSection={<IconPencil size={14} />}
-                          >
-                            {isDemo ? (narrowRow ? 'Open' : 'Open in editor') : 'Edit'}
-                          </Button>
-                        )}
-                        {!narrowRow && (
-                          <Tooltip label="Preview" withArrow>
-                            <ActionIcon variant="subtle" color="gray" size="lg" onClick={() => setPreviewing(form)} aria-label="Preview">
-                              <IconEye size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                        )}
-                        {!isDemo && !narrowRow && (
-                          <Tooltip label="Share" withArrow>
-                            <ActionIcon variant="subtle" color="gray" size="lg" onClick={() => setSharing(form)} aria-label="Share">
-                              <IconShare2 size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                        )}
-
-                        {!isDemo && (
-                        <Menu shadow="md" position="bottom-end" width={200}>
-                          <Menu.Target>
-                            <ActionIcon variant="subtle" color="gray" size="lg" aria-label="More actions">
-                              <IconDots size={16} />
-                            </ActionIcon>
-                          </Menu.Target>
-                          <Menu.Dropdown>
-                            {narrowRow && (
-                              <>
-                                <Menu.Item
-                                  component={Link}
-                                  to={`/${workspaceId}/forms/${form._id}/edit`}
-                                  leftSection={<IconPencil size={15} />}
-                                >
-                                  Edit
-                                </Menu.Item>
-                                <Menu.Item
-                                  component={Link}
-                                  to={`/${workspaceId}/forms/${form._id}/entries`}
-                                  leftSection={<IconInbox size={15} />}
-                                >
-                                  Responses
-                                </Menu.Item>
-                                <Menu.Item leftSection={<IconEye size={15} />} onClick={() => setPreviewing(form)}>
-                                  Preview
-                                </Menu.Item>
-                                <Menu.Item leftSection={<IconShare2 size={15} />} onClick={() => setSharing(form)}>
-                                  Share
-                                </Menu.Item>
-                                <Menu.Divider />
-                              </>
-                            )}
-                            <Menu.Item
-                              leftSection={live ? <IconEyeOff size={15} /> : <IconWorldUpload size={15} />}
-                              onClick={() => toggleStatus(form)}
-                            >
-                              {live ? 'Unpublish' : 'Publish'}
-                            </Menu.Item>
-                            <Menu.Divider />
-                            <Menu.Item
-                              component="a"
-                              href={publicFormPath(form._id)}
-                              target="_blank"
-                              leftSection={<IconExternalLink size={15} />}
-                            >
-                              Open live form
-                            </Menu.Item>
-                            <Menu.Item
-                              leftSection={<IconCopy size={15} />}
-                              onClick={() => {
-                                navigator.clipboard.writeText(publicFormUrl(form._id));
-                                notifications.show({ message: 'Link copied', color: 'emerald' });
-                              }}
-                            >
-                              Copy link
-                            </Menu.Item>
-                            <Menu.Divider />
-                            <Menu.Item
-                              leftSection={<IconCopyPlus size={15} />}
-                              disabled={duplicatingId === form._id}
-                              onClick={() => duplicateForm(form)}
-                            >
-                              Duplicate
-                            </Menu.Item>
-                            <Menu.Item
-                              leftSection={<IconClipboardCopy size={15} />}
-                              disabled={copyingConfigId === form._id}
-                              onClick={() => copyConfig(form)}
-                            >
-                              Copy config
-                            </Menu.Item>
-                            <Menu.Divider />
-                            <Menu.Item color="red" leftSection={<IconTrash size={15} />} onClick={() => setPendingDelete(form)}>
-                              Delete
-                            </Menu.Item>
-                          </Menu.Dropdown>
-                        </Menu>
-                        )}
-                      </Group>
-                    </div>
-                  </Card>
-                );
-              })}
-
-              {total > PAGE_SIZE && (
-                <Group justify="space-between" mt="sm">
-                  <Text size="xs" c="dimmed">
-                    Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
-                  </Text>
-                  <Pagination size="sm" total={Math.ceil(total / PAGE_SIZE)} value={page} onChange={setPage} />
-                </Group>
-              )}
-            </Stack>
-          )}
-        </div>
-      </Stack>
+      {isEmpty ? (
+        <FormListEmpty
+          filtered={list.isFiltered}
+          canCreate={!isDemo}
+          onClearFilters={() => list.setFilter({ q: '', status: 'all' })}
+          onCreate={startCreate}
+        />
+      ) : (
+        <FormList
+          forms={list.forms}
+          loading={list.loading}
+          total={list.total}
+          page={list.page}
+          onPage={list.setPage}
+          workspaceId={workspaceId}
+          isDemo={isDemo}
+          compact={compact}
+          duplicatingId={duplicatingId}
+          copyingConfigId={copyingConfigId}
+          actions={rowActions}
+        />
+      )}
 
       <NewFormModal
         opened={newFormOpen}
         onClose={() => setNewFormOpen(false)}
         onContinue={(name, scope) => {
           setNewFormOpen(false);
-          navigate(
-            `/${workspaceId}/forms/create?name=${encodeURIComponent(name)}&scope=${scope}`
-          );
+          navigate(`/${workspaceId}/forms/create?name=${encodeURIComponent(name)}&scope=${scope}`);
         }}
       />
 
@@ -607,7 +242,7 @@ export function FormListPage() {
           onClose={() => setSharing(null)}
           form={sharing}
           onStatusChange={(status) =>
-            setForms((prev) => prev.map((f) => (f._id === sharing._id ? { ...f, status } : f)))
+            list.setForms((prev) => prev.map((f) => (f._id === sharing._id ? { ...f, status } : f)))
           }
         />
       )}
@@ -619,39 +254,12 @@ export function FormListPage() {
         isDemo={isDemo}
       />
 
-      <Modal
-        opened={!!pendingDelete}
-        onClose={() => setPendingDelete(null)}
-        title="Delete form"
-        centered
-        radius="lg"
-      >
-        <Text size="sm">
-          Delete <strong>{pendingDelete?.name || pendingDelete?.title}</strong>? Its submissions stay in the database but the
-          form and its public link stop working.
-        </Text>
-        <Group justify="flex-end" mt="lg">
-          <Button variant="default" onClick={() => setPendingDelete(null)}>
-            Cancel
-          </Button>
-          <Button color="red" loading={deleting} onClick={confirmDelete}>
-            Delete
-          </Button>
-        </Group>
-      </Modal>
+      <DeleteFormModal
+        form={pendingDelete}
+        deleting={deleting}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+      />
     </Box>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className={classes.metric}>
-      <Text size="sm" fw={650} style={{ fontVariantNumeric: 'tabular-nums' }}>
-        {value}
-      </Text>
-      <Text size="xs" c="dimmed">
-        {label}
-      </Text>
-    </div>
   );
 }

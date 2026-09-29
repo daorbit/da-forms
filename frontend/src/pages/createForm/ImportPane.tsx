@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Button, Group, Stack, Text, Textarea } from '@mantine/core';
-import { IconClipboard } from '@tabler/icons-react';
+import { ClipboardIcon } from 'lucide-react';
 import classes from './createForm.module.css';
 
 interface Props {
@@ -89,7 +89,7 @@ export function ImportPane({ importing, error, onErrorChange, onImport }: Props)
             variant="light"
             color="gray"
             size="xs"
-            leftSection={<IconClipboard size={14} />}
+            leftSection={<ClipboardIcon size={14} />}
             onClick={pasteFromClipboard}
             disabled={importing}
           >

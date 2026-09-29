@@ -1,287 +1,87 @@
-/* Chrome colours follow the app's colour scheme; the stage stays its own
-   deliberate surface (see .stage). */
-/* Mantine's scroll container. Left to itself it scrolls the whole modal when
-   the content is a hair taller than the viewport; the modal is pinned instead
-   so the themes panel owns the only scrollbar. */
-.inner {
-  position: fixed;
-  inset: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-.content {
-  --preview-chrome: #16181d;
-  --preview-border: #24272e;
-  --preview-text: #f1f3f5;
-  --preview-dimmed: #868e96;
-  --preview-hover: #e9ecef;
-  --preview-track: #22252c;
-  --preview-active: #31353d;
-  --preview-active-text: #ffffff;
-  --preview-scrollbar: #3a3f48;
-  --preview-stage: radial-gradient(circle at 50% 0%, #1c2029 0%, #0f1115 60%);
-  --preview-heading: #ced4da;
-
-  display: flex;
-  flex-direction: column;
-  /* Pinned to the viewport so the modal itself never scrolls — the themes
-     panel owns the only scrollbar, and the stage stays put beside it. */
-  /* Mantine's full-screen preset sets --modal-content-max-height:auto, which
-     lets the section grow past the viewport and scroll the page with it. */
-  --modal-content-max-height: 100dvh;
-  --modal-content-height: 100dvh;
-  height: 100dvh !important;
-  max-height: 100dvh !important;
-  margin: 0;
-  overflow: hidden !important;
-  background-color: #0f1115;
-}
-
-:global(html[data-mantine-color-scheme='light']) .content {
-  --preview-chrome: #ffffff;
-  --preview-border: var(--mantine-color-gray-3);
-  --preview-text: var(--mantine-color-gray-9);
-  --preview-dimmed: var(--mantine-color-gray-6);
-  --preview-hover: var(--mantine-color-gray-9);
-  --preview-track: var(--mantine-color-gray-1);
-  --preview-active: var(--mantine-color-gray-3);
-  --preview-active-text: var(--mantine-color-gray-9);
-  --preview-scrollbar: var(--mantine-color-gray-4);
-  --preview-stage: radial-gradient(
-    circle at 50% 0%,
-    var(--mantine-color-gray-0) 0%,
-    var(--mantine-color-gray-2) 60%
-  );
-  --preview-heading: var(--mantine-color-gray-7);
-
-  background-color: var(--mantine-color-gray-0);
-}
-
-/* Sticky rather than merely first-in-flow: whatever a column does with its own
-   overflow, the device switcher and close button stay reachable. */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  height: 56px;
-  flex-shrink: 0;
-  padding: 0 16px;
-  background-color: var(--preview-chrome);
-  border-bottom: 1px solid var(--preview-border);
-}
-
-.topbarStart {
-  flex: 1;
-  min-width: 0;
-}
-
-.topbarEnd {
-  flex: 1;
-}
-
-.topbarTitle {
-  color: var(--preview-text);
-}
-
-
-.deviceGroup {
-  padding: 3px;
-  border-radius: var(--mantine-radius-md);
-  background-color: var(--preview-track);
-}
-
-.deviceButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 30px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--preview-dimmed);
-  font-size: 13px;
-  cursor: pointer;
-  transition:
-    background-color 120ms ease,
-    color 120ms ease;
-}
-
-.deviceButton:hover {
-  color: var(--preview-hover);
-}
-
-.deviceButtonActive {
-  background-color: var(--preview-active);
-  color: var(--preview-active-text);
-}
-
-.body {
-  flex: 1;
-  height: calc(100dvh - 56px);
-  max-height: calc(100dvh - 56px);
-  min-height: 0;
-  display: flex;
-  position: relative;
-  overflow: hidden;
-}
-
-/* The workbench the hardware sits on — a neutral surface a shade away from the
-   chrome so the form's own colours, whatever they are, read as the form's and
-   not the chrome's. */
-.stage {
-  flex: 1;
-  min-width: 0;
-  height: calc(100dvh - 56px);
-  max-height: calc(100dvh - 56px);
-  /* The frame is scaled to fit, so normally nothing overflows; on a short or
-     narrow screen the fit bottoms out and the stage scrolls like the panel
-     rather than clipping the device. */
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--preview-scrollbar) transparent;
-  display: flex;
-  justify-content: center;
-  padding: 24px;
-  background: var(--preview-stage);
-}
-
-.panel {
-  display: flex;
-  flex-direction: column;
-  width: 268px;
-  flex-shrink: 0;
-  /* Viewport minus the 56px topbar — the panel is its own scroll box and must
-     not grow the modal, whatever its parents do with height. */
-  height: calc(100dvh - 56px);
-  max-height: calc(100dvh - 56px);
-  overflow: hidden;
-  background-color: var(--preview-chrome);
-  border-left: 1px solid var(--preview-border);
-}
-
-/* Stays put while the preset grid scrolls under it. */
-.panelHeader {
-  flex-shrink: 0;
-  padding: 14px 14px 10px;
-  background-color: var(--preview-chrome);
-  border-bottom: 1px solid var(--preview-border);
-}
-
-.panelScroll {
-  flex: 1;
-  min-height: 0;
-  max-height: 100%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 12px 14px 16px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--preview-scrollbar) transparent;
-}
-
-.stage::-webkit-scrollbar,
-.panelScroll::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.stage::-webkit-scrollbar-thumb,
-.panelScroll::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
-  border-radius: 999px;
-  background-clip: content-box;
-  background-color: var(--preview-scrollbar);
-}
-
-.panelHeading {
-  color: var(--preview-heading);
-}
-
-.panelToggle {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 48px;
-  padding: 0;
-  transform: translateY(-50%);
-  border: 1px solid var(--preview-border);
-  border-right: none;
-  border-radius: 6px 0 0 6px;
-  background-color: var(--preview-chrome);
-  color: var(--preview-dimmed);
-  cursor: pointer;
-  transition: right 160ms ease;
-}
-
-.panelToggle[data-open='true'] {
-  right: 268px;
-}
-
-.panelToggle:hover {
-  color: var(--preview-text);
-}
-
 .presetGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px 12px;
 }
 
-.stagePhone {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+.applyBar {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow:
+    inset 0 0 0 1px var(--border),
+    0 18px 40px -16px rgba(0, 0, 0, 0.55);
+  transform: translateX(-50%);
+  animation: apply-bar-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  white-space: nowrap;
+}
+
+.applySwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.applyText {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.applyText strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.applyReset {
+  color: var(--text-2);
+}
+
+.applyReset:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+}
+
+@keyframes apply-bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+[data-motion='off'] .applyBar {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .applyBar {
+    animation: none;
+  }
 }
 
 @media (max-width: 48em) {
-  .topbar {
-    padding: 0 8px 0 14px;
-  }
-
-  .topbarEnd {
-    flex: 0 0 auto;
-  }
-
-  .body {
-    flex-direction: column;
-  }
-
-  .panel {
-    width: 100%;
-    height: auto;
-    max-height: none;
-    border-left: 0;
-    border-top: 1px solid var(--preview-border);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  .panelHeader {
-    padding: 10px 14px 6px;
-    border-bottom: 0;
-  }
-
-  .panelScroll {
-    flex: none;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 4px 14px 14px;
-  }
-
   .presetGrid {
     grid-auto-flow: column;
     grid-template-columns: none;
     grid-auto-columns: 112px;
+    overflow-x: auto;
+    padding-bottom: 4px;
   }
 
-  .panelToggle {
-    display: none;
+  .applyBar {
+    position: fixed;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   }
 }

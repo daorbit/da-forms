@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TextInput, Text } from '@mantine/core';
-import { IconSearch } from '@tabler/icons-react';
+import { SearchIcon } from 'lucide-react';
 import { fieldPalette, paletteKey } from '@/lib/fieldPalette';
 import { PaletteTile } from './PaletteTile';
 import type { FieldType } from '@/types';
@@ -55,7 +55,7 @@ export function FieldPalette({ onAdd }: Props) {
         <TextInput
           placeholder="Search"
           radius="md"
-          leftSection={<IconSearch size={15} />}
+          leftSection={<SearchIcon size={15} />}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

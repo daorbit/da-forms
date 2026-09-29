@@ -25,11 +25,11 @@ export function PageHeader({
         <div className={classes.main}>
           {leading}
           <div className={classes.text}>
-            <Title order={1} fz={24} lh={1.25} className={classes.title}>
+            <Title order={1} className={classes.title}>
               {title}
             </Title>
             {description && (
-              <Text c="dimmed" size="sm" mt={4}>
+              <Text c="dimmed" size="sm" mt={6}>
                 {description}
               </Text>
             )}

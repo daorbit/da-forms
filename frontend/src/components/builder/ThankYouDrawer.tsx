@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Textarea, TextInput } from '@mantine/core';
-import { IconCheck, IconCircleCheck, IconLink } from '@tabler/icons-react';
+import { CheckIcon, CircleCheckIcon, LinkIcon } from 'lucide-react';
 import { SettingsDrawer } from './settings/SettingsDrawer';
 import { SettingsGroup, SettingRow } from './settings/SettingsGroup';
 import { ChoiceCards } from './settings/ChoiceCards';
@@ -57,7 +57,7 @@ export function ThankYouDrawer({
       onClose={onClose}
       title="After submission"
       subtitle="What people see once they send the form."
-      icon={<IconCircleCheck size={18} stroke={1.7} />}
+      icon={<CircleCheckIcon size={18} strokeWidth={1.7} />}
     >
       <ChoiceCards ariaLabel="After submission" value={mode} onChange={changeMode} choices={MODES} />
 
@@ -77,7 +77,7 @@ export function ThankYouDrawer({
             <div className={classes.previewLabel}>Preview</div>
             <div className={classes.thanksCard}>
               <span className={classes.thanksIcon}>
-                <IconCheck size={20} stroke={3} />
+                <CheckIcon size={20} strokeWidth={3} />
               </span>
               <div className={classes.thanksText}>{thankYouMessage || DEFAULT_MESSAGE}</div>
             </div>
@@ -89,7 +89,7 @@ export function ThankYouDrawer({
             <TextInput
               value={redirectUrl}
               placeholder="https://example.com/thanks"
-              leftSection={<IconLink size={15} />}
+              leftSection={<LinkIcon size={15} />}
               onChange={(e) => onRedirectChange(e.target.value)}
               error={urlInvalid ? 'Start the address with https://' : undefined}
               aria-label="Redirect URL"

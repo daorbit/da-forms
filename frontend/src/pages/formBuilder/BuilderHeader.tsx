@@ -1,13 +1,13 @@
 import { AppShell, Group, Button, ThemeIcon, ActionIcon, Tooltip, Text, Skeleton, Burger, Badge, Divider } from '@mantine/core';
 import {
-  IconFileText,
-  IconEye,
-  IconEyeOff,
-  IconWorld,
-  IconArrowLeft,
-  IconArrowBackUp,
-  IconArrowForwardUp,
-} from '@tabler/icons-react';
+  ArrowLeftIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FileTextIcon,
+  GlobeIcon,
+  Redo2Icon,
+  Undo2Icon,
+} from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
 import type { Form } from '@/types';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
@@ -71,13 +71,13 @@ export function BuilderHeader({
               aria-label="Back to all forms"
               onClick={onBack}
             >
-              <IconArrowLeft size={19} />
+              <ArrowLeftIcon size={19} />
             </ActionIcon>
           </Tooltip>
           {/* The app icon is the host's job when embedded. */}
           {!embedded && (
             <ThemeIcon variant="light" color="gray" radius="sm">
-              <IconFileText size={18} />
+              <FileTextIcon size={18} />
             </ThemeIcon>
           )}
           {/* Read-only here — the name is set at creation and renamed from
@@ -92,7 +92,12 @@ export function BuilderHeader({
           {savedForm && (
             <Group gap={6} wrap="nowrap" visibleFrom="sm" className={classes.statusText}>
               {savedForm.status === 'published' && <span className={classes.liveDot} />}
-              <Text size="xs" c="dimmed" fw={600}>
+              <Text
+                size="xs"
+                c="dimmed"
+                fw={600}
+                className={savedForm.status === 'published' ? classes.liveStatusLabel : undefined}
+              >
                 {savedForm.status === 'published' ? 'Live' : 'Draft'}
               </Text>
             </Group>
@@ -117,7 +122,7 @@ export function BuilderHeader({
                 disabled={!canUndo}
                 onClick={undo}
               >
-                <IconArrowBackUp size={17} />
+                <Undo2Icon size={17} />
               </ActionIcon>
             </Tooltip>
             <Tooltip label="Redo (Ctrl+Y)" position="bottom" withArrow>
@@ -129,7 +134,7 @@ export function BuilderHeader({
                 disabled={!canRedo}
                 onClick={redo}
               >
-                <IconArrowForwardUp size={17} />
+                <Redo2Icon size={17} />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -141,7 +146,7 @@ export function BuilderHeader({
               aria-label="Preview"
               onClick={onPreview}
             >
-              <IconEye size={18} />
+              <EyeIcon size={18} />
             </ActionIcon>
           </Tooltip>
           <DocsButton path="/forms-advanced-fields" visibleFrom="sm" />
@@ -177,9 +182,9 @@ export function BuilderHeader({
                 className={classes.publishBtn}
                 leftSection={
                   savedForm?.status === 'published' ? (
-                    <IconEyeOff size={16} />
+                    <EyeOffIcon size={16} />
                   ) : (
-                    <IconWorld size={16} />
+                    <GlobeIcon size={16} />
                   )
                 }
                 onClick={onTogglePublish}

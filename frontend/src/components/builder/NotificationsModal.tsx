@@ -16,14 +16,14 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import {
-  IconX,
-  IconMail,
-  IconBellRinging,
-  IconChevronDown,
-  IconPlus,
-  IconAlertTriangle,
-  IconCheck,
-} from '@tabler/icons-react';
+  BellRingIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  MailIcon,
+  PlusIcon,
+  TriangleAlertIcon,
+  XIcon,
+} from 'lucide-react';
 import type { Editor } from '@tiptap/react';
 import { listApps } from '@/lib/api';
 import type { EmailLayout, FormField, FormTheme, NotificationSettings } from '@/types';
@@ -33,9 +33,9 @@ import classes from './NotificationsModal.module.css';
 
 type TabId = 'respondent' | 'owner';
 
-const TABS: { id: TabId; label: string; icon: typeof IconMail; color: string }[] = [
-  { id: 'respondent', label: 'Respondent email', icon: IconMail, color: '#0ca678' },
-  { id: 'owner', label: 'Notify me', icon: IconBellRinging, color: '#7048e8' },
+const TABS: { id: TabId; label: string; icon: typeof MailIcon; color: string }[] = [
+  { id: 'respondent', label: 'Respondent email', icon: MailIcon, color: '#0ca678' },
+  { id: 'owner', label: 'Notify me', icon: BellRingIcon, color: '#7048e8' },
 ];
 
 interface Props {
@@ -285,7 +285,7 @@ export function NotificationsModal({
         <Box className={classes.panel}>
           <Group gap="sm" px={20} py="md" wrap="nowrap" className={classes.panelHeader}>
             <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
-              <IconX size={18} />
+              <XIcon size={18} />
             </ActionIcon>
             <Divider orientation="vertical" my={6} />
             <Text fw={600}>Email Notifications</Text>
@@ -320,7 +320,7 @@ export function NotificationsModal({
               <Alert
                 color="orange"
                 variant="light"
-                icon={<IconAlertTriangle size={16} />}
+                icon={<TriangleAlertIcon size={16} />}
                 withCloseButton
                 onClose={() => setWarningHidden(true)}
                 closeButtonLabel="Dismiss"
@@ -390,7 +390,7 @@ export function NotificationsModal({
                           </div>
                           {/* Colour alone does not say which is chosen — the
                               accent can be any hue the host passes. */}
-                          {on && <IconCheck size={16} className={classes.layoutCheck} />}
+                          {on && <CheckIcon size={16} className={classes.layoutCheck} />}
                         </UnstyledButton>
                       );
                     })}
@@ -568,7 +568,7 @@ export function NotificationsModal({
                         data-unset={enabled && !respondentEmailField ? true : undefined}
                       >
                         {respondentEmailField?.label || 'Choose a field'}
-                        <IconChevronDown size={14} />
+                        <ChevronDownIcon size={14} />
                       </UnstyledButton>
                     </Menu.Target>
                     <Menu.Dropdown>
@@ -632,7 +632,7 @@ export function NotificationsModal({
                         variant="subtle"
                         size="xs"
                         color="gray"
-                        rightSection={<IconChevronDown size={13} />}
+                        rightSection={<ChevronDownIcon size={13} />}
                         disabled={!enabled || placeholderFields.length === 0}
                         onMouseDown={(e) => e.preventDefault()}
                       >
@@ -643,7 +643,7 @@ export function NotificationsModal({
                       {placeholderFields.map((f) => (
                         <Menu.Item
                           key={f.id}
-                          leftSection={<IconPlus size={13} />}
+                          leftSection={<PlusIcon size={13} />}
                           onClick={() => insertPlaceholder(f.label)}
                         >
                           {f.label || 'Untitled field'}

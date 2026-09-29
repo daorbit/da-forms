@@ -2,7 +2,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type D
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ActionIcon, Group, Paper, Stack, Text } from '@mantine/core';
-import { IconGripVertical, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import { ChevronDownIcon, ChevronUpIcon, GripVerticalIcon } from 'lucide-react';
 
 interface Props {
   options: string[];
@@ -74,7 +74,7 @@ function Row({
               onClick={() => onMove(index, index - 1)}
               aria-label={`Move ${option} up`}
             >
-              <IconChevronUp size={14} />
+              <ChevronUpIcon size={14} />
             </ActionIcon>
             <ActionIcon
               size="sm"
@@ -84,7 +84,7 @@ function Row({
               onClick={() => onMove(index, index + 1)}
               aria-label={`Move ${option} down`}
             >
-              <IconChevronDown size={14} />
+              <ChevronDownIcon size={14} />
             </ActionIcon>
             <ActionIcon
               size="sm"
@@ -95,7 +95,7 @@ function Row({
               {...listeners}
               aria-label={`Drag ${option}`}
             >
-              <IconGripVertical size={14} />
+              <GripVerticalIcon size={14} />
             </ActionIcon>
           </Group>
         )}

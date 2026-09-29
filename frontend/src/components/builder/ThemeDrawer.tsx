@@ -1,5 +1,5 @@
 import { SegmentedControl, Select, Slider, Tabs, Text } from '@mantine/core';
-import { IconPalette } from '@tabler/icons-react';
+import { PaletteIcon } from 'lucide-react';
 import type { BackgroundLayer, FontFamilyId, FormTheme } from '@/types';
 import { BackgroundEditor } from './BackgroundEditor';
 import { FONT_OPTIONS } from '@/lib/formBackground';
@@ -68,7 +68,7 @@ export function ThemeDrawer({ opened, onClose, theme, onChange }: Props) {
       onClose={onClose}
       title="Theme"
       subtitle="Colours, background and style of your form."
-      icon={<IconPalette size={18} stroke={1.7} />}
+      icon={<PaletteIcon size={18} strokeWidth={1.7} />}
     >
       <SettingsGroup title="Where will this form live?">
         <SettingRow stacked>

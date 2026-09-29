@@ -1,5 +1,5 @@
 import { Anchor, Button, Group, Text } from '@mantine/core';
-import { IconCheck, IconPlayerPause, IconPlugConnected } from '@tabler/icons-react';
+import { CheckIcon, PauseIcon, PlugIcon } from 'lucide-react';
 import { relativeTime } from '@/lib/relativeTime';
 import classes from './apps.module.css';
 import type { AppCard as AppCardData } from '@/types';
@@ -71,7 +71,7 @@ export function AppCard({ card, onOpen, busy = false }: Props) {
       <div className={classes.action}>
         {card.enabled ? (
           <Group gap={8} wrap="nowrap">
-            <IconCheck size={14} color="var(--mantine-color-teal-6)" style={{ flexShrink: 0 }} />
+            <CheckIcon size={14} color="var(--mantine-color-teal-6)" style={{ flexShrink: 0 }} />
             <Text size="xs" c="dimmed" truncate>
               {card.kind === 'webhook' ? 'On for this workspace' : 'Connected'}
               {lastUsed ? ` · last used ${relativeTime(lastUsed)}` : ''}
@@ -91,7 +91,7 @@ export function AppCard({ card, onOpen, busy = false }: Props) {
           </Group>
         ) : card.connected ? (
           <Group gap={8} wrap="nowrap">
-            <IconPlayerPause size={14} color="var(--mantine-color-yellow-6)" style={{ flexShrink: 0 }} />
+            <PauseIcon size={14} color="var(--mantine-color-yellow-6)" style={{ flexShrink: 0 }} />
             <Text size="xs" c="dimmed" truncate>
               Saved, but switched off
             </Text>
@@ -114,7 +114,7 @@ export function AppCard({ card, onOpen, busy = false }: Props) {
             <Button
               size="sm"
               loading={busy}
-              leftSection={<IconPlugConnected size={15} />}
+              leftSection={<PlugIcon size={15} />}
               onClick={() => onOpen(card)}
             >
               {card.kind === 'webhook' ? 'Turn on webhooks' : `Connect ${card.name}`}

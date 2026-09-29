@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Skeleton, Alert, Text } from '@mantine/core';
-import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
+import { InfoIcon, TriangleAlertIcon } from 'lucide-react';
 import classes from './apps.module.css';
 import { listApps, getPaymentSettings, getWebhookApp, saveWebhookApp, ApiError } from '@/lib/api';
 import type { AppCard as AppCardData, PaymentSettings, PaymentProvider } from '@/types';
@@ -135,13 +135,13 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
   return (
     <div>
       {isDemo && (
-        <Alert color="blue" variant="light" mb="lg" icon={<IconInfoCircle size={18} />}>
+        <Alert color="blue" variant="light" mb="lg" icon={<InfoIcon size={18} />}>
           Integrations are configured in your own workspace, not the demo.
         </Alert>
       )}
 
       {error && (
-        <Alert color="red" variant="light" mb="lg" icon={<IconAlertTriangle size={16} />}>
+        <Alert color="red" variant="light" mb="lg" icon={<TriangleAlertIcon size={16} />}>
           {error}
         </Alert>
       )}

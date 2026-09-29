@@ -1,5 +1,5 @@
 import { Box, Button, Group, Image, Modal, Stack, Text } from '@mantine/core';
-import { IconDownload, IconExternalLink } from '@tabler/icons-react';
+import { DownloadIcon, ExternalLinkIcon } from 'lucide-react';
 import { FileTypeIcon } from './fileTypeIcon';
 import classes from '../../../pages/EntriesPage.module.css';
 
@@ -56,10 +56,10 @@ export function AttachmentModal({ attachment, onClose }: { attachment: Attachmen
             )}
           </Box>
           <Group justify="flex-end" gap="sm">
-            <Button component="a" href={attachment.url} target="_blank" rel="noopener noreferrer" variant="default" leftSection={<IconExternalLink size={16} />}>
+            <Button component="a" href={attachment.url} target="_blank" rel="noopener noreferrer" variant="default" leftSection={<ExternalLinkIcon size={16} />}>
               Open in new tab
             </Button>
-            <Button component="a" href={attachment.url} download={attachment.name} color="emerald" leftSection={<IconDownload size={16} />}>
+            <Button component="a" href={attachment.url} download={attachment.name} color="emerald" leftSection={<DownloadIcon size={16} />}>
               Download
             </Button>
           </Group>

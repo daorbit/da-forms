@@ -1,5 +1,5 @@
 import { ActionIcon, Button, Stack, TextInput } from '@mantine/core';
-import { IconPlus, IconX } from '@tabler/icons-react';
+import { PlusIcon, XIcon } from 'lucide-react';
 
 interface Props {
   options: string[];
@@ -50,7 +50,7 @@ export function ChoiceEditor({ options, onChange }: Props) {
               aria-label={`Remove choice ${index + 1}`}
               onClick={() => remove(index)}
             >
-              <IconX size={15} />
+              <XIcon size={15} />
             </ActionIcon>
           }
         />
@@ -60,7 +60,7 @@ export function ChoiceEditor({ options, onChange }: Props) {
         variant="subtle"
         color="emerald"
         size="compact-sm"
-        leftSection={<IconPlus size={15} />}
+        leftSection={<PlusIcon size={15} />}
         onClick={() => onChange([...rows, ''])}
         style={{ alignSelf: 'flex-end' }}
       >

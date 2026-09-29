@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { notifications } from '@mantine/notifications';
 import { getForm } from '@/lib/api';
 import { getDemoForm } from '@/lib/demoWorkspace';
 import { cloneWithNewIds, findField } from '@/lib/fieldTree';
@@ -20,6 +19,7 @@ import type {
   FormSchedule,
 } from '@/types';
 import type { EditableState } from './types';
+import { notify } from '@/lib/notify';
 
 const DEFAULT_THANK_YOU = 'Thanks! Your response has been recorded.';
 
@@ -332,7 +332,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       })
       .catch(() => {
         setLoadingForm(false);
-        notifications.show({ message: 'Could not load this form', color: 'red' });
+        notify.error('Could not load this form');
         navigate(`/${workspaceId}/forms`);
       });
   }, [routeFormId, workspaceId, isDemo, navigate]);

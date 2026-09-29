@@ -1,5 +1,5 @@
 import { ActionIcon, Button, Group, Paper, Select, Stack, Switch, TextInput } from '@mantine/core';
-import { IconChevronDown, IconChevronUp, IconPlus, IconTrash } from '@tabler/icons-react';
+import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import type { FieldType, FormField } from '@/types';
 import { makeField, optionTypes, paletteByType, repeaterSubTypes } from '@/lib/fieldPalette';
 import { ChoiceEditor } from './ChoiceEditor';
@@ -51,7 +51,7 @@ export function RepeaterFieldsEditor({ subFields, onChange }: Props) {
               onChange={(e) => patch(index, { label: e.target.value })}
             />
             <ActionIcon variant="subtle" color="gray" onClick={() => move(index, index - 1)} disabled={index === 0} aria-label="Move up">
-              <IconChevronUp size={16} />
+              <ChevronUpIcon size={16} />
             </ActionIcon>
             <ActionIcon
               variant="subtle"
@@ -60,7 +60,7 @@ export function RepeaterFieldsEditor({ subFields, onChange }: Props) {
               disabled={index === subFields.length - 1}
               aria-label="Move down"
             >
-              <IconChevronDown size={16} />
+              <ChevronDownIcon size={16} />
             </ActionIcon>
             <ActionIcon
               variant="subtle"
@@ -69,7 +69,7 @@ export function RepeaterFieldsEditor({ subFields, onChange }: Props) {
               disabled={subFields.length <= 1}
               aria-label="Remove field"
             >
-              <IconTrash size={16} />
+              <Trash2Icon size={16} />
             </ActionIcon>
           </Group>
 
@@ -97,7 +97,7 @@ export function RepeaterFieldsEditor({ subFields, onChange }: Props) {
         </Paper>
       ))}
 
-      <Button variant="light" size="xs" leftSection={<IconPlus size={14} />} onClick={add}>
+      <Button variant="light" size="xs" leftSection={<PlusIcon size={14} />} onClick={add}>
         Add field
       </Button>
     </Stack>

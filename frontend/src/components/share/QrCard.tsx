@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Group, Skeleton, Text } from '@mantine/core';
-import { IconDownload } from '@tabler/icons-react';
+import { DownloadIcon } from 'lucide-react';
 import QRCode from 'qrcode';
 import classes from './ShareModal.module.css';
 
@@ -39,7 +39,7 @@ export function QrCard({ url, name }: { url: string; name: string }) {
           download={fileName}
           variant="default"
           size="xs"
-          leftSection={<IconDownload size={14} />}
+          leftSection={<DownloadIcon size={14} />}
           disabled={!dataUrl}
         >
           Download PNG

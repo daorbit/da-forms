@@ -4,6 +4,7 @@ import { findPaymentField, paymentFieldProblem, paymentStepProblem } from '@/lib
 import type { PaymentSettings } from '@/types';
 import type { RailPanel } from '@/components/builder/IconRail';
 import type { FormBuilderState } from './useFormBuilderState';
+import { notify } from '@/lib/notify';
 
 interface Params {
   state: FormBuilderState;
@@ -73,11 +74,11 @@ export function useFormPersistence({
     setSaving(true);
     try {
       const form = await saveForm();
-      notifications.show({ message: 'Form saved', color: 'emerald' });
+      notify.success('Form saved');
       if (!state.savedFormId) setShareOpen(true);
       return form;
     } catch {
-      notifications.show({ message: 'Could not save form', color: 'red' });
+      notify.error('Could not save form');
       return undefined;
     } finally {
       setSaving(false);
@@ -93,21 +94,16 @@ export function useFormPersistence({
       const problem =
         paymentFieldProblem(payField, state.fields) ?? paymentStepProblem(state.fields);
       if (problem) {
-        notifications.show({
-          title: 'Fix the payment field first',
-          message: problem,
-          color: 'orange',
-        });
+        notify.warn(problem, 'Fix the payment field first');
         state.setSelectedId(payField.id);
         state.setEditingId(payField.id);
         return;
       }
       if (!paymentSettings?.enabled) {
-        notifications.show({
-          title: 'Payments are switched off',
-          message: 'Connect Razorpay and turn payments on, or this form cannot charge anyone.',
-          color: 'orange',
-        });
+        notify.warn(
+          'Connect Razorpay and turn payments on, or this form cannot charge anyone.',
+          'Payments are switched off',
+        );
         setRailPanel('payments');
         return;
       }
@@ -120,12 +116,10 @@ export function useFormPersistence({
       const nextStatus = base.status === 'published' ? 'draft' : 'published';
       const updated = await updateForm(base._id, { status: nextStatus }, workspaceId);
       state.setSavedForm(updated);
-      notifications.show({
-        message: nextStatus === 'published' ? 'Form published' : 'Form moved back to draft',
-        color: nextStatus === 'published' ? 'emerald' : 'gray',
-      });
+      if (nextStatus === 'published') notify.success('Form published');
+      else notify.info('Form moved back to draft');
     } catch {
-      notifications.show({ message: 'Could not update publish status', color: 'red' });
+      notify.error('Could not update publish status');
     } finally {
       setPublishing(false);
     }

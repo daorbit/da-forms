@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Modal, Box } from '@mantine/core';
+import { Button } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
+import { PaletteIcon } from 'lucide-react';
 import type {
   FormField,
   FormStep,
@@ -13,12 +14,14 @@ import type {
 } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
+import { StudioModal, studioClasses } from '@/components/studio/StudioModal';
+import { StudioTopbar } from '@/components/studio/StudioTopbar';
 import { THEME_PRESETS } from '@/lib/themes';
 import { useFitScale } from '@/hooks/useFitScale';
 import { DeviceFrame, frameSize, type DeviceId } from './DeviceFrame';
-import { PreviewTopbar } from './PreviewTopbar';
+import { DeviceSwitch } from './DeviceSwitch';
 import { PreviewThemePanel } from './PreviewThemePanel';
-import classes from './PreviewModal.module.css';
+import { PreviewApplyBar } from './PreviewApplyBar';
 
 const PHONE_QUERY = '(max-width: 48em)';
 
@@ -39,19 +42,9 @@ interface Props {
   steps?: FormStep[];
   stepIndicator?: StepIndicator;
   showStepHeadings?: boolean;
-  /** Applies a preset's colors straight to the builder's theme state. */
   onApplyTheme?: (patch: Partial<FormTheme>) => void;
 }
 
-/**
- * Shows exactly what respondents see, rendered from the editor's current
- * state — so unsaved changes are previewable without a round trip.
- *
- * The page renders inside a hardware frame at the device's true CSS width and
- * is then scaled to fit the stage, rather than being squeezed into whatever
- * width the modal has: a phone layout has to stay a phone layout for the
- * preview to be worth trusting.
- */
 export function PreviewModal({
   opened,
   onClose,
@@ -76,7 +69,6 @@ export function PreviewModal({
   const [panelOpen, setPanelOpen] = useState(() => !window.matchMedia?.(PHONE_QUERY).matches);
   const [pickedId, setPickedId] = useState<string | null>(null);
 
-  // A picked preset is previewed here only; Apply is what reaches the builder.
   useEffect(() => {
     if (!opened) setPickedId(null);
   }, [opened]);
@@ -85,10 +77,9 @@ export function PreviewModal({
   const { ref: stageRef, scale, measured } = useFitScale({
     contentWidth: size.width,
     contentHeight: size.height,
-    padding: { x: 64, y: 64 },
+    padding: { x: 80, y: 88 },
   });
 
-  // A preset is "current" when the theme still matches every color it sets.
   const currentPreset = THEME_PRESETS.find((p) =>
     (Object.keys(p.theme) as (keyof typeof p.theme)[]).every((k) => theme?.[k] === p.theme[k])
   );
@@ -97,6 +88,18 @@ export function PreviewModal({
   const shownTheme: FormTheme | undefined = picked
     ? { ...theme, ...picked.theme, scope: theme?.scope ?? 'page' }
     : theme;
+  const showThemes = Boolean(onApplyTheme) && panelOpen;
+
+  const applyBar = picked && onApplyTheme && (
+    <PreviewApplyBar
+      preset={picked}
+      onReset={() => setPickedId(null)}
+      onApply={() => {
+        onApplyTheme(picked.theme);
+        setPickedId(null);
+      }}
+    />
+  );
 
   const page = (
     <FormPage theme={shownTheme} minHeight="100%">
@@ -121,57 +124,49 @@ export function PreviewModal({
   );
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      fullScreen
-      withCloseButton={false}
-      padding={0}
-      transitionProps={{ transition: 'fade', duration: 150 }}
-      classNames={{ content: classes.content, inner: classes.inner }}
-      styles={{
-        body: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-      }}
-    >
-      <PreviewTopbar
-        title={title}
-        device={device}
-        onDeviceChange={setDevice}
-        pickedName={picked?.name}
-        onApply={
-          picked && onApplyTheme
-            ? () => {
-                onApplyTheme(picked.theme);
-                setPickedId(null);
-              }
-            : undefined
-        }
+    <StudioModal opened={opened} onClose={onClose}>
+      <StudioTopbar
+        title={title || 'Untitled form'}
+        subtitle="Preview"
         onClose={onClose}
-        compact={phone}
-        themesOpen={panelOpen}
-        onToggleThemes={onApplyTheme ? () => setPanelOpen((v) => !v) : undefined}
+        center={<DeviceSwitch device={device} onChange={setDevice} />}
+        actions={
+          onApplyTheme && (
+            <Button
+              variant="transparent"
+              className={studioClasses.pillButton}
+              data-active={panelOpen || undefined}
+              leftSection={<PaletteIcon size={15} />}
+              onClick={() => setPanelOpen((v) => !v)}
+            >
+              Themes
+            </Button>
+          )
+        }
       />
 
-      <Box className={classes.body}>
+      <div className={studioClasses.body}>
         {phone ? (
-          <Box className={classes.stagePhone}>{page}</Box>
+          <div className={studioClasses.stageScroll}>
+            {page}
+            {applyBar}
+          </div>
         ) : (
-          <Box className={classes.stage} ref={stageRef}>
+          <div className={studioClasses.stage} ref={stageRef}>
             <DeviceFrame device={device} scale={scale} hidden={!measured}>
               {page}
             </DeviceFrame>
-          </Box>
+            {applyBar}
+          </div>
         )}
 
-        {onApplyTheme && (
+        {showThemes && (
           <PreviewThemePanel
-            open={panelOpen}
-            onToggle={() => setPanelOpen((v) => !v)}
             selectedId={pickedId ?? currentPreset?.id}
             onSelect={(id) => setPickedId(id === pickedId ? null : id)}
           />
         )}
-      </Box>
-    </Modal>
+      </div>
+    </StudioModal>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, CloseButton, Group, Modal, Text } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { ArrowLeftIcon } from 'lucide-react';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { type DeviceId } from '@/components/builder/DeviceFrame';
 import { formTemplates } from '@/lib/templates';
@@ -102,7 +102,7 @@ export function CreateFormPage() {
             variant="subtle"
             color="gray"
             radius="xl"
-            leftSection={<IconArrowLeft size={16} />}
+            leftSection={<ArrowLeftIcon size={16} />}
             onClick={handleBack}
             disabled={creation.creating || creation.importing || orbit.generating}
           >

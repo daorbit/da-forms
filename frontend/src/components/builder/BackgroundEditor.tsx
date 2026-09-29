@@ -14,12 +14,12 @@ import {
   TextInput,
   Tooltip,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import { IconTrash, IconUpload } from '@tabler/icons-react';
+import { Trash2Icon, UploadIcon } from 'lucide-react';
 import type { BackgroundLayer, BackgroundPosition, BackgroundSize } from '@/types';
 import { GRADIENT_PRESETS } from '@/lib/formBackground';
 import { uploadBackgroundImage } from '@/lib/api';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
+import { notify } from '@/lib/notify';
 
 interface Props {
   layer: BackgroundLayer;
@@ -73,7 +73,7 @@ export function BackgroundEditor({ layer, onChange, allowFixed }: Props) {
   async function handleFile(file: File | undefined) {
     if (!file) return;
     if (file.size > MAX_UPLOAD_BYTES) {
-      notifications.show({ message: 'Background image must be under 15MB', color: 'red' });
+      notify.error('Background image must be under 15MB');
       return;
     }
     setUploading(true);
@@ -81,7 +81,7 @@ export function BackgroundEditor({ layer, onChange, allowFixed }: Props) {
       const { url } = await uploadBackgroundImage(file, workspaceId);
       onChange({ image: url, gradient: undefined, size: layer.size ?? 'cover' });
     } catch {
-      notifications.show({ message: 'Could not upload the image', color: 'red' });
+      notify.error('Could not upload the image');
     } finally {
       setUploading(false);
       if (fileInput.current) fileInput.current.value = '';
@@ -150,7 +150,7 @@ export function BackgroundEditor({ layer, onChange, allowFixed }: Props) {
           <Group gap="xs" wrap="nowrap">
             <Button
               variant="light"
-              leftSection={<IconUpload size={16} />}
+              leftSection={<UploadIcon size={16} />}
               loading={uploading}
               onClick={() => fileInput.current?.click()}
             >
@@ -159,7 +159,7 @@ export function BackgroundEditor({ layer, onChange, allowFixed }: Props) {
             {layer.image && (
               <Tooltip label="Remove image" withArrow>
                 <ActionIcon variant="subtle" color="red" onClick={() => onChange({ image: undefined })}>
-                  <IconTrash size={16} />
+                  <Trash2Icon size={16} />
                 </ActionIcon>
               </Tooltip>
             )}

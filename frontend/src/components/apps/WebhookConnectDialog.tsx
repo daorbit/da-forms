@@ -16,14 +16,14 @@ import {
   ActionIcon,
 } from '@mantine/core';
 import {
-  IconX,
-  IconAlertTriangle,
-  IconCircleCheck,
-  IconCircleDashed,
-  IconCircleX,
-  IconPlugConnected,
-  IconPlugConnectedX,
-} from '@tabler/icons-react';
+  CircleCheckIcon,
+  CircleDashedIcon,
+  CircleXIcon,
+  PlugIcon,
+  TriangleAlertIcon,
+  UnplugIcon,
+  XIcon,
+} from 'lucide-react';
 import type { WebhookSettings } from '@/types';
 import { getWebhookApp } from '@/lib/api';
 import { AppLogo } from './AppLogos';
@@ -140,11 +140,11 @@ export function WebhookConnectDialog({
                   <Group key={c.label} gap="sm" wrap="nowrap">
                     {c.done ? (
                       <ThemeIcon color="teal" size="sm" radius="xl" variant="light">
-                        <IconCircleCheck size={14} />
+                        <CircleCheckIcon size={14} />
                       </ThemeIcon>
                     ) : (
                       <ThemeIcon color="gray" size="sm" radius="xl" variant="light">
-                        <IconCircleDashed size={14} />
+                        <CircleDashedIcon size={14} />
                       </ThemeIcon>
                     )}
                     <Text size="sm" c={c.done ? undefined : 'dimmed'}>
@@ -157,9 +157,9 @@ export function WebhookConnectDialog({
               {webhook.lastAttemptAt && (
                 <Group gap={6} wrap="nowrap" mt="md">
                   {webhook.lastStatus === 'ok' ? (
-                    <IconCircleCheck size={14} color="var(--mantine-color-teal-6)" />
+                    <CircleCheckIcon size={14} color="var(--mantine-color-teal-6)" />
                   ) : (
-                    <IconCircleX size={14} color="var(--mantine-color-red-6)" />
+                    <CircleXIcon size={14} color="var(--mantine-color-red-6)" />
                   )}
                   <Text size="xs" c="dimmed">
                     Last delivery {webhook.lastStatus === 'ok' ? 'succeeded' : 'failed'} ·{' '}
@@ -182,7 +182,7 @@ export function WebhookConnectDialog({
             <Group px={28} className={classes.paneHeader} align="center" justify="space-between">
               <Text fw={600}>Connect webhook — {formName}</Text>
               <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
-                <IconX size={18} />
+                <XIcon size={18} />
               </ActionIcon>
             </Group>
 
@@ -199,7 +199,7 @@ export function WebhookConnectDialog({
                     <Alert
                       variant="light"
                       color="orange"
-                      icon={<IconPlugConnectedX size={16} />}
+                      icon={<UnplugIcon size={16} />}
                       title="Webhooks are off for this workspace"
                     >
                       <Stack gap="sm">
@@ -275,7 +275,7 @@ export function WebhookConnectDialog({
                       </Button>
                     )}
                     <Button
-                      leftSection={<IconPlugConnected size={16} />}
+                      leftSection={<PlugIcon size={16} />}
                       onClick={() => save(true)}
                       disabled={!url.trim() || appEnabled === false}
                     >
@@ -283,7 +283,7 @@ export function WebhookConnectDialog({
                     </Button>
                   </Group>
 
-                  <Alert variant="light" color="gray" icon={<IconAlertTriangle size={16} />}>
+                  <Alert variant="light" color="gray" icon={<TriangleAlertIcon size={16} />}>
                     Delivery is fire-and-forget — it never blocks a respondent&apos;s submit, and
                     there is no retry queue behind it. The status above reflects only the most
                     recent attempt.

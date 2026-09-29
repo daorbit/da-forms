@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Box, Text, Group, Stack, Skeleton } from '@mantine/core';
 import { AreaChart, Area, ResponsiveContainer, YAxis } from 'recharts';
-import type { Icon as TablerIcon } from '@tabler/icons-react';
+import type { LucideIcon } from 'lucide-react';
 import classes from './StatTile.module.css';
 
  
@@ -33,7 +33,7 @@ export function StatTile({
   accent,
   spark,
 }: {
-  icon: TablerIcon;
+  icon: LucideIcon;
   label: string;
   value: string;
   accent?: string;

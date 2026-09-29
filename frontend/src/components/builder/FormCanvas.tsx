@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
-import { IconTrash, IconSettings, IconCopyPlus, IconEyeOff, IconPlus } from '@tabler/icons-react';
+import { CopyPlusIcon, EyeOffIcon, PlusIcon, SettingsIcon, Trash2Icon } from 'lucide-react';
 import type { FormField, FormTheme, SubmitButtonAlign } from '@/types';
 import { staticTypes } from '@/lib/fieldPalette';
 import { FieldControl } from '@/components/FieldControl';
@@ -150,7 +150,7 @@ export function FormCanvas({
               }}
               aria-label="Field settings"
             >
-              <IconSettings size={16} />
+              <SettingsIcon size={16} />
             </ActionIcon>
           )}
           <ActionIcon
@@ -165,7 +165,7 @@ export function FormCanvas({
             }}
             aria-label="Duplicate field"
           >
-            <IconCopyPlus size={16} />
+            <CopyPlusIcon size={16} />
           </ActionIcon>
           {/* The toolbar sits inside the light-surface wrapper that pins the
               form's own palette, so the icon colour is stated outright rather
@@ -182,7 +182,7 @@ export function FormCanvas({
             }}
             aria-label="Delete field"
           >
-            <IconTrash size={16} />
+            <Trash2Icon size={16} />
           </ActionIcon>
         </Stack>
       </SortableField>
@@ -247,7 +247,7 @@ export function FormCanvas({
                         size="lg"
                         onClick={onOpenFormSettings}
                       >
-                        <IconSettings size={16} />
+                        <SettingsIcon size={16} />
                       </ActionIcon>
                     </Tooltip>
                     <Tooltip label="Hide header" position="left" withArrow>
@@ -258,7 +258,7 @@ export function FormCanvas({
                         size="lg"
                         onClick={onHideHeader}
                       >
-                        <IconEyeOff size={16} />
+                        <EyeOffIcon size={16} />
                       </ActionIcon>
                     </Tooltip>
                   </Stack>
@@ -279,7 +279,7 @@ export function FormCanvas({
                     // somewhere to aim rather than as a notice about absence.
                     <Box className={classes.emptyState}>
                       <div className={classes.emptyIcon}>
-                        <IconPlus size={20} />
+                        <PlusIcon size={20} />
                       </div>
                       <Text size="sm" fw={500} mt="sm">
                         Drag a field here

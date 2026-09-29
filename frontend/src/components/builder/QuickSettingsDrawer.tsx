@@ -1,5 +1,5 @@
 import { NumberInput, SegmentedControl, TextInput } from '@mantine/core';
-import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
+import { SlidersHorizontalIcon } from 'lucide-react';
 import type {
   LabelPlacement,
   SubmitButtonSize,
@@ -45,7 +45,7 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange, accen
       onClose={onClose}
       title="Quick settings"
       subtitle="Changes apply to the form as you make them."
-      icon={<IconAdjustmentsHorizontal size={18} stroke={1.7} />}
+      icon={<SlidersHorizontalIcon size={18} strokeWidth={1.7} />}
     >
       <SettingsGroup title="Layout">
         <SwitchRow

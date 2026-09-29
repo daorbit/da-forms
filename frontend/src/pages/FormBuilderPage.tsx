@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { AppShell, Stack, Skeleton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
 import { getPaymentSettings } from '@/lib/api';
 import { findPaymentField } from '@/lib/payment';
 import { isDemoWorkspace } from '@/lib/demoWorkspace';
@@ -30,6 +29,7 @@ import { useAiRevision } from './formBuilder/useAiRevision';
 import { BuilderHeader } from './formBuilder/BuilderHeader';
 import { BuilderDrawers } from './formBuilder/BuilderDrawers';
 import classes from './FormBuilderPage.module.css';
+import { notify } from '@/lib/notify';
 
 export function FormBuilderPage() {
   const location = useLocation();
@@ -96,15 +96,11 @@ export function FormBuilderPage() {
       return;
     }
     if (isDemo) {
-      notifications.show({
-        message:
-          'Sample forms have no share link — create a form in your own workspace to embed it',
-        color: 'yellow',
-      });
+      notify.warn('Sample forms have no share link — create a form in your own workspace to embed it');
       return;
     }
     if (!state.savedFormId) {
-      notifications.show({ message: 'Save the form first to get its embed code', color: 'yellow' });
+      notify.warn('Save the form first to get its embed code');
       return;
     }
     setShareOpen(true);

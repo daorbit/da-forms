@@ -3,7 +3,7 @@ import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestC
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Badge, Box, Group, Paper, ScrollArea, Stack, Text } from '@mantine/core';
-import { IconGripVertical } from '@tabler/icons-react';
+import { GripVerticalIcon } from 'lucide-react';
 import type { FormField, Submission } from '@/types';
 import { parseRepeaterRows } from '@/lib/repeater';
 
@@ -58,7 +58,7 @@ function Card({ submission, primaryField }: { submission: Submission; primaryFie
               : submission.data[primaryField.id] || 'Untitled entry'
             : 'Entry'}
         </Text>
-        <IconGripVertical size={14} color="var(--mantine-color-gray-5)" />
+        <GripVerticalIcon size={14} color="var(--mantine-color-gray-5)" />
       </Group>
       <Text size="xs" c="dimmed">
         {formatDateTime(submission.createdAt)}

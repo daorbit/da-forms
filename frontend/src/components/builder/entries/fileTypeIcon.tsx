@@ -1,4 +1,4 @@
-import { IconEye } from '@tabler/icons-react';
+import { EyeIcon } from 'lucide-react';
 import { FileIcon, defaultStyles, type DefaultExtensionType } from 'react-file-icon';
 
 function extensionOf(fileName: string): string {
@@ -26,7 +26,7 @@ export function FileTypeIcon({
       <FileIcon extension={ext} {...style} />
       {previewable && (
         <span className="fileTypeIcon-hoverEye">
-          <IconEye size={Math.round(size * 0.5)} color="#fff" />
+          <EyeIcon size={Math.round(size * 0.5)} color="#fff" />
         </span>
       )}
     </span>

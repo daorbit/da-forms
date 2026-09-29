@@ -10,7 +10,7 @@ import {
   type ICellRendererParams,
 } from 'ag-grid-community';
 import { Button, Group, Stack, Text, ThemeIcon, useComputedColorScheme } from '@mantine/core';
-import { IconMailOpened, IconShare2 } from '@tabler/icons-react';
+import { MailOpenIcon, Share2Icon } from 'lucide-react';
 import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
 import { parseRepeaterRows } from '@/lib/repeater';
@@ -210,7 +210,7 @@ export function EntriesExcel({
     return (
       <Stack align="center" gap={4} py="xl">
         <ThemeIcon variant="light" color="gray" size={44} radius="xl">
-          <IconMailOpened size={22} />
+          <MailOpenIcon size={22} />
         </ThemeIcon>
         <Text fw={600} size="sm">
           No responses yet
@@ -223,7 +223,7 @@ export function EntriesExcel({
           color="emerald"
           size="xs"
           mt="xs"
-          leftSection={<IconShare2 size={14} />}
+          leftSection={<Share2Icon size={14} />}
           onClick={onCopyShareLink}
         >
           Copy share link

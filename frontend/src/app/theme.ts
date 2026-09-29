@@ -1,8 +1,29 @@
-import { ActionIcon, Button, createTheme, rem } from '@mantine/core';
+import { ActionIcon, Badge, Button, createTheme, rem, type MantineColorsTuple } from '@mantine/core';
 
- 
+const NEUTRAL_BADGE_COLORS = ['gray', 'dark'];
+const NEUTRAL_RAMP: MantineColorsTuple = [
+  '#f5f5f5',
+  '#d4d4d4',
+  '#a3a3a3',
+  '#737373',
+  '#525252',
+  '#3a3a3a',
+  '#292929',
+  '#1c1c1c',
+  '#111111',
+  '#000000',
+];
+
+function badgeTextColor(color: string | undefined, themeColors: Record<string, unknown>): string {
+  if (!color) return 'var(--mantine-color-emerald-text)';
+  if (NEUTRAL_BADGE_COLORS.includes(color)) return 'var(--mantine-color-dimmed)';
+  const [name] = color.split('.');
+  return name in themeColors ? `var(--mantine-color-${name}-text)` : color;
+}
+
 export const theme = createTheme({
   primaryColor: 'emerald',
+  black: '#0a0b0d',
   primaryShade: { light: 6, dark: 5 },
   fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
   fontFamilyMonospace: "ui-monospace, 'SF Mono', Menlo, monospace",
@@ -18,31 +39,10 @@ export const theme = createTheme({
   defaultRadius: 'md',
   cursorType: 'pointer',
   colors: {
-    emerald: [
-      '#f0fdfa',
-      '#ccfbf1',
-      '#99f6e4',
-      '#5eead4',
-      '#2dd4bf',
-      '#14b8a6',
-      '#0d9488',
-      '#0f766e',
-      '#115e59',
-      '#134e4a',
-    ],
- 
-    dark: [
-      '#f5f5f5',
-      '#d4d4d4',
-      '#a3a3a3',
-      '#737373',
-      '#3a3a3a',
-      '#292929',
-      '#1c1c1c',
-      '#161616',
-      '#111111',
-      '#000000',
-    ],
+    emerald: NEUTRAL_RAMP,
+    green: NEUTRAL_RAMP,
+    teal: NEUTRAL_RAMP,
+    dark: NEUTRAL_RAMP,
   },
   shadows: {
     md: '0 8px 24px -8px rgba(0,0,0,0.45)',
@@ -123,6 +123,67 @@ export const theme = createTheme({
       styles: { message: { color: 'var(--mantine-color-text)' } },
     },
     Loader: { defaultProps: { type: 'oval' } },
+    Skeleton: { defaultProps: { className: 'skeleton-shimmer' } },
+    Badge: Badge.extend({
+      vars: (theme, props) => ({
+        root: {
+          '--badge-bg': 'transparent',
+          '--badge-bd': 'none',
+          '--badge-radius': '0',
+          '--badge-color': badgeTextColor(props.color, theme.colors),
+        },
+      }),
+      styles: {
+        root: {
+          paddingInline: 0,
+          textTransform: 'none',
+          fontWeight: 650,
+          height: 'auto',
+          lineHeight: 1.35,
+          letterSpacing: '0.01em',
+          fontVariantNumeric: 'tabular-nums',
+        },
+      },
+    }),
+    Switch: {
+      vars: () => ({
+        root: {
+          '--switch-bg': 'var(--surface-2)',
+          '--switch-bd': '1px solid var(--border)',
+          '--switch-thumb-bg': 'var(--control-thumb, var(--text))',
+        },
+      }),
+    },
+    Checkbox: {
+      vars: () => ({
+        root: {
+          '--checkbox-bd': '1px solid var(--border)',
+        },
+      }),
+    },
+    Radio: {
+      vars: () => ({
+        root: {
+          '--radio-bd': '1px solid var(--border)',
+        },
+      }),
+    },
+    Modal: {
+      defaultProps: {
+        radius: 24,
+        centered: true,
+        overlayProps: { backgroundOpacity: 0.5, blur: 8 },
+        transitionProps: { transition: 'pop', duration: 200 },
+      },
+    },
+    Menu: {
+      defaultProps: {
+        radius: 14,
+        shadow: 'lg',
+        transitionProps: { transition: 'pop', duration: 140 },
+      },
+    },
+    Popover: { defaultProps: { radius: 14, shadow: 'lg' } },
     Card: { defaultProps: { radius: 'md' } },
     Button: Button.extend({
       defaultProps: { radius: 'md' },
@@ -155,6 +216,7 @@ export const theme = createTheme({
     Paper: { defaultProps: { radius: 'md' } },
     Input: { defaultProps: { radius: 8 } },
     TextInput: { defaultProps: { radius: 8 } },
+    PasswordInput: { defaultProps: { radius: 8 } },
     Select: { defaultProps: { radius: 8 } },
     Textarea: { defaultProps: { radius: 8 } },
     NumberInput: { defaultProps: { radius: 8 } },

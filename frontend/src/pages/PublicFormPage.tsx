@@ -8,7 +8,7 @@ import {
   Button,
   ThemeIcon,
 } from '@mantine/core';
-import { IconCheck, IconClockPause } from '@tabler/icons-react';
+import { CheckIcon, CirclePauseIcon } from 'lucide-react';
 import { notifications } from '@mantine/notifications';
 import {
   getPublicForm,
@@ -31,6 +31,7 @@ import { PoweredBy } from '@/components/public/PoweredBy';
 import { BrandHeader } from '@/components/public/BrandHeader';
 import { FormPage } from '@/components/FormPage';
 import { FormLoader } from '@/components/FormLoader';
+import { notify } from '@/lib/notify';
 
 function prefillFrom(form: Form | null, values: Record<string, string>) {
   if (!form) return {};
@@ -146,17 +147,11 @@ export function PublicFormPage() {
     if (!orderId) return;
 
     if (hinted === "failed") {
-      notifications.show({
-        message: "The payment did not go through. Nothing was charged — you can try again.",
-        color: "red",
-      });
+      notify.error("The payment did not go through. Nothing was charged — you can try again.");
       return;
     }
     if (hinted === "error") {
-      notifications.show({
-        message: "This form cannot take payments right now. Please try again later.",
-        color: "red",
-      });
+      notify.error("This form cannot take payments right now. Please try again later.");
       return;
     }
 
@@ -196,22 +191,15 @@ export function PublicFormPage() {
         return true;
       } catch (e) {
         setSubmitting(false);
-        notifications.show({
-          message:
-            e instanceof ApiError
-              ? e.message
-              : "Could not save your changes. Please try again.",
-          color: "red",
-        });
+        notify.error(
+          e instanceof ApiError ? e.message : "Could not save your changes. Please try again.",
+        );
         return false;
       }
     }
 
     if (isPreview) {
-      notifications.show({
-        message: 'Preview — nothing was submitted and no payment was taken.',
-        color: 'blue',
-      });
+      notify.info('Preview — nothing was submitted and no payment was taken.');
       setSubmitted(true);
       return true;
     }
@@ -236,10 +224,7 @@ export function PublicFormPage() {
         const outcome = await openGatewayCheckout(result, prefillFrom(form, values));
         if (!outcome.ok) {
           setSubmitting(false);
-          notifications.show({
-            message: outcome.reason ?? "Payment was not completed.",
-            color: "red",
-          });
+          notify.error(outcome.reason ?? "Payment was not completed.");
           return false;
         }
         const confirmed = await waitForPayment(() =>
@@ -261,7 +246,7 @@ export function PublicFormPage() {
       setSubmitting(false);
       if (e instanceof ApiError && e.code === "phone_required") {
         getPublicForm(id).then(setForm);
-        notifications.show({ message: e.message, color: "orange" });
+        notify.warn(e.message);
         return false;
       }
       if (
@@ -272,7 +257,7 @@ export function PublicFormPage() {
           e.code === "invalid_amount" ||
           e.code === "payment_unavailable")
       ) {
-        notifications.show({ message: e.message, color: "red" });
+        notify.error(e.message);
         return false;
       }
 
@@ -316,7 +301,7 @@ export function PublicFormPage() {
         <Container size="xs" px="md" style={{ width: "100%", textAlign: "center" }}>
           <Center>
             <ThemeIcon size={64} radius="xl" color="gray" variant="light">
-              <IconClockPause size={30} stroke={1.8} />
+              <CirclePauseIcon size={30} strokeWidth={1.8} />
             </ThemeIcon>
           </Center>
           <Text
@@ -352,7 +337,7 @@ export function PublicFormPage() {
         >
           <Center>
             <ThemeIcon size={64} radius="xl" color="gray" variant="light">
-              <IconClockPause size={30} stroke={1.8} />
+              <CirclePauseIcon size={30} strokeWidth={1.8} />
             </ThemeIcon>
           </Center>
           <Text
@@ -403,7 +388,7 @@ export function PublicFormPage() {
               variant="filled"
               style={accent ? { backgroundColor: accent } : undefined}
             >
-              <IconCheck size={30} stroke={3} />
+              <CheckIcon size={30} strokeWidth={3} />
             </ThemeIcon>
           </Center>
           <Text

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { notifications } from '@mantine/notifications';
 import { ApiError, createForm, importFormConfig } from '@/lib/api';
 import { isPlanLimit } from '@/lib/planLimit';
 import { formTemplates } from '@/lib/templates';
 import type { Draft, Scope } from './types';
+import { notify } from '@/lib/notify';
 
 type Template = (typeof formTemplates)[number];
 
@@ -27,7 +27,7 @@ export function useFormCreation({ workspaceId, formName, scope }: Options) {
   function reportFailure(err: unknown) {
     setCreating(false);
     if (isPlanLimit(err)) return;
-    notifications.show({ message: 'Could not create form', color: 'red' });
+    notify.error('Could not create form');
   }
 
   async function createFromDraft(draft: Draft) {

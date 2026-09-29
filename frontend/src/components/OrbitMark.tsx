@@ -18,7 +18,7 @@ import lightMark from '../assets/orbit-ai-light.webp';
  * `useComputedColorScheme` resolves 'auto' to whichever the person is actually
  * seeing, which is what has to match.
  */
-export function OrbitMark({ size = 20 }: { size?: number }) {
+export function OrbitMark({ size = 20, className }: { size?: number; className?: string }) {
   // `getInitialValueInEffect: false` — the default defers to an effect, which
   // flashes the light mark on a dark page for a frame on first paint.
   const scheme = useComputedColorScheme('dark', { getInitialValueInEffect: false });
@@ -31,6 +31,7 @@ export function OrbitMark({ size = 20 }: { size?: number }) {
       // label or an aria-label, and "Orbit AI Orbit AI" is what a screen reader
       // would otherwise announce.
       aria-hidden="true"
+      className={className}
       width={size}
       height={size}
       style={{

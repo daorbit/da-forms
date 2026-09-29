@@ -2,19 +2,19 @@ import type React from 'react';
 import { ActionIcon, Button, Group, Menu, SegmentedControl, TextInput, Tooltip } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import {
-  IconChevronDown,
-  IconFileExport,
-  IconLayoutList,
-  IconLayoutKanban,
-  IconTable,
-  IconCheck,
-  IconRefresh,
-  IconCalendar,
-  IconCalendarEvent,
-  IconSearch,
-  IconX,
-  IconPaperclip,
-} from '@tabler/icons-react';
+  CalendarCheckIcon,
+  CalendarIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  FileOutputIcon,
+  LayoutListIcon,
+  PaperclipIcon,
+  RefreshCwIcon,
+  SearchIcon,
+  SquareKanbanIcon,
+  TableIcon,
+  XIcon,
+} from 'lucide-react';
 import {
   DAY_LABEL,
   STATUS_LABEL,
@@ -75,7 +75,7 @@ export function EntriesFilterBar({
           size="sm"
           className={classes.filterSearch}
           placeholder="Search answers…"
-          leftSection={<IconSearch size={15} />}
+          leftSection={<SearchIcon size={15} />}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           rightSection={
@@ -87,7 +87,7 @@ export function EntriesFilterBar({
                 onClick={() => onSearchChange('')}
                 aria-label="Clear search"
               >
-                <IconX size={12} />
+                <XIcon size={12} />
               </ActionIcon>
             ) : null
           }
@@ -111,8 +111,8 @@ export function EntriesFilterBar({
             <Button
               variant="default"
               size="sm"
-              leftSection={<IconCalendar size={15} />}
-              rightSection={<IconChevronDown size={14} />}
+              leftSection={<CalendarIcon size={15} />}
+              rightSection={<ChevronDownIcon size={14} />}
             >
               {day === 'custom' ? rangeLabel(customRange) : DAY_LABEL[day]}
             </Button>
@@ -124,7 +124,7 @@ export function EntriesFilterBar({
                 <Menu.Item
                   key={key}
                   onClick={() => onFilter({ day: key })}
-                  rightSection={day === key ? <IconCheck size={14} /> : undefined}
+                  rightSection={day === key ? <CheckIcon size={14} /> : undefined}
                 >
                   {DAY_LABEL[key]}
                 </Menu.Item>
@@ -144,7 +144,7 @@ export function EntriesFilterBar({
                 size="input-sm"
                 aria-label="Custom date range"
               >
-                <IconCalendarEvent size={16} />
+                <CalendarCheckIcon size={16} />
               </ActionIcon>
             </Tooltip>
           </Menu.Target>
@@ -187,14 +187,14 @@ export function EntriesFilterBar({
           onChange={(value) => onSetView(value as EntriesView)}
           aria-label="View"
           data={[
-            { value: 'list', label: <ViewLabel icon={<IconLayoutList size={15} />} text="List" /> },
-            { value: 'kanban', label: <ViewLabel icon={<IconLayoutKanban size={15} />} text="Board" /> },
-            { value: 'excel', label: <ViewLabel icon={<IconTable size={15} />} text="Sheet" /> },
+            { value: 'list', label: <ViewLabel icon={<LayoutListIcon size={15} />} text="List" /> },
+            { value: 'kanban', label: <ViewLabel icon={<SquareKanbanIcon size={15} />} text="Board" /> },
+            { value: 'excel', label: <ViewLabel icon={<TableIcon size={15} />} text="Sheet" /> },
           ]}
         />
         <Tooltip label="Refresh responses" withArrow>
           <ActionIcon variant="default" size="input-sm" onClick={onRefresh} loading={loading} aria-label="Refresh responses">
-            <IconRefresh size={16} />
+            <RefreshCwIcon size={16} />
           </ActionIcon>
         </Tooltip>
         {/* Absent on a form that collects no files, rather than opening an
@@ -202,11 +202,11 @@ export function EntriesFilterBar({
         {onOpenFiles && (
           <Tooltip label="Uploaded files" withArrow>
             <ActionIcon variant="default" size="input-sm" onClick={onOpenFiles} aria-label="Uploaded files">
-              <IconPaperclip size={16} />
+              <PaperclipIcon size={16} />
             </ActionIcon>
           </Tooltip>
         )}
-        <Button variant="default" size="sm" leftSection={<IconFileExport size={15} />} onClick={onExportCsv}>
+        <Button variant="default" size="sm" leftSection={<FileOutputIcon size={15} />} onClick={onExportCsv}>
           Export
         </Button>
       </Group>

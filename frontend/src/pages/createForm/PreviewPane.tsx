@@ -1,5 +1,5 @@
 import { Center, Loader, Text } from '@mantine/core';
-import { IconCheck } from '@tabler/icons-react';
+import { CheckIcon } from 'lucide-react';
 import { FormPage } from '@/components/FormPage';
 import { FormRenderer } from '@/components/FormRenderer';
 import { OrbitMark } from '@/components/OrbitMark';
@@ -49,7 +49,7 @@ export function PreviewPane({
           ) : done ? (
             <>
               <span className={classes.statusTick}>
-                <IconCheck size={11} stroke={3} />
+                <CheckIcon size={11} strokeWidth={3} />
               </span>
               <Text size="xs" fw={600}>
                 Your form is ready

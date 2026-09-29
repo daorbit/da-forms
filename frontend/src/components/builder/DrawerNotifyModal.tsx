@@ -1,5 +1,5 @@
 import { Modal, Group, Text, Switch, Divider, ActionIcon, Stack } from '@mantine/core';
-import { IconX, IconBellRinging } from '@tabler/icons-react';
+import { BellRingIcon, XIcon } from 'lucide-react';
 
 interface Props {
   opened: boolean;
@@ -26,7 +26,7 @@ export function DrawerNotifyModal({ opened, onClose, enabled, onChange }: Props)
     >
       <Group gap="sm" px="lg" py="md" wrap="nowrap">
         <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
-          <IconX size={18} />
+          <XIcon size={18} />
         </ActionIcon>
         <Divider orientation="vertical" my={6} />
         <Text fw={600}>Notification drawer</Text>
@@ -35,7 +35,7 @@ export function DrawerNotifyModal({ opened, onClose, enabled, onChange }: Props)
       <Stack gap="md" px="lg" py="lg">
         <Group justify="space-between" align="flex-start" wrap="nowrap">
           <Group gap="sm" wrap="nowrap" align="flex-start">
-            <IconBellRinging size={20} style={{ marginTop: 2, flexShrink: 0 }} />
+            <BellRingIcon size={20} style={{ marginTop: 2, flexShrink: 0 }} />
             <div>
               <Text size="sm" fw={600}>
                 Notify in Quantalog

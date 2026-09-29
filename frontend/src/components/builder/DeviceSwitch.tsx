@@ -1,11 +1,11 @@
 import { SegmentedControl, Tooltip } from '@mantine/core';
-import { IconDeviceIpad, IconDeviceLaptop, IconDeviceMobile } from '@tabler/icons-react';
+import { LaptopIcon, SmartphoneIcon, TabletIcon } from 'lucide-react';
 import { DEVICE_ORDER, DEVICE_SPECS, type DeviceId } from './DeviceFrame';
 
-const DEVICE_ICONS: Record<DeviceId, typeof IconDeviceLaptop> = {
-  macbook: IconDeviceLaptop,
-  ipad: IconDeviceIpad,
-  iphone: IconDeviceMobile,
+const DEVICE_ICONS: Record<DeviceId, typeof LaptopIcon> = {
+  macbook: LaptopIcon,
+  ipad: TabletIcon,
+  iphone: SmartphoneIcon,
 };
 
 interface Props {
@@ -34,7 +34,7 @@ export function DeviceSwitch({ device, onChange }: Props) {
                 style={{ display: 'flex', padding: '0 2px' }}
                 aria-label={DEVICE_SPECS[id].label}
               >
-                <Icon size={20} stroke={1.6} />
+                <Icon size={20} strokeWidth={1.6} />
               </span>
             </Tooltip>
           ),

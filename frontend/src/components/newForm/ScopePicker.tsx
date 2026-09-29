@@ -1,5 +1,5 @@
 import { Text, UnstyledButton } from '@mantine/core';
-import { IconCheck } from '@tabler/icons-react';
+import { CheckIcon } from 'lucide-react';
 import type { FormTheme } from '@/types';
 import classes from './ScopePicker.module.css';
 
@@ -42,7 +42,7 @@ export function ScopePicker({ value, onChange }: Props) {
             <img src={choice.art} alt="" className={classes.stageArt} aria-hidden />
             {value === choice.value && (
               <span className={classes.checkBadge} aria-hidden>
-                <IconCheck size={14} stroke={3} />
+                <CheckIcon size={14} strokeWidth={3} />
               </span>
             )}
           </span>

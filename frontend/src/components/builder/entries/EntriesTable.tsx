@@ -1,10 +1,5 @@
 import { ActionIcon, Anchor, Button, Checkbox, Group, Image, Pagination, Stack, Table, Text, ThemeIcon, Tooltip } from '@mantine/core';
-import {
-  IconShare2,
-  IconEye,
-  IconTrash,
-  IconMailOpened,
-} from '@tabler/icons-react';
+import { EyeIcon, MailOpenIcon, Share2Icon, Trash2Icon } from 'lucide-react';
 import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
 import { parseRepeaterRows } from '@/lib/repeater';
@@ -115,7 +110,7 @@ export function EntriesTable({
                 <Table.Td colSpan={columns.length + 3}>
                   <Stack align="center" gap={4} py="xl">
                     <ThemeIcon variant="light" color="gray" size={44} radius="xl">
-                      <IconMailOpened size={22} />
+                      <MailOpenIcon size={22} />
                     </ThemeIcon>
                     <Text fw={600} size="sm">
                       No responses yet
@@ -123,7 +118,7 @@ export function EntriesTable({
                     <Text size="xs" c="dimmed" ta="center" maw={320}>
                       Share your form's link to start collecting responses.
                     </Text>
-                    <Button variant="light" color="emerald" size="xs" mt="xs" leftSection={<IconShare2 size={14} />} onClick={onCopyShareLink}>
+                    <Button variant="light" color="emerald" size="xs" mt="xs" leftSection={<Share2Icon size={14} />} onClick={onCopyShareLink}>
                       Copy share link
                     </Button>
                   </Stack>
@@ -244,7 +239,7 @@ export function EntriesTable({
                     <Group gap={2} wrap="nowrap" justify="flex-end">
                       <Tooltip label="View response" withArrow>
                         <ActionIcon variant="subtle" color="gray" onClick={() => onView(submission)}>
-                          <IconEye size={16} />
+                          <EyeIcon size={16} />
                         </ActionIcon>
                       </Tooltip>
                       <Tooltip label="Download PDF" withArrow>
@@ -258,7 +253,7 @@ export function EntriesTable({
                       </Tooltip>
                       <Tooltip label="Delete response" withArrow>
                         <ActionIcon variant="subtle" color="red" onClick={() => onDelete(submission)}>
-                          <IconTrash size={16} />
+                          <Trash2Icon size={16} />
                         </ActionIcon>
                       </Tooltip>
                     </Group>

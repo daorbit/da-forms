@@ -1,5 +1,5 @@
 import { Loader, Stack, Text, Title, UnstyledButton } from '@mantine/core';
-import { IconPlus } from '@tabler/icons-react';
+import { PlusIcon } from 'lucide-react';
 import { OrbitMark } from '@/components/OrbitMark';
 import type { SuggestionChip } from '@/lib/formSuggestions';
 import { Composer } from './Composer';
@@ -100,7 +100,7 @@ export function HeroPane({
                 ) : card.busy ? (
                   <Loader size={26} color="emerald" />
                 ) : (
-                  <IconPlus size={26} />
+                  <PlusIcon size={26} />
                 )}
               </span>
               <span className={classes.deckBody}>

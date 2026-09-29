@@ -13,14 +13,14 @@ import {
   Tooltip,
 } from '@mantine/core';
 import {
-  IconX,
-  IconCopy,
-  IconCheck,
-  IconExternalLink,
-  IconLink,
-  IconCode,
-  IconShare2,
-} from '@tabler/icons-react';
+  CheckIcon,
+  CodeIcon,
+  CopyIcon,
+  ExternalLinkIcon,
+  LinkIcon,
+  Share2Icon,
+  XIcon,
+} from 'lucide-react';
 import {
   SettingsGroup,
   SettingsStack,
@@ -28,14 +28,14 @@ import {
   SwitchRow,
 } from '@/components/builder/settings/SettingsGroup';
 import { QrCard } from './QrCard';
-import { notifications } from '@mantine/notifications';
+import { notify } from '@/lib/notify';
 import { updateForm, publicFormUrl } from '@/lib/api';
 import type { Form } from '@/types';
 import { useFitScale } from '@/hooks/useFitScale';
 import { DeviceFrame, frameSize, type DeviceId } from '@/components/builder/DeviceFrame';
 import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
 import {
-  WhatsAppIcon, XIcon, FacebookIcon, LinkedInIcon, TelegramIcon, MailIcon,
+  WhatsAppIcon, XIcon as XLogoIcon, FacebookIcon, LinkedInIcon, TelegramIcon, MailIcon,
   RedditIcon, PinterestIcon,
 } from './SocialIcons';
 import classes from './ShareModal.module.css';
@@ -49,7 +49,7 @@ function socialTargets(url: string, title: string) {
   const t = encodeURIComponent(title);
   return [
     { id: 'whatsapp', label: 'WhatsApp', Icon: WhatsAppIcon, bg: '#25D366', fg: '#fff', href: `https://wa.me/?text=${t}%20${u}` },
-    { id: 'x', label: 'X', Icon: XIcon, bg: '#000000', fg: '#fff', href: `https://twitter.com/intent/tweet?text=${t}&url=${u}` },
+    { id: 'x', label: 'X', Icon: XLogoIcon, bg: '#000000', fg: '#fff', href: `https://twitter.com/intent/tweet?text=${t}&url=${u}` },
     { id: 'facebook', label: 'Facebook', Icon: FacebookIcon, bg: '#1877F2', fg: '#fff', href: `https://www.facebook.com/sharer/sharer.php?u=${u}` },
     { id: 'linkedin', label: 'LinkedIn', Icon: LinkedInIcon, bg: '#0A66C2', fg: '#fff', href: `https://www.linkedin.com/sharing/share-offsite/?url=${u}` },
     { id: 'telegram', label: 'Telegram', Icon: TelegramIcon, bg: '#26A5E4', fg: '#fff', href: `https://t.me/share/url?url=${u}&text=${t}` },
@@ -59,9 +59,9 @@ function socialTargets(url: string, title: string) {
   ] as const;
 }
 
-const TABS: { id: TabId; label: string; icon: typeof IconLink }[] = [
-  { id: 'link', label: 'Public link', icon: IconLink },
-  { id: 'embed', label: 'Embed', icon: IconCode },
+const TABS: { id: TabId; label: string; icon: typeof LinkIcon }[] = [
+  { id: 'link', label: 'Public link', icon: LinkIcon },
+  { id: 'embed', label: 'Embed', icon: CodeIcon },
 ];
 
 interface Props {
@@ -146,10 +146,8 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
     setPublished(next);
     const updated = await updateForm(form._id, { status: next ? 'published' : 'draft' });
     onStatusChange?.(updated.status);
-    notifications.show({
-      message: next ? 'Form is now public' : 'Form unpublished',
-      color: next ? 'emerald' : 'gray',
-    });
+    if (next) notify.success('Form is now public');
+    else notify.info('Form unpublished');
   }
 
   const active = TABS.find((t) => t.id === tab) ?? TABS[0];
@@ -172,7 +170,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
         <Box className={classes.panel}>
           <div className={classes.panelHeader}>
             <span className={classes.headIcon}>
-              <IconShare2 size={17} />
+              <Share2Icon size={17} />
             </span>
             <div style={{ minWidth: 0, flex: 1 }}>
               <Group gap={8} wrap="nowrap">
@@ -189,7 +187,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
               </Text>
             </div>
             <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
-              <IconX size={18} />
+              <XIcon size={18} />
             </ActionIcon>
           </div>
 
@@ -243,7 +241,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                               onClick={() => window.open(shareUrl, '_blank', 'noopener,noreferrer')}
                               aria-label="Open form"
                             >
-                              <IconExternalLink size={15} />
+                              <ExternalLinkIcon size={15} />
                             </ActionIcon>
                           </Tooltip>
                         }
@@ -255,7 +253,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                             mt={10}
                             variant={copied ? 'light' : 'filled'}
                             onClick={copy}
-                            leftSection={copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                            leftSection={copied ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
                           >
                             {copied ? 'Link copied' : 'Copy link'}
                           </Button>
@@ -314,7 +312,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                           <div className={classes.codeCopy}>
                             <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow>
                               <ActionIcon variant="default" onClick={copy} aria-label="Copy embed code">
-                                {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                                {copied ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
                               </ActionIcon>
                             </Tooltip>
                           </div>
@@ -338,7 +336,7 @@ export function ShareModal({ opened, onClose, form, onStatusChange }: Props) {
                           fullWidth
                           variant={copied ? 'light' : 'filled'}
                           onClick={copy}
-                          leftSection={copied ? <IconCheck size={15} /> : <IconCode size={15} />}
+                          leftSection={copied ? <CheckIcon size={15} /> : <CodeIcon size={15} />}
                         >
                           {copied ? 'Embed code copied' : `Copy ${EMBED_LANG_LABEL[embedLang]} code`}
                         </Button>

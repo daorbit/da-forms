@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { notifications } from '@mantine/notifications';
 import { applyEditOps } from '@/lib/editOps';
 import { generateFormDraft, requestFormEdit } from '@/lib/api';
 import { isPlanLimit } from '@/lib/planLimit';
 import type { GeneratedForm } from '@/lib/generatedForm';
 import { fromGenerated, toSnapshot, withEdit } from './draft';
 import type { Draft, Turn } from './types';
+import { notify } from '@/lib/notify';
 
 const FIELD_MS = 180;
 const HANDOVER_TAIL_MS = 700;
@@ -60,10 +60,7 @@ export function useOrbitDraft(workspaceId: string) {
 
         if (!result.applied) {
           setTurns((t) => t.slice(0, -1));
-          notifications.show({
-            message: 'Orbit did not find anything to change',
-            color: 'yellow',
-          });
+          notify.warn('Orbit did not find anything to change');
           return;
         }
 
@@ -77,10 +74,7 @@ export function useOrbitDraft(workspaceId: string) {
       setTurns((t) => t.slice(0, -1));
       setDrafting(null);
       if (isPlanLimit(err)) return;
-      notifications.show({
-        message: err instanceof Error ? err.message : 'Could not generate a form',
-        color: 'red',
-      });
+      notify.error(err instanceof Error ? err.message : 'Could not generate a form');
       return;
     } finally {
       setGenerating(false);

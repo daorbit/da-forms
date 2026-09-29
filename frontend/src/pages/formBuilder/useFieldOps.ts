@@ -1,4 +1,3 @@
-import { notifications } from '@mantine/notifications';
 import type { DragEndEvent } from '@dnd-kit/core';
 import type { FieldType, FormField } from '@/types';
 import { makeField, paletteByKey } from '@/lib/fieldPalette';
@@ -12,6 +11,7 @@ import {
 } from '@/lib/fieldTree';
 import { findPaymentField } from '@/lib/payment';
 import { parseColumnDroppableId, type DragData } from '@/components/builder/dnd';
+import { notify } from '@/lib/notify';
 
 interface Params {
   fields: FormField[];
@@ -36,10 +36,7 @@ export function useFieldOps({
 
   function refusesSecondPayment(type: FieldType): boolean {
     if (type !== 'payment' || !findPaymentField(fields)) return false;
-    notifications.show({
-      message: 'A form can only take one payment. Edit the payment field you already have.',
-      color: 'orange',
-    });
+    notify.warn('A form can only take one payment. Edit the payment field you already have.');
     return true;
   }
 
@@ -66,10 +63,7 @@ export function useFieldOps({
       const source = findField(prev, id);
       if (!source) return prev;
       if (source.type === 'payment') {
-        notifications.show({
-          message: 'A form can only take one payment.',
-          color: 'orange',
-        });
+        notify.warn('A form can only take one payment.');
         return prev;
       }
 

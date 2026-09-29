@@ -1,6 +1,12 @@
 import type { ReactNode } from 'react';
 import { Box, Group, Skeleton, Text, Tooltip, UnstyledButton } from '@mantine/core';
-import { IconChevronRight, IconInfoCircle, IconMinus, IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
+import {
+  ChevronRightIcon,
+  InfoIcon,
+  MinusIcon,
+  TrendingDownIcon,
+  TrendingUpIcon,
+} from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import classes from './StatCard.module.css';
 
@@ -50,12 +56,12 @@ export function StatCard({
             </Text>
             {hint && (
               <Tooltip label={hint} multiline w={240} withArrow>
-                <IconInfoCircle size={12} className={classes.icon} style={{ cursor: 'help' }} />
+                <InfoIcon size={12} className={classes.icon} style={{ cursor: 'help' }} />
               </Tooltip>
             )}
           </Group>
           {onClick ? (
-            <IconChevronRight size={15} className={classes.icon} />
+            <ChevronRightIcon size={15} className={classes.icon} />
           ) : delta !== undefined ? (
             <Delta delta={delta} inverse={inverseDelta} />
           ) : null}
@@ -106,7 +112,7 @@ function Delta({ delta, inverse }: { delta: number | null; inverse?: boolean }) 
       </Text>
     );
   }
-  const Icon = delta === 0 ? IconMinus : delta > 0 ? IconTrendingUp : IconTrendingDown;
+  const Icon = delta === 0 ? MinusIcon : delta > 0 ? TrendingUpIcon : TrendingDownIcon;
   return (
     <span
       className={classes.delta}

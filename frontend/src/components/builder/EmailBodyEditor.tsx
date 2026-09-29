@@ -6,20 +6,20 @@ import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import { ActionIcon, Divider, Group, Tooltip } from '@mantine/core';
 import {
-  IconBold,
-  IconItalic,
-  IconUnderline,
-  IconStrikethrough,
-  IconList,
-  IconListNumbers,
-  IconLink,
-  IconLinkOff,
-  IconAlignLeft,
-  IconAlignCenter,
-  IconAlignRight,
-  IconH1,
-  IconH2,
-} from '@tabler/icons-react';
+  BoldIcon,
+  Heading1Icon,
+  Heading2Icon,
+  ItalicIcon,
+  LinkIcon,
+  ListIcon,
+  ListOrderedIcon,
+  StrikethroughIcon,
+  TextAlignCenterIcon,
+  TextAlignEndIcon,
+  TextAlignStartIcon,
+  UnderlineIcon,
+  UnlinkIcon,
+} from 'lucide-react';
 import classes from './EmailBodyEditor.module.css';
 
 interface Props {
@@ -91,7 +91,7 @@ export function EmailBodyEditor({
   if (!editor) return null;
 
   type Item = {
-    icon: typeof IconBold;
+    icon: typeof BoldIcon;
     label: string;
     hint?: string;
     run: () => void;
@@ -100,80 +100,80 @@ export function EmailBodyEditor({
 
   const items: (Item | null)[] = [
     {
-      icon: IconBold,
+      icon: BoldIcon,
       label: 'Bold',
       hint: 'Ctrl+B',
       run: () => editor.chain().focus().toggleBold().run(),
       active: editor.isActive('bold'),
     },
     {
-      icon: IconItalic,
+      icon: ItalicIcon,
       label: 'Italic',
       hint: 'Ctrl+I',
       run: () => editor.chain().focus().toggleItalic().run(),
       active: editor.isActive('italic'),
     },
     {
-      icon: IconUnderline,
+      icon: UnderlineIcon,
       label: 'Underline',
       hint: 'Ctrl+U',
       run: () => editor.chain().focus().toggleUnderline().run(),
       active: editor.isActive('underline'),
     },
     {
-      icon: IconStrikethrough,
+      icon: StrikethroughIcon,
       label: 'Strikethrough',
       run: () => editor.chain().focus().toggleStrike().run(),
       active: editor.isActive('strike'),
     },
     null,
     {
-      icon: IconH1,
+      icon: Heading1Icon,
       label: 'Heading',
       run: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
       active: editor.isActive('heading', { level: 2 }),
     },
     {
-      icon: IconH2,
+      icon: Heading2Icon,
       label: 'Subheading',
       run: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
       active: editor.isActive('heading', { level: 3 }),
     },
     null,
     {
-      icon: IconList,
+      icon: ListIcon,
       label: 'Bullet list',
       run: () => editor.chain().focus().toggleBulletList().run(),
       active: editor.isActive('bulletList'),
     },
     {
-      icon: IconListNumbers,
+      icon: ListOrderedIcon,
       label: 'Numbered list',
       run: () => editor.chain().focus().toggleOrderedList().run(),
       active: editor.isActive('orderedList'),
     },
     null,
     {
-      icon: IconAlignLeft,
+      icon: TextAlignStartIcon,
       label: 'Align left',
       run: () => editor.chain().focus().setTextAlign('left').run(),
       active: editor.isActive({ textAlign: 'left' }),
     },
     {
-      icon: IconAlignCenter,
+      icon: TextAlignCenterIcon,
       label: 'Align centre',
       run: () => editor.chain().focus().setTextAlign('center').run(),
       active: editor.isActive({ textAlign: 'center' }),
     },
     {
-      icon: IconAlignRight,
+      icon: TextAlignEndIcon,
       label: 'Align right',
       run: () => editor.chain().focus().setTextAlign('right').run(),
       active: editor.isActive({ textAlign: 'right' }),
     },
     null,
     {
-      icon: IconLink,
+      icon: LinkIcon,
       label: 'Add link',
       run: () => {
         const previous = editor.getAttributes('link').href as string | undefined;
@@ -188,7 +188,7 @@ export function EmailBodyEditor({
       active: editor.isActive('link'),
     },
     {
-      icon: IconLinkOff,
+      icon: UnlinkIcon,
       label: 'Remove link',
       run: () => editor.chain().focus().unsetLink().run(),
     },

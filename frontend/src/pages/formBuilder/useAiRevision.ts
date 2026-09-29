@@ -1,4 +1,3 @@
-import { notifications } from '@mantine/notifications';
 import { findField } from '@/lib/fieldTree';
 import {
   applyEditOps,
@@ -8,6 +7,7 @@ import {
 } from '@/lib/editOps';
 import type { FormTheme } from '@/types';
 import type { FormBuilderState } from './useFormBuilderState';
+import { notify } from '@/lib/notify';
 
 /**
  * Editing the form on the canvas with Orbit.
@@ -33,10 +33,7 @@ export function useAiRevision(state: FormBuilderState) {
     const result = applyEditOps(ops, state.fields);
 
     if (!result.applied) {
-      notifications.show({
-        message: 'Orbit did not find anything to change',
-        color: 'yellow',
-      });
+      notify.warn('Orbit did not find anything to change');
       return 0;
     }
 
@@ -58,7 +55,7 @@ export function useAiRevision(state: FormBuilderState) {
     state.setSelectedId((id) => (id && findField(result.fields, id) ? id : null));
     state.setEditingId((id) => (id && findField(result.fields, id) ? id : null));
 
-    notifications.show({ message: 'Applied — Ctrl+Z to undo', color: 'blue' });
+    notify.info('Applied — Ctrl+Z to undo');
     return result.applied;
   }
 

@@ -8,9 +8,6 @@
   text-align: left;
 }
 
-/* The page background, with a miniature form card sitting on it — the same
-   two surfaces the preset actually sets, so the tile can never drift from
-   what applying it does. */
 .swatch {
   position: relative;
   display: flex;
@@ -19,25 +16,36 @@
   aspect-ratio: 4 / 3;
   width: 100%;
   padding-top: 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 10%, transparent);
   transition:
-    box-shadow 120ms ease,
-    transform 120ms ease;
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .card:hover .swatch {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 8%),
-    0 0 0 2px #4a505c;
+    inset 0 0 0 1px color-mix(in srgb, var(--text) 10%, transparent),
+    0 10px 24px -12px rgba(0, 0, 0, 0.5);
 }
 
 .card[data-selected='true'] .swatch {
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 8%),
-    0 0 0 2px var(--mantine-color-emerald-5);
+    inset 0 0 0 1px color-mix(in srgb, var(--text) 10%, transparent),
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--accent);
+}
+
+.card:focus-visible {
+  outline: none;
+}
+
+.card:focus-visible .swatch {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--border-strong);
 }
 
 .miniCard {
@@ -49,9 +57,9 @@
   padding: 8px 8px 0;
   border: 1px solid transparent;
   border-radius: 6px 6px 0 0;
+  box-shadow: 0 -4px 14px -6px rgba(0, 0, 0, 0.25);
 }
 
-/* Stand-ins for a label and its input, so the tile reads as a form. */
 .line {
   width: 52%;
   height: 3px;
@@ -74,22 +82,27 @@
 
 .check {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 7px;
+  right: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background-color: var(--mantine-color-emerald-6);
-  color: #ffffff;
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .label {
-  color: #adb5bd;
+  color: var(--text-2);
 }
 
 .card[data-selected='true'] .label {
-  color: #f1f3f5;
+  color: var(--text);
+}
+
+[data-motion='off'] .swatch {
+  transition: none;
 }

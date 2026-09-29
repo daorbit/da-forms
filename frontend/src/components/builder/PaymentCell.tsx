@@ -12,7 +12,7 @@ import {
   Tooltip,
   Box,
 } from '@mantine/core';
-import { IconCopy, IconCheck } from '@tabler/icons-react';
+import { CheckIcon, CopyIcon } from 'lucide-react';
 import type { PaymentProvider, SubmissionPayment } from '@/types';
 import { formatAmount } from '@/lib/payment';
 import { GatewayLogo } from './GatewayLogos';
@@ -48,7 +48,7 @@ function Row({ label, value }: { label: string; value?: string }) {
           {({ copied, copy }) => (
             <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow>
               <ActionIcon size="sm" variant="subtle" color="gray" onClick={copy}>
-                {copied ? <IconCheck size={13} /> : <IconCopy size={13} />}
+                {copied ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
               </ActionIcon>
             </Tooltip>
           )}

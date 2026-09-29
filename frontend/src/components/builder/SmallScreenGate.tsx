@@ -1,6 +1,6 @@
 import { useBuilderTooSmall } from '@/hooks/useBuilderTooSmall';
 import { Box, Button, Stack, Text, ThemeIcon, Title } from '@mantine/core';
-import { IconDeviceDesktop, IconArrowLeft } from '@tabler/icons-react';
+import { ArrowLeftIcon, MonitorIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 
@@ -35,7 +35,7 @@ export function SmallScreenGate({ children }: { children: React.ReactNode }) {
     >
       <Stack align="center" gap="md" maw={360} ta="center">
         <ThemeIcon size={56} radius="xl" variant="light">
-          <IconDeviceDesktop size={26} />
+          <MonitorIcon size={26} />
         </ThemeIcon>
         <Title order={3}>Open the editor on a bigger screen</Title>
         <Text size="sm" c="dimmed">
@@ -44,7 +44,7 @@ export function SmallScreenGate({ children }: { children: React.ReactNode }) {
           sharing — works fine here.
         </Text>
         <Button
-          leftSection={<IconArrowLeft size={15} />}
+          leftSection={<ArrowLeftIcon size={15} />}
           onClick={() => navigate(`/${workspaceId}/forms`)}
         >
           Back to forms

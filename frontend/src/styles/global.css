@@ -1,29 +1,21 @@
 :root {
-  font-family: system-ui, sans-serif;
+  font-family: var(--font);
   line-height: 1.5;
-  --mantine-color-body: #0b0c0e;
-  --mantine-color-text: #f2f4f6;
-  --mantine-color-default: #16181b;
-  --mantine-color-default-hover: #1c1f23;
-  --mantine-color-default-color: #f2f4f6;
-  --mantine-color-default-border: #26292e;
-  --mantine-color-dimmed: #a9afba;
-  --mantine-color-placeholder: #6d737e;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
   box-sizing: border-box;
 }
 
-/* One thin scrollbar everywhere, so panels don't each style their own. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--mantine-color-gray-4) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 *::-webkit-scrollbar-track {
@@ -31,180 +23,28 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: var(--mantine-color-gray-4);
-  border-radius: 3px;
+  background-color: var(--border-strong);
+  border-radius: 6px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: var(--mantine-color-gray-5);
+  background-color: var(--muted);
 }
 
-/* Management surfaces mirror the host analytics app exactly. The light
-   surface below intentionally overrides these tokens for public forms and
-   builder previews. */
-html[data-mantine-color-scheme='dark'] {
-  --mantine-color-body: #0b0c0e !important;
-  --mantine-color-text: #f2f4f6 !important;
-  --mantine-color-default: #16181b !important;
-  --mantine-color-default-hover: #1c1f23 !important;
-  --mantine-color-default-color: #f2f4f6 !important;
-  --mantine-color-default-border: #26292e !important;
-  --mantine-color-dimmed: #a9afba !important;
-  --mantine-color-placeholder: #6d737e !important;
-  --mantine-color-gray-0: #f2f4f6;
-  --mantine-color-gray-1: #a9afba;
-  --mantine-color-gray-2: #6d737e;
-  --mantine-color-gray-3: #34383e;
-  --mantine-color-gray-4: #26292e;
-  --mantine-color-gray-5: #1c1f23;
-  --mantine-color-gray-6: #16181b;
-  --mantine-color-gray-7: #111316;
-  --mantine-color-gray-8: #0e0f12;
+.dfs__screen {
+  display: flex;
+  flex-direction: column;
 }
 
-/* Mantine writes its own body colour onto :root at runtime. Re-declare the
-   management tokens on the actual document body so inherited surfaces cannot
-   fall back to Mantine's default #242424 value. */
-html[data-mantine-color-scheme='dark'] body,
-html[data-mantine-color-scheme='dark'] #root {
-  --mantine-color-body: #0b0c0e !important;
-  --mantine-color-text: #f2f4f6 !important;
-  --mantine-color-default: #16181b !important;
-  --mantine-color-default-hover: #1c1f23 !important;
-  --mantine-color-default-color: #f2f4f6 !important;
-  --mantine-color-default-border: #26292e !important;
-  --mantine-color-dimmed: #a9afba !important;
-  --mantine-color-placeholder: #6d737e !important;
-  background-color: #0b0c0e !important;
-  color: #f2f4f6 !important;
+.dfs__viewport {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-html[data-mantine-color-scheme='light'] {
-  --mantine-color-body: #f4f5f7 !important;
-  --mantine-color-text: #111418 !important;
-  --mantine-color-default: #ffffff !important;
-  --mantine-color-default-hover: #f1f3f5 !important;
-  --mantine-color-default-color: #111418 !important;
-  --mantine-color-default-border: #e5e7eb !important;
-  --mantine-color-dimmed: #4b5563 !important;
-  --mantine-color-placeholder: #9ca3af !important;
-}
-
-/*
- * The rounded corner every drawer in the builder now has is set with
- * Mantine's own `radius` prop, per drawer (see AiEditDrawer.tsx,
- * PropertiesDrawer.tsx, drawer.module.css's consumers) — not here.
- *
- * A CSS override on `.mantine-Drawer-content` was tried first, adding
- * `border-radius` plus padding on `.mantine-Drawer-inner` to inset it from
- * the edge. That broke scrolling: Mantine sizes `.mantine-Drawer-content`
- * with an inline `height: calc(100vh - var(--drawer-offset) * 2)`, computed
- * from its own `offset` prop — padding added from outside that calculation
- * shrinks the visible box without shrinking the height Mantine thinks it has,
- * so the content overflowed its own container and fields past the bottom
- * were unreachable. `radius` doesn't have this problem since Mantine applies
- * it as part of the same layout Mantine already accounts for.
- *
- * No shadow and no overlay blur on Drawer, by design — kept plain rather than
- * matching Quantalog's own drop shadow and blurred backdrop.
- */
-.mantine-Drawer-content {
-  box-shadow: none !important;
-}
-
-/* Dialogs render in Mantine's portal, outside page-level wrappers. Give the
-   management chrome its own raised surface so it remains distinct from the
-   Quantalog page ground; light preview stages inside dialogs keep their local
-   light-surface variables below. */
-html[data-mantine-color-scheme='dark'] .mantine-Modal-content,
-html[data-mantine-color-scheme='dark'] .mantine-Drawer-content {
-  background-color: #16181b !important;
-  color: #f2f4f6 !important;
-  /* border: 1px solid #34383e !important; */
-}
-
-html[data-mantine-color-scheme='dark'] .mantine-Modal-content {
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55) !important;
-}
-
-html[data-mantine-color-scheme='dark'] .mantine-Modal-header,
-html[data-mantine-color-scheme='dark'] .mantine-Drawer-header {
-  background-color: #16181b !important;
-  color: #f2f4f6 !important;
-  border-bottom-color: #26292e !important;
-}
-
-html[data-mantine-color-scheme='dark'] .mantine-Modal-title,
-html[data-mantine-color-scheme='dark'] .mantine-Drawer-title {
-  color: #f2f4f6 !important;
-}
-
-html[data-mantine-color-scheme='dark'] .mantine-Modal-body,
-html[data-mantine-color-scheme='dark'] .mantine-Drawer-body {
-  color: #f2f4f6 !important;
-}
-
-html[data-mantine-color-scheme='dark'] .mantine-Modal-close,
-html[data-mantine-color-scheme='dark'] .mantine-Drawer-close {
-  color: #a9afba !important;
-}
-
-html[data-mantine-color-scheme='dark'] .mantine-Modal-close:hover,
-html[data-mantine-color-scheme='dark'] .mantine-Drawer-close:hover {
-  background-color: #1c1f23 !important;
-  color: #f2f4f6 !important;
-}
-
-/* Mantine's red Menu.Item hover is calibrated for a light background —
-   in dark mode it reads as a solid saturated block instead of a subtle tint. */
-html[data-mantine-color-scheme='dark'] .mantine-Menu-item[data-color='red']:hover {
-  background-color: rgba(224, 49, 49, 0.18) !important;
-  color: #ff8787 !important;
-}
-
-/* The light-mode counterpart of the dark-only block above. Without it, a
-   Modal/Drawer in light mode fell back to Mantine's own portal defaults
-   instead of this app's tokens — usually harmless since the two happen to
-   agree, but not guaranteed, and it is what let the AI edit drawer's
-   composer end up with mismatched text and background colour in light mode
-   (see AiEditDrawer.tsx). Pinning both modes here is what keeps every
-   Drawer/Modal's content on this app's own token, in either colour scheme. */
-html[data-mantine-color-scheme='light'] .mantine-Modal-content,
-html[data-mantine-color-scheme='light'] .mantine-Drawer-content {
-  background-color: #ffffff !important;
-  color: #111418 !important;
-}
-
-html[data-mantine-color-scheme='light'] .mantine-Modal-content {
-  box-shadow: 0 20px 48px rgba(17, 20, 24, 0.16) !important;
-}
-
-html[data-mantine-color-scheme='light'] .mantine-Modal-header,
-html[data-mantine-color-scheme='light'] .mantine-Drawer-header {
-  background-color: #ffffff !important;
-  color: #111418 !important;
-  border-bottom-color: #e5e7eb !important;
-}
-
-html[data-mantine-color-scheme='light'] .mantine-Modal-title,
-html[data-mantine-color-scheme='light'] .mantine-Drawer-title {
-  color: #111418 !important;
-}
-
-html[data-mantine-color-scheme='light'] .mantine-Modal-body,
-html[data-mantine-color-scheme='light'] .mantine-Drawer-body {
-  color: #111418 !important;
-}
-
-html[data-mantine-color-scheme='light'] .mantine-Modal-close,
-html[data-mantine-color-scheme='light'] .mantine-Drawer-close {
-  color: #4b5563 !important;
-}
-
-html[data-mantine-color-scheme='light'] .mantine-Modal-close:hover,
-html[data-mantine-color-scheme='light'] .mantine-Drawer-close:hover {
-  background-color: #f1f3f5 !important;
-  color: #111418 !important;
+.dfs__viewport > * {
+  flex: 1;
+  min-height: 100%;
 }
 
 .analytics-source-arrow {
@@ -217,20 +57,20 @@ html[data-mantine-color-scheme='light'] .mantine-Drawer-close:hover {
   transform: translateX(2px);
 }
 
-/*
- * Surfaces that always render in the respondent's own colours — the builder
- * canvas, the preview, and the live form — whatever theme a host app passes.
- * The nested providers that emit these variables are scoped to this class, so
- * the class has to paint its own ground rather than inherit the editor's.
- */
 .da-forms-light-surface {
   color-scheme: light;
 
-  /*
-   * Mantine resolves these from the root's colour scheme, so a dark host theme
-   * reaches inside the card unless they are restated here. Literal values
-   * rather than tokens: the tokens are exactly what is being overridden.
-   */
+  --bg: #ffffff;
+  --bg-2: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f8f9fa;
+  --border: #dee2e6;
+  --border-strong: #ced4da;
+  --text: #1a1b1e;
+  --text-2: #495057;
+  --muted: #6d737e;
+  --control-thumb: #ffffff;
+
   --mantine-color-body: #ffffff;
   --mantine-color-text: #1a1b1e;
   --mantine-color-dimmed: #6d737e;
@@ -240,7 +80,7 @@ html[data-mantine-color-scheme='light'] .mantine-Drawer-close:hover {
   --mantine-color-default-border: #dee2e6;
   --mantine-color-placeholder: #adb5bd;
   --mantine-color-error: #e03131;
-  --mantine-color-anchor: #0d9488;
+  --mantine-color-anchor: #495057;
   --mantine-color-dark-4: #ced4da;
   --mantine-color-dark-5: #adb5bd;
   --mantine-color-dark-6: #495057;
@@ -260,14 +100,6 @@ html[data-mantine-color-scheme='light'] .mantine-Drawer-close:hover {
   background-color: transparent;
 }
 
-/* Inputs read their surface from these, which the block above has already
-   flipped — restating them on the controls themselves covers the variants
-   Mantine resolves at the component level.
-
-   Checkboxes and radios are excluded on purpose. They are `<input>` elements
-   too, so a blanket rule here painted a ticked box white over Mantine's own
-   checked fill and the tick vanished. Their colours come from the form's
-   theme (accent fill, contrasting icon), not from this surface reset. */
 .da-forms-light-surface
   :is(input:not([type='checkbox']):not([type='radio']), textarea, select, .mantine-Input-input) {
   background-color: #ffffff;
@@ -280,8 +112,6 @@ html[data-mantine-color-scheme='light'] .mantine-Drawer-close:hover {
   color: #adb5bd;
 }
 
-/* The unchecked state only — a checked box keeps whatever fill its theme
-   accent gives it, which is what the `:not([data-checked])` guard protects. */
 .da-forms-light-surface
   :is(.mantine-Checkbox-input, .mantine-Radio-radio):not(:checked):not([data-checked]) {
   background-color: #ffffff;
@@ -294,11 +124,6 @@ html[data-mantine-color-scheme='light'] .mantine-Drawer-close:hover {
   border-color: #dee2e6;
 }
 
-/* Subtle icon and text buttons inside a form — the ranking reorder controls,
-   a signature's Clear. Mantine resolves `color="gray"` against the *app's*
-   colour scheme, so on a dark editor these came out near-black on the form's
-   white card. Stated here once rather than inline on each control, so anything
-   added to a form later inherits the fix. */
 .da-forms-light-surface
   :is(.mantine-ActionIcon-root, .mantine-Button-root)[data-variant='subtle'] {
   color: #495057;
@@ -318,17 +143,11 @@ html[data-mantine-color-scheme='light'] .mantine-Drawer-close:hover {
   background-color: transparent;
 }
 
-
 .da-forms-light-surface .mantine-Rating-starSymbol:not([data-filled]) {
   fill: var(--da-forms-rating-empty, #ced4da);
   stroke: var(--da-forms-rating-empty, #ced4da);
 }
 
-/* A Select's dropdown renders in a portal on <body>, outside
-   `.da-forms-light-surface`, so a dark host theme paints it: near-black
-   panel, dark option text, app-primary highlight. FieldControl marks it
-   `da-forms-select-dropdown` and passes the form's own colours as custom
-   properties on the dropdown element; repaint from those here. */
 .da-forms-select-dropdown {
   background-color: var(--da-forms-select-bg, #fff) !important;
   border-color: var(--da-forms-select-border, #dee2e6) !important;
@@ -356,10 +175,9 @@ html,
 body,
 #root {
   height: 100%;
-  background-color: var(--mantine-color-body) !important;
+  background-color: var(--mantine-color-body);
 }
 
-/* The document never scrolls — #root does, so drawers can leave it unlocked. */
 html,
 body {
   overflow: hidden;
@@ -369,30 +187,17 @@ body {
   overflow-y: auto;
 }
 
-/*
- * While Razorpay's Standard Checkout is open, the document must be a normal
- * scrolling page or checkout.js drops to its full-page view instead of the
- * centred modal. The rule above otherwise pins the viewport and scrolls #root,
- * which reads to Razorpay as a broken viewport. `openCheckout` adds this class
- * before opening and removes it when checkout settles.
- */
 body.rzp-checkout-open,
 html:has(body.rzp-checkout-open) {
   overflow: visible;
   height: auto;
 }
+
 body.rzp-checkout-open #root {
   overflow: visible;
   height: auto;
 }
 
-/*
- * A public form page in a plain iframe embed (no host chrome, unlike the
- * dashboard's full-app embed) is sized by its own content, not by the
- * iframe's starting viewport — the iframe resizes to match instead. Locking
- * `#root` to height:100% here would mean it always shows its own scrollbar
- * until the parent catches up, and clips content that's already off-screen.
- */
 html:has(body.da-forms-bare-embed),
 body.da-forms-bare-embed,
 body.da-forms-bare-embed #root {
@@ -400,12 +205,7 @@ body.da-forms-bare-embed #root {
   overflow: visible;
 }
 
-/*
- * A card-scope theme means only the card itself is meant to carry a
- * background — the page around it is the host site's, which an iframe can
- * only honor by staying transparent itself (a browser paints a framed
- * document white by default otherwise, regardless of any div's own styles).
- */
+html:has(body.da-forms-transparent-page),
 body.da-forms-transparent-page,
 body.da-forms-transparent-page #root {
   background: transparent;
@@ -414,23 +214,14 @@ body.da-forms-transparent-page #root {
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--mantine-color-body) !important;
   color: var(--mantine-color-text);
 }
 
-/*
- * Mantine compensates for the hidden scrollbar when a drawer/modal locks body
- * scroll, which shifts the fixed builder chrome. The builder never scrolls the
- * body, so the compensation is unnecessary.
- */
 body[data-mantine-scroll-locked] {
   padding-right: 0 !important;
   margin-right: 0 !important;
 }
 
-/* Hover affordance for a FileTypeIcon marked `previewable`: an eye icon fades
- * in centered over the glyph so the icon itself signals "click opens a
- * preview" without needing separate hover chrome around it. */
 .fileTypeIcon--previewable {
   cursor: pointer;
 }
@@ -452,9 +243,6 @@ body[data-mantine-scroll-locked] {
   opacity: 1;
 }
 
-/* Snackbar-style bulk-selection bar: floats above the page rather than
- * living in the table's own flow, so appearing/disappearing as rows are
- * checked never shifts the table underneath it. */
 .bulkActionBar {
   position: fixed;
   left: 50%;
@@ -464,25 +252,6 @@ body[data-mantine-scroll-locked] {
   background-color: var(--mantine-color-body);
 }
 
-
-/* The integrations dialog is full-screen and stands in for a page, so it takes
-   the page's ground rather than the raised dialog surface — its cards then sit
-   on it the way Quantalog's own Connections cards do. */
-html[data-mantine-color-scheme='dark'] .mantine-Modal-content.integrations-page {
-  background-color: #0b0c0e !important;
-  box-shadow: none !important;
-}
-
-html[data-mantine-color-scheme='light'] .mantine-Modal-content.integrations-page {
-  background-color: #f4f5f7 !important;
-  box-shadow: none !important;
-}
-
-/* Inside Quantalog with a textured background (gradient, mesh, grid, stars),
-   the page's own ground steps aside so the host's background shows through the
-   frame, exactly as it does behind the host's own pages. Cards, tables and
-   dialogs keep their surfaces. Last in the file, so it wins over the solid
-   body colour set above. */
 html[data-host-bg='textured'],
 html[data-host-bg='textured'] body,
 html[data-host-bg='textured'] #root {
@@ -490,10 +259,6 @@ html[data-host-bg='textured'] #root {
   background-color: transparent !important;
 }
 
-/* A full-screen dialog covers the page, and with it the host background the
-   page lets through — so it paints that background itself (passed in as
-   --host-bg-wash). Its own panes go clear on top; cards and inputs keep their
-   surfaces. */
 html[data-host-bg='textured'] .mantine-Modal-content[data-full-screen] {
   background: var(--host-bg-wash, var(--mantine-color-body)) !important;
   box-shadow: none !important;

@@ -44,7 +44,7 @@ export function PaletteTile({
       {...listeners}
     >
       <span className={classes.itemIcon}>
-        <item.icon size={18} stroke={1.6} />
+        <item.icon size={18} strokeWidth={1.6} />
       </span>
       <span className={classes.itemLabel}>{item.label}</span>
     </button>

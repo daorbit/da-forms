@@ -1,6 +1,16 @@
 import type { ReactNode } from 'react';
 import { Tooltip } from '@mantine/core';
-import { IconCircleCheck, IconCode, IconAdjustmentsHorizontal, IconPalette, IconListNumbers, IconMail, IconPlugConnected, IconWebhook, IconBellRinging } from '@tabler/icons-react';
+import {
+  BellRingIcon,
+  CircleCheckIcon,
+  CodeIcon,
+  ListOrderedIcon,
+  MailIcon,
+  PaletteIcon,
+  PlugIcon,
+  SlidersHorizontalIcon,
+  WebhookIcon,
+} from 'lucide-react';
 import { OrbitMark } from '@/components/OrbitMark';
 import classes from './IconRail.module.css';
 
@@ -14,17 +24,17 @@ interface Props {
  
 const items: { id: RailPanel; label: string; icon: () => ReactNode }[] = [
   { id: 'ai', label: 'Edit with AI', icon: () => <OrbitMark size={19} /> },
-  { id: 'quickSettings', label: 'Quick settings', icon: () => <IconAdjustmentsHorizontal size={19} stroke={1.6} /> },
-  { id: 'theme', label: 'Theme', icon: () => <IconPalette size={19} stroke={1.6} /> },
-  { id: 'steps', label: 'Steps & Progress', icon: () => <IconListNumbers size={19} stroke={1.6} /> },
-  { id: 'thankYou', label: 'After submission', icon: () => <IconCircleCheck size={19} stroke={1.6} /> },
-  { id: 'notifications', label: 'Email Notifications', icon: () => <IconMail size={19} stroke={1.6} /> },
-  { id: 'drawerNotify', label: 'Notification Drawer', icon: () => <IconBellRinging size={19} stroke={1.6} /> },
-  { id: 'webhook', label: 'Webhook', icon: () => <IconWebhook size={19} stroke={1.6} /> },
+  { id: 'quickSettings', label: 'Quick settings', icon: () => <SlidersHorizontalIcon size={19} strokeWidth={1.6} /> },
+  { id: 'theme', label: 'Theme', icon: () => <PaletteIcon size={19} strokeWidth={1.6} /> },
+  { id: 'steps', label: 'Steps & Progress', icon: () => <ListOrderedIcon size={19} strokeWidth={1.6} /> },
+  { id: 'thankYou', label: 'After submission', icon: () => <CircleCheckIcon size={19} strokeWidth={1.6} /> },
+  { id: 'notifications', label: 'Email Notifications', icon: () => <MailIcon size={19} strokeWidth={1.6} /> },
+  { id: 'drawerNotify', label: 'Notification Drawer', icon: () => <BellRingIcon size={19} strokeWidth={1.6} /> },
+  { id: 'webhook', label: 'Webhook', icon: () => <WebhookIcon size={19} strokeWidth={1.6} /> },
   // 'integrations' covers payment gateways too — there is no separate Payments
   // rail entry; a payment field's own settings link here as well.
-  { id: 'integrations', label: 'Integrations', icon: () => <IconPlugConnected size={19} stroke={1.6} /> },
-  { id: 'embed', label: 'Share & Embed', icon: () => <IconCode size={19} stroke={1.6} /> },
+  { id: 'integrations', label: 'Integrations', icon: () => <PlugIcon size={19} strokeWidth={1.6} /> },
+  { id: 'embed', label: 'Share & Embed', icon: () => <CodeIcon size={19} strokeWidth={1.6} /> },
 ];
 
 export function IconRail({ active, onSelect }: Props) {

@@ -1,5 +1,5 @@
 import { Text } from '@mantine/core';
-import { IconCheck } from '@tabler/icons-react';
+import { CheckIcon } from 'lucide-react';
 import type { ThemePreset } from '@/lib/themes';
 import classes from './PresetCard.module.css';
 
@@ -35,7 +35,7 @@ export function PresetCard({ preset, selected, onSelect }: Props) {
         </span>
         {selected && (
           <span className={classes.check}>
-            <IconCheck size={12} stroke={3} />
+            <CheckIcon size={12} strokeWidth={3} />
           </span>
         )}
       </span>

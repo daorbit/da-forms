@@ -1,7 +1,16 @@
 import { useEffect } from 'react';
-import { ActionIcon, Anchor, Button, Drawer, Group, Image, Paper, Stack, Table, Text, Tooltip } from '@mantine/core';
-import { IconTrash, IconMail, IconMailOpened, IconChevronUp, IconChevronDown, IconX, IconWorld } from '@tabler/icons-react';
+import { ActionIcon, Anchor, Button, Group, Image, Paper, Stack, Table, Text, Tooltip } from '@mantine/core';
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  GlobeIcon,
+  MailIcon,
+  MailOpenIcon,
+  Trash2Icon,
+} from 'lucide-react';
 import { StatusPill } from '@/components/ui/StatusPill';
+import { PanelDrawer } from '@/components/ui/PanelDrawer';
+import panel from '@/components/ui/PanelDrawer.module.css';
 import { relativeTime } from '@/lib/relativeTime';
 import type { Form, FormField, Submission } from '@/types';
 import { uploadedTypes } from '@/lib/fieldPalette';
@@ -56,63 +65,79 @@ export function ResponseModal({
   }, [viewing, prev, next, onNavigate]);
 
   return (
-    <Drawer
+    <PanelDrawer
       opened={!!viewing}
       onClose={onClose}
-      position="right"
       size={560}
-      withCloseButton={false}
-      padding={0}
-      overlayProps={{ backgroundOpacity: 0.45, blur: 1 }}
-      classNames={{ body: classes.drawerBody }}
+      bare
+      title={
+        <>
+          Response
+          {index >= 0 && submissions.length > 1 && (
+            <span className={classes.drawerCount}>
+              {index + 1} of {submissions.length}
+            </span>
+          )}
+        </>
+      }
+      subtitle={
+        viewing && (
+          <>
+            <StatusPill tone={viewing.read ? 'idle' : 'live'} label={viewing.read ? 'Read' : 'New'} />
+            <Tooltip label={formatDateTime(viewing.createdAt)} withArrow>
+              <span>Submitted {relativeTime(viewing.createdAt)}</span>
+            </Tooltip>
+          </>
+        )
+      }
+      headerActions={
+        onNavigate && (
+          <>
+            <Tooltip label="Previous (↑)" withArrow>
+              <ActionIcon variant="subtle" size={30} radius="xl" className={panel.headerButton} disabled={!prev} onClick={() => prev && onNavigate(prev)} aria-label="Previous response">
+                <ChevronUpIcon size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Next (↓)" withArrow>
+              <ActionIcon variant="subtle" size={30} radius="xl" className={panel.headerButton} disabled={!next} onClick={() => next && onNavigate(next)} aria-label="Next response">
+                <ChevronDownIcon size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </>
+        )
+      }
+      footer={
+        viewing && (
+          <>
+            <Button
+              variant="default"
+              leftSection={viewing.read ? <MailIcon size={16} /> : <MailOpenIcon size={16} />}
+              onClick={() => (onToggleRead ? onToggleRead(viewing) : onMarkRead(viewing))}
+              disabled={!onToggleRead && viewing.read}
+            >
+              {viewing.read ? 'Mark unread' : 'Mark read'}
+            </Button>
+            <Button
+              variant="default"
+              leftSection={<FileTypeIcon fileName="response.pdf" size={16} />}
+              onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, viewing)}
+            >
+              PDF
+            </Button>
+            <Tooltip label="Delete response" withArrow>
+              <ActionIcon variant="default" size="input-sm" color="red" ml="auto" aria-label="Delete response" onClick={() => onDelete(viewing)}>
+                <Trash2Icon size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </>
+        )
+      }
     >
       {viewing && (
         <div className={classes.drawer}>
-          <div className={classes.drawerHead}>
-            <div style={{ minWidth: 0 }}>
-              <Group gap={8} wrap="nowrap">
-                <Text fw={700} size="lg">
-                  Response
-                </Text>
-                {index >= 0 && submissions.length > 1 && (
-                  <Text size="sm" c="dimmed">
-                    {index + 1} of {submissions.length}
-                  </Text>
-                )}
-              </Group>
-              <Group gap={8} mt={4} wrap="nowrap">
-                <StatusPill tone={viewing.read ? 'idle' : 'live'} label={viewing.read ? 'Read' : 'New'} />
-                <Tooltip label={formatDateTime(viewing.createdAt)} withArrow>
-                  <Text size="xs" c="dimmed" span>
-                    Submitted {relativeTime(viewing.createdAt)}
-                  </Text>
-                </Tooltip>
-              </Group>
-            </div>
-            <Group gap={4} wrap="nowrap">
-              {onNavigate && (
-                <>
-                  <Tooltip label="Previous (↑)" withArrow>
-                    <ActionIcon variant="default" size="lg" disabled={!prev} onClick={() => prev && onNavigate(prev)} aria-label="Previous response">
-                      <IconChevronUp size={17} />
-                    </ActionIcon>
-                  </Tooltip>
-                  <Tooltip label="Next (↓)" withArrow>
-                    <ActionIcon variant="default" size="lg" disabled={!next} onClick={() => next && onNavigate(next)} aria-label="Next response">
-                      <IconChevronDown size={17} />
-                    </ActionIcon>
-                  </Tooltip>
-                </>
-              )}
-              <ActionIcon variant="subtle" color="gray" size="lg" onClick={onClose} aria-label="Close">
-                <IconX size={18} />
-              </ActionIcon>
-            </Group>
-          </div>
-
           {viewing.sourceUrl && (
             <div className={classes.drawerSource}>
-              <IconWorld size={13} />
+              <GlobeIcon size={13} />
               <Text size="xs" c="dimmed" truncate>
                 {viewing.sourceUrl}
               </Text>
@@ -226,30 +251,8 @@ export function ResponseModal({
 
           </div>
 
-          <div className={classes.drawerFoot}>
-            <Button
-              variant="default"
-              leftSection={viewing.read ? <IconMail size={16} /> : <IconMailOpened size={16} />}
-              onClick={() => (onToggleRead ? onToggleRead(viewing) : onMarkRead(viewing))}
-              disabled={!onToggleRead && viewing.read}
-            >
-              {viewing.read ? 'Mark unread' : 'Mark read'}
-            </Button>
-            <Button
-              variant="default"
-              leftSection={<FileTypeIcon fileName="response.pdf" size={16} />}
-              onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, viewing)}
-            >
-              PDF
-            </Button>
-            <Tooltip label="Delete response" withArrow>
-              <ActionIcon variant="default" size="input-sm" color="red" ml="auto" aria-label="Delete response" onClick={() => onDelete(viewing)}>
-                <IconTrash size={16} />
-              </ActionIcon>
-            </Tooltip>
-          </div>
         </div>
       )}
-    </Drawer>
+    </PanelDrawer>
   );
 }

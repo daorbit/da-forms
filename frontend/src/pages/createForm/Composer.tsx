@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent, type ClipboardEvent, type DragEvent } from 'react';
 import { ActionIcon, Button, Text, Textarea, Tooltip } from '@mantine/core';
-import { IconArrowUp, IconPhotoPlus, IconX } from '@tabler/icons-react';
+import { ArrowUpIcon, ImagePlusIcon, XIcon } from 'lucide-react';
 import classes from './createForm.module.css';
 
 interface Props {
@@ -90,7 +90,7 @@ export function Composer({
             onClick={() => onAttachImage(null)}
             aria-label="Remove attached image"
           >
-            <IconX size={12} />
+            <XIcon size={12} />
           </ActionIcon>
         </div>
       )}
@@ -147,7 +147,7 @@ export function Composer({
             onClick={() => fileInputRef.current?.click()}
             aria-label="Attach a photo of a form"
           >
-            <IconPhotoPlus size={compact ? 13 : 15} />
+            <ImagePlusIcon size={compact ? 13 : 15} />
           </ActionIcon>
         </Tooltip>
 
@@ -166,7 +166,7 @@ export function Composer({
               onClick={onSend}
               aria-label="Apply change"
             >
-              <IconArrowUp size={13} />
+              <ArrowUpIcon size={13} />
             </ActionIcon>
           </Tooltip>
         ) : (
@@ -174,7 +174,7 @@ export function Composer({
             color="emerald"
             radius="xl"
             size="sm"
-            leftSection={<IconArrowUp size={15} />}
+            leftSection={<ArrowUpIcon size={15} />}
             disabled={empty || busy}
             loading={busy}
             onClick={onSend}

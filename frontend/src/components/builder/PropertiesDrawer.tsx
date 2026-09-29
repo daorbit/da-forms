@@ -1,5 +1,4 @@
 import {
-  Drawer,
   Stack,
   TextInput,
   Textarea,
@@ -48,6 +47,8 @@ import { GatewayLogo } from '@/components/builder/GatewayLogos';
 import payClasses from '@/components/builder/GatewayPicker.module.css';
 import { RepeaterFieldsEditor } from '@/components/builder/RepeaterFieldsEditor';
 import { EmailBodyEditor } from '@/components/builder/EmailBodyEditor';
+import { SlidersHorizontalIcon } from 'lucide-react';
+import { PanelDrawer } from '@/components/ui/PanelDrawer';
 import classes from './PropertiesDrawer.module.css';
 
 interface Props {
@@ -204,35 +205,13 @@ export function PropertiesDrawer({
   const showIfValueless = showIfRule && (showIfRule.operator === 'isEmpty' || showIfRule.operator === 'isNotEmpty');
 
   return (
-    <Drawer
+    <PanelDrawer
       opened={!!field}
       onClose={onClose}
-      position="right"
       size={520}
-      // Mantine writes this onto the content element, which then drives the
-      // header and body insets — set to 0 and controlled entirely by our own
-      // .header/.body classes below instead, so the two never fight.
-      padding={0}
-      radius="lg"
-      overlayProps={{ backgroundOpacity: 0.35 }}
-      transitionProps={{ duration: 180, transition: 'slide-left' }}
-      title={
-        meta && (
-          <div className={classes.headerBar}>
-            <span className={classes.headerTitle}>Properties</span>
-            <span className={classes.fieldTypeChip}>
-              <meta.icon size={13} stroke={1.7} />
-              {meta.label}
-            </span>
-          </div>
-        )
-      }
-      classNames={{
-        header: classes.header,
-        title: classes.title,
-        body: classes.body,
-        content: classes.content,
-      }}
+      title="Properties"
+      subtitle={meta?.label}
+      icon={meta ? <meta.icon size={16} strokeWidth={1.7} /> : <SlidersHorizontalIcon size={16} />}
     >
       {field && (
         <>
@@ -966,6 +945,6 @@ export function PropertiesDrawer({
           )}
         </>
       )}
-    </Drawer>
+    </PanelDrawer>
   );
 }

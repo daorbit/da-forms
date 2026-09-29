@@ -1,0 +1,76 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 44vh;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.root[data-compact] {
+  min-height: 0;
+  padding: 36px 20px;
+}
+
+.icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  color: var(--text-2);
+  background: radial-gradient(
+    circle at 50% 30%,
+    color-mix(in srgb, var(--text) 10%, transparent),
+    color-mix(in srgb, var(--text) 3%, transparent) 72%
+  );
+  box-shadow: inset 0 0 0 1px var(--border);
+  animation: empty-state-float 5s ease-in-out infinite;
+}
+
+.root[data-compact] .icon {
+  width: 52px;
+  height: 52px;
+}
+
+.title {
+  margin-top: 20px;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+
+.description {
+  max-width: 40ch;
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.action {
+  margin-top: 22px;
+}
+
+@keyframes empty-state-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+[data-motion='off'] .icon {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon {
+    animation: none;
+  }
+}

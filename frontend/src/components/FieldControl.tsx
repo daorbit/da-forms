@@ -20,17 +20,17 @@ import {
 import { DateInput, TimeInput, DateTimePicker, MonthPickerInput } from '@mantine/dates';
 import { evaluateFormula, numericValues } from '@/lib/formula';
 import {
-  IconMail,
-  IconPhone,
-  IconWorld,
-  IconCurrencyDollar,
-  IconCalendar,
-  IconClock,
-  IconPhotoUp,
-  IconVideo,
-  IconBook2,
-  IconCreditCard,
-} from '@tabler/icons-react';
+  BookOpenIcon,
+  CalendarIcon,
+  ClockIcon,
+  CreditCardIcon,
+  DollarSignIcon,
+  GlobeIcon,
+  ImageUpIcon,
+  MailIcon,
+  PhoneIcon,
+  VideoIcon,
+} from 'lucide-react';
 import type { FormField, FieldSize, LabelPlacement } from '@/types';
 import { acceptFor } from '@/lib/fieldPalette';
 import {
@@ -413,13 +413,13 @@ export function FieldControl({
     }
 
     case 'email':
-      return text({ type: readOnly ? 'text' : 'email', leftSection: <IconMail size={16} /> });
+      return text({ type: readOnly ? 'text' : 'email', leftSection: <MailIcon size={16} /> });
     case 'phone':
-      return text({ type: readOnly ? 'text' : 'tel', leftSection: <IconPhone size={16} /> });
+      return text({ type: readOnly ? 'text' : 'tel', leftSection: <PhoneIcon size={16} /> });
     case 'website':
       return text({
         type: readOnly ? 'text' : 'url',
-        leftSection: <IconWorld size={16} />,
+        leftSection: <GlobeIcon size={16} />,
         placeholder: field.placeholder || 'https://',
       });
     case 'textarea':
@@ -440,7 +440,7 @@ export function FieldControl({
     case 'decimal':
       return number({ decimalScale: 2, placeholder: field.placeholder || '0.00' });
     case 'currency':
-      return number({ decimalScale: 2, leftSection: <IconCurrencyDollar size={16} /> });
+      return number({ decimalScale: 2, leftSection: <DollarSignIcon size={16} /> });
     case 'select':
       return (
         <Select
@@ -649,7 +649,7 @@ export function FieldControl({
       return (
         <DateInput
           {...base}
-          leftSection={<IconCalendar size={16} />}
+          leftSection={<CalendarIcon size={16} />}
           valueFormat="DD/MM/YYYY"
           value={value || null}
           onChange={(v) => !readOnly && onChange(v ?? '')}
@@ -659,7 +659,7 @@ export function FieldControl({
       return (
         <TimeInput
           {...base}
-          leftSection={<IconClock size={16} />}
+          leftSection={<ClockIcon size={16} />}
           value={value}
           onChange={(e) => !readOnly && onChange(e.currentTarget.value)}
         />
@@ -668,7 +668,7 @@ export function FieldControl({
       return (
         <DateTimePicker
           {...base}
-          leftSection={<IconCalendar size={16} />}
+          leftSection={<CalendarIcon size={16} />}
           valueFormat="DD/MM/YYYY HH:mm"
           value={value || null}
           onChange={(v) => !readOnly && onChange(v ?? '')}
@@ -678,7 +678,7 @@ export function FieldControl({
       return (
         <MonthPickerInput
           {...base}
-          leftSection={<IconCalendar size={16} />}
+          leftSection={<CalendarIcon size={16} />}
           valueFormat="MM/YYYY"
           value={value || null}
           onChange={(v) => !readOnly && onChange(v ?? '')}
@@ -699,7 +699,7 @@ export function FieldControl({
           <Group grow gap="sm" align="flex-start">
             <DateInput
               styles={base.styles}
-              leftSection={<IconCalendar size={16} />}
+              leftSection={<CalendarIcon size={16} />}
               valueFormat="DD/MM/YYYY"
               placeholder="Start"
               value={start || null}
@@ -709,7 +709,7 @@ export function FieldControl({
             />
             <DateInput
               styles={base.styles}
-              leftSection={<IconCalendar size={16} />}
+              leftSection={<CalendarIcon size={16} />}
               valueFormat="DD/MM/YYYY"
               placeholder="End"
               value={end || null}
@@ -735,7 +735,7 @@ export function FieldControl({
           <Group grow gap="sm" align="flex-start">
             <TimeInput
               styles={base.styles}
-              leftSection={<IconClock size={16} />}
+              leftSection={<ClockIcon size={16} />}
               value={start}
               readOnly={readOnly}
               error={Boolean(error)}
@@ -743,7 +743,7 @@ export function FieldControl({
             />
             <TimeInput
               styles={base.styles}
-              leftSection={<IconClock size={16} />}
+              leftSection={<ClockIcon size={16} />}
               value={end}
               readOnly={readOnly}
               error={Boolean(error)}
@@ -758,9 +758,9 @@ export function FieldControl({
     case 'mediaUpload': {
       const leftSection =
         field.type === 'imageUpload' ? (
-          <IconPhotoUp size={16} />
+          <ImageUpIcon size={16} />
         ) : field.type === 'mediaUpload' ? (
-          <IconVideo size={16} />
+          <VideoIcon size={16} />
         ) : undefined;
       const placeholder =
         field.placeholder ||
@@ -973,7 +973,7 @@ export function FieldControl({
           >
             <Group justify="space-between" wrap="nowrap">
               <Group gap="xs" wrap="nowrap">
-                <IconCreditCard size={20} color={accentColor} />
+                <CreditCardIcon size={20} color={accentColor} />
                 <Box>
                   <Text size="sm" fw={500} c={inputTextColor}>
                     {pay?.description || field.label || 'Payment'}
@@ -1205,7 +1205,7 @@ export function FieldControl({
         <Group gap="xs" my="xs" c="dimmed">
           <Divider style={{ flex: 1 }} labelPosition="center" label={
             <Group gap={6}>
-              <IconBook2 size={14} />
+              <BookOpenIcon size={14} />
               <Text size="xs">{field.label || 'Page break'}</Text>
             </Group>
           } />

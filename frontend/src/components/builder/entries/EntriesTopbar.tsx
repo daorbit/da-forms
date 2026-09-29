@@ -1,6 +1,6 @@
 import { ActionIcon, Button, Group, Skeleton, TextInput, Tooltip } from '@mantine/core';
 import { Link } from 'react-router-dom';
-import { IconArrowLeft, IconCheck, IconLink, IconPencil, IconX } from '@tabler/icons-react';
+import { ArrowLeftIcon, CheckIcon, LinkIcon, PencilIcon, XIcon } from 'lucide-react';
 import { StatusText } from '@/components/ui/StatusText';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
@@ -60,7 +60,7 @@ export function EntriesTopbar({
       mt={2}
       aria-label="Back to all forms"
     >
-      <IconArrowLeft size={18} />
+      <ArrowLeftIcon size={18} />
     </ActionIcon>
   );
 
@@ -82,10 +82,10 @@ export function EntriesTopbar({
               disabled={savingName}
             />
             <ActionIcon variant="subtle" size="lg" aria-label="Save name" onClick={onSaveName} loading={savingName}>
-              <IconCheck size={16} />
+              <CheckIcon size={16} />
             </ActionIcon>
             <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Cancel" onClick={onCancelEditingName} disabled={savingName}>
-              <IconX size={16} />
+              <XIcon size={16} />
             </ActionIcon>
           </Group>
         ) : (
@@ -93,7 +93,7 @@ export function EntriesTopbar({
             <span className={classes.titleText}>{form.name || form.title}</span>
             <Tooltip label="Rename form" withArrow>
               <ActionIcon variant="subtle" color="gray" size="md" aria-label="Rename form" onClick={onStartEditingName}>
-                <IconPencil size={16} />
+                <PencilIcon size={16} />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -114,10 +114,10 @@ export function EntriesTopbar({
       }
       actions={
         <>
-          <Button component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} leftSection={<IconPencil size={16} />}>
+          <Button component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} leftSection={<PencilIcon size={16} />}>
             Edit form
           </Button>
-          <Button variant="default" leftSection={<IconLink size={16} />} onClick={onCopyShareLink}>
+          <Button variant="default" leftSection={<LinkIcon size={16} />} onClick={onCopyShareLink}>
             Copy link
           </Button>
           <DocsButton path="/forms-entries-and-links" />

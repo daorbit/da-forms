@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------ status --- */
 
 .pill {
-  --pill: var(--mantine-color-gray-5);
+  --pill: var(--muted);
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -18,7 +18,7 @@
 }
 
 .pill[data-tone='live'] {
-  --pill: var(--text-2);
+  --pill: var(--accent);
 }
 
 .pill[data-tone='warn'] {

@@ -4,18 +4,26 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
+.start,
 .end {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 
 .search {
   margin-right: 4px;
+}
+
+@container (max-width: 900px) {
+  .viewText {
+    display: none;
+  }
 }
 
 @container (max-width: 640px) {
@@ -24,12 +32,13 @@
     align-items: stretch;
   }
 
-  .end {
+  .search {
+    flex: 1 1 100%;
     width: 100%;
+    margin-right: 0;
   }
 
-  .search {
-    flex: 1;
-    width: auto;
+  .end {
+    justify-content: space-between;
   }
 }

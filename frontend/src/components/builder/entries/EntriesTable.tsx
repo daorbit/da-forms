@@ -1,15 +1,48 @@
-import { ActionIcon, Anchor, Button, Checkbox, Group, Image, Pagination, Stack, Table, Text, ThemeIcon, Tooltip } from '@mantine/core';
-import { EyeIcon, MailOpenIcon, Share2Icon, Trash2Icon } from 'lucide-react';
+import { ActionIcon, Checkbox, Pagination, Table, Tooltip } from '@mantine/core';
+import { EyeIcon, InboxIcon, Share2Icon, Trash2Icon } from 'lucide-react';
 import type { Form, FormField, Submission } from '@/types';
-import { uploadedTypes } from '@/lib/fieldPalette';
-import { parseRepeaterRows } from '@/lib/repeater';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
-import { PaymentCell } from '@/components/builder/PaymentCell';
-import { FileTypeIcon } from './fileTypeIcon';
-import { FileSizeBadge } from './FileSizeBadge';
-import { answerText, formatAnswer, formatDateTime, isImageUrl, PAGE_SIZE } from './entriesTypes';
 import { relativeTime } from '@/lib/relativeTime';
-import classes from '../../../pages/EntriesPage.module.css';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { FileTypeIcon } from './fileTypeIcon';
+import { EntryCell } from './EntryCell';
+import { formatDateTime, PAGE_SIZE } from './entriesTypes';
+import classes from './EntriesTable.module.css';
+
+type Column = FormField & { retired?: boolean };
+
+interface Props {
+  form: Form | null;
+  columns: Column[];
+  submissions: Submission[];
+  total: number;
+  page: number;
+  loading: boolean;
+  selected: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleSelectAll: (checked: boolean) => void;
+  onPageChange: (page: number) => void;
+  onMarkRead?: (submission: Submission) => void;
+  onView: (submission: Submission) => void;
+  onDelete: (submission: Submission) => void;
+  onCopyShareLink: () => void;
+  onOpenAttachment: (attachment: { url: string; name: string; image: boolean }) => void;
+}
+
+function ColumnHeading({ field }: { field: Column }) {
+  return (
+    <div className={classes.thLabel}>
+      <span className={classes.thText} title={field.label} data-retired={field.retired || undefined}>
+        {field.label}
+      </span>
+      {field.retired && (
+        <Tooltip label="Removed from the form — earlier answers are kept here" withArrow>
+          <span className={classes.retiredTag}>removed</span>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
 
 export function EntriesTable({
   form,
@@ -26,259 +59,144 @@ export function EntriesTable({
   onDelete,
   onCopyShareLink,
   onOpenAttachment,
-}: {
-  form: Form | null;
-  columns: (FormField & { retired?: boolean })[];
-  submissions: Submission[];
-  total: number;
-  page: number;
-  loading: boolean;
-  /** Ids of the checked rows, scoped to the current page — selection doesn't
-   *  carry across pages, so a "select all" only ever means "this page". */
-  selected: Set<string>;
-  onToggleSelect: (id: string) => void;
-  onToggleSelectAll: (checked: boolean) => void;
-  onPageChange: (page: number) => void;
-  /** Kept for callers; opening a response is what marks it read now. */
-  onMarkRead?: (submission: Submission) => void;
-  onView: (submission: Submission) => void;
-  onDelete: (submission: Submission) => void;
-  onCopyShareLink: () => void;
-  onOpenAttachment: (attachment: { url: string; name: string; image: boolean }) => void;
-}) {
+}: Props) {
   const allSelected = submissions.length > 0 && submissions.every((s) => selected.has(s._id));
   const someSelected = !allSelected && submissions.some((s) => selected.has(s._id));
+
+  if (submissions.length === 0 && !loading) {
+    return (
+      <div className="surface-card">
+        <EmptyState
+          compact
+          icon={InboxIcon}
+          title="No responses yet"
+          description="Share your form's link to start collecting responses."
+          action={{ label: 'Copy share link', onClick: onCopyShareLink, icon: Share2Icon, variant: 'default' }}
+        />
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* Enough width for every value column at 180px plus the date and
-          actions columns, so a narrow screen scrolls the table sideways
-          instead of crushing the columns into unreadable slivers. */}
-      <Table.ScrollContainer minWidth={columns.length * 180 + 90 + 160 + 40} className={classes.tableWrap}>
-        <Table
-          highlightOnHover
-          verticalSpacing="sm"
-          className={`${classes.table} ${loading && submissions.length > 0 ? classes.tableLoading : ''}`}
-          aria-busy={loading}
-        >
-          <Table.Thead className={classes.thead}>
-            <Table.Tr>
-              <Table.Th className={classes.th} style={{ width: 40 }}>
-                <Checkbox
-                  size="sm"
-                  checked={allSelected}
-                  indeterminate={someSelected}
-                  onChange={(e) => onToggleSelectAll(e.currentTarget.checked)}
-                  aria-label="Select all responses on this page"
-                />
-              </Table.Th>
-              {/* No leading icon: the icon shifted every heading right by its
-                  own width while the values below started at the cell edge,
-                  so each column read as misaligned with its own data. The
-                  field type is already visible from the values. */}
-              {columns.map((field) => (
-                <Table.Th key={field.id} className={classes.th}>
-                  <Group gap={6} wrap="nowrap">
-                    <Text size="sm" fw={600} title={field.label} truncate c={field.retired ? 'dimmed' : undefined}>
-                      {field.label}
-                    </Text>
-                    {field.retired && (
-                      <Tooltip label="This field was removed from the form — its earlier answers are kept here" withArrow>
-                        <Text component="span" size="xs" c="dimmed" style={{ flexShrink: 0 }}>
-                          removed
-                        </Text>
-                      </Tooltip>
-                    )}
-                  </Group>
-                </Table.Th>
-              ))}
-              <Table.Th className={classes.th}>
-                <Text size="sm" fw={600}>
-                  Submitted
-                </Text>
-              </Table.Th>
-              <Table.Th className={`${classes.th} ${classes.actionsCol}`}>
-                <Text size="sm" fw={600} ta="right">
-                  {' '}
-                </Text>
-              </Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-
-          <Table.Tbody>
-            {submissions.length === 0 ? (
+      <div className={`surface-card ${classes.card}`}>
+        <Table.ScrollContainer minWidth={columns.length * 170 + 48 + 120 + 112} className={classes.scroll}>
+          <Table className={`${classes.table} ${loading ? classes.loading : ''}`} aria-busy={loading}>
+            <Table.Thead>
               <Table.Tr>
-                <Table.Td colSpan={columns.length + 3}>
-                  <Stack align="center" gap={4} py="xl">
-                    <ThemeIcon variant="light" color="gray" size={44} radius="xl">
-                      <MailOpenIcon size={22} />
-                    </ThemeIcon>
-                    <Text fw={600} size="sm">
-                      No responses yet
-                    </Text>
-                    <Text size="xs" c="dimmed" ta="center" maw={320}>
-                      Share your form's link to start collecting responses.
-                    </Text>
-                    <Button variant="light" color="emerald" size="xs" mt="xs" leftSection={<Share2Icon size={14} />} onClick={onCopyShareLink}>
-                      Copy share link
-                    </Button>
-                  </Stack>
-                </Table.Td>
+                <Table.Th className={`${classes.th} ${classes.checkCol}`}>
+                  <Checkbox
+                    size="xs"
+                    checked={allSelected}
+                    indeterminate={someSelected}
+                    onChange={(e) => onToggleSelectAll(e.currentTarget.checked)}
+                    aria-label="Select all responses on this page"
+                  />
+                </Table.Th>
+                {columns.map((field) => (
+                  <Table.Th key={field.id} className={classes.th}>
+                    <ColumnHeading field={field} />
+                  </Table.Th>
+                ))}
+                <Table.Th className={`${classes.th} ${classes.dateCol}`}>Submitted</Table.Th>
+                <Table.Th className={`${classes.th} ${classes.actionsCol}`} aria-label="Actions" />
               </Table.Tr>
-            ) : (
-              submissions.map((submission) => (
+            </Table.Thead>
+
+            <Table.Tbody>
+              {submissions.map((submission) => (
                 <Table.Tr
                   key={submission._id}
                   onClick={() => onView(submission)}
-                  className={classes.tr}
+                  className={classes.row}
                   data-unread={!submission.read || undefined}
                 >
-                  <Table.Td onClick={(e) => e.stopPropagation()}>
+                  <Table.Td className={classes.td} onClick={(e) => e.stopPropagation()}>
                     <Checkbox
-                      size="sm"
+                      size="xs"
                       checked={selected.has(submission._id)}
                       onChange={() => onToggleSelect(submission._id)}
                       aria-label={`Select response from ${formatDateTime(submission.createdAt)}`}
                     />
                   </Table.Td>
-                  {columns.map((field) => {
-                    // A payment is not an answer — it lives on the
-                    // submission itself, written by the webhook rather
-                    // than typed by the respondent.
-                    if (field.type === 'payment') {
-                      return (
-                        <Table.Td key={field.id}>
-                          <PaymentCell payment={submission.payment} />
-                        </Table.Td>
-                      );
-                    }
-                    if (field.type === 'repeater') {
-                      const rowCount = parseRepeaterRows(submission.data[field.id]).length;
-                      return (
-                        <Table.Td key={field.id}>
-                          <Button
-                            variant="subtle"
-                            size="compact-xs"
-                            color="gray"
-                            disabled={rowCount === 0}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onView(submission);
-                            }}
-                          >
-                            {rowCount === 0 ? '—' : `${rowCount} ${rowCount === 1 ? 'entry' : 'entries'}`}
-                          </Button>
-                        </Table.Td>
-                      );
-                    }
-                    const raw = answerText(submission.data[field.id]);
-                    // Older submissions (or builder-preview edits) may only hold a bare
-                    // filename from before uploads were wired to Cloudinary — link only
-                    // what's actually a URL.
-                    const isFileLink = uploadedTypes.includes(field.type) && /^https?:\/\//.test(raw);
-                    const isImage = isFileLink && (field.type === 'imageUpload' || field.type === 'signature' || isImageUrl(raw));
-                    const fileName = raw.split('/').pop() || 'Attachment';
-                    const bytes = submission.fileMeta?.[field.id]?.bytes;
-                    return (
-                      <Table.Td key={field.id}>
-                        {isImage ? (
-                          <Group gap={6} wrap="nowrap">
-                            <Anchor href={raw} target="_blank" rel="noopener noreferrer">
-                              <Image
-                                src={raw}
-                                alt={fileName}
-                                h={40}
-                                w={40}
-                                fit="cover"
-                                radius="sm"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  onOpenAttachment({ url: raw, name: fileName, image: true });
-                                }}
-                              />
-                            </Anchor>
-                            <FileSizeBadge bytes={bytes} url={raw} />
-                          </Group>
-                        ) : isFileLink ? (
-                          <Anchor
-                            href={raw}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            underline="never"
-                            c="inherit"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              onOpenAttachment({ url: raw, name: fileName, image: false });
-                            }}
-                          >
-                            <Group gap={6} wrap="nowrap">
-                              <FileTypeIcon fileName={fileName} size={26} previewable />
-                              <Stack gap={0} style={{ minWidth: 0 }}>
-                                <Text size="sm" truncate maw={140}>
-                                  {fileName}
-                                </Text>
-                                <FileSizeBadge bytes={bytes} url={raw} />
-                              </Stack>
-                            </Group>
-                          </Anchor>
-                        ) : (
-                          <Text size="sm" className={classes.cellText} title={raw}>
-                            {formatAnswer(field.type, raw)}
-                          </Text>
-                        )}
-                      </Table.Td>
-                    );
-                  })}
-                  <Table.Td>
+                  {columns.map((field, i) => (
+                    <Table.Td key={field.id} className={classes.td}>
+                      {i === 0 ? (
+                        <div className={classes.firstCell}>
+                          {!submission.read && <span className={classes.unreadDot} aria-label="Unread" />}
+                          <EntryCell
+                            field={field}
+                            submission={submission}
+                            onView={onView}
+                            onOpenAttachment={onOpenAttachment}
+                          />
+                        </div>
+                      ) : (
+                        <EntryCell field={field} submission={submission} onView={onView} onOpenAttachment={onOpenAttachment} />
+                      )}
+                    </Table.Td>
+                  ))}
+                  <Table.Td className={classes.td}>
                     <Tooltip label={formatDateTime(submission.createdAt)} withArrow openDelay={300}>
-                      <Text size="sm" c="dimmed" span>
-                        {relativeTime(submission.createdAt)}
-                      </Text>
+                      <span className={classes.date}>{relativeTime(submission.createdAt)}</span>
                     </Tooltip>
                   </Table.Td>
-                  <Table.Td className={classes.actionsCol} onClick={(e) => e.stopPropagation()}>
-                    <Group gap={2} wrap="nowrap" justify="flex-end">
+                  <Table.Td className={classes.td} onClick={(e) => e.stopPropagation()}>
+                    <div className={classes.actions}>
                       <Tooltip label="View response" withArrow>
-                        <ActionIcon variant="subtle" color="gray" onClick={() => onView(submission)}>
-                          <EyeIcon size={16} />
+                        <ActionIcon
+                          variant="subtle"
+                          size={28}
+                          radius="md"
+                          className={classes.action}
+                          onClick={() => onView(submission)}
+                          aria-label="View response"
+                        >
+                          <EyeIcon size={15} />
                         </ActionIcon>
                       </Tooltip>
                       <Tooltip label="Download PDF" withArrow>
-                        <ActionIcon variant="subtle" color="gray" onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, submission)}>
-                          {/* The real branded glyph, same as the file-type
-                              icons elsewhere in this table — a fixed filename
-                              since this button always produces a PDF, not one
-                              taken from an uploaded file. */}
-                          <FileTypeIcon fileName="response.pdf" size={16} />
+                        <ActionIcon
+                          variant="subtle"
+                          size={28}
+                          radius="md"
+                          className={classes.action}
+                          onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, submission)}
+                          aria-label="Download PDF"
+                        >
+                          <FileTypeIcon fileName="response.pdf" size={15} />
                         </ActionIcon>
                       </Tooltip>
                       <Tooltip label="Delete response" withArrow>
-                        <ActionIcon variant="subtle" color="red" onClick={() => onDelete(submission)}>
-                          <Trash2Icon size={16} />
+                        <ActionIcon
+                          variant="subtle"
+                          size={28}
+                          radius="md"
+                          className={`${classes.action} ${classes.danger}`}
+                          onClick={() => onDelete(submission)}
+                          aria-label="Delete response"
+                        >
+                          <Trash2Icon size={15} />
                         </ActionIcon>
                       </Tooltip>
-                    </Group>
+                    </div>
                   </Table.Td>
                 </Table.Tr>
-              ))
-            )}
-          </Table.Tbody>
-        </Table>
-      </Table.ScrollContainer>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+      </div>
 
       {total > 0 && (
-        <Group justify="space-between" pt="md" gap="sm">
-          <Text size="xs" c="dimmed">
-            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total.toLocaleString()}
-          </Text>
+        <div className={classes.footer}>
+          <span className={classes.count}>
+            {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total.toLocaleString()}
+          </span>
           {total > PAGE_SIZE && (
-            <Pagination
-              size="sm"
-              total={Math.ceil(total / PAGE_SIZE)}
-              value={page}
-              onChange={onPageChange}
-            />
+            <Pagination size="sm" radius="md" total={Math.ceil(total / PAGE_SIZE)} value={page} onChange={onPageChange} />
           )}
-        </Group>
+        </div>
       )}
     </>
   );

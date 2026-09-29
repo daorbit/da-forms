@@ -71,7 +71,7 @@
 }
 
 .templateItem:hover {
-  border-color: var(--mantine-color-gray-5) !important;
+  border-color: var(--border-strong) !important;
   background-color: var(--mantine-color-default-hover);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }

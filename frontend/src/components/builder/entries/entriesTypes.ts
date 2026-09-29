@@ -129,3 +129,11 @@ export function isImageUrl(url: string) {
 }
 
 export const PAGE_SIZE = 10;
+
+const ID_LIKE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$|^[0-9a-f]{24}$|^field[_-]/i;
+
+export function retiredColumnLabel(id: string, label: string): string {
+  const clean = label?.trim();
+  if (!clean || clean === id || ID_LIKE.test(clean)) return 'Removed question';
+  return clean;
+}

@@ -1,0 +1,183 @@
+.card {
+  border-radius: var(--radius-lg);
+}
+
+.scroll :global(.mantine-ScrollArea-scrollbar) {
+  background-color: transparent;
+  padding: 0;
+}
+
+.scroll :global(.mantine-ScrollArea-scrollbar[data-orientation='horizontal']) {
+  height: 6px;
+}
+
+.scroll :global(.mantine-ScrollArea-thumb) {
+  background-color: var(--border-strong);
+  border-radius: 6px;
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+}
+
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+.th {
+  height: 40px;
+  padding: 0 14px !important;
+  border-bottom: 1px solid var(--border) !important;
+  background: color-mix(in srgb, var(--text) 2%, transparent);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.thLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.thText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thText[data-retired] {
+  font-style: italic;
+}
+
+.retiredTag {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  font-size: 10.5px;
+  font-style: normal;
+  color: var(--muted);
+}
+
+.checkCol {
+  width: 48px;
+}
+
+.dateCol {
+  width: 120px;
+}
+
+.actionsCol {
+  width: 112px;
+}
+
+.td {
+  height: 52px;
+  padding: 8px 14px !important;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.row:hover .td {
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.table tbody tr:last-child .td {
+  border-bottom: 0;
+}
+
+.row[data-unread] .td {
+  font-weight: 600;
+}
+
+.firstCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.unreadDot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.cellText {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.date {
+  color: var(--text-2);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.action {
+  color: var(--text-2);
+}
+
+.action:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+}
+
+.danger:hover {
+  background: color-mix(in srgb, var(--mantine-color-red-6) 12%, transparent);
+  color: var(--mantine-color-red-5);
+}
+
+.loading {
+  opacity: 0.58;
+  transition: opacity 120ms ease;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+}
+
+.count {
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+[data-motion='off'] .row {
+  transition: none;
+}

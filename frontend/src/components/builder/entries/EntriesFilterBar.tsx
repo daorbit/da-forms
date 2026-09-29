@@ -1,20 +1,21 @@
-import type React from 'react';
-import { ActionIcon, Button, Group, Menu, SegmentedControl, TextInput, Tooltip } from '@mantine/core';
+import type { ReactNode } from 'react';
+import { ActionIcon, Button, Menu, Tooltip } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import {
-  CalendarCheckIcon,
   CalendarIcon,
+  CalendarRangeIcon,
   CheckIcon,
   ChevronDownIcon,
-  FileOutputIcon,
+  DownloadIcon,
   LayoutListIcon,
   PaperclipIcon,
   RefreshCwIcon,
-  SearchIcon,
   SquareKanbanIcon,
   TableIcon,
-  XIcon,
 } from 'lucide-react';
+import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
+import { SearchField } from '@/components/ui/SearchField';
+import toolbar from '@/components/ui/toolbar.module.css';
 import {
   DAY_LABEL,
   STATUS_LABEL,
@@ -23,16 +24,41 @@ import {
   type EntriesView,
   type StatusFilter,
 } from './entriesTypes';
-import classes from '../../../pages/EntriesPage.module.css';
+import classes from './EntriesFilterBar.module.css';
 
-/** "Sep 1 – Sep 8", or just the start once only that's picked. `start`/`end`
- *  are ISO date strings (Mantine's range value shape), parsed here rather
- *  than assumed to already be `Date` objects. */
 function rangeLabel(range: CustomRange): string {
   const [start, end] = range;
   if (!start) return DAY_LABEL.custom;
   const fmt = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   return end ? `${fmt(start)} – ${fmt(end)}` : `From ${fmt(start)}`;
+}
+
+const STATUS_TABS = (Object.keys(STATUS_LABEL) as StatusFilter[]).map((value) => ({
+  value,
+  label: STATUS_LABEL[value],
+}));
+
+const VIEW_TABS: { value: EntriesView; label: ReactNode; title: string }[] = [
+  { value: 'list', title: 'List', label: <><LayoutListIcon size={14} /><span className={classes.viewText}>List</span></> },
+  { value: 'kanban', title: 'Board', label: <><SquareKanbanIcon size={14} /><span className={classes.viewText}>Board</span></> },
+  { value: 'excel', title: 'Sheet', label: <><TableIcon size={14} /><span className={classes.viewText}>Sheet</span></> },
+];
+
+interface Props {
+  status: StatusFilter;
+  day: DayFilter;
+  customRange: CustomRange;
+  view: EntriesView;
+  loading: boolean;
+  onFilter: (patch: Partial<{ status: StatusFilter; day: DayFilter }>) => void;
+  onCustomRangeChange: (range: CustomRange) => void;
+  onSetView: (view: EntriesView) => void;
+  onCopyShareLink?: () => void;
+  onRefresh: () => void;
+  onExportCsv: () => void;
+  search: string;
+  onSearchChange: (value: string) => void;
+  onOpenFiles?: () => void;
 }
 
 export function EntriesFilterBar({
@@ -49,68 +75,33 @@ export function EntriesFilterBar({
   search,
   onSearchChange,
   onOpenFiles,
-}: {
-  status: StatusFilter;
-  day: DayFilter;
-  customRange: CustomRange;
-  view: EntriesView;
-  loading: boolean;
-  onFilter: (patch: Partial<{ status: StatusFilter; day: DayFilter }>) => void;
-  onCustomRangeChange: (range: CustomRange) => void;
-  onSetView: (view: EntriesView) => void;
-  /** Unused here now — the topbar carries the share link. */
-  onCopyShareLink?: () => void;
-  onRefresh: () => void;
-  onExportCsv: () => void;
-  /** Free text across every answer. Debounced by the page, not here. */
-  search: string;
-  onSearchChange: (value: string) => void;
-  /** Absent on a form with no upload fields, which hides the button. */
-  onOpenFiles?: () => void;
-}) {
+}: Props) {
   return (
-    <Group justify="space-between" className={classes.filterbar} wrap="wrap" gap="sm">
-      <Group gap="sm" wrap="wrap" className={classes.filterLeft}>
-        <TextInput
-          size="sm"
-          className={classes.filterSearch}
-          placeholder="Search answers…"
-          leftSection={<SearchIcon size={15} />}
+    <div className={classes.root}>
+      <div className={classes.start}>
+        <SearchField
           value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          rightSection={
-            search ? (
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="sm"
-                onClick={() => onSearchChange('')}
-                aria-label="Clear search"
-              >
-                <XIcon size={12} />
-              </ActionIcon>
-            ) : null
-          }
+          onChange={onSearchChange}
+          placeholder="Search answers"
+          ariaLabel="Search answers"
+          className={classes.search}
         />
 
-        {/* Read state as tabs: three options is a choice to see, not to open. */}
         {view === 'list' && (
-          <SegmentedControl
-            size="sm"
+          <SegmentedTabs
+            ariaLabel="Filter by read state"
             value={status}
-            onChange={(value) => onFilter({ status: value as StatusFilter })}
-            data={(Object.keys(STATUS_LABEL) as StatusFilter[]).map((key) => ({
-              value: key,
-              label: STATUS_LABEL[key],
-            }))}
+            onChange={(value) => onFilter({ status: value })}
+            data={STATUS_TABS}
           />
         )}
 
-        <Menu shadow="md" width={170} position="bottom-start">
+        <Menu width={180} position="bottom-start">
           <Menu.Target>
             <Button
-              variant="default"
-              size="sm"
+              variant="subtle"
+              className={toolbar.pillButton}
+              data-active={day !== 'all' || undefined}
               leftSection={<CalendarIcon size={15} />}
               rightSection={<ChevronDownIcon size={14} />}
             >
@@ -132,19 +123,18 @@ export function EntriesFilterBar({
           </Menu.Dropdown>
         </Menu>
 
-        {/* Its own button, not another item in the day menu — a range picker
-            needs to stay open across two clicks (start, then end), which fought
-            the day-menu's own open/close state when the two shared one
-            dropdown. */}
-        <Menu shadow="md" width="auto" closeOnItemClick={false}>
+        <Menu width="auto" closeOnItemClick={false}>
           <Menu.Target>
             <Tooltip label="Custom date range" withArrow>
               <ActionIcon
-                variant={day === 'custom' ? 'light' : 'default'}
-                size="input-sm"
+                variant="subtle"
+                size={34}
+                radius="xl"
+                className={toolbar.iconButton}
+                data-active={day === 'custom' || undefined}
                 aria-label="Custom date range"
               >
-                <CalendarCheckIcon size={16} />
+                <CalendarRangeIcon size={16} />
               </ActionIcon>
             </Tooltip>
           </Menu.Target>
@@ -158,7 +148,6 @@ export function EntriesFilterBar({
                 onFilter({ day: 'custom' });
               }}
               allowSingleDateInRange
-              // Today, not further out — a form only has responses up to now.
               maxDate={new Date()}
             />
             {(customRange[0] || customRange[1]) && (
@@ -178,47 +167,40 @@ export function EntriesFilterBar({
             )}
           </Menu.Dropdown>
         </Menu>
-      </Group>
+      </div>
 
-      <Group gap="xs" wrap="nowrap">
-        <SegmentedControl
-          size="sm"
-          value={view}
-          onChange={(value) => onSetView(value as EntriesView)}
-          aria-label="View"
-          data={[
-            { value: 'list', label: <ViewLabel icon={<LayoutListIcon size={15} />} text="List" /> },
-            { value: 'kanban', label: <ViewLabel icon={<SquareKanbanIcon size={15} />} text="Board" /> },
-            { value: 'excel', label: <ViewLabel icon={<TableIcon size={15} />} text="Sheet" /> },
-          ]}
-        />
+      <div className={classes.end}>
+        <SegmentedTabs ariaLabel="View" value={view} onChange={onSetView} data={VIEW_TABS} />
         <Tooltip label="Refresh responses" withArrow>
-          <ActionIcon variant="default" size="input-sm" onClick={onRefresh} loading={loading} aria-label="Refresh responses">
-            <RefreshCwIcon size={16} />
+          <ActionIcon
+            variant="subtle"
+            size={34}
+            radius="xl"
+            className={toolbar.iconButton}
+            onClick={onRefresh}
+            aria-label="Refresh responses"
+          >
+            <RefreshCwIcon size={16} className={loading ? toolbar.spinning : undefined} />
           </ActionIcon>
         </Tooltip>
-        {/* Absent on a form that collects no files, rather than opening an
-            empty list. */}
         {onOpenFiles && (
           <Tooltip label="Uploaded files" withArrow>
-            <ActionIcon variant="default" size="input-sm" onClick={onOpenFiles} aria-label="Uploaded files">
+            <ActionIcon
+              variant="subtle"
+              size={34}
+              radius="xl"
+              className={toolbar.iconButton}
+              onClick={onOpenFiles}
+              aria-label="Uploaded files"
+            >
               <PaperclipIcon size={16} />
             </ActionIcon>
           </Tooltip>
         )}
-        <Button variant="default" size="sm" leftSection={<FileOutputIcon size={15} />} onClick={onExportCsv}>
+        <Button variant="default" radius="xl" leftSection={<DownloadIcon size={15} />} onClick={onExportCsv}>
           Export
         </Button>
-      </Group>
-    </Group>
-  );
-}
-
-function ViewLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <span className={classes.viewLabel}>
-      {icon}
-      <span className={classes.viewText}>{text}</span>
-    </span>
+      </div>
+    </div>
   );
 }

@@ -10,8 +10,8 @@
   overflow: hidden;
   padding: 0 !important;
   border-radius: 12px !important;
-  border: 2px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4)) !important;
-  background-color: var(--mantine-color-body);
+  border: 2px solid var(--border) !important;
+  background-color: var(--surface);
   text-align: left;
   min-width: 0;
   transition:
@@ -20,19 +20,17 @@
 }
 
 .card:hover:not(.cardActive) {
-  border-color: var(--mantine-color-gray-5) !important;
+  border-color: var(--border-strong) !important;
 }
 
 .cardActive {
-  border-color: var(--mantine-color-emerald-6) !important;
-  box-shadow: 0 0 0 3px rgba(18, 184, 134, 0.3);
+  border-color: var(--accent-2) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* Mantine's own focus-visible ring reads as a stray white outline over a dark
-   card — replace it with the same emerald ring the active state already uses. */
 .card:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(18, 184, 134, 0.3);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 /* Confirms the pick even at a glance over the art, where a thin border can
@@ -47,8 +45,8 @@
   width: 24px;
   height: 24px;
   border-radius: 999px;
-  background: var(--mantine-color-emerald-6);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
 /*

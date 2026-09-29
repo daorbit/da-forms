@@ -111,7 +111,7 @@
 
 .swatch:focus-visible,
 .choice:focus-visible {
-  outline: 2px solid var(--mantine-primary-color-filled);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -131,20 +131,21 @@
   flex-direction: column;
   gap: 4px;
   padding: 12px;
-  border-radius: 10px;
-  border: 1px solid var(--mantine-color-default-border);
-  background: var(--mantine-color-body);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel-well, var(--surface));
   text-align: left;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition: border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
 }
 
-.choice:hover {
-  border-color: var(--mantine-color-gray-5);
+.choice:hover:not([data-active]) {
+  border-color: var(--border-strong);
 }
 
 .choice[data-active] {
-  border-color: var(--mantine-primary-color-filled);
-  box-shadow: 0 0 0 1px var(--mantine-primary-color-filled);
+  border-color: var(--accent-2);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent-2);
 }
 
 .choiceHead {
@@ -161,11 +162,12 @@
   height: 16px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 1.5px solid var(--mantine-color-default-border);
+  border: 1.5px solid var(--border-strong);
+  transition: border 120ms ease;
 }
 
 .choice[data-active] .radio {
-  border: 5px solid var(--mantine-primary-color-filled);
+  border: 5px solid var(--accent);
 }
 
 .choiceHint {

@@ -10,8 +10,8 @@
   --text-2: #a3a3a3;
   --muted: #8f8f8f;
 
-  --accent: #a3a3a3;
-  --accent-2: #d4d4d4;
+  --accent: #14b8a6;
+  --accent-2: #30c1b1;
   --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
   --accent-contrast: #ffffff;
 
@@ -43,8 +43,8 @@
   --text-2: #525252;
   --muted: #737373;
 
-  --accent: #525252;
-  --accent-2: #404040;
+  --accent: #0d9488;
+  --accent-2: #0b7e74;
   --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
 
   --cta: #171717;

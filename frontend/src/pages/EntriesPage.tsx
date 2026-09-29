@@ -41,6 +41,7 @@ import {
   formatAnswer,
   formatDateTime,
   PAGE_SIZE,
+  retiredColumnLabel,
   type CustomRange,
   type DayFilter,
   type EntriesView,
@@ -340,7 +341,7 @@ export function EntriesPage() {
       : []),
     ...retiredColumns.map((c) => ({
       id: c.id,
-      label: c.label,
+      label: retiredColumnLabel(c.id, c.label),
       type: "text" as const,
       required: false,
       retired: true,
@@ -348,7 +349,7 @@ export function EntriesPage() {
   ];
 
   return (
-    <Box className={classes.page} px="md" py="lg">
+    <Box className={classes.page}>
       <EntriesTopbar
         form={form}
         workspaceId={workspaceId}
@@ -363,8 +364,9 @@ export function EntriesPage() {
         total={analytics?.submissionCount}
       />
 
-      <AnalyticsBar analytics={analytics} fields={form?.fields ?? []} />
-      <Box h="xl" />
+      <div className={classes.stats}>
+        <AnalyticsBar analytics={analytics} fields={form?.fields ?? []} />
+      </div>
 
       <EntriesFilterBar
         search={search}

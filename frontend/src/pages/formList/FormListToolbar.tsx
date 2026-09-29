@@ -1,6 +1,8 @@
-import { ActionIcon, Button, Menu, TextInput, Tooltip } from '@mantine/core';
-import { CheckIcon, ChevronDownIcon, RefreshCwIcon, SearchIcon, XIcon } from 'lucide-react';
+import { ActionIcon, Button, Menu, Tooltip } from '@mantine/core';
+import { CheckIcon, ChevronDownIcon, RefreshCwIcon } from 'lucide-react';
 import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
+import { SearchField } from '@/components/ui/SearchField';
+import toolbar from '@/components/ui/toolbar.module.css';
 import { SORT_LABEL, STATUS_TABS, type SortOption, type StatusFilter } from './constants';
 import classes from './FormListToolbar.module.css';
 
@@ -38,25 +40,11 @@ export function FormListToolbar({
       />
 
       <div className={classes.end}>
-        <TextInput
-          placeholder="Search"
-          value={search}
-          onChange={(e) => onSearch(e.currentTarget.value)}
-          leftSection={<SearchIcon size={15} />}
-          rightSection={
-            search ? (
-              <ActionIcon variant="transparent" className={classes.clear} onClick={() => onSearch('')} aria-label="Clear search">
-                <XIcon size={13} />
-              </ActionIcon>
-            ) : undefined
-          }
-          aria-label="Search forms"
-          classNames={{ root: classes.search, input: classes.searchInput, section: classes.searchSection }}
-        />
+        <SearchField value={search} onChange={onSearch} ariaLabel="Search forms" className={classes.search} />
 
         <Menu position="bottom-end" width={190}>
           <Menu.Target>
-            <Button variant="subtle" className={classes.sort} rightSection={<ChevronDownIcon size={14} />}>
+            <Button variant="subtle" className={toolbar.pillButton} rightSection={<ChevronDownIcon size={14} />}>
               {SORT_LABEL[sort]}
             </Button>
           </Menu.Target>
@@ -75,15 +63,8 @@ export function FormListToolbar({
         </Menu>
 
         <Tooltip label="Refresh" withArrow>
-          <ActionIcon
-            variant="subtle"
-            className={classes.iconButton}
-            size={34}
-            radius="xl"
-            onClick={onRefresh}
-            aria-label="Refresh"
-          >
-            <RefreshCwIcon size={16} className={loading ? classes.spinning : undefined} />
+          <ActionIcon variant="subtle" className={toolbar.iconButton} size={34} radius="xl" onClick={onRefresh} aria-label="Refresh">
+            <RefreshCwIcon size={16} className={loading ? toolbar.spinning : undefined} />
           </ActionIcon>
         </Tooltip>
       </div>

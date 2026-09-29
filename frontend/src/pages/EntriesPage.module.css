@@ -1,22 +1,10 @@
-.topbar {
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  background-color: var(--mantine-color-body);
-  position: sticky;
-  top: 0;
-  z-index: 3;
+.page {
+  container-type: inline-size;
+  padding: 24px 24px 40px;
 }
 
-.formLink {
-  color: var(--mantine-color-text);
-  text-decoration: none;
-}
-
-.formLink:hover {
-  color: var(--mantine-color-emerald-6);
-}
-
-.filterbar {
-  padding: 0 0 12px !important;
+.stats {
+  margin-bottom: 24px;
 }
 
 .titleRow {
@@ -29,23 +17,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.filterLeft {
-  flex: 1;
-  min-width: 0;
-}
-
-.filterSearch {
-  width: 240px;
-}
-
-.viewLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* ------------------------------------------------ response side panel --- */
 
 .drawer {
   flex: 1;
@@ -80,7 +51,7 @@
 
 .responseList .responseField {
   padding: 14px 0;
-  border-bottom: 1px solid var(--mantine-color-default-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .responseList .responseField:last-child {
@@ -88,150 +59,18 @@
 }
 
 .responseList .responseField > p:last-child,
-.responseList .responseField > .mantine-Text-root:last-child {
+.responseList .responseField > :global(.mantine-Text-root):last-child {
   font-size: 14px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.tableWrap {
-  padding: 0;
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: var(--mantine-radius-lg);
-  overflow: hidden;
-}
-
-/* Mantine draws its own scrollbar element here rather than the native one, so
-   the thin bar set globally in global.css never reaches it. These bring it
-   back in line: same 5px track, same muted thumb, no pale overlay strip. */
-.tableWrap :global(.mantine-ScrollArea-scrollbar) {
-  background-color: transparent;
-  padding: 0;
-}
-
-.tableWrap :global(.mantine-ScrollArea-scrollbar[data-orientation='horizontal']) {
-  height: 5px;
-}
-
-.tableWrap :global(.mantine-ScrollArea-scrollbar[data-orientation='vertical']) {
-  width: 5px;
-}
-
-.tableWrap :global(.mantine-ScrollArea-thumb) {
-  background-color: var(--mantine-color-gray-6);
-  border-radius: 3px;
-}
-
-.tableWrap :global(.mantine-ScrollArea-thumb:hover) {
-  background-color: var(--mantine-color-gray-5);
-}
-
-.table {
-  background-color: var(--mantine-color-default);
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.table td {
-  border-bottom: 1px solid var(--mantine-color-default-border);
-}
-
-.table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.tr {
-  cursor: pointer;
-}
-
-.tr[data-unread] td {
-  font-weight: 600;
-}
-
-
-.tableLoading {
-  opacity: 0.58;
-  transition: opacity 120ms ease;
-}
-
-.cellText {
-  display: -webkit-box;
-  overflow: hidden;
-  line-height: 1.35;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow-wrap: anywhere;
-}
-
-.thead {
-  background-color: var(--mantine-color-default-hover);
-}
-
-.th {
-  white-space: nowrap;
-  width: 180px;
-  border-bottom: 1px solid var(--mantine-color-default-border);
-}
-
-.th :global(.mantine-Text-root) {
-  font-size: 12px;
-  color: var(--mantine-color-dimmed);
-}
-
-/* A row is as tall as its tallest value (a wrapped email, a two-line answer).
-   Without this the shorter cells centre themselves against it and the row
-   stops reading as one line. */
-.table th,
-.table td {
-  vertical-align: middle;
-}
-
-.actionsCol {
-  position: sticky;
-  right: 0;
-  width: 108px;
-  background-color: var(--mantine-color-default);
-  box-shadow: -1px 0 0 var(--mantine-color-default-border);
-}
-
-.thead .actionsCol {
-  background-color: var(--mantine-color-default-hover);
-  z-index: 1;
-}
-
-.responseModal {
-  overflow: hidden;
-}
-
-.responseBody {
-  padding: 0 24px 24px;
-}
-
-.responseMeta {
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  padding: 14px 0;
-}
-
-.responseGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 24px;
-}
-
 .responseField {
   min-width: 0;
-  border-bottom: 1px solid var(--mantine-color-default-border);
-  padding: 14px 0;
 }
 
 .mediaField {
   grid-column: 1 / -1;
-}
-
-.responseFooter {
-  padding-top: 2px;
 }
 
 .attachmentModal {
@@ -248,17 +87,12 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: var(--mantine-radius-md);
-  background-color: var(--mantine-color-default);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
   padding: 20px;
 }
 
-/* A PDF/Office iframe is its own document with its own chrome (Excel's
-   toolbar, the PDF viewer's page controls) — the card's border and padding
-   just shrank how much of that the viewer got, on top of framing that was
-   already redundant with the iframe's own edge. Image and no-preview states
-   keep the card look above; only the iframe case drops it. */
 .attachmentPreview:has(.attachmentFrame) {
   border: 0;
   border-radius: 0;
@@ -272,71 +106,10 @@
   height: 72vh;
   min-height: 460px;
   border: 0;
-  border-radius: var(--mantine-radius-md);
+  border-radius: var(--radius);
   background: #fff;
 }
 
-/* Container query, not viewport: this page is often inside a narrow iframe on
-   a wide screen. See FormListPage.module.css for the same reasoning. */
-.page {
-  container-type: inline-size;
-}
-
-@container (max-width: 900px) {
-  .viewText {
-    display: none;
-  }
-}
-
-@container (max-width: 640px) {
-
-  .filterbar {
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-
-  .filterLeft {
-    width: 100% !important;
-    flex: none !important;
-  }
-
-  .filterSearch {
-    flex: 1 1 100%;
-    width: 100%;
-  }
-
-  .topbarSecondary {
-    display: none !important;
-  }
-
-  /* The toolbar rows stack their two halves instead of forcing them onto one
-     line, which is what pushed the filter icons off the edge. */
-  .topbar,
-  .filterbar {
-    flex-wrap: wrap;
-    row-gap: 8px;
-  }
-}
-
-@media (max-width: 600px) {
-  .responseBody {
-    padding: 0 16px 16px;
-  }
-
-  .responseGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .mediaField {
-    grid-column: auto;
-  }
-}
-
-/* The spreadsheet view.
- *
- * Padded like `.tableWrap` above, so switching between List and Excel does not
- * shift the content sideways — the two views sit in the same place on the page
- * and only their contents differ. */
 .excelCard {
   padding: 0;
 }
@@ -347,41 +120,38 @@
   width: 100%;
 }
 
-/* Inside the card and against the grid's own bottom border, so the caption
-   belongs to the table rather than floating on the page beneath it. */
 .excelFooter {
   padding: 7px 10px;
-  border: 1px solid var(--mantine-color-default-border);
+  border: 1px solid var(--border);
   border-top: none;
-  border-radius: 0 0 var(--mantine-radius-sm) var(--mantine-radius-sm);
-  background-color: var(--mantine-color-default-hover);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background-color: var(--surface-2);
 }
 
-/* The grid's own corners, squared where the footer meets it so the two read as
-   one object rather than two stacked boxes. */
 .excelGrid :global(.ag-root-wrapper) {
-  border-radius: var(--mantine-radius-sm) var(--mantine-radius-sm) 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
-/* The spreadsheet view — cell styles.
- *
- * Global rather than composed, because AG Grid owns the class names on the
- * elements these apply to — a CSS-module hash on `.ag-row-unread` would never
- * match the class the grid actually writes. */
 :global(.ag-row-unread) {
   font-weight: 600;
 }
 
-/* The row-number gutter: a label, not data. Dimmed and centred so it reads as
-   the spreadsheet's margin rather than as a first column of answers. */
 :global(.ag-cell-rownum) {
   color: var(--mantine-color-dimmed);
   justify-content: center;
   font-size: 11px;
 }
 
-/* A column whose field was deleted from the form. Its answers are still real
-   and still worth reading; the heading already says "(removed)". */
 :global(.ag-cell-retired) {
   color: var(--mantine-color-dimmed);
+}
+
+@media (max-width: 48em) {
+  .page {
+    padding: 18px 16px 32px;
+  }
+
+  .attachmentBody {
+    padding: 0 16px 16px;
+  }
 }

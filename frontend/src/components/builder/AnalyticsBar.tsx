@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Text, Group, Stack, Progress, Modal, SimpleGrid } from '@mantine/core';
+import { Text, Group, Stack, Progress, Modal } from '@mantine/core';
 import { EyeIcon, GlobeIcon, InboxIcon, TrendingUpIcon, UserXIcon } from 'lucide-react';
 import type { Analytics } from '@/lib/api';
 import type { FormField } from '@/types';
 import { valueFields } from '@/lib/fieldTree';
-import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
+import { StatStrip, type StatItem } from '@/components/ui/StatStrip';
 
 function SourceBreakdown({ sources }: { sources: Analytics['sources'] }) {
   if (sources.length === 0) {
@@ -128,66 +128,67 @@ export function AnalyticsBar({
     const before = rateOf(daily.slice(0, 7));
     return before === 0 ? null : Math.round(((rateOf(daily.slice(7)) - before) / before) * 100);
   })();
-  const series = (pick: (d: (typeof daily)[number]) => number) => daily.map((d) => ({ v: pick(d) }));
+  const topDrop = analytics?.partialsEnabled ? analytics.dropOff[0] : undefined;
+  const dropOffLabel = topDrop
+    ? valueFields(fields).find((f) => f.id === topDrop.fieldId)?.label ?? 'Deleted question'
+    : '—';
+  const topSource = analytics?.sources[0];
+  const sourceTotal = analytics?.sources.reduce((sum, s) => sum + s.count, 0) ?? 0;
 
-  const dropOffLabel =
-    analytics && analytics.partialsEnabled && analytics.dropOff.length > 0
-      ? valueFields(fields).find((f) => f.id === analytics.dropOff[0].fieldId)?.label ?? 'Deleted question'
-      : analytics && !analytics.partialsEnabled
-        ? 'Not tracked'
-        : '—';
+  const items: StatItem[] = analytics
+    ? [
+        {
+          key: 'views',
+          icon: <EyeIcon size={14} />,
+          label: 'Views',
+          value: analytics.viewCount.toLocaleString(),
+          delta: weekDelta((d) => d.views),
+          caption: 'All time',
+        },
+        {
+          key: 'responses',
+          icon: <InboxIcon size={14} />,
+          label: 'Responses',
+          value: analytics.submissionCount.toLocaleString(),
+          delta: weekDelta((d) => d.responses),
+          caption: 'All time',
+        },
+        {
+          key: 'completion',
+          icon: <TrendingUpIcon size={14} />,
+          label: 'Completion',
+          value: `${Math.min(100, Math.round(analytics.completionRate * 100))}%`,
+          delta: rateDelta,
+          caption: 'Responses per view',
+        },
+        {
+          key: 'source',
+          icon: <GlobeIcon size={14} />,
+          label: 'Top source',
+          value: topSource?.source ?? '—',
+          caption: topSource
+            ? `${Math.round((topSource.count / sourceTotal) * 100)}% of responses`
+            : 'No responses yet',
+          onClick: () => setSourcesOpen(true),
+        },
+        {
+          key: 'dropoff',
+          icon: <UserXIcon size={14} />,
+          label: 'Most gave up at',
+          value: dropOffLabel,
+          caption: !analytics.partialsEnabled
+            ? 'Turn on partial saves to track'
+            : topDrop
+              ? `${topDrop.abandoned.toLocaleString()} left here`
+              : 'Nobody has given up yet',
+          onClick: () => setDropOffOpen(true),
+        },
+      ]
+    : [];
 
   return (
     <>
-      {!analytics ? (
-        <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="lg">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
-        </SimpleGrid>
-      ) : (
-        <SimpleGrid cols={{ base: 2, sm: 3, md: 5 }} spacing="lg">
-          <StatCard
-            icon={<EyeIcon size={14} />}
-            label="Views"
-            value={analytics.viewCount.toLocaleString()}
-            color="#22d3ee"
-            delta={weekDelta((d) => d.views)}
-            spark={series((d) => d.views)}
-          />
-          <StatCard
-            icon={<InboxIcon size={14} />}
-            label="Responses"
-            value={analytics.submissionCount.toLocaleString()}
-            delta={weekDelta((d) => d.responses)}
-            spark={series((d) => d.responses)}
-          />
-          <StatCard
-            icon={<TrendingUpIcon size={14} />}
-            label="Completion"
-            value={`${Math.round(analytics.completionRate * 100)}%`}
-            color="#f59e0b"
-            delta={rateDelta}
-            spark={series((d) => (d.views ? d.responses / d.views : 0))}
-          />
-          <StatCard
-            icon={<GlobeIcon size={14} />}
-            label="Top source"
-            value={analytics.sources[0]?.source ?? '—'}
-            color="var(--accent)"
-            spark={series((d) => d.topSource)}
-            onClick={() => setSourcesOpen(true)}
-          />
-          <StatCard
-            icon={<UserXIcon size={14} />}
-            label="Gave up at"
-            value={dropOffLabel}
-            color="#f472b6"
-            spark={analytics.partialsEnabled ? series((d) => d.abandoned) : undefined}
-            onClick={() => setDropOffOpen(true)}
-          />
-        </SimpleGrid>
-      )}
+      <StatStrip items={items} loading={!analytics} />
 
       <Modal
         opened={sourcesOpen}

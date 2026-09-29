@@ -102,6 +102,21 @@
   background-color: var(--accent-contrast);
 }
 
+.mantine-Switch-input:disabled + .mantine-Switch-track {
+  --switch-bg: var(--surface-2);
+  border-color: var(--border);
+  opacity: 0.5;
+}
+
+.mantine-Switch-input:disabled:checked + .mantine-Switch-track {
+  --switch-bg: var(--switch-color);
+  border-color: transparent;
+}
+
+.mantine-Switch-input:disabled + .mantine-Switch-track .mantine-Switch-thumb {
+  --switch-thumb-bg: var(--text-2);
+}
+
 .mantine-Checkbox-input:checked:not(.da-forms-light-surface *) {
   --checkbox-icon-color: var(--accent-contrast);
 }

@@ -13,7 +13,7 @@
   --accent: #14b8a6;
   --accent-2: #30c1b1;
   --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
-  --accent-contrast: #ffffff;
+  --accent-contrast: var(--cta-fg);
 
   --cta: #fafafa;
   --cta-hover: #e5e5e5;

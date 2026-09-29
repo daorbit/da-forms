@@ -87,7 +87,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #10b981;
+  background: #14b8a6;
   animation: live-dot 1.8s ease-in-out infinite;
 }
 @keyframes live-dot {
@@ -98,29 +98,26 @@
   .liveDot { animation: none; }
 }
 
-/* Header action buttons, colours pinned against the embedding shell's theme.
-   A fixed emerald pair (#059669 / #047857) so Save always reads as the live,
-   primary action and Publish sits beside it as its outlined twin. */
 .saveBtn {
-  background-color: #059669 !important;
-  color: #fff !important;
+  background-color: var(--cta) !important;
+  color: var(--cta-fg) !important;
   border: none !important;
 }
 .saveBtn:hover {
-  background-color: #047857 !important;
+  background-color: var(--cta-hover) !important;
 }
 .saveBtn:disabled {
-  background-color: #059669 !important;
+  background-color: var(--cta) !important;
   opacity: 0.45 !important;
 }
 
 .publishBtn {
-  border: 1px solid #059669 !important;
-  color: #10b981 !important;
+  border: 1px solid var(--mantine-color-default-border) !important;
+  color: var(--mantine-color-text) !important;
   background-color: transparent !important;
 }
 .publishBtn:hover {
-  background-color: rgba(5, 150, 105, 0.12) !important;
+  background-color: var(--mantine-color-default-hover) !important;
 }
 .publishBtn:disabled {
   opacity: 0.45 !important;

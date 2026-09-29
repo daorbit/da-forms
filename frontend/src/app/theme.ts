@@ -1,9 +1,9 @@
-import { createTheme, rem } from '@mantine/core';
+import { ActionIcon, Button, createTheme, rem } from '@mantine/core';
 
  
 export const theme = createTheme({
   primaryColor: 'emerald',
-  primaryShade: { light: 6, dark: 7 },
+  primaryShade: { light: 6, dark: 5 },
   fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
   fontFamilyMonospace: "ui-monospace, 'SF Mono', Menlo, monospace",
   headings: {
@@ -19,29 +19,29 @@ export const theme = createTheme({
   cursorType: 'pointer',
   colors: {
     emerald: [
-      '#ecfdf5',
-      '#d1fae5',
-      '#a7f3d0',
-      '#6ee7b7',
-      '#34d399',
-      '#10b981',
-      '#059669',
-      '#047857',
-      '#065f46',
-      '#064e3b',
+      '#f0fdfa',
+      '#ccfbf1',
+      '#99f6e4',
+      '#5eead4',
+      '#2dd4bf',
+      '#14b8a6',
+      '#0d9488',
+      '#0f766e',
+      '#115e59',
+      '#134e4a',
     ],
  
     dark: [
-      '#f2f4f6',
-      '#a9afba',
-      '#6d737e',
-      '#34383e',
-      '#26292e',
-      '#1c1f23',
-      '#16181b',
-      '#111316',
-      '#0e0f12',
-      '#0b0c0e',
+      '#f5f5f5',
+      '#d4d4d4',
+      '#a3a3a3',
+      '#737373',
+      '#3a3a3a',
+      '#292929',
+      '#1c1c1c',
+      '#161616',
+      '#111111',
+      '#000000',
     ],
   },
   shadows: {
@@ -124,7 +124,34 @@ export const theme = createTheme({
     },
     Loader: { defaultProps: { type: 'oval' } },
     Card: { defaultProps: { radius: 'md' } },
-    Button: { defaultProps: { radius: 'md' } },
+    Button: Button.extend({
+      defaultProps: { radius: 'md' },
+      vars: (_theme, props) =>
+        (props.variant === undefined || props.variant === 'filled') &&
+        (!props.color || props.color === 'emerald')
+          ? {
+              root: {
+                '--button-bg': 'var(--cta)',
+                '--button-hover': 'var(--cta-hover)',
+                '--button-color': 'var(--cta-fg)',
+                '--button-hover-color': 'var(--cta-fg)',
+              },
+            }
+          : { root: {} },
+    }),
+    ActionIcon: ActionIcon.extend({
+      vars: (_theme, props) =>
+        props.variant === 'filled' && (!props.color || props.color === 'emerald')
+          ? {
+              root: {
+                '--ai-bg': 'var(--cta)',
+                '--ai-hover': 'var(--cta-hover)',
+                '--ai-color': 'var(--cta-fg)',
+                '--ai-hover-color': 'var(--cta-fg)',
+              },
+            }
+          : { root: {} },
+    }),
     Paper: { defaultProps: { radius: 'md' } },
     Input: { defaultProps: { radius: 8 } },
     TextInput: { defaultProps: { radius: 8 } },

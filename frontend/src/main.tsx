@@ -20,24 +20,30 @@ const dark = colorScheme === 'dark' ||
   (colorScheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 const managementTokens = dark
   ? {
-      '--mantine-color-body': '#0b0c0e',
-      '--mantine-color-text': '#f2f4f6',
-      '--mantine-color-default': '#16181b',
-      '--mantine-color-default-hover': '#1c1f23',
-      '--mantine-color-default-color': '#f2f4f6',
-      '--mantine-color-default-border': '#26292e',
-      '--mantine-color-dimmed': '#a9afba',
-      '--mantine-color-placeholder': '#6d737e',
+      '--mantine-color-body': '#000000',
+      '--mantine-color-text': '#f5f5f5',
+      '--mantine-color-default': '#161616',
+      '--mantine-color-default-hover': '#1c1c1c',
+      '--mantine-color-default-color': '#f5f5f5',
+      '--mantine-color-default-border': '#292929',
+      '--mantine-color-dimmed': '#a3a3a3',
+      '--mantine-color-placeholder': '#8f8f8f',
+      '--cta': '#fafafa',
+      '--cta-hover': '#e5e5e5',
+      '--cta-fg': '#0a0a0a',
     }
   : {
-      '--mantine-color-body': '#f4f5f7',
-      '--mantine-color-text': '#111418',
+      '--mantine-color-body': '#f5f5f5',
+      '--mantine-color-text': '#171717',
       '--mantine-color-default': '#ffffff',
-      '--mantine-color-default-hover': '#f1f3f5',
-      '--mantine-color-default-color': '#111418',
-      '--mantine-color-default-border': '#e5e7eb',
-      '--mantine-color-dimmed': '#4b5563',
-      '--mantine-color-placeholder': '#9ca3af',
+      '--mantine-color-default-hover': '#f5f5f5',
+      '--mantine-color-default-color': '#171717',
+      '--mantine-color-default-border': '#e5e5e5',
+      '--mantine-color-dimmed': '#525252',
+      '--mantine-color-placeholder': '#737373',
+      '--cta': '#171717',
+      '--cta-hover': '#333333',
+      '--cta-fg': '#ffffff',
     };
 Object.entries(managementTokens).forEach(([name, value]) => {
   document.documentElement.style.setProperty(name, value, 'important');

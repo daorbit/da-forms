@@ -31,7 +31,7 @@ function rampFrom(hex: string, colorScheme: MantineColorScheme): MantineColorsTu
   const steps = [0.92, 0.8, 0.64, 0.44, 0.22, 0.08, -0.14, -0.3, -0.46, -0.6];
   const isDark = colorScheme === 'dark' ||
     (colorScheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const anchor = isDark ? 7 : 6;
+  const anchor = isDark ? 5 : 6;
   const at = steps[anchor];
   const scale = steps.map((step, index) => {
     if (index === anchor) return `#${value}`;

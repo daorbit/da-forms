@@ -21,6 +21,14 @@
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px -8px rgba(0, 0, 0, 0.5);
   --shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 20px 48px -20px rgba(0, 0, 0, 0.6);
+
+  /* The violet-to-teal glow every Orbit prompt box sits in. */
+  --orbit-glow:
+    -12px -8px 32px -12px color-mix(in srgb, #8b5cf6 35%, transparent),
+    12px 8px 32px -12px color-mix(in srgb, var(--accent) 35%, transparent);
+  --orbit-glow-focus:
+    -12px -8px 36px -10px color-mix(in srgb, #8b5cf6 48%, transparent),
+    12px 8px 36px -10px color-mix(in srgb, var(--accent) 48%, transparent);
 }
 
 :root {
@@ -53,6 +61,14 @@
 
   --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 16px -10px rgba(16, 24, 40, 0.1);
   --shadow: 0 2px 6px rgba(16, 24, 40, 0.05), 0 18px 40px -18px rgba(16, 24, 40, 0.16);
+
+  /* The violet-to-teal glow every Orbit prompt box sits in. */
+  --orbit-glow:
+    -12px -8px 32px -12px color-mix(in srgb, #8b5cf6 45%, transparent),
+    12px 8px 32px -12px color-mix(in srgb, var(--accent) 45%, transparent);
+  --orbit-glow-focus:
+    -12px -8px 36px -10px color-mix(in srgb, #8b5cf6 55%, transparent),
+    12px 8px 36px -10px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 html:root[data-mantine-color-scheme='dark'] {

@@ -6,6 +6,7 @@ import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { type DeviceId } from '@/components/builder/DeviceFrame';
 import { formTemplates } from '@/lib/templates';
 import { pickSuggestionChips } from '@/lib/formSuggestions';
+import { NewFormModal } from '@/components/NewFormModal';
 import { Aurora } from './createForm/Aurora';
 import { DraftingStage } from './createForm/DraftingStage';
 import { HeroPane } from './createForm/HeroPane';
@@ -14,12 +15,21 @@ import { OrbitThread } from './createForm/OrbitThread';
 import { PreviewPane } from './createForm/PreviewPane';
 import { TemplatePane } from './createForm/TemplatePane';
 import { useFieldReveal } from './createForm/useFieldReveal';
-import { useFormCreation } from './createForm/useFormCreation';
+import { useFormCreation, type FormDetails } from './createForm/useFormCreation';
 import { useOrbitDraft } from './createForm/useOrbitDraft';
 import type { CreateMode, DeckCard, Scope } from './createForm/types';
 import classes from './createForm/createForm.module.css';
 
-export function CreateFormPage() {
+interface Props {
+  /**
+   * Shown in place of an empty form list. Nothing has been named yet, so the
+   * name and placement are asked for only once the person commits to a way in,
+   * and there is no list to go back to.
+   */
+  onboarding?: boolean;
+}
+
+export function CreateFormPage({ onboarding = false }: Props) {
   const navigate = useNavigate();
   const workspaceId = useWorkspaceId();
   const [searchParams] = useSearchParams();
@@ -34,6 +44,13 @@ export function CreateFormPage() {
 
   const orbit = useOrbitDraft(workspaceId);
   const creation = useFormCreation({ workspaceId, formName, scope });
+
+  // Onboarding holds the chosen way in until the details modal answers it.
+  const [pendingCreate, setPendingCreate] = useState<((details: FormDetails) => void) | null>(null);
+  function withDetails(create: (details?: FormDetails) => void) {
+    if (onboarding) setPendingCreate(() => create);
+    else create();
+  }
 
   const { shown, done } = useFieldReveal({
     total: orbit.template?.fields.length ?? 0,
@@ -66,7 +83,7 @@ export function CreateFormPage() {
       key: 'blank',
       title: 'Start from scratch',
       body: 'A blank slate is all you need',
-      onClick: creation.createBlank,
+      onClick: () => withDetails(creation.createBlank),
       busy: creation.creating,
     },
     {
@@ -98,23 +115,30 @@ export function CreateFormPage() {
 
       <div className={classes.page}>
         <header className={classes.topbar}>
-          <Button
-            variant="subtle"
-            color="gray"
-            radius="xl"
-            leftSection={<ArrowLeftIcon size={16} />}
-            onClick={handleBack}
-            disabled={creation.creating || creation.importing || orbit.generating}
-          >
-            Back
-          </Button>
+          {onboarding && mode === 'hero' && orbit.turns.length === 0 ? (
+            <span />
+          ) : (
+            <Button
+              variant="subtle"
+              color="gray"
+              radius="xl"
+              leftSection={<ArrowLeftIcon size={16} />}
+              onClick={handleBack}
+              disabled={creation.creating || creation.importing || orbit.generating}
+            >
+              Back
+            </Button>
+          )}
 
           <Group gap={10}>
             {inWorkspace && (
               <Button
                 color="emerald"
                 radius="xl"
-                onClick={() => orbit.template && creation.createFromDraft(orbit.template)}
+                onClick={() => {
+                  const draft = orbit.template;
+                  if (draft) withDetails((details) => creation.createFromDraft(draft, details));
+                }}
                 loading={creation.creating}
                 disabled={!ready || orbit.generating}
                 className={classes.createAction}
@@ -122,7 +146,9 @@ export function CreateFormPage() {
                 Create form
               </Button>
             )}
-            <CloseButton size="lg" radius="xl" onClick={backToList} aria-label="Close" />
+            {!onboarding && (
+              <CloseButton size="lg" radius="xl" onClick={backToList} aria-label="Close" />
+            )}
           </Group>
         </header>
 
@@ -130,7 +156,7 @@ export function CreateFormPage() {
           <TemplatePane
             scope={scope}
             creating={creation.creating}
-            onCreate={creation.createFromTemplate}
+            onCreate={(tpl) => withDetails((details) => creation.createFromTemplate(tpl, details))}
           />
         ) : mode === 'import' ? (
           <ImportPane
@@ -177,6 +203,16 @@ export function CreateFormPage() {
           />
         )}
       </div>
+
+      <NewFormModal
+        opened={pendingCreate !== null}
+        onClose={() => setPendingCreate(null)}
+        onContinue={(name, chosenScope) => {
+          const create = pendingCreate;
+          setPendingCreate(null);
+          create?.({ name, scope: chosenScope });
+        }}
+      />
 
       <Modal
         opened={pendingRestart}

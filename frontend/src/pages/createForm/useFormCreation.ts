@@ -8,6 +8,12 @@ import { notify } from '@/lib/notify';
 
 type Template = (typeof formTemplates)[number];
 
+/** Name and placement, when they were collected after the screen opened. */
+export interface FormDetails {
+  name: string;
+  scope: Scope;
+}
+
 interface Options {
   workspaceId: string;
   formName: string;
@@ -19,6 +25,7 @@ export function useFormCreation({ workspaceId, formName, scope }: Options) {
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const defaults: FormDetails = { name: formName, scope };
 
   function openInBuilder(id: string) {
     navigate(`/${workspaceId}/forms/${id}/edit`);
@@ -30,8 +37,9 @@ export function useFormCreation({ workspaceId, formName, scope }: Options) {
     notify.error('Could not create form');
   }
 
-  async function createFromDraft(draft: Draft) {
+  async function createFromDraft(draft: Draft, details?: FormDetails) {
     if (creating) return;
+    const { name: formName, scope } = details ?? defaults;
     setCreating(true);
     try {
       const form = await createForm(
@@ -51,8 +59,9 @@ export function useFormCreation({ workspaceId, formName, scope }: Options) {
     }
   }
 
-  async function createFromTemplate(tpl: Template) {
+  async function createFromTemplate(tpl: Template, details?: FormDetails) {
     if (creating) return;
+    const { name: formName, scope } = details ?? defaults;
     setCreating(true);
     try {
       const form = await createForm(
@@ -76,9 +85,9 @@ export function useFormCreation({ workspaceId, formName, scope }: Options) {
     }
   }
 
-  async function createBlank() {
+  async function createBlank(details?: FormDetails) {
     const blank = formTemplates.find((t) => t.id === 'blank');
-    if (blank) await createFromTemplate(blank);
+    if (blank) await createFromTemplate(blank, details);
   }
 
   async function importConfig(parsed: unknown) {

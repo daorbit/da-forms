@@ -14,6 +14,7 @@ import { isDemoWorkspace } from '@/lib/demoWorkspace';
 import { notify } from '@/lib/notify';
 import type { Form, FormTheme } from '@/types';
 import { NewFormModal } from '@/components/NewFormModal';
+import { CreateFormPage } from './CreateFormPage';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
@@ -115,6 +116,13 @@ export function FormListPage() {
   };
 
   const isEmpty = list.forms.length === 0 && !list.loading;
+
+  // A workspace with no forms at all opens straight on the create screen
+  // rather than an empty list; name and type are asked for once a way in is
+  // picked. From the first form on, "New form" asks for them up front.
+  if (isEmpty && list.total === 0 && !list.isFiltered && !isDemo && !builderTooSmall) {
+    return <CreateFormPage onboarding />;
+  }
 
   return (
     <Box className={classes.page} ref={pageRef}>

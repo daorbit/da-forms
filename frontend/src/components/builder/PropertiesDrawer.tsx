@@ -1,94 +1,73 @@
-import {
-  Stack,
-  TextInput,
-  Textarea,
-  Checkbox,
-  SegmentedControl,
-  NumberInput,
-  Group,
-  Text,
-  Switch,
-  Select,
-  Anchor,
-  Box,
-  Button,
-} from '@mantine/core';
-import type {
-  FormField,
-  FieldSize,
-  PaymentMode,
-  PaymentProvider,
-  PaymentSettings,
-} from '@/types';
-import {
-  optionTypes,
-  numericTypes,
-  textTypes,
-  staticTypes,
-  paletteByType,
-} from '@/lib/fieldPalette';
-import { flattenFields } from '@/lib/fieldTree';
-import { evaluateFormula } from '@/lib/formula';
-import {
-  CURRENCIES,
-  currencySymbol,
-  toMajorUnits,
-  toMinorUnits,
-  paymentFieldProblem,
-  paymentStepProblem,
-  isChoiceField,
-  PRICEABLE_TYPES,
-  providerNeedsPhone,
-  formCollectsPhone,
-} from '@/lib/payment';
-import { ChoiceEditor } from '@/components/builder/ChoiceEditor';
-import { GatewayLogo } from '@/components/builder/GatewayLogos';
-import payClasses from '@/components/builder/GatewayPicker.module.css';
-import { RepeaterFieldsEditor } from '@/components/builder/RepeaterFieldsEditor';
-import { EmailBodyEditor } from '@/components/builder/EmailBodyEditor';
-import { ConditionEditor } from '@/components/builder/logic/ConditionEditor';
-import { conditionCandidates } from '@/components/builder/logic/conditionOptions';
-import { DocsLink } from '@/components/ui/DocsLink';
-import { DOCS } from '@/lib/docs';
+import { ThemeIcon } from '@mantine/core';
 import { SlidersHorizontalIcon } from 'lucide-react';
+import type { FormField, PaymentSettings } from '@/types';
+import { optionTypes, paletteByType, staticTypes } from '@/lib/fieldPalette';
 import { PanelDrawer } from '@/components/ui/PanelDrawer';
+import { BasicsSection } from './properties/BasicsSection';
+import { ContentSection } from './properties/ContentSection';
+import { ChoicesSection } from './properties/ChoicesSection';
+import { RepeaterSection } from './properties/RepeaterSection';
+import { PaymentSection } from './properties/PaymentSection';
+import { FormulaSection } from './properties/FormulaSection';
+import { HiddenValueSection } from './properties/HiddenValueSection';
+import { ScoringSection } from './properties/ScoringSection';
+import { ValidationSection } from './properties/ValidationSection';
+import { AppearanceSection } from './properties/AppearanceSection';
+import { LogicSection } from './properties/LogicSection';
 import classes from './PropertiesDrawer.module.css';
 
 interface Props {
   field: FormField | null;
-  /** The full tree, so "show if" can offer every other field as its target. */
   allFields: FormField[];
   onClose: () => void;
-  /** Applied immediately — the canvas reflects every keystroke. */
   onChange: (id: string, patch: Partial<FormField>) => void;
-  /** The workspace's Razorpay connection, so a payment field can show its state. */
   paymentSettings?: PaymentSettings | null;
-  /** Opens the payments modal — the field panel is where authors look first. */
   onOpenPaymentSettings?: () => void;
 }
 
-// Sentinels resolved to an actual date/time at render — never stored as a
-// literal, or a form saved today would keep prefilling today's date forever.
-const dateDefaultTypes: FormField['type'][] = ['date', 'time', 'datetime', 'monthYear'];
-const dateDefaultSentinel: Record<string, string> = {
-  date: '__today__',
-  time: '__now__',
-  datetime: '__now__',
-  monthYear: '__today__',
-};
-const dateDefaultLabel: Record<string, string> = {
-  date: "Today's date",
-  time: 'Current time',
-  datetime: 'Current date & time',
-  monthYear: 'Current month',
-};
+function Sections({
+  field,
+  allFields,
+  set,
+  paymentSettings,
+  onOpenPaymentSettings,
+}: Omit<Props, 'field' | 'onClose' | 'onChange'> & { field: FormField; set: (patch: Partial<FormField>) => void }) {
+  if (field.type === 'pageBreak') {
+    return <LogicSection field={field} set={set} allFields={allFields} />;
+  }
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  if (staticTypes.includes(field.type)) {
+    return (
+      <>
+        <ContentSection field={field} set={set} />
+        <LogicSection field={field} set={set} allFields={allFields} />
+      </>
+    );
+  }
+
+  const hasOptions = optionTypes.includes(field.type);
+
   return (
-    <section className={classes.section}>
-      <span className={classes.sectionLabel}>{label}</span>
-      <Stack gap="md">{children}</Stack>
-    </section>
+    <>
+      <BasicsSection field={field} set={set} />
+      {hasOptions && <ChoicesSection field={field} set={set} />}
+      {field.type === 'repeater' && <RepeaterSection field={field} set={set} />}
+      {field.type === 'payment' && (
+        <PaymentSection
+          field={field}
+          set={set}
+          allFields={allFields}
+          paymentSettings={paymentSettings}
+          onOpenPaymentSettings={onOpenPaymentSettings}
+        />
+      )}
+      {field.type === 'calculated' && <FormulaSection field={field} set={set} allFields={allFields} />}
+      {field.type === 'hidden' && <HiddenValueSection field={field} set={set} />}
+      <LogicSection field={field} set={set} allFields={allFields} />
+      <ValidationSection field={field} set={set} />
+      {hasOptions && (field.options?.length ?? 0) > 0 && <ScoringSection field={field} set={set} />}
+      <AppearanceSection field={field} set={set} />
+    </>
   );
 }
 
@@ -103,822 +82,45 @@ export function PropertiesDrawer({
   const meta = field ? paletteByType[field.type] : null;
   const set = (patch: Partial<FormField>) => field && onChange(field.id, patch);
 
-  const showIfCandidates = field ? conditionCandidates(allFields, field.id) : [];
-  const pageBreakIndex = field?.type === 'pageBreak' ? allFields.findIndex((f) => f.id === field.id) : -1;
-  const stepCandidates = pageBreakIndex > 0 ? conditionCandidates(allFields.slice(0, pageBreakIndex)) : [];
-  // Patches the nested `pay` block without dropping the keys the patch does
-  // not mention — a plain `set({ pay })` would replace the whole object and
-  // lose the currency every time the amount changed.
-  const setPay = (patch: Partial<NonNullable<FormField['pay']>>) =>
-    field &&
-    onChange(field.id, {
-      pay: { mode: 'fixed', currency: 'INR', ...field.pay, ...patch },
-    });
-
-  // Numbers and choices can both drive a price; a payment field cannot take
-  // its amount from itself.
-  const amountFieldCandidates = field
-    ? flattenFields(allFields).filter(
-        (candidate) => candidate.id !== field.id && PRICEABLE_TYPES.includes(candidate.type)
-      )
-    : [];
-
-  const selectedAmountField = field?.pay?.amountFieldId
-    ? amountFieldCandidates.find((c) => c.id === field.pay?.amountFieldId)
-    : undefined;
-
-  const payCurrency = field?.pay?.currency ?? 'INR';
-
-  /**
-   * Fields a formula can name — anything labelled, other than itself.
-   *
-   * A calculated field may reference another one, so those are included: the
-   * server evaluates them in document order, which means a subtotal above can
-   * feed a total below.
-   */
-  const referableFields = field
-    ? flattenFields(allFields).filter(
-        (candidate) =>
-          candidate.id !== field.id &&
-          candidate.type !== 'grid' &&
-          candidate.type !== 'repeater' &&
-          !staticTypes.includes(candidate.type) &&
-          Boolean(candidate.label?.trim())
-      )
-    : [];
-
-  /*
-   * The formula's own error, checked as it is typed.
-   *
-   * Run against an empty value set: what is being validated is the expression's
-   * *shape*, not what it currently works out to, and every reference resolves
-   * to zero regardless.
-   */
-  const formulaError =
-    field?.type === 'calculated' && field.formula?.trim()
-      ? (() => {
-          const result = evaluateFormula(field.formula, new Map());
-          return result.ok ? undefined : result.reason;
-        })()
-      : undefined;
-
-  const paymentProblem =
-    field?.type === 'payment' ? paymentFieldProblem(field, allFields) : null;
-
-  // Ready means keys are saved and switched on — a connected account that is
-  // turned off still cannot charge anyone.
-  // Which gateway this field charges through: its own choice, or the
-  // workspace's default when it has not made one.
-  const fieldProvider: PaymentProvider =
-    field?.pay?.provider ?? paymentSettings?.defaultProvider ?? 'razorpay';
-  const providerSettings = paymentSettings?.providers?.[fieldProvider];
-  const providerLabel = providerSettings?.label ?? 'Razorpay';
-
-  const paymentReady = Boolean(
-    providerSettings?.enabled &&
-      (providerSettings.mode === 'live'
-        ? providerSettings.live.keyId
-        : providerSettings.test.keyId)
-  );
-  const paymentLive = providerSettings?.mode === 'live';
-
-  const paymentStepIssue =
-    field?.type === 'payment' ? paymentStepProblem(allFields) : null;
-
-  // Cashfree needs a phone number to open an order. When the form asks for
-  // none, one is collected beside the pay button — which works, but the author
-  // should know it is happening rather than discover it in a screenshot.
-  const needsPhoneNotice =
-    field?.type === 'payment' &&
-    providerNeedsPhone(fieldProvider) &&
-    !formCollectsPhone(allFields);
-
   return (
     <PanelDrawer
       opened={!!field}
       onClose={onClose}
-      size={520}
-      title="Properties"
-      subtitle={meta?.label}
-      icon={meta ? <meta.icon size={16} strokeWidth={1.7} /> : <SlidersHorizontalIcon size={16} />}
+      size={480}
+      bare
+      ariaLabel="Field properties"
+      iconVariant="plain"
+      title={field ? field.label?.trim() || meta?.label || 'Field' : 'Properties'}
+      subtitle={
+        meta && (
+          <span className={classes.subtitle}>
+            {meta.label}
+            {field?.required && <span className={classes.required}>· Required</span>}
+          </span>
+        )
+      }
+      icon={
+        meta ? (
+          <ThemeIcon variant="light" color={meta.color} size={34} radius="md">
+            <meta.icon size={17} strokeWidth={1.8} />
+          </ThemeIcon>
+        ) : (
+          <SlidersHorizontalIcon size={16} />
+        )
+      }
     >
       {field && (
-        <>
-          {field.type === 'richText' ? (
-            <Section label="Content">
-              {/* The same editor the email composer uses, so formatted copy is
-                  authored the same way in both places. */}
-              <EmailBodyEditor
-                value={field.content ?? ''}
-                onChange={(html) => set({ content: html })}
-                placeholder="Write the text shown on the form…"
-              />
-            </Section>
-          ) : field.type === 'pageBreak' ? (
-            <Section label="Step logic">
-              <ConditionEditor
-                value={field.showIf}
-                candidates={stepCandidates}
-                onChange={(showIf) => set({ showIf })}
-                emptyText="The step after this break is always shown. Add a condition to skip it unless earlier answers match."
-                addLabel="Add step condition"
-              />
-              <DocsLink path={DOCS.stepLogic} />
-            </Section>
-          ) : staticTypes.includes(field.type) ? (
-            <Section label="Content">
-              <Textarea
-                label={field.type === 'heading' ? 'Heading text' : 'Text'}
-                value={field.content ?? ''}
-                onChange={(e) => set({ content: e.target.value })}
-                autosize
-                minRows={2}
-                disabled={field.type === 'divider' || field.type === 'spacer'}
-                description={
-                  field.type === 'divider' || field.type === 'spacer'
-                    ? 'This element has no editable content.'
-                    : undefined
-                }
-              />
-            </Section>
-          ) : (
-            <>
-              <Section label="Basics">
-                <TextInput
-                  label="Field label"
-                  value={field.label}
-                  onChange={(e) => set({ label: e.target.value })}
-                />
-
-                <Checkbox
-                  label="Hide label on the form"
-                  checked={field.hideLabel ?? false}
-                  onChange={(e) => set({ hideLabel: e.target.checked })}
-                />
-
-                <Switch
-                  label="Required"
-                  description="Respondents cannot submit without answering."
-                  checked={field.required}
-                  onChange={(e) => set({ required: e.target.checked })}
-                />
-
-                {field.type !== 'repeater' && (
-                  <Switch
-                    label="Must be unique"
-                    description="Rejects a submission whose answer matches an earlier one."
-                    checked={field.unique ?? false}
-                    onChange={(e) => set({ unique: e.target.checked })}
-                  />
-                )}
-              </Section>
-
-              <Section label="Conditional logic">
-                <ConditionEditor
-                  value={field.showIf}
-                  candidates={showIfCandidates}
-                  onChange={(showIf) => set({ showIf })}
-                  emptyText="Always shown. Add a condition to show this field only when other answers match."
-                />
-                <DocsLink path={DOCS.fieldLogic} />
-              </Section>
-
-              <Section label="Appearance">
-                <div>
-                  <Text size="sm" fw={500} mb={6}>
-                    Field size
-                  </Text>
-                  <SegmentedControl
-                    fullWidth
-                    value={field.size ?? 'large'}
-                    onChange={(value) => set({ size: value as FieldSize })}
-                    disabled={!!field.customWidth}
-                    data={[
-                      { value: 'small', label: 'Small' },
-                      { value: 'medium', label: 'Medium' },
-                      { value: 'large', label: 'Large' },
-                    ]}
-                  />
-                </div>
-
-                <Group grow>
-                  <NumberInput
-                    label="Custom width"
-                    description="Pixel width, overriding the size preset above. Leave blank to use it."
-                    suffix="px"
-                    min={40}
-                    value={field.customWidth ?? ''}
-                    onChange={(value) => set({ customWidth: value === '' ? undefined : Number(value) })}
-                  />
-                  <NumberInput
-                    label="Custom height"
-                    description="Pixel height for this field's input, e.g. a taller text area."
-                    suffix="px"
-                    min={24}
-                    value={field.customHeight ?? ''}
-                    onChange={(value) => set({ customHeight: value === '' ? undefined : Number(value) })}
-                  />
-                </Group>
-
-                <TextInput
-                  label="CSS class"
-                  description="Extra class name for custom styling, applied to this field's input."
-                  value={field.cssClass ?? ''}
-                  onChange={(e) => set({ cssClass: e.target.value || undefined })}
-                />
-
-                <TextInput
-                  label="Placeholder"
-                  value={field.placeholder ?? ''}
-                  onChange={(e) => set({ placeholder: e.target.value })}
-                />
-
-                <Textarea
-                  label="Instructions"
-                  description="Helper text shown beneath the label."
-                  value={field.instructions ?? ''}
-                  onChange={(e) => set({ instructions: e.target.value })}
-                  autosize
-                  minRows={2}
-                />
-
-                <TextInput
-                  label="Hover text"
-                  description="Tooltip shown on hover."
-                  value={field.hoverText ?? ''}
-                  onChange={(e) => set({ hoverText: e.target.value })}
-                />
-              </Section>
-
-              {optionTypes.includes(field.type) && (
-                <Section label={field.type === 'matrix' ? 'Answer columns' : 'Options'}>
-                  <ChoiceEditor
-                    options={field.options ?? []}
-                    onChange={(options) => set({ options })}
-                  />
-                  {field.type === 'chips' && (
-                    <Switch
-                      label="Allow multiple selections"
-                      description="Respondents can pick more than one chip."
-                      checked={field.allowMultiple ?? false}
-                      onChange={(e) => set({ allowMultiple: e.target.checked })}
-                    />
-                  )}
-                </Section>
-              )}
-
-              {/* A matrix is rows against those shared columns, so its
-                  statements get an editor of their own. */}
-              {field.type === 'matrix' && (
-                <Section label="Rows">
-                  <ChoiceEditor options={field.rows ?? []} onChange={(rows) => set({ rows })} />
-                </Section>
-              )}
-
-              {field.type === 'repeater' && (
-                <>
-                  <Section label="Fields in each row">
-                    <RepeaterFieldsEditor
-                      subFields={field.subFields ?? []}
-                      onChange={(subFields) => set({ subFields })}
-                    />
-                  </Section>
-                  <Section label="Rows">
-                    <Group grow>
-                      <NumberInput
-                        label="Minimum rows"
-                        min={0}
-                        value={field.minRows ?? ''}
-                        onChange={(v) => set({ minRows: v === '' ? undefined : Number(v) })}
-                      />
-                      <NumberInput
-                        label="Maximum rows"
-                        min={1}
-                        value={field.maxRows ?? ''}
-                        onChange={(v) => set({ maxRows: v === '' ? undefined : Number(v) })}
-                      />
-                    </Group>
-                  </Section>
-                </>
-              )}
-
-              {field.type === 'payment' && (
-                <Section label="Payment">
- 
-                  <Group justify="space-between" wrap="nowrap" gap="xs">
-                    <Group gap={8} wrap="nowrap">
-                      <Box
-                        w={7}
-                        h={7}
-                        style={{
-                          borderRadius: 999,
-                          flexShrink: 0,
-                          backgroundColor: !paymentSettings
-                            ? 'var(--mantine-color-dimmed)'
-                            : !paymentReady
-                              ? 'var(--mantine-color-orange-6)'
-                              : paymentLive
-                                ? 'var(--mantine-color-emerald-6)'
-                                : 'var(--mantine-color-dimmed)',
-                        }}
-                      />
-                      <Text size="xs" c={paymentReady || !paymentSettings ? 'dimmed' : 'orange'}>
-                        {!paymentSettings
-                          ? `Checking ${providerLabel}…`
-                          : !paymentReady
-                            ? `${providerLabel} not connected`
-                            : paymentLive
-                              ? 'Live — charging real payments'
-                              : 'Test mode — no real money'}
-                      </Text>
-                    </Group>
-                    {onOpenPaymentSettings && (
-                      <Anchor
-                        component="button"
-                        type="button"
-                        size="xs"
-                        style={{ flexShrink: 0 }}
-                        onClick={onOpenPaymentSettings}
-                      >
-                        {paymentReady ? 'Manage' : 'Connect'}
-                      </Anchor>
-                    )}
-                  </Group>
-
-                  <Box>
-                    <Text size="xs" fw={500} mb={4}>
-                      Gateway
-                    </Text>
-                    <Box className={payClasses.gatewayPicker}>
-                      {Object.values(paymentSettings?.providers ?? {}).map((p) => {
-                        const picked = field.pay?.provider === p.provider;
-                        const inherited = !field.pay?.provider &&
-                          paymentSettings?.defaultProvider === p.provider;
-                        return (
-                          <button
-                            key={p.provider}
-                            type="button"
-                            aria-pressed={picked}
-                            className={[
-                              payClasses.gatewayOption,
-                              picked ? payClasses.gatewayOptionActive : '',
-                              inherited ? payClasses.gatewayOptionInherited : '',
-                              p.enabled ? '' : payClasses.gatewayOptionIdle,
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                            // Clicking the one already pinned unpins it, which
-                            // is how a form goes back to following the
-                            // workspace default without a third control.
-                            onClick={() =>
-                              setPay({ provider: picked ? undefined : p.provider })
-                            }
-                          >
-                            <GatewayLogo provider={p.provider} height={16} />
-                            {!p.enabled && (
-                              <Text size="9px" c="dimmed" mt={4}>
-                                Not connected
-                              </Text>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </Box>
-                    <Text size="xs" c="dimmed" mt={6}>
-                      {field.pay?.provider
-                        ? `Pinned to ${providerLabel}. Click it again to follow the workspace default.`
-                        : `Following the workspace default${
-                            paymentSettings ? ` (${providerLabel})` : ''
-                          }.`}
-                    </Text>
-                  </Box>
-
-                  <SegmentedControl
-                    fullWidth
-                    size="xs"
-                    value={field.pay?.mode ?? 'fixed'}
-                    onChange={(mode) => setPay({ mode: mode as PaymentMode })}
-                    data={[
-                      { value: 'fixed', label: 'Fixed' },
-                      { value: 'field', label: 'From a field' },
-                      { value: 'modifiable', label: 'Respondent decides' },
-                    ]}
-                  />
-
-                  {(field.pay?.mode ?? 'fixed') === 'fixed' && (
-                    <NumberInput
-                      label="Amount"
-                      description="What every respondent pays."
-                      min={0}
-                      decimalScale={2}
-                      prefix={currencySymbol(payCurrency)}
-                      // Stored in minor units, shown in major — the conversion
-                      // happens here so nothing downstream has to guess which
-                      // one it is holding.
-                      value={field.pay?.amount ? toMajorUnits(field.pay.amount) : ''}
-                      onChange={(v) => setPay({ amount: toMinorUnits(Number(v) || 0) })}
-                    />
-                  )}
-
-                  {field.pay?.mode === 'modifiable' && (
-                    <>
-                      <Text size="xs" c="dimmed">
-                        The respondent types what they want to pay — for donations, or
-                        pay-what-you-want.
-                      </Text>
-                      <Group grow>
-                        <NumberInput
-                          label="Minimum"
-                          min={1}
-                          decimalScale={2}
-                          prefix={currencySymbol(payCurrency)}
-                          value={toMajorUnits(field.pay?.minAmount ?? 100)}
-                          onChange={(v) => setPay({ minAmount: toMinorUnits(Number(v) || 1) })}
-                        />
-                        <NumberInput
-                          label="Maximum"
-                          description="Optional"
-                          min={1}
-                          decimalScale={2}
-                          prefix={currencySymbol(payCurrency)}
-                          value={field.pay?.maxAmount ? toMajorUnits(field.pay.maxAmount) : ''}
-                          onChange={(v) =>
-                            setPay({ maxAmount: v === '' ? undefined : toMinorUnits(Number(v)) })
-                          }
-                        />
-                      </Group>
-                      <NumberInput
-                        label="Suggested amount"
-                        description="What the box starts at. Optional."
-                        min={0}
-                        decimalScale={2}
-                        prefix={currencySymbol(payCurrency)}
-                        value={field.pay?.defaultAmount ? toMajorUnits(field.pay.defaultAmount) : ''}
-                        onChange={(v) =>
-                          setPay({ defaultAmount: v === '' ? undefined : toMinorUnits(Number(v)) })
-                        }
-                      />
-                    </>
-                  )}
-
-                  {field.pay?.mode === 'field' && (
-                    <>
-                      <Select
-                        label="Amount comes from"
-                        description="The respondent's answer to this field sets the price."
-                        placeholder="Pick a field"
-                        value={field.pay?.amountFieldId ?? null}
-                        onChange={(v) => {
-                          const source = amountFieldCandidates.find((c) => c.id === v);
-                          setPay({
-                            amountFieldId: v ?? undefined,
-                            // A choice field prices per option; a number field
-                            // uses the answer directly. Switching between them
-                            // must not leave the other's config behind.
-                            optionPrices: isChoiceField(source)
-                              ? Object.fromEntries((source?.options ?? []).map((o) => [o, 0]))
-                              : undefined,
-                          });
-                        }}
-                        data={amountFieldCandidates.map((candidate) => ({
-                          value: candidate.id,
-                          label: `${candidate.label || candidate.type}${
-                            isChoiceField(candidate) ? ' (priced per option)' : ''
-                          }`,
-                        }))}
-                      />
-
-                      {/* A choice field needs a price against each option —
-                          otherwise picking one would charge nothing. */}
-                      {field.pay?.optionPrices && (
-                        <Stack gap="xs">
-                          <Text size="xs" fw={500}>
-                            Price per option
-                          </Text>
-                          {/* A respondent can tick several of these, and the
-                              charge is their sum — worth saying, since it is
-                              not what "price per option" implies on its own. */}
-                          {selectedAmountField &&
-                            (selectedAmountField.type === 'checkbox' ||
-                              selectedAmountField.type === 'multipleChoice') && (
-                              <Text size="xs" c="dimmed">
-                                This field allows several picks — the respondent pays the total of
-                                everything they tick.
-                              </Text>
-                            )}
-                          {(selectedAmountField?.options ?? []).map((option) => (
-                            <NumberInput
-                              key={option}
-                              label={option}
-                              size="xs"
-                              min={0}
-                              decimalScale={2}
-                              prefix={currencySymbol(payCurrency)}
-                              value={
-                                field.pay?.optionPrices?.[option]
-                                  ? toMajorUnits(field.pay.optionPrices[option])
-                                  : ''
-                              }
-                              onChange={(v) =>
-                                setPay({
-                                  optionPrices: {
-                                    ...field.pay?.optionPrices,
-                                    [option]: toMinorUnits(Number(v) || 0),
-                                  },
-                                })
-                              }
-                            />
-                          ))}
-                        </Stack>
-                      )}
-                    </>
-                  )}
-
-                  <Select
-                    label="Currency"
-                    description={
-                      payCurrency !== 'INR'
-                        ? `Your ${providerLabel} account must be enabled for this currency, or checkout will fail.`
-                        : undefined
-                    }
-                    value={field.pay?.currency ?? 'INR'}
-                    onChange={(v) => setPay({ currency: v ?? 'INR' })}
-                    data={CURRENCIES.map((c) => ({ value: c.value, label: c.label }))}
-                  />
-
-                  <TextInput
-                    label="Description"
-                    description="Shown on the payment window. Defaults to the form's title."
-                    value={field.pay?.description ?? ''}
-                    onChange={(e) => setPay({ description: e.target.value || undefined })}
-                  />
-
-                  {paymentProblem && (
-                    <Text size="xs" c="orange">
-                      {paymentProblem}
-                    </Text>
-                  )}
-                  {paymentStepIssue && (
-                    <Text size="xs" c="orange">
-                      {paymentStepIssue}
-                    </Text>
-                  )}
-                  {needsPhoneNotice && (
-                    <Box className={payClasses.phoneNotice}>
-                      <Text size="xs" fw={600} c="orange" mb={2}>
-                        {providerLabel} needs a phone number
-                      </Text>
-                      <Text size="xs" c="dimmed" style={{ lineHeight: 1.5 }}>
-                        This form asks for none, so respondents get an extra
-                        “Mobile number” box above the pay button. It reaches{' '}
-                        {providerLabel} and the receipt, but is not saved as an answer. Add a
-                        phone field to collect it properly instead.
-                      </Text>
-                    </Box>
-                  )}
-                </Section>
-              )}
-
-              {field.type === 'calculated' && (
-                <Section label="Formula">
-                  <Textarea
-                    label="Expression"
-                    description="Refer to other questions by name, e.g. {{Quantity}} * {{Unit price}}. Supports + - * / % and brackets."
-                    placeholder="{{Quantity}} * {{Unit price}}"
-                    autosize
-                    minRows={2}
-                    value={field.formula ?? ''}
-                    onChange={(e) => set({ formula: e.target.value || undefined })}
-                    // Checked as it is typed, against the same parser the server
-                    // uses — a formula that will not compile is worth saying so
-                    // here rather than silently storing nothing on every
-                    // response.
-                    error={formulaError}
-                  />
-
-                  {referableFields.length > 0 && (
-                    <div>
-                      <Text size="xs" c="dimmed" mb={6}>
-                        Click to insert
-                      </Text>
-                      <Group gap={6}>
-                        {referableFields.map((f) => (
-                          <Button
-                            key={f.id}
-                            size="compact-xs"
-                            variant="light"
-                            color="gray"
-                            onClick={() =>
-                              set({ formula: `${field.formula ?? ''}{{${f.label}}}` })
-                            }
-                          >
-                            {f.label}
-                          </Button>
-                        ))}
-                      </Group>
-                    </div>
-                  )}
-
-                  <SegmentedControl
-                    fullWidth
-                    value={field.formulaFormat ?? 'number'}
-                    onChange={(value) =>
-                      set({ formulaFormat: value as 'number' | 'currency' })
-                    }
-                    data={[
-                      { value: 'number', label: 'Number' },
-                      { value: 'currency', label: 'Currency' },
-                    ]}
-                  />
-
-                  {field.formulaFormat === 'currency' && (
-                    <TextInput
-                      label="Currency symbol"
-                      placeholder="₹"
-                      value={field.formulaCurrency ?? ''}
-                      onChange={(e) => set({ formulaCurrency: e.target.value || undefined })}
-                    />
-                  )}
-
-                  <NumberInput
-                    label="Decimal places"
-                    min={0}
-                    max={6}
-                    value={field.formulaPrecision ?? (field.formulaFormat === 'currency' ? 2 : 0)}
-                    onChange={(value) =>
-                      set({ formulaPrecision: typeof value === 'number' ? value : undefined })
-                    }
-                  />
-                </Section>
-              )}
-
-              {optionTypes.includes(field.type) && (field.options?.length ?? 0) > 0 && (
-                <Section label="Scoring & answer key">
-                  <Text size="xs" c="dimmed" mt={-6}>
-                    Give an option a value to use it in a formula, or tick it as correct to make
-                    this a scored question. Values also add up to each response&apos;s lead score.
-                  </Text>
-                  <DocsLink path={DOCS.scoring} />
-                  {(field.options ?? []).map((option) => (
-                    <Group key={option} gap="sm" wrap="nowrap" align="center">
-                      <Checkbox
-                        // The key is the option's own text, so renaming an
-                        // option detaches it — same trade the email
-                        // placeholders make, for the same reason: an author can
-                        // read and reason about the text, not an internal id.
-                        checked={field.correctOptions?.includes(option) ?? false}
-                        onChange={(e) => {
-                          const current = field.correctOptions ?? [];
-                          const next = e.currentTarget.checked
-                            ? [...current, option]
-                            : current.filter((o) => o !== option);
-                          set({ correctOptions: next.length ? next : undefined });
-                        }}
-                        aria-label={`${option} is correct`}
-                      />
-                      <Text size="sm" style={{ flex: 1, minWidth: 0 }} truncate>
-                        {option}
-                      </Text>
-                      <NumberInput
-                        w={90}
-                        size="xs"
-                        placeholder="0"
-                        value={field.optionValues?.[option] ?? ''}
-                        onChange={(value) => {
-                          const next = { ...(field.optionValues ?? {}) };
-                          if (typeof value === 'number') next[option] = value;
-                          else delete next[option];
-                          set({ optionValues: Object.keys(next).length ? next : undefined });
-                        }}
-                      />
-                    </Group>
-                  ))}
-                </Section>
-              )}
-
-              {field.type === 'hidden' && (
-                <Section label="Value source">
-                  <TextInput
-                    label="URL parameter"
-                    description="Taken from the link's query string, e.g. utm_source."
-                    placeholder="utm_source"
-                    value={field.paramName ?? ''}
-                    onChange={(e) => set({ paramName: e.target.value || undefined })}
-                  />
-                  <TextInput
-                    label="Fallback value"
-                    description="Used when the link carries no such parameter."
-                    value={field.initialValue ?? ''}
-                    onChange={(e) => set({ initialValue: e.target.value || undefined })}
-                  />
-                </Section>
-              )}
-
-              <Section label="Validation & defaults">
-                {dateDefaultTypes.includes(field.type) ? (
-                  <Select
-                    label="Default value"
-                    description="Prefilled when the form opens."
-                    placeholder="None"
-                    clearable
-                    data={[{ value: dateDefaultSentinel[field.type], label: dateDefaultLabel[field.type] }]}
-                    value={field.initialValue ?? null}
-                    onChange={(v) => set({ initialValue: v ?? undefined })}
-                  />
-                ) : field.type === 'yesNo' ? (
-                  <Select
-                    label="Default answer"
-                    description="Prefilled when the form opens."
-                    placeholder="None"
-                    clearable
-                    data={[
-                      { value: 'yes', label: 'Yes' },
-                      { value: 'no', label: 'No' },
-                    ]}
-                    value={field.initialValue ?? null}
-                    onChange={(v) => set({ initialValue: v ?? undefined })}
-                  />
-                ) : field.type === 'terms' || field.type === 'decisionBox' ? (
-                  <Switch
-                    label="Checked by default"
-                    checked={field.initialValue === 'true'}
-                    onChange={(e) => set({ initialValue: e.target.checked ? 'true' : undefined })}
-                  />
-                ) : (
-                  <TextInput
-                    label="Initial value"
-                    description="Prefilled when the form opens."
-                    value={field.initialValue ?? ''}
-                    onChange={(e) => set({ initialValue: e.target.value })}
-                  />
-                )}
-
-                {textTypes.includes(field.type) && (
-                  <NumberInput
-                    label="Character limit"
-                    w={180}
-                    value={field.maxLength ?? ''}
-                    onChange={(value) => set({ maxLength: value === '' ? undefined : Number(value) })}
-                  />
-                )}
-
-                {field.type === 'regex' && (
-                  <TextInput
-                    label="Pattern"
-                    description="Regular expression the answer must match."
-                    value={field.pattern ?? ''}
-                    onChange={(e) => set({ pattern: e.target.value })}
-                  />
-                )}
-
-                {(numericTypes.includes(field.type) || field.type === 'nps') && (
-                  <Group grow>
-                    <NumberInput
-                      label={field.type === 'nps' ? 'Scale from' : 'Minimum'}
-                      value={field.min ?? ''}
-                      onChange={(value) => set({ min: value === '' ? undefined : Number(value) })}
-                    />
-                    <NumberInput
-                      label={field.type === 'nps' ? 'Scale to' : 'Maximum'}
-                      value={field.max ?? ''}
-                      onChange={(value) => set({ max: value === '' ? undefined : Number(value) })}
-                    />
-                  </Group>
-                )}
-
-                {field.type === 'slider' && (
-                  <NumberInput
-                    label="Step"
-                    w={180}
-                    value={field.step ?? 1}
-                    onChange={(value) => set({ step: Number(value) || 1 })}
-                  />
-                )}
-
-                {field.type === 'rating' && (
-                  <NumberInput
-                    label="Number of stars"
-                    w={180}
-                    min={2}
-                    max={10}
-                    value={field.maxRating ?? 5}
-                    onChange={(value) => set({ maxRating: Number(value) || 5 })}
-                  />
-                )}
-
-                {(field.type === 'terms' || field.type === 'decisionBox') && (
-                  <Textarea
-                    label={field.type === 'terms' ? 'Terms text' : 'Consent text'}
-                    value={field.content ?? ''}
-                    onChange={(e) => set({ content: e.target.value })}
-                    autosize
-                    minRows={4}
-                  />
-                )}
-              </Section>
-            </>
-          )}
-        </>
+        <div className={classes.scroll}>
+          <div className={classes.body}>
+            <Sections
+              field={field}
+              allFields={allFields}
+              set={set}
+              paymentSettings={paymentSettings}
+              onOpenPaymentSettings={onOpenPaymentSettings}
+            />
+          </div>
+        </div>
       )}
     </PanelDrawer>
   );

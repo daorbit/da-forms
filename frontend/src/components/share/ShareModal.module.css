@@ -293,11 +293,11 @@
 }
 
 :global(html[data-mantine-color-scheme='light']) .preview {
-  background-color: #f1f3f5;
+  background-color: var(--surface-2);
 }
 
 :global(html[data-mantine-color-scheme='light']) .deviceToggle {
-  background-color: #e9ecef;
+  background-color: var(--border);
 }
 
 /* Clear over the host's background — see global.css. */

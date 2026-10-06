@@ -8,7 +8,7 @@ import {
 import { notify } from '@/lib/notify';
 import { STAGE_BY_ID } from '@/lib/stages';
 import type { PipelineFacets, PipelinePatch, Submission, SubmissionStage } from '@/types';
-import type { PipelineHandlers } from '@/components/builder/entries/LeadPanel';
+import type { PipelineHandlers } from '@/components/builder/entries/response/types';
 
 const EMPTY_FACETS: PipelineFacets = { assignees: [], tags: [] };
 

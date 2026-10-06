@@ -1,0 +1,63 @@
+.app-combobox-dropdown {
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+.app-combobox-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.app-combobox-option:where([data-combobox-selected], :hover) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.app-combobox-option[data-checked] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.app-combobox-option[data-combobox-disabled] {
+  opacity: 0.45;
+}
+
+.app-combobox-option > svg {
+  flex: none;
+  order: 2;
+  width: 14px;
+  height: 14px;
+  color: var(--accent-2);
+}
+
+.app-combobox-group-label {
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.app-combobox-group-label::after {
+  display: none;
+}
+
+.app-combobox-group + .app-combobox-group {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}

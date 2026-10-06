@@ -3,17 +3,82 @@
   background: var(--surface);
 }
 
-.mantine-Modal-content {
-  background-color: var(--bg-2);
+[data-mantine-color-scheme='light'] .mantine-Input-input {
+  border-color: var(--border-strong);
+  background: var(--surface);
+  color: #1d1d1f;
+}
+
+[data-mantine-color-scheme='light'] .mantine-Input-input::placeholder {
+  color: #86868b;
+}
+
+.mantine-InputWrapper-label,
+.mantine-Input-label {
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+[data-mantine-color-scheme='dark'] .mantine-Card-root {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-mantine-color-scheme='dark'] .mantine-SegmentedControl-root {
+  background: var(--shell);
+  border: 1px solid var(--border);
+}
+
+.mantine-SegmentedControl-indicator {
+  display: none;
+}
+
+.mantine-SegmentedControl-label {
+  position: relative;
+  z-index: 0;
+}
+
+.mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active]::before {
+  display: block;
+  z-index: -1;
+}
+
+[data-mantine-color-scheme='dark'] .mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active]::before {
+  background-color: var(--surface-2);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-mantine-color-scheme='light'] .mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active]::before {
+  background-color: var(--surface);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 0 0 1px var(--border);
+}
+
+.mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active] {
   color: var(--text);
+}
+
+.mantine-ScrollArea-scrollbar {
+  background: transparent !important;
+  padding: 0;
+}
+
+.mantine-ScrollArea-scrollbar[data-orientation='vertical'] {
+  width: 6px;
+}
+
+.mantine-ScrollArea-scrollbar[data-orientation='horizontal'] {
+  height: 6px;
+}
+
+.mantine-Modal-content {
   border: 1px solid var(--border);
   box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.5);
 }
 
 .mantine-Modal-header {
   padding: 20px 24px 8px;
-  background-color: inherit;
-  color: var(--text);
+  background: transparent;
 }
 
 .mantine-Modal-title {
@@ -40,23 +105,9 @@
 }
 
 .mantine-Modal-content.integrations-page {
-  background-color: var(--bg);
+  background-color: var(--shell);
   border: 0;
   box-shadow: none;
-}
-
-.mantine-Drawer-content {
-  background-color: var(--bg);
-  color: var(--text);
-  border-radius: 0;
-  border-left: 1px solid var(--border);
-  box-shadow: -24px 0 60px -20px rgba(0, 0, 0, 0.6);
-}
-
-.mantine-Drawer-header {
-  background-color: inherit;
-  color: var(--text);
-  border-bottom-color: var(--border);
 }
 
 .mantine-Popover-dropdown {
@@ -84,21 +135,33 @@
   font-weight: 600;
 }
 
-[data-mantine-color-scheme='dark'] .mantine-Menu-item[data-color='red']:hover {
-  background-color: rgba(224, 49, 49, 0.18);
-  color: #ff8787;
+.mantine-Menu-item[data-color='red']:where(:hover, :focus, [data-menu-active]) {
+  background: color-mix(in srgb, var(--mantine-color-red-6) 12%, transparent);
+  color: var(--mantine-color-red-4);
+}
+
+[data-mantine-color-scheme='light'] .mantine-Menu-item[data-color='red']:where(:hover, :focus, [data-menu-active]) {
+  background: color-mix(in srgb, var(--mantine-color-red-6) 9%, transparent);
+  color: var(--mantine-color-red-7);
+}
+
+:where(a, button, [role='button'], [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 .mantine-Checkbox-label,
 .mantine-Switch-label,
 .mantine-Radio-label,
+.mantine-Chip-label,
 .mantine-Checkbox-description,
 .mantine-Switch-description,
 .mantine-Radio-description {
   cursor: pointer;
 }
 
-.mantine-Switch-input:checked + * > .mantine-Switch-thumb:not(.da-forms-light-surface *) {
+.mantine-Switch-input:checked + .mantine-Switch-track .mantine-Switch-thumb:not(.da-forms-light-surface *) {
   background-color: var(--accent-contrast);
 }
 

@@ -2,7 +2,6 @@ import { Pagination, Skeleton } from '@mantine/core';
 import type { Form } from '@/types';
 import { PAGE_SIZE } from './constants';
 import { FormRow, type FormRowActions } from './FormRow';
-import rowClasses from './FormRow.module.css';
 import classes from './FormList.module.css';
 
 interface Props {
@@ -21,13 +20,11 @@ interface Props {
 
 function SkeletonRow() {
   return (
-    <div className={rowClasses.row}>
-      <div className={rowClasses.name}>
-        <Skeleton height={36} width={36} radius={10} />
-        <div className={rowClasses.nameText}>
-          <Skeleton height={12} width={180} radius="sm" />
-          <Skeleton height={10} width={70} radius="sm" mt={8} />
-        </div>
+    <div className={classes.skeleton}>
+      <Skeleton height={42} width={42} radius={11} />
+      <div>
+        <Skeleton height={14} width={200} radius="sm" />
+        <Skeleton height={10} width={260} radius="sm" mt={10} />
       </div>
     </div>
   );
@@ -52,42 +49,20 @@ export function FormList({
 
   return (
     <>
-      <div
-        className={`surface-card ${classes.list}`}
-        data-demo={isDemo || undefined}
-        data-compact={compact || undefined}
-      >
-        {!compact && (
-          <div className={classes.header}>
-            <span>Name</span>
-            <span>Status</span>
-            {!isDemo && (
-              <>
-                <span className={classes.right}>Responses</span>
-                <span className={`${classes.right} ${classes.secondary}`}>Views</span>
-                <span className={`${classes.right} ${classes.secondary}`}>Conversion</span>
-              </>
-            )}
-            <span className={`${classes.right} ${classes.secondary}`}>Updated</span>
-            <span />
-          </div>
-        )}
-
-        <div className={classes.rows} data-loading={loading && !showSkeleton ? true : undefined}>
-          {showSkeleton
-            ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
-            : forms.map((form) => (
-                <FormRow
-                  key={form._id}
-                  form={form}
-                  workspaceId={workspaceId}
-                  isDemo={isDemo}
-                  compact={compact}
-                  busy={{ duplicating: duplicatingId === form._id, copyingConfig: copyingConfigId === form._id }}
-                  actions={actions}
-                />
-              ))}
-        </div>
+      <div className={classes.rows} data-loading={loading && !showSkeleton ? true : undefined}>
+        {showSkeleton
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+          : forms.map((form) => (
+              <FormRow
+                key={form._id}
+                form={form}
+                workspaceId={workspaceId}
+                isDemo={isDemo}
+                compact={compact}
+                busy={{ duplicating: duplicatingId === form._id, copyingConfig: copyingConfigId === form._id }}
+                actions={actions}
+              />
+            ))}
       </div>
 
       {total > PAGE_SIZE && (

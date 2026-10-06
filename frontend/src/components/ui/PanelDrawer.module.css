@@ -1,17 +1,14 @@
 .content {
-  --panel-bg: var(--surface);
-  --panel-well: var(--surface-2);
+  --panel-bg: var(--shell);
+  --panel-well: var(--surface);
   --panel-pad: 20px;
 
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background-color: var(--panel-bg) !important;
-}
-
-:global([data-mantine-color-scheme='dark']) .content {
-  --panel-bg: var(--surface-2);
-  --panel-well: var(--surface);
+  border-inline-start: 1px solid var(--border);
+  box-shadow: -24px 0 60px -20px rgba(0, 0, 0, 0.6);
 }
 
 .body {

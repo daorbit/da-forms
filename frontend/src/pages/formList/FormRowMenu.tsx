@@ -5,7 +5,7 @@ import {
   CloudUploadIcon,
   CopyIcon,
   CopyPlusIcon,
-  EllipsisIcon,
+  EllipsisVerticalIcon,
   ExternalLinkIcon,
   EyeIcon,
   EyeOffIcon,
@@ -34,8 +34,8 @@ export function FormRowMenu({ form, basePath, compact, busy, actions }: Props) {
   return (
     <Menu position="bottom-end" width={210}>
       <Menu.Target>
-        <ActionIcon variant="subtle" size={28} radius="md" className={classes.iconAction} aria-label="More actions">
-          <EllipsisIcon size={16} />
+        <ActionIcon variant="default" size={32} radius="xl" className={classes.round} aria-label="More actions">
+          <EllipsisVerticalIcon size={16} />
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown>

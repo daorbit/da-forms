@@ -1,0 +1,38 @@
+.drawer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 28px;
+}
+
+.count {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.tabs {
+  margin-top: 18px;
+}
+
+.panel {
+  padding: 6px 24px 0;
+}
+
+.panel[data-padded] {
+  padding-top: 20px;
+}
+
+@media (max-width: 480px) {
+  .panel {
+    padding-inline: 16px;
+  }
+}

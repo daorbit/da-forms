@@ -1,0 +1,103 @@
+.track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3px;
+  padding: 3px;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.stage {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.stage:hover:not(:disabled):not([data-active]) {
+  color: var(--text);
+}
+
+.stage:disabled {
+  cursor: default;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--stage-color);
+  opacity: 0.55;
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stage[data-active] {
+  color: var(--stage-text);
+  background: var(--stage-soft);
+  box-shadow: inset 0 0 0 1px var(--stage-ring);
+}
+
+.stage[data-active] .dot {
+  opacity: 1;
+}
+
+.stage[data-stage='new'] {
+  --stage-color: var(--text-2);
+  --stage-text: var(--text);
+  --stage-soft: var(--surface);
+  --stage-ring: var(--border-strong);
+}
+
+.stage[data-stage='contacted'] {
+  --stage-color: var(--mantine-color-blue-5);
+  --stage-text: light-dark(var(--mantine-color-blue-7), var(--mantine-color-blue-3));
+  --stage-soft: color-mix(in srgb, var(--mantine-color-blue-6) 16%, transparent);
+  --stage-ring: color-mix(in srgb, var(--mantine-color-blue-5) 35%, transparent);
+}
+
+.stage[data-stage='qualified'] {
+  --stage-color: var(--mantine-color-violet-5);
+  --stage-text: light-dark(var(--mantine-color-violet-7), var(--mantine-color-violet-3));
+  --stage-soft: color-mix(in srgb, var(--mantine-color-violet-6) 16%, transparent);
+  --stage-ring: color-mix(in srgb, var(--mantine-color-violet-5) 35%, transparent);
+}
+
+.stage[data-stage='won'] {
+  --stage-color: var(--mantine-color-teal-5);
+  --stage-text: light-dark(var(--mantine-color-teal-7), var(--mantine-color-teal-3));
+  --stage-soft: color-mix(in srgb, var(--mantine-color-teal-6) 16%, transparent);
+  --stage-ring: color-mix(in srgb, var(--mantine-color-teal-5) 35%, transparent);
+}
+
+.stage[data-stage='lost'] {
+  --stage-color: var(--mantine-color-red-5);
+  --stage-text: light-dark(var(--mantine-color-red-7), var(--mantine-color-red-3));
+  --stage-soft: color-mix(in srgb, var(--mantine-color-red-6) 14%, transparent);
+  --stage-ring: color-mix(in srgb, var(--mantine-color-red-5) 32%, transparent);
+}
+
+@media (max-width: 420px) {
+  .dot {
+    display: none;
+  }
+}

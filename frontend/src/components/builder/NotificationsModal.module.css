@@ -434,7 +434,7 @@
 }
 
 :global(html[data-mantine-color-scheme='light']) .composerPane {
-  background-color: #f1f3f5;
+  background-color: var(--surface-2);
 }
 
 /* Clear over the host's background — see global.css. */

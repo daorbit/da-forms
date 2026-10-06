@@ -28,7 +28,7 @@
   border: 1px solid var(--mantine-color-default-border);
   border-radius: 10px;
   overflow: hidden;
-  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
+  background: var(--surface-2);
 }
 
 /* A faint wash so the pane reads as Orbit's own rather than as another panel.
@@ -63,7 +63,7 @@
   display: block;
   width: 100%;
   text-align: left;
-  border: 1px solid light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-3)) !important;
+  border: 1px solid var(--border-strong) !important;
   border-radius: 8px !important;
   padding: 9px 12px !important;
   color: var(--mantine-color-dimmed);

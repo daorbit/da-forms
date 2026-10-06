@@ -73,14 +73,13 @@
   position: relative;
   width: min(720px, 100%);
   border-radius: 24px;
-  background: color-mix(in srgb, var(--mantine-color-default) 60%, var(--mantine-color-body));
-  box-shadow: inset 0 0 0 1px var(--mantine-color-default-border);
-  transition: box-shadow 200ms ease, background-color 200ms ease;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  transition: box-shadow 200ms ease;
 }
 
 .composer:focus-within {
-  background: var(--mantine-color-default);
-  box-shadow: inset 0 0 0 1.5px var(--mantine-color-emerald-5);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
 }
 
 .composer :global(.mantine-Input-input),
@@ -189,10 +188,10 @@
   align-items: center;
   max-width: 100%;
   padding: 8px 16px;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mantine-color-default) 60%, var(--mantine-color-body));
-  color: var(--mantine-color-text);
+  background: var(--surface);
+  color: var(--text-2);
   font-size: 12px;
   line-height: 1.4;
   white-space: nowrap;
@@ -200,8 +199,8 @@
 }
 
 .suggestion.suggestion:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--mantine-color-emerald-5) 12%, var(--mantine-color-default));
-  color: var(--mantine-color-emerald-5);
+  border-color: var(--border-strong);
+  color: var(--text);
 }
 
 .suggestion.suggestion:focus-visible {
@@ -513,21 +512,7 @@
 /* ---------------------------------------------------------------- deck --- */
 
 .deck {
-  /*
-   * Grounded by a fade, not by a slab.
-   *
-   * A flat fill with a border across the top cut the page in half and killed
-   * the aurora dead along a straight line. This starts fully transparent, so
-   * the wash runs down into the row and only firms up under the cards, where
-   * the text actually needs a ground to sit on.
-   */
   flex: none;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    color-mix(in srgb, var(--mantine-color-body) 55%, transparent) 38%,
-    color-mix(in srgb, var(--mantine-color-body) 88%, transparent) 100%
-  );
   padding: 40px 20px 30px;
 }
 
@@ -559,70 +544,17 @@
   flex-direction: column;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid var(--mantine-color-default-border);
-  /* Same trick as the composer: a top-lit gradient rather than a flat fill, so
-     the card has a direction of light instead of reading as a cut-out. */
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--mantine-color-default) 55%, var(--mantine-color-body)) 0%,
-    var(--mantine-color-body) 100%
-  );
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent);
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-}
-
-/*
- * The hover glow.
- *
- * A pseudo-element rather than a background swap, because the card's own
- * background is a gradient and cross-fading two gradients is not something CSS
- * will interpolate. This one just fades in over the top of it.
- */
-.deckCard::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 180ms ease;
-  background: radial-gradient(
-    120% 80% at 50% 0%,
-    color-mix(in srgb, var(--mantine-color-emerald-5) 22%, transparent) 0%,
-    transparent 70%
-  );
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: border-color 160ms ease;
 }
 
 .deckCard.deckCard:hover:not(:disabled) {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--mantine-color-emerald-5) 60%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent),
-    /* Shadows have to be far lighter on a white page: an opacity pitched to
-       read against near-black turns into a smudge under the card in light
-       mode. */
-    light-dark(0 10px 24px rgba(16, 24, 40, 0.1), 0 14px 32px rgba(0, 0, 0, 0.28)),
-    0 0 0 1px color-mix(in srgb, var(--mantine-color-emerald-5) 18%, transparent);
-}
-
-.deckCard:hover:not(:disabled)::after {
-  opacity: 1;
-}
-
-.deckCard:active:not(:disabled) {
-  transform: translateY(-1px);
+  border-color: var(--border-strong);
 }
 
 .deckCard:disabled {
   opacity: 0.55;
-}
-
-:global([data-mantine-color-scheme='dark']) .deckCard.deckCard {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, #fff 6%, var(--mantine-color-body)) 0%,
-    color-mix(in srgb, #fff 1%, var(--mantine-color-body)) 100%
-  );
 }
 
 .deckArt {
@@ -641,17 +573,10 @@
   overflow: hidden;
 }
 
-/* The art itself lifts a touch on hover, so the whole tile does not feel like
-   one flat sticker sliding upward. */
-.deckCard:hover:not(:disabled) .deckArt img {
-  transform: scale(1.04);
-}
-
 .deckArt img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 220ms ease;
 }
 
 .deckBody {
@@ -716,15 +641,11 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--mantine-color-default-border);
-  /* Flat glass, not a gradient. A fade that ends partway down the pane draws a
-     horizontal band across it wherever the content happens to stop, which on a
-     short conversation lands in the middle of empty space. */
-  background: color-mix(in srgb, var(--mantine-color-body) 55%, transparent);
-  backdrop-filter: blur(18px);
+  background: var(--surface);
 }
 
 :global([data-mantine-color-scheme='dark']) .orbitPane {
-  background: color-mix(in srgb, var(--mantine-color-body) 62%, transparent);
+  background: var(--surface);
 }
 
 .paneHead {
@@ -878,7 +799,7 @@
  */
 .listPane.listPane,
 :global([data-mantine-color-scheme='dark']) .listPane.listPane {
-  background: color-mix(in srgb, var(--mantine-color-body) 48%, transparent);
+  background: var(--surface);
 }
 
 /* The search and scope filter, pinned above the scrolling list. */
@@ -1002,8 +923,7 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--mantine-color-default-border);
-  background: color-mix(in srgb, var(--mantine-color-body) 42%, transparent);
-  backdrop-filter: blur(14px);
+  background: var(--surface);
   box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent);
 }
 

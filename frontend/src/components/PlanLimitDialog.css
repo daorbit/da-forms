@@ -49,7 +49,7 @@
   color: var(--mantine-color-emerald-4);
   background:
     radial-gradient(circle at 30% 25%, rgb(255 255 255 / 0.14), transparent 60%),
-    var(--mantine-color-dark-6, rgb(0 0 0 / 0.25));
+    var(--surface, rgb(0 0 0 / 0.25));
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 0.08),
     0 10px 30px -12px var(--accent-2, var(--mantine-color-emerald-8));

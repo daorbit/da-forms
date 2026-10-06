@@ -4,6 +4,8 @@ import { ArrowLeftIcon, CheckIcon, LinkIcon, PencilIcon, XIcon } from 'lucide-re
 import { StatusText } from '@/components/ui/StatusText';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
+import { HostNotificationsBell } from '@/components/HostNotificationsBell';
+import { IS_EMBEDDED } from '@/lib/bootParams';
 import type { Form } from '@/types';
 import classes from '../../../pages/EntriesPage.module.css';
 
@@ -121,6 +123,7 @@ export function EntriesTopbar({
             Copy link
           </Button>
           <DocsButton path="/forms-entries-and-links" />
+          {IS_EMBEDDED && <HostNotificationsBell />}
         </>
       }
     />

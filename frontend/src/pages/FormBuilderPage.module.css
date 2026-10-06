@@ -65,7 +65,7 @@
 .dragChip {
   padding: 8px 14px;
   border-radius: 6px;
-  background-color: var(--mantine-color-dark-8);
+  background-color: var(--surface);
   color: var(--mantine-color-white);
   font-size: 13px;
   font-weight: 500;

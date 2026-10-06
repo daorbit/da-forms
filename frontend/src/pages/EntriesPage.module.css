@@ -18,61 +18,6 @@
   white-space: nowrap;
 }
 
-.drawer {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.drawerCount {
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--muted);
-}
-
-.drawerSource {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel-well);
-  color: var(--muted);
-  min-width: 0;
-}
-
-.drawerScroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 4px 20px 20px;
-}
-
-.responseList .responseField {
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.responseList .responseField:last-child {
-  border-bottom: 0;
-}
-
-.responseList .responseField > p:last-child,
-.responseList .responseField > :global(.mantine-Text-root):last-child {
-  font-size: 14px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.responseField {
-  min-width: 0;
-}
-
-.mediaField {
-  grid-column: 1 / -1;
-}
-
 .attachmentModal {
   max-width: min(960px, calc(100vw - 32px));
 }

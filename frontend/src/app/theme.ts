@@ -1,18 +1,24 @@
-import { ActionIcon, Badge, Button, createTheme, rem, type MantineColorsTuple } from '@mantine/core';
+import { ActionIcon, Badge, Button, createTheme, Pagination, rem, ThemeIcon } from '@mantine/core';
 
 const NEUTRAL_BADGE_COLORS = ['gray', 'dark'];
-const NEUTRAL_RAMP: MantineColorsTuple = [
-  '#f5f5f5',
-  '#d4d4d4',
-  '#a3a3a3',
-  '#737373',
-  '#525252',
-  '#3a3a3a',
-  '#292929',
-  '#1c1c1c',
-  '#111111',
-  '#000000',
-];
+
+const DROPDOWN_DEFAULTS = {
+  checkIconPosition: 'right' as const,
+  maxDropdownHeight: 340,
+  comboboxProps: {
+    radius: 12,
+    shadow: 'lg',
+    offset: 6,
+    transitionProps: { transition: 'pop' as const, duration: 140 },
+  },
+};
+
+const DROPDOWN_CLASSES = {
+  dropdown: 'app-combobox-dropdown',
+  option: 'app-combobox-option',
+  group: 'app-combobox-group',
+  groupLabel: 'app-combobox-group-label',
+};
 
 function badgeTextColor(color: string | undefined, themeColors: Record<string, unknown>): string {
   if (!color) return 'var(--mantine-color-emerald-text)';
@@ -23,12 +29,11 @@ function badgeTextColor(color: string | undefined, themeColors: Record<string, u
 
 export const theme = createTheme({
   primaryColor: 'emerald',
-  black: '#0a0b0d',
-  primaryShade: { light: 6, dark: 5 },
-  fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+  primaryShade: { light: 6, dark: 7 },
+  fontFamily: "'Google Sans Flex', ui-sans-serif, system-ui, -apple-system, sans-serif",
   fontFamilyMonospace: "ui-monospace, 'SF Mono', Menlo, monospace",
   headings: {
-    fontFamily: 'Inter, system-ui, sans-serif',
+    fontFamily: "'Google Sans Flex', ui-sans-serif, system-ui, sans-serif",
     fontWeight: '700',
     sizes: {
       h1: { fontSize: rem(30), lineHeight: '1.2' },
@@ -39,57 +44,20 @@ export const theme = createTheme({
   defaultRadius: 'md',
   cursorType: 'pointer',
   colors: {
-    emerald: NEUTRAL_RAMP,
-    green: NEUTRAL_RAMP,
-    teal: NEUTRAL_RAMP,
-    dark: NEUTRAL_RAMP,
+    emerald: [
+      '#ecfdf5', '#d1fae5', '#a7f3d0', '#6ee7b7', '#34d399',
+      '#10b981', '#059669', '#047857', '#065f46', '#064e3b',
+    ],
+    dark: [
+      '#c9c9c9', '#a8a8a8', '#8a8a8a', '#5e5e5e', '#2c2c2c',
+      '#242424', '#1c1c1c', '#161616', '#0f0f0f', '#0a0a0a',
+    ],
   },
   shadows: {
     md: '0 8px 24px -8px rgba(0,0,0,0.45)',
     lg: '0 16px 40px -12px rgba(0,0,0,0.55)',
   },
   components: {
- 
-    /*
-     * A dark tooltip in both schemes, with light text to match.
-     *
-     * The label colour has to be stated rather than inherited: `--mantine-color-text`
-     * follows the scheme, so on a light page it resolved to near-black and put
-     * dark text on the dark tooltip.
-     */
-    Tooltip: {
-      defaultProps: { color: 'dark.8' },
-      styles: { tooltip: { color: 'var(--mantine-color-white)' } },
-    },
-
-    /*
-     * The selected segment, in whichever scheme is showing.
-     *
-     * `dark-4` is a dark grey in both schemes — Mantine's `dark` palette does
-     * not flip — so on a light page the indicator was a near-black pill under
-     * near-black text. `light-dark()` picks a raised surface for light and the
-     * same grey as before for dark, and the active label takes whatever sits
-     * legibly on it.
-     */
-    SegmentedControl: {
-      styles: {
-        indicator: {
-          backgroundColor: 'light-dark(var(--mantine-color-white), var(--mantine-color-dark-4))',
-          boxShadow: 'light-dark(0 1px 3px rgba(0, 0, 0, 0.12), none)',
-        },
-        label: {
-          color: 'var(--mantine-color-dimmed)',
-          '&[data-active]': {
-            color: 'light-dark(var(--mantine-color-black), var(--mantine-color-white))',
-          },
-        },
-      },
-    },
- 
- 
-    Alert: {
-      styles: { message: { color: 'var(--mantine-color-text)' } },
-    },
     Loader: { defaultProps: { type: 'oval' } },
     Skeleton: { defaultProps: { className: 'skeleton-shimmer' } },
     Badge: Badge.extend({
@@ -116,8 +84,8 @@ export const theme = createTheme({
     Switch: {
       vars: () => ({
         root: {
-          '--switch-bg': 'color-mix(in srgb, var(--text) 14%, transparent)',
-          '--switch-bd': '1px solid var(--border-strong)',
+          '--switch-bg': 'var(--surface-2)',
+          '--switch-bd': '1px solid var(--border)',
           '--switch-thumb-bg': 'var(--control-thumb, var(--text))',
         },
       }),
@@ -125,17 +93,23 @@ export const theme = createTheme({
     Checkbox: {
       vars: () => ({
         root: {
-          '--checkbox-bd': '1px solid var(--border-strong)',
+          '--checkbox-bd': '1px solid var(--border)',
         },
       }),
     },
     Radio: {
       vars: () => ({
         root: {
-          '--radio-bd': '1px solid var(--border-strong)',
+          '--radio-bd': '1px solid var(--border)',
         },
       }),
     },
+    ThemeIcon: ThemeIcon.extend({
+      vars: (_theme, props) =>
+        props.variant === 'filled' && (!props.color || props.color === 'emerald')
+          ? { root: { '--ti-color': 'var(--accent-contrast)' } }
+          : { root: {} },
+    }),
     Modal: {
       defaultProps: {
         radius: 24,
@@ -170,7 +144,8 @@ export const theme = createTheme({
     }),
     ActionIcon: ActionIcon.extend({
       vars: (_theme, props) =>
-        props.variant === 'filled' && (!props.color || props.color === 'emerald')
+        (props.variant === undefined || props.variant === 'filled') &&
+        (!props.color || props.color === 'emerald')
           ? {
               root: {
                 '--ai-bg': 'var(--cta)',
@@ -181,12 +156,26 @@ export const theme = createTheme({
             }
           : { root: {} },
     }),
+    Pagination: Pagination.extend({
+      vars: (_theme, props) =>
+        !props.color || props.color === 'emerald'
+          ? {
+              root: {
+                '--pagination-active-bg': 'var(--cta)',
+                '--pagination-active-color': 'var(--cta-fg)',
+              },
+            }
+          : { root: {} },
+    }),
     Paper: { defaultProps: { radius: 'md' } },
     Input: { defaultProps: { radius: 8 } },
     TextInput: { defaultProps: { radius: 8 } },
     PasswordInput: { defaultProps: { radius: 8 } },
-    Select: { defaultProps: { radius: 8 } },
     Textarea: { defaultProps: { radius: 8 } },
     NumberInput: { defaultProps: { radius: 8 } },
+    Select: { defaultProps: { radius: 8, ...DROPDOWN_DEFAULTS }, classNames: DROPDOWN_CLASSES },
+    MultiSelect: { defaultProps: DROPDOWN_DEFAULTS, classNames: DROPDOWN_CLASSES },
+    Autocomplete: { defaultProps: { comboboxProps: DROPDOWN_DEFAULTS.comboboxProps }, classNames: DROPDOWN_CLASSES },
+    TagsInput: { defaultProps: { comboboxProps: DROPDOWN_DEFAULTS.comboboxProps }, classNames: DROPDOWN_CLASSES },
   },
 });

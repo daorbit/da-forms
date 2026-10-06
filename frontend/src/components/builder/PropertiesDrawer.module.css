@@ -1,18 +1,29 @@
-.section + .section {
-  padding-top: 20px;
-  margin-left: calc(var(--panel-pad) * -1);
-  margin-right: calc(var(--panel-pad) * -1);
-  padding-left: var(--panel-pad);
-  padding-right: var(--panel-pad);
-  border-top: 1px solid var(--border);
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-.sectionLabel {
-  display: block;
-  font-size: 11px;
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px 36px;
+}
+
+.subtitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.required {
+  color: var(--mantine-color-red-5);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--mantine-color-dimmed);
-  margin-bottom: 12px;
+}
+
+@media (max-width: 480px) {
+  .body {
+    padding: 16px 16px 28px;
+  }
 }

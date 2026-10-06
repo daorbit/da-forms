@@ -1,0 +1,151 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 24px 18px;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-2);
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.who {
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name[data-anonymous] {
+  color: var(--text-2);
+}
+
+.contacts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 14px;
+  margin-top: 3px;
+}
+
+.contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.contact a {
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.contactIcon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.copy {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.contact:hover .copy,
+.contact:focus-within .copy {
+  opacity: 1;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.chip svg {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.chipText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip[data-tone='score'] {
+  color: light-dark(var(--mantine-color-grape-7), var(--mantine-color-grape-3));
+  border-color: color-mix(in srgb, var(--mantine-color-grape-5) 30%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-grape-6) 10%, transparent);
+}
+
+.chip[data-tone='score'] svg {
+  color: inherit;
+}
+
+.chip[data-tone='paid'] {
+  color: light-dark(var(--mantine-color-teal-7), var(--mantine-color-teal-3));
+  border-color: color-mix(in srgb, var(--mantine-color-teal-5) 30%, transparent);
+  background: color-mix(in srgb, var(--mantine-color-teal-6) 10%, transparent);
+}
+
+.chip[data-tone='paid'] svg {
+  color: inherit;
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 18px 16px 16px;
+  }
+}

@@ -1,8 +1,9 @@
-import { ActionIcon, Indicator, Tooltip } from '@mantine/core';
+import { ActionIcon, Tooltip } from '@mantine/core';
 import { Bell } from 'lucide-react';
 import { requestOpenNotifications } from '@/lib/planLimit';
 import { useHostUnreadCount } from '@/hooks/useHostUnreadCount';
 import { useHostPhone } from '@/hooks/useHostPhone';
+import classes from './HostNotificationsBell.module.css';
 
 interface Props {
   variant?: 'default' | 'subtle';
@@ -18,16 +19,7 @@ export function HostNotificationsBell({ variant = 'default', iconSize = 17 }: Pr
 
   return (
     <Tooltip label={label} withArrow>
-      <Indicator
-        inline
-        disabled={count === 0}
-        label={badge}
-        size={16}
-        offset={6}
-        color="red"
-        withBorder
-        styles={{ indicator: { fontSize: 10, fontWeight: 700, paddingInline: 4 } }}
-      >
+      <span className={classes.bell}>
         <ActionIcon
           variant={variant}
           color={variant === 'subtle' ? 'gray' : undefined}
@@ -38,7 +30,12 @@ export function HostNotificationsBell({ variant = 'default', iconSize = 17 }: Pr
         >
           <Bell size={iconSize} />
         </ActionIcon>
-      </Indicator>
+        {count > 0 && (
+          <span className={classes.badge} data-wide={badge.length > 2 || undefined} aria-hidden>
+            {badge}
+          </span>
+        )}
+      </span>
     </Tooltip>
   );
 }

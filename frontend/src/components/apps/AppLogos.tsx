@@ -1,4 +1,6 @@
 import { WebhookIcon } from 'lucide-react';
+import slackSvg from '@/assets/slack.svg';
+import discordSvg from '@/assets/discord.svg';
 import { GatewayLogo } from "../builder/GatewayLogos";
 
 interface LogoProps {
@@ -19,6 +21,14 @@ export function BrevoLogo({ height = 20 }: LogoProps) {
       <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0M7.2 4.8h5.747c2.34 0 3.895 1.406 3.895 3.516 0 1.022-.348 1.862-1.09 2.588C17.189 11.812 18 13.22 18 14.785c0 2.86-2.64 5.016-6.164 5.016H7.199v-15zm2.085 1.952v5.537h.07c.233-.432.858-.796 2.249-1.226 2.039-.659 3.037-1.52 3.037-2.655 0-.998-.766-1.656-1.924-1.656zm4.87 5.266c-.766.385-1.67.748-2.76 1.11-1.229.387-2.11 1.386-2.11 2.407v2.315h2.365c2.387 0 4.149-1.34 4.149-3.155 0-1.067-.625-2.087-1.645-2.677z" />
     </svg>
   );
+}
+
+export function SlackLogo({ height = 20 }: LogoProps) {
+  return <img src={slackSvg} height={height} width={height} alt="Slack" />;
+}
+
+export function DiscordLogo({ height = 20 }: LogoProps) {
+  return <img src={discordSvg} height={height} width={height} alt="Discord" />;
 }
 
 export function SmtpLogo({ height = 20 }: LogoProps) {
@@ -113,6 +123,8 @@ export const APP_TINT: Record<string, string> = {
   cashfree: "#04AB61",
   payu: "#A2D045",
   webhook: "#8B5CF6",
+  slack: "#4A154B",
+  discord: "#5865F2",
 };
 
 export function isWordmark(appId: string): boolean {
@@ -129,6 +141,8 @@ export function AppLogo({
   if (appId === "brevo") return <BrevoLogo height={height} />;
   if (appId === "smtp") return <SmtpLogo height={height} />;
   if (appId === "webhook") return <WebhookIcon size={height} />;
+  if (appId === "slack") return <SlackLogo height={height} />;
+  if (appId === "discord") return <DiscordLogo height={height} />;
   if (isWordmark(appId)) {
     return (
       <GatewayLogo

@@ -130,10 +130,50 @@ export const APP_CATALOG: AppDescriptor[] = [
       ...FROM_FIELDS,
     ],
   },
+  {
+    id: 'slack',
+    name: 'Slack',
+    category: 'notification',
+    description: 'Post a message to a Slack channel for every new response.',
+    docsUrl: 'https://api.slack.com/messaging/webhooks',
+    testable: true,
+    fields: [
+      {
+        key: 'webhookUrl',
+        label: 'Incoming webhook URL',
+        type: 'password',
+        secret: true,
+        required: true,
+        placeholder: 'https://hooks.slack.com/services/…',
+        help: 'Create an incoming webhook for the channel and paste its URL.',
+      },
+    ],
+  },
+  {
+    id: 'discord',
+    name: 'Discord',
+    category: 'notification',
+    description: 'Post a message to a Discord channel for every new response.',
+    docsUrl: 'https://support.discord.com/hc/en-us/articles/228383668',
+    testable: true,
+    fields: [
+      {
+        key: 'webhookUrl',
+        label: 'Webhook URL',
+        type: 'password',
+        secret: true,
+        required: true,
+        placeholder: 'https://discord.com/api/webhooks/…',
+        help: 'In channel settings, open Integrations, create a webhook and copy its URL.',
+      },
+    ],
+  },
 ];
 
 /** App ids in the 'email' category — the mailer's candidate transports. */
 export const EMAIL_APP_IDS = APP_CATALOG.filter((a) => a.category === 'email').map((a) => a.id);
+
+export const CHAT_APP_IDS = APP_CATALOG.filter((a) => a.category === 'notification').map((a) => a.id);
 
 export function getDescriptor(appId: string): AppDescriptor | undefined {
   return APP_CATALOG.find((a) => a.id === appId);

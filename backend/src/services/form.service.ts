@@ -1017,18 +1017,21 @@ export async function editSubmission(
 
   applyCalculatedFields(fields, data);
 
-  const uniqueFields = flattenFields(fields).filter((field) => field.unique);
-  for (const field of uniqueFields) {
-    const value = data[field.id];
-    if (!value) continue;
-
-    const existing = await SubmissionModel.exists({
-      _id: { $ne: id },
-      formId: target.formId,
-      status: 'complete',
-      [`data.${field.id}`]: value,
-    });
-    if (existing) throw new DuplicateValueError(field);
+  const uniqueFields = flattenFields(fields).filter((field) => field.unique && data[field.id]);
+  if (uniqueFields.length) {
+    const clashes = await SubmissionModel.find(
+      {
+        _id: { $ne: id },
+        formId: target.formId,
+        status: 'complete',
+        $or: uniqueFields.map((field) => ({ [`data.${field.id}`]: data[field.id] })),
+      },
+      { data: 1 }
+    ).lean();
+    const clashing = uniqueFields.find((field) =>
+      clashes.some((row) => (row.data as Record<string, string>)[field.id] === data[field.id])
+    );
+    if (clashing) throw new DuplicateValueError(clashing);
   }
 
   const quiz = scoreSubmission(fields, data);

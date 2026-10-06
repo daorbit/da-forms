@@ -38,6 +38,7 @@ interface Props {
 
 const ACTION_HINT: Record<string, string> = {
   email: 'Connect it to send notification emails from your own domain.',
+  notification: 'Connect a channel to get every new response posted there.',
   payments: 'Connect your account to take payments on forms with a payment field.',
   automation: 'Turn it on, then set a URL from any form’s Webhook panel.',
 };

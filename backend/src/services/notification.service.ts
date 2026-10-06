@@ -7,6 +7,8 @@ import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
 import { getBranding, notifyFormSubmission } from '../lib/quantalog.js';
 import { bannerAttachment } from '../lib/email-banner.js';
+import { postChatAlert } from '../lib/chatAlert.js';
+import { resolveChatConnections } from './appConnection.service.js';
 
 
  
@@ -64,7 +66,7 @@ function answersOf(
 }
 
  
-export async function sendSubmissionNotifications(
+async function sendEmailNotifications(
   form: FormDocument & { _id: unknown },
   data: Record<string, string>,
   /** Present for a paid form — shown as a line in the emailed summary. */
@@ -194,4 +196,39 @@ export async function sendSubmissionNotifications(
       console.error('[notifications] failed to send submission email:', result.reason);
     }
   }
+}
+
+async function sendChatNotifications(
+  form: FormDocument & { _id: unknown },
+  data: Record<string, string>,
+  payment?: SubmissionPayment
+): Promise<void> {
+  const notifications = form.notifications;
+  if (!notifications?.ownerEnabled && !notifications?.ownerInAppEnabled) return;
+
+  const connections = await resolveChatConnections(form.workspaceId);
+  if (!connections.length) return;
+
+  const alert = { title: `New submission: ${form.title}`, answers: answersOf(form.fields, data, payment) };
+  const results = await Promise.allSettled(
+    connections.map((c) => postChatAlert(c.appId, String(c.secrets.webhookUrl ?? ''), alert))
+  );
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error('[notifications] failed to post chat alert:', result.reason);
+    }
+  }
+}
+
+export async function sendSubmissionNotifications(
+  form: FormDocument & { _id: unknown },
+  data: Record<string, string>,
+  payment?: SubmissionPayment,
+  submissionId?: string,
+  formId?: string
+): Promise<void> {
+  await Promise.all([
+    sendEmailNotifications(form, data, payment, submissionId, formId),
+    sendChatNotifications(form, data, payment),
+  ]);
 }

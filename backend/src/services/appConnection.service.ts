@@ -5,7 +5,9 @@ import {
   getDescriptor,
   type AppDescriptor,
   type AppField,
+  CHAT_APP_IDS,
 } from '../lib/app-catalog.js';
+import { isValidChatUrl, postChatAlert } from '../lib/chatAlert.js';
 import { encrypt, decrypt, maskTail, isEncryptionConfigured } from '../lib/crypto.js';
 import { invalidateMailCache } from '../lib/mailer.js';
 
@@ -152,6 +154,9 @@ export async function saveApp(
     if (field.secret) {
       const raw = supplied ? String(values[field.key] ?? '').trim() : '';
       if (raw) {
+        if (descriptor.category === 'notification' && !isValidChatUrl(appId, raw)) {
+          throw new ConfigInvalidError(`${field.label} is not a valid ${descriptor.name} address.`);
+        }
         secrets[field.key] = encrypt(raw);
         secretChanged = true;
       }
@@ -269,6 +274,15 @@ export async function resolveEmailConnection(
  * For the test action: an owner checks a provider before switching to it, so
  * the connection being tested is usually the one that is still off.
  */
+export async function resolveChatConnections(workspaceId: string): Promise<ResolvedConnection[]> {
+  const docs = await AppConnectionModel.find({
+    workspaceId,
+    appId: { $in: CHAT_APP_IDS },
+    enabled: true,
+  });
+  return docs.map((doc) => decryptConnection(doc)).filter((c): c is ResolvedConnection => c !== null);
+}
+
 export async function resolveConnection(
   workspaceId: string,
   appId: string
@@ -325,6 +339,22 @@ export async function testApp(
 ): Promise<TestResult> {
   const descriptor = getDescriptor(appId);
   if (!descriptor) throw new UnknownAppError(`Unknown app: ${appId}`);
+
+  if (descriptor.category === 'notification') {
+    const connection = await resolveConnection(workspaceId, appId);
+    const url = String(connection?.secrets.webhookUrl ?? '');
+    if (!url) return { ok: false, message: 'Save the webhook URL first.' };
+    try {
+      await postChatAlert(appId as AppId, url, {
+        title: 'Test message from your form notifications',
+        answers: [{ label: 'Status', value: 'Connected' }],
+      });
+      await markVerified(workspaceId, appId);
+      return { ok: true, message: 'Test message sent.' };
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : 'The message could not be sent.' };
+    }
+  }
 
   if (descriptor.category !== 'email') {
     return { ok: false, message: 'This app has no test action.' };

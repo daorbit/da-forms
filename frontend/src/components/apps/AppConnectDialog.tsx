@@ -129,7 +129,11 @@ export function AppConnectDialog({
       const card = await saveApp(app.id, { values: payloadValues(), enabled: enable }, workspaceId);
       onSaved(card);
       notify.success(
-        enable ? 'Notification emails will go out through it.' : 'Turn it on when you are ready.',
+        enable
+          ? app.category === 'email'
+            ? 'Notification emails will go out through it.'
+            : 'New responses will be posted there.'
+          : 'Turn it on when you are ready.',
         enable ? `${app.name} connected` : `${app.name} saved`,
       );
     } catch (err) {
@@ -385,9 +389,11 @@ export function AppConnectDialog({
                     />
                     <Text size="xs" c={app.enabled ? undefined : 'dimmed'}>
                       {app.enabled
-                        ? `Live — notification emails send through ${app.name}`
+                        ? app.category === 'email'
+                          ? `Live — notification emails send through ${app.name}`
+                          : `Live — new responses are posted to ${app.name}`
                         : app.connected
-                          ? 'Saved but off — no emails sent through it yet'
+                          ? 'Saved but off — nothing sent through it yet'
                           : `Not connected — ${app.name} is not sending anything`}
                     </Text>
                   </Group>
@@ -431,13 +437,16 @@ export function AppConnectDialog({
                           disabled={dirty || busy !== null}
                           onClick={() => handleTest(false)}
                         >
-                          Verify credentials
+                          {app.category === 'email' ? 'Verify credentials' : 'Send test message'}
                         </Button>
-                        <Text size="xs" c="dimmed">
-                          Checks the login without sending anything.
-                        </Text>
+                        {app.category === 'email' && (
+                          <Text size="xs" c="dimmed">
+                            Checks the login without sending anything.
+                          </Text>
+                        )}
                       </Group>
 
+                      {app.category === 'email' && (
                       <Group align="flex-end" gap="sm" wrap="nowrap" mt="xs">
                         <TextInput
                           label="Or send a real test email to"
@@ -458,6 +467,7 @@ export function AppConnectDialog({
                           Send test
                         </Button>
                       </Group>
+                      )}
 
                       {dirty && (
                         <Text size="xs" c="dimmed">

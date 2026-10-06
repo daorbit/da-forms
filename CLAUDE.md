@@ -10,14 +10,23 @@ React (Vite, Mantine) frontend in `frontend`, Express + TypeScript backend in `b
 
 ## What already exists
 
-Form builder with drag and drop, steps, matrix, ranking, repeater, signature and file upload fields, formulas, thank-you pages, themes and backgrounds, device preview. AI form generation and AI editing (Orbit). Entries as table, Excel view and read/unread kanban, filters, bulk update and delete, attachments. Partial save with resume link and edit-by-token. Payments through Razorpay, PayU and Cashfree. Notification emails with templates, app connections (Brevo, custom SMTP, Slack and Discord) and a webhook app. Conditional logic (`showIf`), a template library, per-field drop-off analytics and CSV export. Turnstile spam protection, per-form view analytics, share modal with QR, plan limits and a demo workspace.
+Form builder with drag and drop, steps, matrix, ranking, repeater, signature and file upload fields, formulas, thank-you pages, themes and backgrounds, device preview. AI form generation (from text or a photo) and AI editing (Orbit). Entries as table, Excel view and read/unread kanban, filters, bulk update and delete, attachments, PDF export. Partial save with resume link and edit-by-token. Quiz scoring through `correctOptions` and `optionValues`. Open and close dates and a submission cap (`schedule`). Payments through Razorpay, PayU and Cashfree. Notification emails with templates, app connections (Brevo, custom SMTP, Slack and Discord) and a webhook app. Conditional logic: `showIf` holds one rule or an AND/OR group, with number comparisons; a condition on a `pageBreak` skips the step after it; `endings` pick a thank-you message or redirect by answer; `notifications.ownerRoutes` add owner email recipients by answer. The client evaluates in `utils/conditionalLogic.ts` and the server in `lib/conditions.ts`; change both together. Entries pipeline: stage (new, contacted, qualified, won, lost), assignee, tags and internal notes on each submission (`services/pipeline.service.ts`), a stage board in `EntriesKanban`, and a lead score summed from `optionValues` (`lib/leadScore.ts`). A template library, per-field drop-off analytics and CSV export. Turnstile spam protection, per-form view analytics, share modal with QR and iframe embed snippets, plan limits and a demo workspace.
 
 ## Roadmap
 
 1. WhatsApp alerts as another entry in `lib/app-catalog.ts` (category `notification`), posted through `lib/chatAlert.ts`.
 2. Export to Google Sheets and an API for reading submissions from Quantalog.
-3. Replace the remaining inline `style={{}}` props in the frontend with CSS modules.
-4. Add tests for `lib/formula.ts`, validation and the payment webhooks.
+3. Assignee picked from the Quantalog workspace members, and a note author. Both need Quantalog to expose members and put the user in the workspace token, so they touch both repos.
+4. Webhook events (`submission.created`, `payment.paid`), retries with backoff through `cron.route.ts`, and a delivery log in place of the single `lastStatus`.
+5. Email and phone verification with a one-time code before submit.
+6. Form version history with restore, saved on each publish. `useUndoHistory` covers only the open builder session.
+7. Multi-language forms, picked by browser language or a URL parameter.
+8. A/B variants with a traffic split, compared through the per-form view analytics.
+9. Per-form data retention and deletion of one respondent's data.
+10. Receipt PDF attached to the respondent email. `lib/submissionPdf.ts` is frontend only, so the backend needs its own.
+11. A booking field backed by Google Calendar, and HubSpot and Zoho CRM apps in `lib/app-catalog.ts`.
+12. Replace the remaining inline `style={{}}` props in the frontend with CSS modules.
+13. Add tests for `lib/formula.ts`, `lib/conditions.ts`, validation and the payment webhooks.
 
 ## Rules
 
@@ -31,4 +40,5 @@ Form builder with drag and drop, steps, matrix, ranking, repeater, signature and
 8. Deployed to Vercel serverless. Do not rely on in-memory state; scheduled work goes through `cron.route.ts`.
 9. Keep response shapes stable. The Quantalog dashboard and its embedded frame depend on them, so check both repos when a shape or token claim changes.
 10. Load heavy frontend libraries only on the screen that uses them.
-11. The developer runs type-checks and builds. Do not run `tsc`, builds or test suites unless asked. In the final message, say what changed and what to check by hand.
+11. User docs for forms live in the Quantalog landing page: `../real-time-analytics/quantalog-lp/src/content/docs/lead-capture.tsx` and `forms-*.tsx`, registered in `quantalog-lp/src/lib/docs.ts`. A new or changed user-facing feature updates the matching page in the same change, and the builder links to it with `DocsLink` and a path from `frontend/src/lib/docs.ts`.
+12. The developer runs type-checks and builds. Do not run `tsc`, builds or test suites unless asked. In the final message, say what changed and what to check by hand.

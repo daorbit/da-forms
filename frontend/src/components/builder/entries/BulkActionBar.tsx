@@ -1,5 +1,7 @@
-import { ActionIcon, Divider, Group, Paper, Text, Tooltip } from '@mantine/core';
-import { FileOutputIcon, MailIcon, MailOpenIcon, Trash2Icon, XIcon } from 'lucide-react';
+import { ActionIcon, Divider, Group, Menu, Paper, Text, Tooltip } from '@mantine/core';
+import { FileOutputIcon, FlagIcon, MailIcon, MailOpenIcon, Trash2Icon, XIcon } from 'lucide-react';
+import type { SubmissionStage } from '@/types';
+import { STAGES } from '@/lib/stages';
 
 /**
  * The floating bar that appears once at least one row is checked — a
@@ -14,6 +16,7 @@ export function BulkActionBar({
   onMarkRead,
   onMarkUnread,
   onExport,
+  onSetStage,
 }: {
   count: number;
   onClear: () => void;
@@ -21,6 +24,7 @@ export function BulkActionBar({
   onMarkRead: () => void;
   onMarkUnread: () => void;
   onExport: () => void;
+  onSetStage?: (stage: SubmissionStage) => void;
 }) {
   if (count === 0) return null;
 
@@ -41,6 +45,25 @@ export function BulkActionBar({
             <MailIcon size={16} />
           </ActionIcon>
         </Tooltip>
+        {onSetStage && (
+          <Menu position="top" withArrow>
+            <Menu.Target>
+              <Tooltip label="Move to stage" withArrow>
+                <ActionIcon variant="subtle" color="gray" radius="xl" aria-label="Move selected to a stage">
+                  <FlagIcon size={16} />
+                </ActionIcon>
+              </Tooltip>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Move to stage</Menu.Label>
+              {STAGES.map((stage) => (
+                <Menu.Item key={stage.id} onClick={() => onSetStage(stage.id)}>
+                  {stage.label}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
+        )}
         <Tooltip label="Export selected as CSV" withArrow>
           <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onExport} aria-label="Export selected as CSV">
             <FileOutputIcon size={16} />

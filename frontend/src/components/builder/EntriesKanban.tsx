@@ -2,25 +2,12 @@ import { useMemo, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCorners } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { Badge, Box, Group, Paper, ScrollArea, Stack, Text } from '@mantine/core';
-import { GripVerticalIcon } from 'lucide-react';
-import type { FormField, Submission } from '@/types';
+import { Badge, Paper, ScrollArea, Text } from '@mantine/core';
+import { GripVerticalIcon, UserIcon } from 'lucide-react';
+import type { FormField, PipelinePatch, Submission, SubmissionStage } from '@/types';
 import { parseRepeaterRows } from '@/lib/repeater';
-
-type Column = 'unread' | 'read';
-
-const COLUMNS: { id: Column; label: string; color: string }[] = [
-  { id: 'unread', label: 'Unread', color: 'gray' },
-  { id: 'read', label: 'Read', color: 'blue' },
-];
-
-function columnOf(submission: Submission): Column {
-  return submission.read ? 'read' : 'unread';
-}
-
-function patchFor(column: Column): Partial<Pick<Submission, 'read'>> {
-  return { read: column === 'read' };
-}
+import { STAGES, stageOf, type StageMeta } from '@/lib/stages';
+import classes from './EntriesKanban.module.css';
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
@@ -31,10 +18,27 @@ function formatDateTime(iso: string) {
   });
 }
 
-function Card({ submission, primaryField }: { submission: Submission; primaryField?: FormField }) {
+function cardTitle(submission: Submission, primaryField?: FormField) {
+  if (!primaryField) return 'Entry';
+  if (primaryField.type === 'repeater') {
+    return `${parseRepeaterRows(submission.data[primaryField.id]).length} entries`;
+  }
+  return submission.data[primaryField.id] || 'Untitled entry';
+}
+
+function Card({
+  submission,
+  primaryField,
+  onOpen,
+}: {
+  submission: Submission;
+  primaryField?: FormField;
+  onOpen?: (submission: Submission) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: submission._id,
   });
+  const tags = submission.tags ?? [];
 
   return (
     <Paper
@@ -42,97 +46,105 @@ function Card({ submission, primaryField }: { submission: Submission; primaryFie
       withBorder
       radius="md"
       p="sm"
-      style={{
-        opacity: isDragging ? 0.4 : 1,
-        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-        cursor: 'grab',
-      }}
+      className={classes.card}
+      data-dragging={isDragging || undefined}
+      style={transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined}
+      onClick={() => onOpen?.(submission)}
       {...listeners}
       {...attributes}
     >
-      <Group justify="space-between" wrap="nowrap" mb={4}>
+      <div className={classes.cardHead}>
         <Text size="sm" fw={600} truncate>
-          {primaryField
-            ? primaryField.type === 'repeater'
-              ? `${parseRepeaterRows(submission.data[primaryField.id]).length} entries`
-              : submission.data[primaryField.id] || 'Untitled entry'
-            : 'Entry'}
+          {cardTitle(submission, primaryField)}
         </Text>
-        <GripVerticalIcon size={14} color="var(--mantine-color-gray-5)" />
-      </Group>
+        <GripVerticalIcon size={14} className={classes.grip} />
+      </div>
       <Text size="xs" c="dimmed">
         {formatDateTime(submission.createdAt)}
       </Text>
+      {(submission.leadScore !== undefined || submission.assignee || tags.length > 0) && (
+        <div className={classes.meta}>
+          {submission.leadScore !== undefined && (
+            <Badge size="xs" variant="light" color="grape">
+              Score {submission.leadScore}
+            </Badge>
+          )}
+          {submission.assignee && (
+            <span className={classes.assignee}>
+              <UserIcon size={11} />
+              {submission.assignee}
+            </span>
+          )}
+          {tags.slice(0, 2).map((tag) => (
+            <Badge key={tag} size="xs" variant="outline" color="gray">
+              {tag}
+            </Badge>
+          ))}
+          {tags.length > 2 && (
+            <Text size="xs" c="dimmed">
+              +{tags.length - 2}
+            </Text>
+          )}
+        </div>
+      )}
     </Paper>
   );
 }
 
 function ColumnDropZone({
-  column,
-  color,
-  label,
+  stage,
   submissions,
   primaryField,
+  onOpen,
 }: {
-  column: Column;
-  color: string;
-  label: string;
+  stage: StageMeta;
   submissions: Submission[];
   primaryField?: FormField;
+  onOpen?: (submission: Submission) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: column });
+  const { setNodeRef, isOver } = useDroppable({ id: stage.id });
 
   return (
-    <Stack
-      ref={setNodeRef}
-      gap="xs"
-      p="sm"
-      style={{
-        flex: 1,
-        minWidth: 260,
-        background: isOver
-          ? 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5))'
-          : 'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))',
-        borderRadius: 8,
-        minHeight: 300,
-      }}
-    >
-      <Group justify="space-between">
+    <div ref={setNodeRef} className={classes.column} data-over={isOver || undefined}>
+      <div className={classes.columnHead}>
         <Text fw={600} size="sm">
-          {label}
+          {stage.label}
         </Text>
-        <Badge color={color} variant="light">
+        <Badge color={stage.color} variant="light">
           {submissions.length}
         </Badge>
-      </Group>
-      <Stack gap="xs">
+      </div>
+      <div className={classes.cards}>
         {submissions.map((s) => (
-          <Card key={s._id} submission={s} primaryField={primaryField} />
+          <Card key={s._id} submission={s} primaryField={primaryField} onOpen={onOpen} />
         ))}
-        {submissions.length === 0 && (
-          <Text size="xs" c="dimmed" ta="center" py="lg">
-            No entries
-          </Text>
-        )}
-      </Stack>
-    </Stack>
+        {submissions.length === 0 && <div className={classes.empty}>No entries</div>}
+      </div>
+    </div>
   );
 }
 
 interface Props {
   submissions: Submission[];
   columns: (FormField & { retired?: boolean })[];
-  onMove: (submissionId: string, patch: Partial<Pick<Submission, 'read'>>) => void;
+  onMove: (submissionId: string, patch: PipelinePatch) => void;
+  onOpen?: (submission: Submission) => void;
 }
 
-export function EntriesKanban({ submissions, columns, onMove }: Props) {
+export function EntriesKanban({ submissions, columns, onMove, onOpen }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [activeId, setActiveId] = useState<string | null>(null);
   const primaryField = columns[0];
 
   const grouped = useMemo(() => {
-    const map: Record<Column, Submission[]> = { unread: [], read: [] };
-    for (const s of submissions) map[columnOf(s)].push(s);
+    const map: Record<SubmissionStage, Submission[]> = {
+      new: [],
+      contacted: [],
+      qualified: [],
+      won: [],
+      lost: [],
+    };
+    for (const s of submissions) map[stageOf(s)].push(s);
     return map;
   }, [submissions]);
 
@@ -148,26 +160,25 @@ export function EntriesKanban({ submissions, columns, onMove }: Props) {
     if (!over) return;
     const submission = submissions.find((s) => s._id === active.id);
     if (!submission) return;
-    const targetColumn = over.id as Column;
-    if (columnOf(submission) === targetColumn) return;
-    onMove(submission._id, patchFor(targetColumn));
+    const target = over.id as SubmissionStage;
+    if (stageOf(submission) === target) return;
+    onMove(submission._id, { stage: target });
   }
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <ScrollArea>
-        <Box style={{ display: 'flex', gap: 16, padding: '16px', minWidth: 780 }}>
-          {COLUMNS.map((col) => (
+        <div className={classes.board}>
+          {STAGES.map((stage) => (
             <ColumnDropZone
-              key={col.id}
-              column={col.id}
-              color={col.color}
-              label={col.label}
-              submissions={grouped[col.id]}
+              key={stage.id}
+              stage={stage}
+              submissions={grouped[stage.id]}
               primaryField={primaryField}
+              onOpen={onOpen}
             />
           ))}
-        </Box>
+        </div>
       </ScrollArea>
       <DragOverlay>
         {activeSubmission ? <Card submission={activeSubmission} primaryField={primaryField} /> : null}

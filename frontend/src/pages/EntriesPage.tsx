@@ -49,6 +49,11 @@ import {
 } from "@/components/builder/entries/entriesTypes";
 import classes from "./EntriesPage.module.css";
 import { notify } from "@/lib/notify";
+import { isDemoWorkspace } from "@/lib/demoWorkspace";
+import { STAGE_BY_ID, formHasLeadScore, stageOf } from "@/lib/stages";
+import { PipelineFilters } from "@/components/builder/entries/PipelineFilters";
+import type { PipelineFilterState } from "@/components/builder/entries/entriesTypes";
+import { useLeadPipeline } from "./entries/useLeadPipeline";
 
 export function EntriesPage() {
   const { id } = useParams<{ id: string }>();
@@ -80,6 +85,16 @@ export function EntriesPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filesOpen, setFilesOpen] = useState(false);
   const [files, setFiles] = useState<UploadedFile[] | null>(null);
+  const [pipelineFilter, setPipelineFilter] = useState<PipelineFilterState>({ sort: "newest" });
+
+  const pipeline = useLeadPipeline({
+    formId: id,
+    workspaceId,
+    readOnly: isDemoWorkspace(workspaceId),
+    setSubmissions,
+    setViewing,
+  });
+  const { setFacets } = pipeline;
 
   const loadSubmissions = useCallback(() => {
     if (!id) return;
@@ -95,14 +110,19 @@ export function EntriesPage() {
       status: wholeSet ? "all" : status,
       q: debouncedSearch,
       ...dayFilterToRange(day, customRange),
+      stage: view === "kanban" ? undefined : pipelineFilter.stage,
+      assignee: pipelineFilter.assignee,
+      tag: pipelineFilter.tag,
+      sort: pipelineFilter.sort,
     })
       .then((res) => {
         setSubmissions(res.items);
         setTotal(res.total);
         if (res.retiredColumns) setRetiredColumns(res.retiredColumns);
+        if (res.facets) setFacets(res.facets);
       })
       .finally(() => setLoading(false));
-  }, [id, workspaceId, page, status, day, customRange, view, debouncedSearch]);
+  }, [id, workspaceId, page, status, day, customRange, view, debouncedSearch, pipelineFilter, setFacets]);
 
   const hasUploadFields = Boolean(
     form?.fields &&
@@ -159,20 +179,9 @@ export function EntriesPage() {
     setPage(1);
   }
 
-  async function moveSubmission(
-    submissionId: string,
-    patch: Partial<Pick<Submission, "read">>,
-  ) {
-    if (!id) return;
-    const updated = await updateSubmission(
-      id,
-      submissionId,
-      patch,
-      workspaceId,
-    );
-    setSubmissions((prev) =>
-      prev.map((s) => (s._id === updated._id ? updated : s)),
-    );
+  function changePipelineFilter(patch: Partial<PipelineFilterState>) {
+    setPipelineFilter((prev) => ({ ...prev, ...patch }));
+    setPage(1);
   }
 
   async function markRead(submission: Submission) {
@@ -295,7 +304,14 @@ export function EntriesPage() {
 
   function exportCsv(rows: Submission[] = submissions, filenameSuffix = "") {
     if (!form) return;
-    const header = [...columns.map((f) => f.label), "Added Time"];
+    const header = [
+      ...columns.map((f) => f.label),
+      "Stage",
+      "Assignee",
+      "Tags",
+      ...(scored ? ["Score"] : []),
+      "Added Time",
+    ].map((label) => JSON.stringify(label));
     const body = rows.map((s) => [
       ...columns.map((f) =>
         JSON.stringify(
@@ -306,6 +322,10 @@ export function EntriesPage() {
               : formatAnswer(f.type, s.data[f.id] ?? ""),
         ),
       ),
+      JSON.stringify(STAGE_BY_ID[stageOf(s)].label),
+      JSON.stringify(s.assignee ?? ""),
+      JSON.stringify((s.tags ?? []).join(", ")),
+      ...(scored ? [JSON.stringify(s.leadScore ?? "")] : []),
       JSON.stringify(formatDateTime(s.createdAt)),
     ]);
     const csv = [header.join(","), ...body.map((r) => r.join(","))].join("\n");
@@ -324,6 +344,7 @@ export function EntriesPage() {
       )
     : [];
 
+  const scored = form ? formHasLeadScore(valueFields(form.fields)) : false;
   const hasPaidResponses = submissions.some((s) => s.payment);
   const formHasPaymentField = currentColumns.some((f) => f.type === "payment");
 
@@ -404,6 +425,15 @@ export function EntriesPage() {
           loadAnalytics();
         }}
         onExportCsv={() => exportCsv()}
+        pipelineFilters={
+          <PipelineFilters
+            value={pipelineFilter}
+            facets={pipeline.facets}
+            showStage={view !== "kanban"}
+            scored={scored}
+            onChange={changePipelineFilter}
+          />
+        }
       />
 
       {!form || (loading && submissions.length === 0) ? (
@@ -412,7 +442,8 @@ export function EntriesPage() {
         <EntriesKanban
           submissions={submissions}
           columns={columns}
-          onMove={moveSubmission}
+          onMove={pipeline.patchSubmission}
+          onOpen={openResponse}
         />
       ) : view === "excel" ? (
         <EntriesExcel
@@ -440,6 +471,7 @@ export function EntriesPage() {
           onDelete={setPendingDelete}
           onCopyShareLink={copyShareLink}
           onOpenAttachment={setAttachment}
+          scored={scored}
         />
       )}
 
@@ -450,6 +482,7 @@ export function EntriesPage() {
         onMarkRead={() => bulkMarkRead(true)}
         onMarkUnread={() => bulkMarkRead(false)}
         onExport={exportSelected}
+        onSetStage={(stage) => pipeline.bulkSetStage([...selected], stage)}
       />
 
       <ResponseModal
@@ -466,6 +499,7 @@ export function EntriesPage() {
           setViewing(null);
         }}
         onOpenAttachment={setAttachment}
+        pipeline={pipeline.handlers}
       />
 
       <DeleteResponseModal

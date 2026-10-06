@@ -190,7 +190,7 @@ export interface FormField {
   maxRows?: number;
   rows?: string[];
   paramName?: string;
-  showIf?: ShowIfRule;
+  showIf?: Condition;
   pay?: PaymentConfig;
   formula?: string;
   formulaFormat?: 'number' | 'currency';
@@ -235,12 +235,42 @@ export interface PaymentConfig {
   buttonLabel?: string;
 }
 
-export type ShowIfOperator = 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
+export type ShowIfOperator =
+  | 'equals'
+  | 'notEquals'
+  | 'contains'
+  | 'notContains'
+  | 'isEmpty'
+  | 'isNotEmpty'
+  | 'greaterThan'
+  | 'lessThan'
+  | 'greaterOrEqual'
+  | 'lessOrEqual';
 
 export interface ShowIfRule {
   fieldId: string;
   operator: ShowIfOperator;
   value?: string;
+}
+
+export interface ConditionGroup {
+  match: 'all' | 'any';
+  rules: ShowIfRule[];
+}
+
+export type Condition = ShowIfRule | ConditionGroup;
+
+export interface FormEnding {
+  id: string;
+  when: ConditionGroup;
+  message?: string;
+  redirectUrl?: string;
+}
+
+export interface OwnerRoute {
+  id: string;
+  when: ConditionGroup;
+  emails: string[];
 }
 
 export interface Form {
@@ -254,6 +284,7 @@ export interface Form {
   status: 'draft' | 'published';
   redirectUrl?: string;
   thankYouMessage?: string;
+  endings?: FormEnding[];
   /** Hides the title/description block on the rendered form. */
   hideHeader?: boolean;
   /** Text alignment for the title/description block. */
@@ -356,6 +387,7 @@ export interface NotificationSettings {
   ownerSubject?: string;
   /** Drops a row into the Quantalog notification bell on every submission — independent of `ownerEnabled`, which only sends email. */
   ownerInAppEnabled?: boolean;
+  ownerRoutes?: OwnerRoute[];
 }
 
 /**
@@ -405,9 +437,35 @@ export interface Submission {
   payment?: SubmissionPayment;
  
   quiz?: { score: number; total: number; correct: number; questions: number };
+  leadScore?: number;
+  stage?: SubmissionStage;
+  assignee?: string;
+  tags?: string[];
+  notes?: SubmissionNote[];
   read: boolean;
   starred: boolean;
   createdAt: string;
+}
+
+export type SubmissionStage = 'new' | 'contacted' | 'qualified' | 'won' | 'lost';
+
+export interface SubmissionNote {
+  id: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface PipelineFacets {
+  assignees: string[];
+  tags: string[];
+}
+
+export type PipelineSort = 'newest' | 'oldest' | 'score';
+
+export interface PipelinePatch {
+  stage?: SubmissionStage;
+  assignee?: string;
+  tags?: string[];
 }
 
  

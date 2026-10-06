@@ -1,7 +1,6 @@
 import { ActionIcon, Tooltip } from '@mantine/core';
 import { BookOpen } from 'lucide-react';
-
-const DOCS_BASE = 'https://quantalog.daorbit.in/docs';
+import { docsUrl } from '@/lib/docs';
 
 interface Props {
   path: string;
@@ -13,7 +12,7 @@ export function DocsButton({ path, visibleFrom }: Props) {
     <Tooltip label="Docs" withArrow>
       <ActionIcon
         component="a"
-        href={`${DOCS_BASE}${path}`}
+        href={docsUrl(path)}
         target="_blank"
         rel="noopener noreferrer"
         variant="default"

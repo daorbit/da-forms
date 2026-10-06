@@ -11,6 +11,10 @@ import type {
   ConnectionTestResult,
   AppCard,
   AppTestResult,
+  PipelineFacets,
+  PipelinePatch,
+  PipelineSort,
+  SubmissionStage,
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
 import type { GeneratedForm } from './generatedForm';
@@ -220,6 +224,10 @@ export function listSubmissions(
     q?: string;
     /** Exact-match filters, keyed by field id. */
     fieldFilters?: Record<string, string>;
+    stage?: SubmissionStage;
+    assignee?: string;
+    tag?: string;
+    sort?: PipelineSort;
   } = {}
 ) {
   const params = new URLSearchParams();
@@ -229,14 +237,18 @@ export function listSubmissions(
   if (options.from) params.set('from', options.from);
   if (options.to) params.set('to', options.to);
   if (options.q?.trim()) params.set('q', options.q.trim());
+  if (options.stage) params.set('stage', options.stage);
+  if (options.assignee) params.set('assignee', options.assignee);
+  if (options.tag) params.set('tag', options.tag);
+  if (options.sort && options.sort !== 'newest') params.set('sort', options.sort);
 
   for (const [fieldId, value] of Object.entries(options.fieldFilters ?? {})) {
     if (value) params.set(`f_${fieldId}`, value);
   }
   const qs = params.toString();
-  return request<Paginated<Submission> & { retiredColumns: RetiredColumn[] }>(
-    `${ws(workspaceId)}/${id}/submissions${qs ? `?${qs}` : ''}`
-  );
+  return request<
+    Paginated<Submission> & { retiredColumns: RetiredColumn[]; facets?: PipelineFacets }
+  >(`${ws(workspaceId)}/${id}/submissions${qs ? `?${qs}` : ''}`);
 }
 
 export interface RetiredColumn {
@@ -247,13 +259,37 @@ export interface RetiredColumn {
 export function updateSubmission(
   formId: string,
   submissionId: string,
-  patch: Partial<Pick<Submission, 'read' | 'starred'>>,
+  patch: Partial<Pick<Submission, 'read' | 'starred'>> & PipelinePatch,
   workspaceId = DEFAULT_WORKSPACE
 ) {
   return request<Submission>(`${ws(workspaceId)}/${formId}/submissions/${submissionId}`, {
     method: 'PATCH',
     body: JSON.stringify(patch),
   });
+}
+
+export function addSubmissionNote(
+  formId: string,
+  submissionId: string,
+  text: string,
+  workspaceId = DEFAULT_WORKSPACE
+) {
+  return request<Submission>(`${ws(workspaceId)}/${formId}/submissions/${submissionId}/notes`, {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+}
+
+export function deleteSubmissionNote(
+  formId: string,
+  submissionId: string,
+  noteId: string,
+  workspaceId = DEFAULT_WORKSPACE
+) {
+  return request<Submission>(
+    `${ws(workspaceId)}/${formId}/submissions/${submissionId}/notes/${encodeURIComponent(noteId)}`,
+    { method: 'DELETE' }
+  );
 }
 
 export function deleteSubmission(formId: string, submissionId: string, workspaceId = DEFAULT_WORKSPACE) {
@@ -270,7 +306,7 @@ export function bulkDeleteSubmissions(formId: string, submissionIds: string[], w
 export function bulkUpdateSubmissions(
   formId: string,
   submissionIds: string[],
-  patch: Partial<Pick<Submission, 'read' | 'starred'>>,
+  patch: Partial<Pick<Submission, 'read' | 'starred'>> & Omit<PipelinePatch, 'tags'>,
   workspaceId = DEFAULT_WORKSPACE
 ) {
   return request<{ matchedCount: number }>(`${ws(workspaceId)}/${formId}/submissions/bulk-update`, {

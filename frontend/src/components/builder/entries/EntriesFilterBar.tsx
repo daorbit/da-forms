@@ -59,6 +59,7 @@ interface Props {
   search: string;
   onSearchChange: (value: string) => void;
   onOpenFiles?: () => void;
+  pipelineFilters?: ReactNode;
 }
 
 export function EntriesFilterBar({
@@ -75,6 +76,7 @@ export function EntriesFilterBar({
   search,
   onSearchChange,
   onOpenFiles,
+  pipelineFilters,
 }: Props) {
   return (
     <div className={classes.root}>
@@ -167,6 +169,8 @@ export function EntriesFilterBar({
             )}
           </Menu.Dropdown>
         </Menu>
+
+        {pipelineFilters}
       </div>
 
       <div className={classes.end}>

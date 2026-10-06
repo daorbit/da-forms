@@ -1,0 +1,63 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.matchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.matchLabel {
+  font-size: 12.5px;
+  color: var(--mantine-color-dimmed);
+}
+
+.rule {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel-well, var(--surface));
+}
+
+.ruleHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ruleField {
+  flex: 1;
+  min-width: 0;
+}
+
+.ruleBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.ruleBody[data-valueless] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.connector {
+  align-self: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+}
+
+.empty {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--mantine-color-dimmed);
+}

@@ -9,6 +9,7 @@ import {
   Undo2Icon,
 } from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
+import { DOCS } from '@/lib/docs';
 import type { Form } from '@/types';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import classes from '../FormBuilderPage.module.css';
@@ -149,7 +150,7 @@ export function BuilderHeader({
               <EyeIcon size={18} />
             </ActionIcon>
           </Tooltip>
-          <DocsButton path="/forms-advanced-fields" visibleFrom="sm" />
+          <DocsButton path={DOCS.forms} visibleFrom="sm" />
           <Divider orientation="vertical" my={14} />
           {isDemo ? (
             // Nothing here can be saved, so the editor says so once instead

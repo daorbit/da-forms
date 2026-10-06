@@ -79,6 +79,14 @@
   width: 112px;
 }
 
+.stageCol {
+  width: 120px;
+}
+
+.scoreCol {
+  width: 80px;
+}
+
 .td {
   height: 52px;
   padding: 8px 14px !important;

@@ -20,6 +20,7 @@ import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
 import { FileSizeBadge } from './FileSizeBadge';
 import { answerText, formatAnswer, formatDateTime, isImageUrl } from './entriesTypes';
+import { LeadPanel, type PipelineHandlers } from './LeadPanel';
 import classes from '../../../pages/EntriesPage.module.css';
 
 export function ResponseModal({
@@ -33,6 +34,7 @@ export function ResponseModal({
   onToggleRead,
   onDelete,
   onOpenAttachment,
+  pipeline,
 }: {
   form: Form | null;
   columns: FormField[];
@@ -46,6 +48,7 @@ export function ResponseModal({
   onToggleRead?: (submission: Submission) => void;
   onDelete: (submission: Submission) => void;
   onOpenAttachment: (attachment: { url: string; name: string; image: boolean }) => void;
+  pipeline?: PipelineHandlers;
 }) {
   const index = viewing ? submissions.findIndex((s) => s._id === viewing._id) : -1;
   const prev = index > 0 ? submissions[index - 1] : null;
@@ -145,6 +148,7 @@ export function ResponseModal({
           )}
 
           <div className={classes.drawerScroll}>
+          {pipeline && <LeadPanel submission={viewing} pipeline={pipeline} />}
           <div className={classes.responseList}>
             {columns.map((field) => {
               // A payment is not an answer — it lives on the submission

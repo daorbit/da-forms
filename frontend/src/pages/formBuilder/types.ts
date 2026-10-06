@@ -10,6 +10,7 @@ import type {
   NotificationSettings,
   WebhookSettings,
   FormSchedule,
+  FormEnding,
 } from '@/types';
 
 /**
@@ -26,6 +27,7 @@ export interface EditableState {
   fields: FormField[];
   redirectUrl: string;
   thankYouMessage: string;
+  endings: FormEnding[];
   hideHeader: boolean;
   headerAlign: SubmitButtonAlign;
   labelPlacement: LabelPlacement;

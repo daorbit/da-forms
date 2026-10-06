@@ -1,3 +1,5 @@
+import type { PipelineSort, SubmissionStage } from '@/types';
+
 /** How the responses are laid out.
  *
  * `list` reads one response at a time, `kanban` moves them through stages, and
@@ -7,6 +9,21 @@
 export type EntriesView = 'list' | 'kanban' | 'excel';
 
 export type StatusFilter = 'all' | 'unread' | 'read';
+
+export interface PipelineFilterState {
+  stage?: SubmissionStage;
+  assignee?: string;
+  tag?: string;
+  sort: PipelineSort;
+}
+
+export const UNASSIGNED = '__none__';
+
+export const SORT_LABEL: Record<PipelineSort, string> = {
+  newest: 'Newest first',
+  oldest: 'Oldest first',
+  score: 'Highest score',
+};
 export type DayFilter = 'all' | 'today' | '7' | '30' | 'custom';
 /** A picked [start, end] pair, or either half still unset while the range
  *  picker is mid-selection. Only meaningful when `day === 'custom'`.

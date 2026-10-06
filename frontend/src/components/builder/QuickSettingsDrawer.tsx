@@ -12,6 +12,8 @@ import { SettingsGroup, SettingRow, SwitchRow } from './settings/SettingsGroup';
 import { SubmitButtonPreview } from './settings/SubmitButtonPreview';
 import { toIso, toLocalInput } from './settings/dateInput';
 import classes from './settings/settings.module.css';
+import { DocsLink } from '@/components/ui/DocsLink';
+import { DOCS } from '@/lib/docs';
 
 export interface QuickSettings {
   hideHeader: boolean;
@@ -192,6 +194,8 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange, accen
           </div>
         </SettingRow>
       </SettingsGroup>
+
+      <DocsLink path={DOCS.quickSettings} label="What each setting does" />
     </SettingsDrawer>
   );
 }

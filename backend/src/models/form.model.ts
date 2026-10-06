@@ -96,7 +96,7 @@ export interface FormField {
   rows?: string[];
 
   paramName?: string;
-  showIf?: ShowIfRule;
+  showIf?: Condition;
 
   pay?: PaymentConfig;
 
@@ -140,12 +140,42 @@ export interface PaymentConfig {
   buttonLabel?: string;
 }
 
-export type ShowIfOperator = 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
+export type ShowIfOperator =
+  | 'equals'
+  | 'notEquals'
+  | 'contains'
+  | 'notContains'
+  | 'isEmpty'
+  | 'isNotEmpty'
+  | 'greaterThan'
+  | 'lessThan'
+  | 'greaterOrEqual'
+  | 'lessOrEqual';
 
 export interface ShowIfRule {
   fieldId: string;
   operator: ShowIfOperator;
   value?: string;
+}
+
+export interface ConditionGroup {
+  match: 'all' | 'any';
+  rules: ShowIfRule[];
+}
+
+export type Condition = ShowIfRule | ConditionGroup;
+
+export interface FormEnding {
+  id: string;
+  when: ConditionGroup;
+  message?: string;
+  redirectUrl?: string;
+}
+
+export interface OwnerRoute {
+  id: string;
+  when: ConditionGroup;
+  emails: string[];
 }
 
 export type BackgroundSize = 'cover' | 'contain' | 'repeat';
@@ -228,6 +258,8 @@ export interface NotificationSettings {
 
   /** Drops a row into the Quantalog notification bell for every submission — separate from `ownerEnabled`, which only sends email. */
   ownerInAppEnabled?: boolean;
+
+  ownerRoutes?: OwnerRoute[];
 }
 
 export interface WebhookSettings {
@@ -262,6 +294,7 @@ export interface FormDocument {
   status: 'draft' | 'published';
   redirectUrl?: string;
   thankYouMessage?: string;
+  endings?: FormEnding[];
   hideHeader?: boolean;
   labelPlacement?: LabelPlacement;
   submitLabel?: string;
@@ -368,6 +401,7 @@ const formSchema = new Schema<FormDocument>(
     status: { type: String, enum: ['draft', 'published'], default: 'draft' },
     redirectUrl: { type: String },
     thankYouMessage: { type: String },
+    endings: { type: Schema.Types.Mixed },
     hideHeader: { type: Boolean },
     headerAlign: { type: String, enum: ['left', 'center', 'right'] },
     labelPlacement: { type: String, enum: ['top', 'left', 'right'] },
@@ -420,6 +454,7 @@ const formSchema = new Schema<FormDocument>(
           ownerEmails: { type: [String], default: undefined },
           ownerSubject: { type: String },
           ownerInAppEnabled: { type: Boolean },
+          ownerRoutes: { type: Schema.Types.Mixed },
         },
         { _id: false }
       ),

@@ -172,6 +172,9 @@ export function BuilderDrawers({
         redirectUrl={state.redirectUrl}
         onThankYouChange={state.setThankYouMessage}
         onRedirectChange={state.setRedirectUrl}
+        fields={state.fields}
+        endings={state.endings}
+        onEndingsChange={state.setEndings}
       />
 
       <NotificationsModal

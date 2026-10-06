@@ -1,4 +1,9 @@
-import type { Condition, ConditionGroup, FormEnding, FormField, ShowIfRule } from '../types';
+import type {
+  Condition,
+  FormField,
+  OwnerRoute,
+  ShowIfRule,
+} from '../models/form.model.js';
 
 type Values = Record<string, unknown>;
 
@@ -17,7 +22,7 @@ function compareNumbers(actual: string, expected: string | undefined, test: (a: 
   return a !== null && b !== null && test(a, b);
 }
 
-function matches(rule: ShowIfRule, actual: unknown): boolean {
+export function matchesRule(rule: ShowIfRule, actual: unknown): boolean {
   const str = actual == null ? '' : String(actual).trim();
   const expected = rule.value ?? '';
   switch (rule.operator) {
@@ -46,18 +51,16 @@ function matches(rule: ShowIfRule, actual: unknown): boolean {
   }
 }
 
-export function toConditionGroup(condition: Condition | undefined): ConditionGroup {
-  if (!condition) return { match: 'all', rules: [] };
-  if ('rules' in condition) return { match: condition.match ?? 'all', rules: condition.rules ?? [] };
-  return { match: 'all', rules: [condition] };
-}
-
 export function evaluateCondition(condition: Condition | undefined, values: Values): boolean {
-  const group = toConditionGroup(condition);
-  const rules = group.rules.filter((rule) => rule?.fieldId);
-  if (!rules.length) return true;
-  const test = (rule: ShowIfRule) => matches(rule, values[rule.fieldId]);
-  return group.match === 'any' ? rules.some(test) : rules.every(test);
+  if (!condition) return true;
+  if ('rules' in condition) {
+    const rules = (condition.rules ?? []).filter((rule) => rule?.fieldId);
+    if (!rules.length) return true;
+    const test = (rule: ShowIfRule) => matchesRule(rule, values[rule.fieldId]);
+    return condition.match === 'any' ? rules.some(test) : rules.every(test);
+  }
+  if (!condition.fieldId) return true;
+  return matchesRule(condition, values[condition.fieldId]);
 }
 
 function walk(fields: FormField[], values: Values): Set<string> {
@@ -105,20 +108,9 @@ export function shownFieldIds(fields: FormField[], values: Values): Set<string> 
   return shown;
 }
 
-export function activePageIndexes(fields: FormField[], values: Values): number[] {
-  const effective = onlyShown(values, shownFieldIds(fields, values));
-  const active = [0];
-  let page = 0;
-  for (const field of fields) {
-    if (field.type !== 'pageBreak') continue;
-    page += 1;
-    if (evaluateCondition(field.showIf, effective)) active.push(page);
-  }
-  return active;
-}
-
-export function resolveEnding(endings: FormEnding[] | undefined, values: Values): FormEnding | undefined {
-  return endings?.find(
-    (ending) => ending.when?.rules?.some((rule) => rule.fieldId) && evaluateCondition(ending.when, values)
-  );
+export function routedOwnerEmails(routes: OwnerRoute[] | undefined, values: Values): string[] {
+  if (!Array.isArray(routes)) return [];
+  return routes
+    .filter((route) => route?.when?.rules?.length && evaluateCondition(route.when, values))
+    .flatMap((route) => route.emails ?? []);
 }

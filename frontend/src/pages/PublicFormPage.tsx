@@ -31,6 +31,7 @@ import { BrandHeader } from '@/components/public/BrandHeader';
 import { FormPage } from '@/components/FormPage';
 import { FormLoader } from '@/components/FormLoader';
 import { notify } from '@/lib/notify';
+import { resolveEnding } from '@/utils/conditionalLogic';
 
 const PAYMENT_PENDING_MESSAGE =
   "Your payment went through, but confirming it is taking longer than usual. " +
@@ -62,6 +63,7 @@ export function PublicFormPage() {
   const [form, setForm] = useState<Form | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [endingMessage, setEndingMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [editData, setEditData] = useState<Record<string, string> | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
@@ -195,8 +197,11 @@ export function PublicFormPage() {
       }
     }
 
+    const ending = resolveEnding(form?.endings, values);
+
     if (isPreview) {
       notify.info('Preview — nothing was submitted and no payment was taken.');
+      setEndingMessage(ending?.message?.trim() || null);
       setSubmitted(true);
       return true;
     }
@@ -256,10 +261,12 @@ export function PublicFormPage() {
       return false;
     }
     setSubmitting(false);
-    if (form?.redirectUrl) {
-      window.location.href = form.redirectUrl;
+    const redirectTo = ending ? ending.redirectUrl?.trim() : form?.redirectUrl;
+    if (redirectTo) {
+      window.location.href = redirectTo;
       return true;
     }
+    setEndingMessage(ending?.message?.trim() || null);
     setSubmitted(true);
     return true;
   }
@@ -391,7 +398,7 @@ export function PublicFormPage() {
           >
             {editToken
               ? "Your changes are saved."
-              : form.thankYouMessage || "Thanks — that reached us."}
+              : endingMessage || form.thankYouMessage || "Thanks — that reached us."}
           </Text>
           <Stack align="center" gap={2} mt="md">
             <Text size="sm" c="dimmed">

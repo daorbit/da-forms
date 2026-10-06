@@ -4,6 +4,10 @@ import { CheckIcon, CircleCheckIcon, LinkIcon } from 'lucide-react';
 import { SettingsDrawer } from './settings/SettingsDrawer';
 import { SettingsGroup, SettingRow } from './settings/SettingsGroup';
 import { ChoiceCards } from './settings/ChoiceCards';
+import { EndingsEditor } from './logic/EndingsEditor';
+import { DocsLink } from '@/components/ui/DocsLink';
+import { DOCS } from '@/lib/docs';
+import type { FormEnding, FormField } from '@/types';
 import classes from './settings/settings.module.css';
 
 type Mode = 'message' | 'redirect';
@@ -15,6 +19,9 @@ interface Props {
   redirectUrl: string;
   onThankYouChange: (value: string) => void;
   onRedirectChange: (value: string) => void;
+  fields: FormField[];
+  endings: FormEnding[];
+  onEndingsChange: (endings: FormEnding[]) => void;
 }
 
 const MODES = [
@@ -31,6 +38,9 @@ export function ThankYouDrawer({
   redirectUrl,
   onThankYouChange,
   onRedirectChange,
+  fields,
+  endings,
+  onEndingsChange,
 }: Props) {
   const [mode, setMode] = useState<Mode>(redirectUrl ? 'redirect' : 'message');
   const lastUrl = useRef(redirectUrl);
@@ -98,6 +108,16 @@ export function ThankYouDrawer({
           </SettingRow>
         </SettingsGroup>
       )}
+
+      <SettingsGroup
+        title="Endings by answer"
+        hint="The first ending whose conditions match replaces the default above. With none matching, the default is used."
+      >
+        <SettingRow stacked>
+          <EndingsEditor endings={endings} fields={fields} onChange={onEndingsChange} />
+          <DocsLink path={DOCS.endings} />
+        </SettingRow>
+      </SettingsGroup>
     </SettingsDrawer>
   );
 }

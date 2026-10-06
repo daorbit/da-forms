@@ -26,7 +26,7 @@ import { valueFields } from '@/lib/fieldTree';
 import { resolveTextColor } from '@/lib/formTheme';
 import { cardSurfaceStyle } from '@/lib/formBackground';
 import { resolveSteps, splitIntoPages } from '@/lib/formSteps';
-import { isFieldVisible } from '@/utils/conditionalLogic';
+import { activePageIndexes, shownFieldIds } from '@/utils/conditionalLogic';
 import { uploadFormFile } from '@/lib/api';
 import { fileTypes, acceptFor } from '@/lib/fieldPalette';
 import { validateField, validateFields, type FieldErrors } from '@/lib/formValidation';
@@ -173,8 +173,17 @@ export function FormRenderer({
 
   const pages = useMemo(() => splitIntoPages(fields), [fields]);
   const resolvedSteps = useMemo(() => resolveSteps(fields, steps), [fields, steps]);
+  const shown = useMemo(() => shownFieldIds(fields, values), [fields, values]);
+  const activePages = useMemo(() => activePageIndexes(fields, values), [fields, values]);
+  const stepPages = activePages.includes(pageIndex)
+    ? activePages
+    : [...activePages, pageIndex].sort((a, b) => a - b);
+  const visibleSteps = stepPages.map((index) => resolvedSteps[index]);
+  const stepPosition = stepPages.indexOf(pageIndex);
+  const nextPage = activePages.find((index) => index > pageIndex);
+  const previousPage = [...activePages].reverse().find((index) => index < pageIndex);
   const isMultiPage = pages.length > 1;
-  const isLastPage = pageIndex === pages.length - 1;
+  const isLastPage = nextPage === undefined;
   const currentPageFields = pages[pageIndex] ?? [];
 
 
@@ -213,7 +222,7 @@ export function FormRenderer({
 
 
   function errorsFor(pageFields: FormField[]): FieldErrors {
-    return validateFields(valueFields(pageFields), values, (f) => isFieldVisible(f, values));
+    return validateFields(valueFields(pageFields), values, (f) => shown.has(f.id));
   }
 
  
@@ -239,9 +248,9 @@ export function FormRenderer({
       return;
     }
 
-    if (isMultiPage && !isLastPage) {
+    if (isMultiPage && nextPage !== undefined) {
       setShowErrors(false);
-      setPageIndex((i) => i + 1);
+      setPageIndex(nextPage);
       return;
     }
  
@@ -259,8 +268,7 @@ export function FormRenderer({
       }
       setPayerPhoneError(null);
     }
-    // Drop answers behind a hidden condition so a since-hidden value can't submit.
-    const visibleFields = valueFields(fields).filter((f) => isFieldVisible(f, values));
+    const visibleFields = valueFields(fields).filter((f) => shown.has(f.id));
     const visibleIds = new Set(visibleFields.map((f) => f.id));
     const submitValues: Record<string, string> = {};
     for (const [id, v] of Object.entries(values)) {
@@ -334,7 +342,7 @@ export function FormRenderer({
 
   /** Grids lay their columns out; everything else is a control. */
   function renderField(field: FormField): React.ReactNode {
-    if (!isFieldVisible(field, values)) return null;
+    if (!shown.has(field.id)) return null;
 
     if (field.type === 'grid') {
       return (
@@ -356,7 +364,7 @@ export function FormRenderer({
         // after a failed submit sends the respondent back up the form.
         onBlur={(e) => {
           if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
-          if (!isFieldVisible(field, values)) return;
+          if (!shown.has(field.id)) return;
           const message = validateField(field, values[field.id] ?? '');
           setErrors((prev) => {
             if (message) return { ...prev, [field.id]: message };
@@ -447,8 +455,8 @@ export function FormRenderer({
           <>
             <StepIndicatorBar
               variant={stepIndicator ?? 'progress'}
-              steps={resolvedSteps}
-              current={pageIndex}
+              steps={visibleSteps}
+              current={stepPosition}
               accent={accent}
               textColor={textColor}
             />
@@ -462,7 +470,7 @@ export function FormRenderer({
               style={{ outline: 'none' }}
             >
               <Text size="xs" style={{ position: 'absolute', left: -9999, width: 1, height: 1, overflow: 'hidden' }}>
-                {`Step ${pageIndex + 1} of ${pages.length}${
+                {`Step ${stepPosition + 1} of ${visibleSteps.length}${
                   resolvedSteps[pageIndex]?.title ? `, ${resolvedSteps[pageIndex].title}` : ''
                 }`}
               </Text>
@@ -544,14 +552,14 @@ export function FormRenderer({
                   width: `${submitButtonWidth ?? 100}%`,
                 }}
               >
-                {isMultiPage && pageIndex > 0 && (
+                {isMultiPage && previousPage !== undefined && (
                   <Button
                     type="button"
                     variant="default"
                     size={buttonSize[submitButtonSize ?? 'medium']}
                     onClick={() => {
                       setShowErrors(false);
-                      setPageIndex((i) => i - 1);
+                      setPageIndex(previousPage);
                     }}
                     style={{ flex: 1 }}
                   >

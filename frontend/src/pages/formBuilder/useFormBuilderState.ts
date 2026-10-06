@@ -17,6 +17,7 @@ import type {
   NotificationSettings,
   WebhookSettings,
   FormSchedule,
+  FormEnding,
 } from '@/types';
 import type { EditableState } from './types';
 import { notify } from '@/lib/notify';
@@ -55,6 +56,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
   const [editingId, setEditingId] = useState<string | null>(null);
   const [thankYouMessage, setThankYouMessage] = useState(DEFAULT_THANK_YOU);
   const [redirectUrl, setRedirectUrl] = useState('');
+  const [endings, setEndings] = useState<FormEnding[]>([]);
   const [hideHeader, setHideHeader] = useState(locationState?.templateHideHeader ?? false);
   const [headerAlign, setHeaderAlign] = useState<SubmitButtonAlign>('left');
   const [labelPlacement, setLabelPlacement] = useState<LabelPlacement>('top');
@@ -89,6 +91,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
         fields,
         redirectUrl,
         thankYouMessage,
+        endings,
         hideHeader,
         headerAlign,
         labelPlacement,
@@ -115,6 +118,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       fields,
       redirectUrl,
       thankYouMessage,
+      endings,
       hideHeader,
       headerAlign,
       labelPlacement,
@@ -146,6 +150,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       fields,
       redirectUrl,
       thankYouMessage,
+      endings,
       hideHeader,
       headerAlign,
       labelPlacement,
@@ -172,6 +177,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       fields,
       redirectUrl,
       thankYouMessage,
+      endings,
       hideHeader,
       headerAlign,
       labelPlacement,
@@ -200,6 +206,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
     setFields(state.fields);
     setRedirectUrl(state.redirectUrl);
     setThankYouMessage(state.thankYouMessage);
+    setEndings(state.endings ?? []);
     setHideHeader(state.hideHeader);
     setHeaderAlign(state.headerAlign);
     setLabelPlacement(state.labelPlacement);
@@ -281,6 +288,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
         setDescription(form.description ?? '');
         setFields(form.fields);
         setRedirectUrl(form.redirectUrl ?? '');
+        setEndings(form.endings ?? []);
         setHideHeader(form.hideHeader ?? false);
         setHeaderAlign(form.headerAlign ?? 'center');
         setLabelPlacement(form.labelPlacement ?? 'top');
@@ -308,6 +316,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
             fields: form.fields,
             redirectUrl: form.redirectUrl ?? '',
             thankYouMessage: form.thankYouMessage || DEFAULT_THANK_YOU,
+            endings: form.endings ?? [],
             hideHeader: form.hideHeader ?? false,
             headerAlign: form.headerAlign ?? 'center',
             labelPlacement: form.labelPlacement ?? 'top',
@@ -353,6 +362,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
     editingId,
     thankYouMessage,
     redirectUrl,
+    endings,
     hideHeader,
     headerAlign,
     labelPlacement,
@@ -385,6 +395,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
     setEditingId,
     setThankYouMessage,
     setRedirectUrl,
+    setEndings,
     setHideHeader,
     setHeaderAlign,
     setLabelPlacement,

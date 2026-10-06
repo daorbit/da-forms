@@ -9,6 +9,7 @@ import { getBranding, notifyFormSubmission } from '../lib/quantalog.js';
 import { bannerAttachment } from '../lib/email-banner.js';
 import { postChatAlert } from '../lib/chatAlert.js';
 import { resolveChatConnections } from './appConnection.service.js';
+import { routedOwnerEmails } from '../lib/conditions.js';
 
 
  
@@ -166,7 +167,15 @@ async function sendEmailNotifications(
     }
   }
 
-  if (notifications.ownerEnabled && notifications.ownerEmails?.length) {
+  const ownerRecipients = [
+    ...new Set(
+      [...(notifications.ownerEmails ?? []), ...routedOwnerEmails(notifications.ownerRoutes, data)]
+        .map((email) => email.trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  if (notifications.ownerEnabled && ownerRecipients.length) {
     const subject = notifications.ownerSubject || `New submission: ${form.title}`;
     const answers = answersOf(form.fields, data, payment);
     // The owner's own alert is always the receipt: it exists to carry the
@@ -183,7 +192,7 @@ async function sendEmailNotifications(
       banner: 'new-submission',
     });
     const banner = bannerAttachment('new-submission');
-    for (const to of notifications.ownerEmails) {
+    for (const to of ownerRecipients) {
       jobs.push(
         sendMail(form.workspaceId, to, subject, html, text, banner ? [banner] : [])
       );

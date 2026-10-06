@@ -16,7 +16,6 @@ import {
 import type {
   FormField,
   FieldSize,
-  ShowIfOperator,
   PaymentMode,
   PaymentProvider,
   PaymentSettings,
@@ -47,6 +46,10 @@ import { GatewayLogo } from '@/components/builder/GatewayLogos';
 import payClasses from '@/components/builder/GatewayPicker.module.css';
 import { RepeaterFieldsEditor } from '@/components/builder/RepeaterFieldsEditor';
 import { EmailBodyEditor } from '@/components/builder/EmailBodyEditor';
+import { ConditionEditor } from '@/components/builder/logic/ConditionEditor';
+import { conditionCandidates } from '@/components/builder/logic/conditionOptions';
+import { DocsLink } from '@/components/ui/DocsLink';
+import { DOCS } from '@/lib/docs';
 import { SlidersHorizontalIcon } from 'lucide-react';
 import { PanelDrawer } from '@/components/ui/PanelDrawer';
 import classes from './PropertiesDrawer.module.css';
@@ -80,14 +83,6 @@ const dateDefaultLabel: Record<string, string> = {
   monthYear: 'Current month',
 };
 
-const showIfOperators: { value: ShowIfOperator; label: string }[] = [
-  { value: 'equals', label: 'is' },
-  { value: 'notEquals', label: 'is not' },
-  { value: 'contains', label: 'contains' },
-  { value: 'isEmpty', label: 'is empty' },
-  { value: 'isNotEmpty', label: 'is not empty' },
-];
-
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section className={classes.section}>
@@ -108,12 +103,9 @@ export function PropertiesDrawer({
   const meta = field ? paletteByType[field.type] : null;
   const set = (patch: Partial<FormField>) => field && onChange(field.id, patch);
 
-  // Any other value-bearing field, so a grid can't target itself or a static block.
-  const showIfCandidates = field
-    ? flattenFields(allFields).filter(
-        (candidate) => candidate.id !== field.id && candidate.type !== 'grid' && candidate.type !== 'repeater' && !staticTypes.includes(candidate.type)
-      )
-    : [];
+  const showIfCandidates = field ? conditionCandidates(allFields, field.id) : [];
+  const pageBreakIndex = field?.type === 'pageBreak' ? allFields.findIndex((f) => f.id === field.id) : -1;
+  const stepCandidates = pageBreakIndex > 0 ? conditionCandidates(allFields.slice(0, pageBreakIndex)) : [];
   // Patches the nested `pay` block without dropping the keys the patch does
   // not mention — a plain `set({ pay })` would replace the whole object and
   // lose the currency every time the amount changed.
@@ -201,9 +193,6 @@ export function PropertiesDrawer({
     providerNeedsPhone(fieldProvider) &&
     !formCollectsPhone(allFields);
 
-  const showIfRule = field?.showIf;
-  const showIfValueless = showIfRule && (showIfRule.operator === 'isEmpty' || showIfRule.operator === 'isNotEmpty');
-
   return (
     <PanelDrawer
       opened={!!field}
@@ -224,6 +213,17 @@ export function PropertiesDrawer({
                 onChange={(html) => set({ content: html })}
                 placeholder="Write the text shown on the form…"
               />
+            </Section>
+          ) : field.type === 'pageBreak' ? (
+            <Section label="Step logic">
+              <ConditionEditor
+                value={field.showIf}
+                candidates={stepCandidates}
+                onChange={(showIf) => set({ showIf })}
+                emptyText="The step after this break is always shown. Add a condition to skip it unless earlier answers match."
+                addLabel="Add step condition"
+              />
+              <DocsLink path={DOCS.stepLogic} />
             </Section>
           ) : staticTypes.includes(field.type) ? (
             <Section label="Content">
@@ -274,39 +274,13 @@ export function PropertiesDrawer({
               </Section>
 
               <Section label="Conditional logic">
-                <Select
-                  label="Show this field only if"
-                  placeholder="Always shown"
-                  clearable
-                  data={showIfCandidates.map((candidate) => ({ value: candidate.id, label: candidate.label || '(untitled field)' }))}
-                  value={showIfRule?.fieldId ?? null}
-                  onChange={(fieldId) =>
-                    set({
-                      showIf: fieldId ? { fieldId, operator: showIfRule?.operator ?? 'equals', value: showIfRule?.value } : undefined,
-                    })
-                  }
+                <ConditionEditor
+                  value={field.showIf}
+                  candidates={showIfCandidates}
+                  onChange={(showIf) => set({ showIf })}
+                  emptyText="Always shown. Add a condition to show this field only when other answers match."
                 />
-
-                {showIfRule && (
-                  <Group grow align="flex-end">
-                    <Select
-                      label="Condition"
-                      data={showIfOperators}
-                      value={showIfRule.operator}
-                      allowDeselect={false}
-                      onChange={(operator) =>
-                        operator && set({ showIf: { ...showIfRule, operator: operator as ShowIfOperator } })
-                      }
-                    />
-                    {!showIfValueless && (
-                      <TextInput
-                        label="Value"
-                        value={showIfRule.value ?? ''}
-                        onChange={(e) => set({ showIf: { ...showIfRule, value: e.target.value } })}
-                      />
-                    )}
-                  </Group>
-                )}
+                <DocsLink path={DOCS.fieldLogic} />
               </Section>
 
               <Section label="Appearance">
@@ -782,8 +756,9 @@ export function PropertiesDrawer({
                 <Section label="Scoring & answer key">
                   <Text size="xs" c="dimmed" mt={-6}>
                     Give an option a value to use it in a formula, or tick it as correct to make
-                    this a scored question. Both are optional.
+                    this a scored question. Values also add up to each response&apos;s lead score.
                   </Text>
+                  <DocsLink path={DOCS.scoring} />
                   {(field.options ?? []).map((option) => (
                     <Group key={option} gap="sm" wrap="nowrap" align="center">
                       <Checkbox

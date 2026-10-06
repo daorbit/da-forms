@@ -29,6 +29,9 @@ import { listApps } from '@/lib/api';
 import type { EmailLayout, FormField, FormTheme, NotificationSettings } from '@/types';
 import { EMAIL_LAYOUTS, partsOfLayout, renderEmail } from '@/lib/emailTemplates';
 import { EmailBodyEditor } from './EmailBodyEditor';
+import { OwnerRoutesEditor } from './logic/OwnerRoutesEditor';
+import { DocsLink } from '@/components/ui/DocsLink';
+import { DOCS } from '@/lib/docs';
 import classes from './NotificationsModal.module.css';
 
 type TabId = 'respondent' | 'owner';
@@ -459,11 +462,34 @@ export function NotificationsModal({
                   the subject says on the right.
                 </Text>
 
-                {notifications.ownerEnabled && !notifications.ownerEmails?.length && (
-                  <Text size="sm" c="red">
-                    Add at least one address or nothing will be sent.
+                {notifications.ownerEnabled &&
+                  !notifications.ownerEmails?.length &&
+                  !notifications.ownerRoutes?.length && (
+                    <Text size="sm" c="red">
+                      Add at least one address or route, or nothing will be sent.
+                    </Text>
+                  )}
+
+                <Divider />
+
+                <div>
+                  <Text size="sm" fw={600}>
+                    Route by answer
                   </Text>
-                )}
+                  <Text size="xs" c="dimmed" mb={12}>
+                    Send the alert to extra addresses when an answer matches — for example, sales
+                    leads to sales and support requests to support.
+                  </Text>
+                  <OwnerRoutesEditor
+                    routes={notifications.ownerRoutes ?? []}
+                    fields={fields}
+                    onChange={(ownerRoutes) => onChange({ ownerRoutes })}
+                    disabled={!notifications.ownerEnabled}
+                  />
+                </div>
+
+                <DocsLink path={DOCS.routing} label="Routing by answer" />
+                <DocsLink path={DOCS.notifications} label="Email apps, Slack & Discord" />
               </Stack>
             )}
           </Box>

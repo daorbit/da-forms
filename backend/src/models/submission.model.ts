@@ -25,6 +25,16 @@ export interface SubmissionPayment {
   method?: string;
 }
 
+export const SUBMISSION_STAGES = ['new', 'contacted', 'qualified', 'won', 'lost'] as const;
+
+export type SubmissionStage = (typeof SUBMISSION_STAGES)[number];
+
+export interface SubmissionNote {
+  id: string;
+  text: string;
+  createdAt: Date;
+}
+
 export interface SubmissionDocument {
   formId: Types.ObjectId;
   data: Record<string, string>;
@@ -85,6 +95,11 @@ export interface SubmissionDocument {
    * whose past results move underneath it is not a quiz.
    */
   quiz?: { score: number; total: number; correct: number; questions: number };
+  leadScore?: number;
+  stage?: SubmissionStage;
+  assignee?: string;
+  tags?: string[];
+  notes?: SubmissionNote[];
   read: boolean;
   starred: boolean;
   createdAt: Date;
@@ -124,6 +139,23 @@ const submissionSchema = new Schema<SubmissionDocument>(
       ),
     },
     quiz: { type: Schema.Types.Mixed },
+    leadScore: { type: Number },
+    stage: { type: String, enum: [...SUBMISSION_STAGES] },
+    assignee: { type: String },
+    tags: { type: [String], default: undefined },
+    notes: {
+      type: [
+        new Schema<SubmissionNote>(
+          {
+            id: { type: String, required: true },
+            text: { type: String, required: true },
+            createdAt: { type: Date, default: Date.now },
+          },
+          { _id: false }
+        ),
+      ],
+      default: undefined,
+    },
     read: { type: Boolean, default: false },
     starred: { type: Boolean, default: false },
   },
@@ -139,5 +171,9 @@ const submissionSchema = new Schema<SubmissionDocument>(
 // carry the key, and a unique index over hundreds of thousands of nulls would
 // reject every completed submission after the first.
 submissionSchema.index({ formId: 1, partialKey: 1 }, { unique: true, sparse: true });
+
+submissionSchema.index({ formId: 1, status: 1, stage: 1, createdAt: -1 });
+
+submissionSchema.index({ formId: 1, status: 1, leadScore: -1 });
 
 export const SubmissionModel = model<SubmissionDocument>('Submission', submissionSchema);

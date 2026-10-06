@@ -2,10 +2,23 @@
 
 import { Types } from 'mongoose';
 import { FormModel } from '../models/form.model.js';
-import { SubmissionModel, type SubmissionPayment } from '../models/submission.model.js';
+import {
+  SubmissionModel,
+  type SubmissionPayment,
+  type SubmissionStage,
+} from '../models/submission.model.js';
 import { FormViewModel } from '../models/formView.model.js';
 import { FormDailyViewModel } from '../models/formDailyView.model.js';
 import { evaluateFormula, numericValues } from '../lib/formula.js';
+import { leadScoreOf } from '../lib/leadScore.js';
+import {
+  pipelineFacets,
+  sortFor,
+  stageFilter,
+  type PipelineFacets,
+  type PipelinePatch,
+  type PipelineSort,
+} from './pipeline.service.js';
 import {
   claimUploads,
   destroyFormBackground,
@@ -22,6 +35,7 @@ import type {
   NotificationSettings,
   WebhookSettings,
   FormSchedule,
+  FormEnding,
 } from '../models/form.model.js';
 
 export interface Paginated<T> {
@@ -133,6 +147,7 @@ export function createForm(input: {
   fields: FormField[];
   redirectUrl?: string;
   thankYouMessage?: string;
+  endings?: FormEnding[];
   hideHeader?: boolean;
   headerAlign?: SubmitButtonAlign;
   labelPlacement?: 'top' | 'left' | 'right';
@@ -165,6 +180,7 @@ export function updateForm(
     status: 'draft' | 'published';
     redirectUrl: string;
     thankYouMessage: string;
+    endings: FormEnding[];
     hideHeader: boolean;
     headerAlign: SubmitButtonAlign;
     labelPlacement: 'top' | 'left' | 'right';
@@ -306,6 +322,7 @@ const PORTABLE_FIELDS = [
   'fields',
   'redirectUrl',
   'thankYouMessage',
+  'endings',
   'hideHeader',
   'headerAlign',
   'labelPlacement',
@@ -517,7 +534,8 @@ async function promotePartial(
   sourceUrl?: string,
   payment?: SubmissionPayment,
   fileMeta?: Record<string, { bytes: number }>,
-  quiz?: QuizScore
+  quiz?: QuizScore,
+  leadScore?: number
 ) {
   return SubmissionModel.findOneAndUpdate(
     { formId, partialKey, status: 'partial' },
@@ -529,6 +547,7 @@ async function promotePartial(
         status: payment ? 'pending_payment' : 'complete',
         ...(payment ? { payment } : {}),
         ...(quiz ? { quiz } : {}),
+        ...(leadScore !== undefined ? { leadScore } : {}),
 
         lastFieldId: undefined,
         lastFieldIndex: undefined,
@@ -697,10 +716,11 @@ export async function submitForm(
   }
 
   const quiz = scoreSubmission(fields, data);
+  const leadScore = leadScoreOf(fields, data);
 
   const submission =
     (partialKey
-      ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta, quiz)
+      ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta, quiz, leadScore)
       : null) ??
     (await SubmissionModel.create({
       formId,
@@ -710,6 +730,7 @@ export async function submitForm(
       status: payment ? 'pending_payment' : 'complete',
       payment,
       quiz,
+      leadScore,
     }));
 
   await claimUploads(submission._id, data);
@@ -922,16 +943,34 @@ export async function listSubmissions(
     fieldFilters?: Record<string, string>;
 
     currentFieldIds?: string[];
+    stage?: SubmissionStage;
+    assignee?: string;
+    tag?: string;
+    minScore?: number;
+    sort?: PipelineSort;
   } = {}
-): Promise<Paginated<InstanceType<typeof SubmissionModel>> & { retiredColumns: RetiredColumn[] }> {
+): Promise<
+  Paginated<InstanceType<typeof SubmissionModel>> & {
+    retiredColumns: RetiredColumn[];
+    facets?: PipelineFacets;
+  }
+> {
   const page = Math.max(1, options.page ?? 1);
-  const limit = Math.max(1, options.limit ?? 10);
+  const limit = Math.min(200, Math.max(1, options.limit ?? 10));
 
   const filter: Record<string, unknown> = { formId, status: 'complete' };
 
   if (options.status === 'read') filter.read = true;
   else if (options.status === 'unread') filter.read = false;
   else if (options.status === 'starred') filter.starred = true;
+
+  if (options.stage) filter.stage = stageFilter(options.stage);
+  if (options.assignee === '__none__') filter.assignee = { $in: ['', null] };
+  else if (options.assignee) filter.assignee = options.assignee;
+  if (options.tag) filter.tags = options.tag;
+  if (typeof options.minScore === 'number' && Number.isFinite(options.minScore)) {
+    filter.leadScore = { $gte: options.minScore };
+  }
 
   if (options.q?.trim()) {
     const needle = options.q.trim().slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -961,17 +1000,18 @@ export async function listSubmissions(
     filter.createdAt = createdAt;
   }
 
-  const [items, total, retiredColumns] = await Promise.all([
+  const [items, total, retiredColumns, facets] = await Promise.all([
     SubmissionModel.find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sortFor(options.sort))
       .skip((page - 1) * limit)
       .limit(limit),
     SubmissionModel.countDocuments(filter),
 
     page === 1 ? retiredColumnsFor(formId, options.currentFieldIds ?? []) : Promise.resolve([]),
+    page === 1 ? pipelineFacets(formId) : Promise.resolve(undefined),
   ]);
 
-  return { items, total, page, limit, retiredColumns };
+  return { items, total, page, limit, retiredColumns, facets };
 }
 
 export async function retiredColumnsFor(
@@ -1001,7 +1041,7 @@ export function getSubmissionById(id: string) {
 export function updateSubmission(
   id: string,
   formId: string,
-  patch: Partial<{ read: boolean; starred: boolean }>
+  patch: Partial<{ read: boolean; starred: boolean }> & PipelinePatch
 ) {
   return SubmissionModel.findOneAndUpdate({ _id: id, formId }, patch, { new: true });
 }
@@ -1035,10 +1075,19 @@ export async function editSubmission(
   }
 
   const quiz = scoreSubmission(fields, data);
+  const leadScore = leadScoreOf(fields, data);
 
   const updated = await SubmissionModel.findOneAndUpdate(
     { _id: id, status: 'complete' },
-    { $set: { data, fileMeta, read: false, ...(quiz ? { quiz } : {}) } },
+    {
+      $set: {
+        data,
+        fileMeta,
+        read: false,
+        ...(quiz ? { quiz } : {}),
+        ...(leadScore !== undefined ? { leadScore } : {}),
+      },
+    },
     { new: true }
   );
 
@@ -1049,7 +1098,7 @@ export async function editSubmission(
 export async function bulkUpdateSubmissions(
   ids: string[],
   formId: string,
-  patch: Partial<{ read: boolean; starred: boolean }>
+  patch: Partial<{ read: boolean; starred: boolean }> & Omit<PipelinePatch, 'tags'>
 ) {
   const result = await SubmissionModel.updateMany({ _id: { $in: ids }, formId }, patch);
   return { matchedCount: result.matchedCount ?? 0 };

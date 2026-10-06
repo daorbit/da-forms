@@ -1,14 +1,15 @@
 import type { RequestHandler, Response } from "express";
 import * as formService from "../../services/form.service.js";
+import * as pipelineService from "../../services/pipeline.service.js";
 import { loadOwnedForm } from "./shared.js";
+
+const SORTS = ["newest", "oldest", "score"] as const;
 
 export const listSubmissions: RequestHandler = async (req, res) => {
   const form = await loadOwnedForm(req, res);
   if (!form) return;
-  const { page, limit, status, from, to, q } = req.query as Record<
-    string,
-    string | undefined
-  >;
+  const { page, limit, status, from, to, q, stage, assignee, tag, minScore, sort } =
+    req.query as Record<string, string | undefined>;
 
   const validIds = new Set(
     formService.flattenFieldsPublic(form.fields).map((f) => f.id),
@@ -29,6 +30,11 @@ export const listSubmissions: RequestHandler = async (req, res) => {
     q,
     fieldFilters,
     currentFieldIds: [...validIds],
+    stage: pipelineService.isStage(stage) ? stage : undefined,
+    assignee: assignee?.trim().slice(0, 80) || undefined,
+    tag: tag?.trim().slice(0, 40) || undefined,
+    minScore: minScore !== undefined && minScore !== "" ? Number(minScore) : undefined,
+    sort: SORTS.find((s) => s === sort),
   });
   res.json(result);
 };
@@ -36,13 +42,14 @@ export const listSubmissions: RequestHandler = async (req, res) => {
 export const updateSubmission: RequestHandler = async (req, res) => {
   const form = await loadOwnedForm(req, res);
   if (!form) return;
-  const { read, starred } = req.body;
+  const { read, starred } = req.body ?? {};
   const submission = await formService.updateSubmission(
     req.params.subId,
     req.params.id,
     {
-      read,
-      starred,
+      ...(typeof read === "boolean" ? { read } : {}),
+      ...(typeof starred === "boolean" ? { starred } : {}),
+      ...pipelineService.readPipelinePatch(req.body ?? {}),
     },
   );
   if (!submission)
@@ -83,17 +90,55 @@ export const bulkUpdateSubmissions: RequestHandler = async (req, res) => {
   if (!form) return;
   const { ids, read, starred } = req.body ?? {};
   if (!validateBulkIds(ids, res)) return;
-  if (read === undefined && starred === undefined) {
-    return res
-      .status(400)
-      .json({ error: "no_patch", message: "read or starred must be provided" });
+  const { stage, assignee } = pipelineService.readPipelinePatch(req.body ?? {});
+  const patch = {
+    ...(typeof read === "boolean" ? { read } : {}),
+    ...(typeof starred === "boolean" ? { starred } : {}),
+    ...(stage ? { stage } : {}),
+    ...(assignee !== undefined ? { assignee } : {}),
+  };
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({
+      error: "no_patch",
+      message: "read, starred, stage or assignee must be provided",
+    });
   }
   const { matchedCount } = await formService.bulkUpdateSubmissions(
     ids,
     req.params.id,
-    { read, starred },
+    patch,
   );
   res.json({ matchedCount });
+};
+
+export const addSubmissionNote: RequestHandler = async (req, res) => {
+  const form = await loadOwnedForm(req, res);
+  if (!form) return;
+  const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+  if (!text) {
+    return res.status(400).json({ error: "empty_note", message: "Write something first" });
+  }
+  const submission = await pipelineService.addNote(req.params.subId, req.params.id, text);
+  if (!submission)
+    return res
+      .status(404)
+      .json({ error: "not_found", message: "Submission not found" });
+  res.status(201).json(submission);
+};
+
+export const deleteSubmissionNote: RequestHandler = async (req, res) => {
+  const form = await loadOwnedForm(req, res);
+  if (!form) return;
+  const submission = await pipelineService.removeNote(
+    req.params.subId,
+    req.params.id,
+    req.params.noteId,
+  );
+  if (!submission)
+    return res
+      .status(404)
+      .json({ error: "not_found", message: "Submission not found" });
+  res.json(submission);
 };
 
 export const deleteSubmission: RequestHandler = async (req, res) => {

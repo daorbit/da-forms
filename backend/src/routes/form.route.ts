@@ -85,6 +85,11 @@ workspaceFormRouter.get('/:id/submissions', asyncHandler(formController.listSubm
 workspaceFormRouter.patch('/:id/submissions/:subId', asyncHandler(formController.updateSubmission));
 workspaceFormRouter.post('/:id/submissions/bulk-update', asyncHandler(formController.bulkUpdateSubmissions));
 workspaceFormRouter.delete('/:id/submissions/:subId', asyncHandler(formController.deleteSubmission));
+workspaceFormRouter.post('/:id/submissions/:subId/notes', asyncHandler(formController.addSubmissionNote));
+workspaceFormRouter.delete(
+  '/:id/submissions/:subId/notes/:noteId',
+  asyncHandler(formController.deleteSubmissionNote)
+);
 
 workspaceFormRouter.post('/:id/submissions/bulk-delete', asyncHandler(formController.bulkDeleteSubmissions));
 workspaceFormRouter.get('/:id/analytics', asyncHandler(formController.getAnalytics));

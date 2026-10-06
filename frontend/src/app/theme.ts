@@ -116,8 +116,8 @@ export const theme = createTheme({
     Switch: {
       vars: () => ({
         root: {
-          '--switch-bg': 'var(--surface-2)',
-          '--switch-bd': '1px solid var(--border)',
+          '--switch-bg': 'color-mix(in srgb, var(--text) 14%, transparent)',
+          '--switch-bd': '1px solid var(--border-strong)',
           '--switch-thumb-bg': 'var(--control-thumb, var(--text))',
         },
       }),
@@ -125,14 +125,14 @@ export const theme = createTheme({
     Checkbox: {
       vars: () => ({
         root: {
-          '--checkbox-bd': '1px solid var(--border)',
+          '--checkbox-bd': '1px solid var(--border-strong)',
         },
       }),
     },
     Radio: {
       vars: () => ({
         root: {
-          '--radio-bd': '1px solid var(--border)',
+          '--radio-bd': '1px solid var(--border-strong)',
         },
       }),
     },

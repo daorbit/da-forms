@@ -41,6 +41,7 @@ export function useFormPersistence({
       fields: state.fields,
       redirectUrl: state.redirectUrl,
       thankYouMessage: state.thankYouMessage,
+      endings: state.endings,
       hideHeader: state.hideHeader,
       headerAlign: state.headerAlign,
       labelPlacement: state.labelPlacement,

@@ -1,4 +1,4 @@
-import { ActionIcon, Checkbox, Pagination, Table, Tooltip } from '@mantine/core';
+import { ActionIcon, Badge, Checkbox, Pagination, Table, Tooltip } from '@mantine/core';
 import { EyeIcon, InboxIcon, Share2Icon, Trash2Icon } from 'lucide-react';
 import type { Form, FormField, Submission } from '@/types';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { FileTypeIcon } from './fileTypeIcon';
 import { EntryCell } from './EntryCell';
 import { formatDateTime, PAGE_SIZE } from './entriesTypes';
+import { STAGE_BY_ID, stageOf } from '@/lib/stages';
 import classes from './EntriesTable.module.css';
 
 type Column = FormField & { retired?: boolean };
@@ -27,6 +28,7 @@ interface Props {
   onDelete: (submission: Submission) => void;
   onCopyShareLink: () => void;
   onOpenAttachment: (attachment: { url: string; name: string; image: boolean }) => void;
+  scored?: boolean;
 }
 
 function ColumnHeading({ field }: { field: Column }) {
@@ -59,6 +61,7 @@ export function EntriesTable({
   onDelete,
   onCopyShareLink,
   onOpenAttachment,
+  scored = false,
 }: Props) {
   const allSelected = submissions.length > 0 && submissions.every((s) => selected.has(s._id));
   const someSelected = !allSelected && submissions.some((s) => selected.has(s._id));
@@ -80,7 +83,10 @@ export function EntriesTable({
   return (
     <>
       <div className={`surface-card ${classes.card}`}>
-        <Table.ScrollContainer minWidth={columns.length * 170 + 48 + 120 + 112} className={classes.scroll}>
+        <Table.ScrollContainer
+          minWidth={columns.length * 170 + 48 + 120 + 112 + 120 + (scored ? 80 : 0)}
+          className={classes.scroll}
+        >
           <Table className={`${classes.table} ${loading ? classes.loading : ''}`} aria-busy={loading}>
             <Table.Thead>
               <Table.Tr>
@@ -98,6 +104,8 @@ export function EntriesTable({
                     <ColumnHeading field={field} />
                   </Table.Th>
                 ))}
+                <Table.Th className={`${classes.th} ${classes.stageCol}`}>Stage</Table.Th>
+                {scored && <Table.Th className={`${classes.th} ${classes.scoreCol}`}>Score</Table.Th>}
                 <Table.Th className={`${classes.th} ${classes.dateCol}`}>Submitted</Table.Th>
                 <Table.Th className={`${classes.th} ${classes.actionsCol}`} aria-label="Actions" />
               </Table.Tr>
@@ -136,6 +144,16 @@ export function EntriesTable({
                       )}
                     </Table.Td>
                   ))}
+                  <Table.Td className={classes.td}>
+                    <Badge size="sm" variant="light" color={STAGE_BY_ID[stageOf(submission)].color}>
+                      {STAGE_BY_ID[stageOf(submission)].label}
+                    </Badge>
+                  </Table.Td>
+                  {scored && (
+                    <Table.Td className={classes.td}>
+                      {submission.leadScore ?? '—'}
+                    </Table.Td>
+                  )}
                   <Table.Td className={classes.td}>
                     <Tooltip label={formatDateTime(submission.createdAt)} withArrow openDelay={300}>
                       <span className={classes.date}>{relativeTime(submission.createdAt)}</span>

@@ -222,7 +222,10 @@ export function FormCanvas({
               }}
             >
               {!hideHeader && (
-                <Box className={`${classes.fieldRow} ${classes.header} ${isDarkCard ? classes.fieldRowDark : ''}`}>
+                <Box
+                  className={`${classes.fieldRow} ${classes.header} ${isDarkCard ? classes.fieldRowDark : ''}`}
+                  onClick={onOpenFormSettings}
+                >
                   <Title order={3} ta={headerAlign ?? 'center'} c={textColor}>
                     {title || 'Untitled form'}
                   </Title>
@@ -245,7 +248,10 @@ export function FormCanvas({
                         color="dark"
                         radius={0}
                         size="lg"
-                        onClick={onOpenFormSettings}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenFormSettings();
+                        }}
                       >
                         <SettingsIcon size={16} />
                       </ActionIcon>
@@ -256,7 +262,10 @@ export function FormCanvas({
                         color="red"
                         radius={0}
                         size="lg"
-                        onClick={onHideHeader}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onHideHeader();
+                        }}
                       >
                         <EyeOffIcon size={16} />
                       </ActionIcon>

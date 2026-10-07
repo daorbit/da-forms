@@ -39,6 +39,19 @@
   gap: 28px;
 }
 
+.heroScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.heroScroll .hero {
+  flex: 1 0 auto;
+  overflow: visible;
+}
+
 .heroHead {
   display: flex;
   flex-direction: column;
@@ -785,116 +798,6 @@
 
 .required {
   color: var(--mantine-color-red-6);
-}
-
-/* ------------------------------------------------------ template pane -- */
-
-/*
- * The picker's left pane is flatter than Orbit's.
- *
- * The gradient and the lit top edge give the chat panel a sense of depth, which
- * is right when it holds a conversation and wrong when it holds a list — there
- * it is one more surface treatment on a column that already has fifteen rows
- * asking for attention.
- */
-.listPane.listPane,
-:global([data-mantine-color-scheme='dark']) .listPane.listPane {
-  background: var(--surface);
-}
-
-/* The search and scope filter, pinned above the scrolling list. */
-.pickerHead {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 10px 8px;
-  border-bottom: 1px solid var(--mantine-color-default-border);
-}
-
-/*
- * A list, not a stack of cards.
- *
- * Every row carrying its own border and fill meant fifteen boxes competing for
- * the same attention, and the one that mattered — the selected template — had
- * no way left to stand out. Rows are plain text separated by hairlines; hover
- * is a tint, and only the selection is drawn.
- */
-.templateList {
-  display: flex;
-  flex-direction: column;
-  /* Clear of the search header above, which the first row was sitting flush
-     against. */
-  padding-top: 8px;
-}
-
-/* Doubled, like the other `UnstyledButton`s on this screen: Mantine's own rule
-   zeroes padding and background, ties on specificity, and wins on order. */
-.templateItem.templateItem {
-  position: relative;
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border-radius: 8px;
-  text-align: left;
-  transition: background 120ms ease;
-}
-
-/* A hairline between rows rather than a border around each: one line where two
-   rows meet, instead of two. The last row has nothing after it to separate. */
-.templateItem.templateItem + .templateItem.templateItem::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 12px;
-  right: 12px;
-  height: 1px;
-  background: var(--mantine-color-default-border);
-}
-
-.templateItem.templateItem:hover {
-  background: color-mix(in srgb, var(--mantine-color-default) 55%, transparent);
-}
-
-/* The selected row is the only one with a fill, and that is all it needs. */
-.templateItemActive.templateItemActive,
-.templateItemActive.templateItemActive:hover {
-  background: color-mix(in srgb, var(--mantine-color-emerald-5) 12%, transparent);
-}
-
-/*
- * A hairline touching a filled row collides with it, so it is dropped both
- * above the filled row and below it — the latter being the `::before` of the
- * row that follows.
- */
-.templateItemActive.templateItemActive::before,
-.templateItem.templateItem:hover::before,
-.templateItemActive.templateItemActive + .templateItem.templateItem::before,
-.templateItem.templateItem:hover + .templateItem.templateItem::before {
-  display: none;
-}
-
-.categoryTag {
-  flex: none;
-}
-
-/*
- * The category chips scroll sideways rather than wrapping: with a dozen of them
- * a wrapped bar costs the stage its height. `min-width: 0` is what lets the
- * track actually shrink — without it the flex item is sized by its content and
- * the last chip is clipped by the bar instead of being scrolled to.
- */
-.filterBar {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Held out of the scrolling chip track, with a rule between the two so the
-   scroll has a visible end rather than appearing to run under the buttons. */
-.previewActions {
-  flex: none;
-  padding-left: 12px;
-  border-left: 1px solid var(--mantine-color-default-border);
 }
 
 /* -------------------------------------------------------- import pane -- */

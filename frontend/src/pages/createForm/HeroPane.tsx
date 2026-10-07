@@ -30,7 +30,7 @@ export function HeroPane({
   onAttachImage,
 }: Props) {
   return (
-    <>
+    <div className={classes.heroScroll}>
       <div className={classes.hero}>
         <div className={`${classes.heroHead} ${classes.rise}`} style={{ animationDelay: '40ms' }}>
           <span className={classes.heroMark}>
@@ -109,6 +109,6 @@ export function HeroPane({
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }

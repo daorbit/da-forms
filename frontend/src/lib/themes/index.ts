@@ -1,8 +1,9 @@
 import { solidPresets } from './solid';
 import { tintedPresets } from './tinted';
 import { designedPresets } from './designed';
+import { studioPresets } from './studio';
 
 export type { ThemePreset } from './types';
+export { presetPatch, matchesPreset } from './apply';
 
-/** Every preset offered in the theme picker, plainest first. */
-export const THEME_PRESETS = [...designedPresets, ...tintedPresets, ...solidPresets];
+export const THEME_PRESETS = [...studioPresets, ...designedPresets, ...tintedPresets, ...solidPresets];

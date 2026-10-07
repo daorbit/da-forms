@@ -4,8 +4,10 @@ import { makeField, paletteByKey } from '@/lib/fieldPalette';
 import {
   cloneWithNewIds,
   findField,
+  insertAfter,
   insertIntoColumn,
   locateField,
+  moveField,
   removeFromTree,
   updateInTree,
 } from '@/lib/fieldTree';
@@ -45,6 +47,28 @@ export function useFieldOps({
     const field = makeField(type, columns);
     setFields((prev) => [...prev, field]);
     setSelectedId(field.id);
+  }
+
+  function insertFieldAt(type: FieldType, columns: number | undefined, index: number) {
+    if (refusesSecondPayment(type)) return;
+    const field = makeField(type, columns);
+    setFields((prev) => {
+      const next = [...prev];
+      next.splice(Math.max(0, Math.min(index, prev.length)), 0, field);
+      return next;
+    });
+    setSelectedId(field.id);
+  }
+
+  function insertFieldAfter(type: FieldType, columns: number | undefined, afterId: string | null) {
+    if (refusesSecondPayment(type)) return;
+    const field = makeField(type, columns);
+    setFields((prev) => insertAfter(prev, afterId, field));
+    setSelectedId(field.id);
+  }
+
+  function moveFieldBy(id: string, delta: number) {
+    setFields((prev) => moveField(prev, id, delta));
   }
 
   function updateField(id: string, patch: Partial<FormField>) {
@@ -127,5 +151,15 @@ export function useFieldOps({
     setSelectedId(field.id);
   }
 
-  return { refusesSecondPayment, addField, updateField, removeField, duplicateField, handleDragEnd };
+  return {
+    refusesSecondPayment,
+    addField,
+    insertFieldAt,
+    insertFieldAfter,
+    moveFieldBy,
+    updateField,
+    removeField,
+    duplicateField,
+    handleDragEnd,
+  };
 }

@@ -1,16 +1,14 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { GripVerticalIcon } from 'lucide-react';
 import type { FormField } from '@/types';
+import type { DragData } from './dnd';
 import classes from './FormCanvas.module.css';
 
-/**
- * One draggable row.
- *
- * The whole row is the handle: fields are large targets and a separate grip
- * would be the only draggable pixel on a row people already expect to grab.
- * Clicks still open the properties panel — dnd-kit only starts a drag past a
- * small movement threshold, set on the sensor.
- */
+interface SortableMeta {
+  sortable?: { containerId?: string | number };
+}
+
 export function SortableField({
   field,
   children,
@@ -22,20 +20,30 @@ export function SortableField({
   className?: string;
   onClick?: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver, active, data } = useSortable({
     id: field.id,
     data: { kind: 'field', field },
   });
+
+  const activeData = active?.data.current as (DragData & SortableMeta) | undefined;
+  const ownContainer = (data as SortableMeta | undefined)?.sortable?.containerId;
+  const fromElsewhere =
+    activeData?.kind === 'palette' || activeData?.sortable?.containerId !== ownContainer;
+  const showDropLine = isOver && !isDragging && active?.id !== field.id && fromElsewhere;
 
   return (
     <div
       ref={setNodeRef}
       className={`${className ?? ''} ${isDragging ? classes.rowDragging : ''}`}
+      data-drop-before={showDropLine || undefined}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       onClick={onClick}
       {...attributes}
       {...listeners}
     >
+      <span className={classes.grip} aria-hidden>
+        <GripVerticalIcon size={14} />
+      </span>
       {children}
     </div>
   );

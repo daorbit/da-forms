@@ -447,7 +447,7 @@ export function PublicFormPage() {
         stepIndicator={form.stepIndicator}
         showStepHeadings={form.showStepHeadings}
         submitting={submitting}
-        collectPartials={form.collectPartials}
+        collectPartials={form.collectPartials && !isPreview}
         requireCaptcha={form.requireCaptcha && !isPreview}
         allowResume={Boolean(form.collectPartials) && !isPreview && !editToken}
         onSaveForLater={(email, partialKey) => emailResumeLink(id!, partialKey, email)}

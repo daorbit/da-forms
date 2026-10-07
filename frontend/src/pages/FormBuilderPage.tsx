@@ -17,8 +17,11 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { paletteByKey, paletteByType } from '@/lib/fieldPalette';
 import { findField } from '@/lib/fieldTree';
+import { QuickInsertModal } from '@/components/builder/canvas/QuickInsertModal';
+import { ShortcutsModal } from '@/components/builder/ShortcutsModal';
+import { DragChip } from './formBuilder/DragChip';
+import { useBuilderShortcuts } from './formBuilder/useBuilderShortcuts';
 import type { DragData } from '@/components/builder/dnd';
 import { FieldPalette } from '@/components/builder/FieldPalette';
 import { FormCanvas } from '@/components/builder/FormCanvas';
@@ -49,12 +52,15 @@ export function FormBuilderPage() {
   const [railPanel, setRailPanel] = useState<RailPanel | null>(null);
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [publishedOpen, setPublishedOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [navOpened, { toggle: toggleNav, close: closeNav }] = useDisclosure(false);
   const [dragging, setDragging] = useState<DragData | null>(null);
   const [pendingLeave, setPendingLeave] = useState(false);
+  const [insertOpen, setInsertOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // A few pixels of travel before a drag starts, so clicking a field to open
   // its properties is not read as the beginning of one.
@@ -62,7 +68,16 @@ export function FormBuilderPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  const { addField, updateField, removeField, duplicateField, handleDragEnd } = useFieldOps({
+  const {
+    addField,
+    insertFieldAt,
+    insertFieldAfter,
+    moveFieldBy,
+    updateField,
+    removeField,
+    duplicateField,
+    handleDragEnd,
+  } = useFieldOps({
     fields: state.fields,
     setFields: state.setFields,
     selectedId: state.selectedId,
@@ -81,9 +96,25 @@ export function FormBuilderPage() {
     setPublishing,
     setShareOpen,
     setRailPanel,
+    onPublished: () => setPublishedOpen(true),
   });
 
   const { aiSnapshot, applyAiRevision } = useAiRevision(state);
+
+  useBuilderShortcuts({
+    selectedId: state.selectedId,
+    editingId: state.editingId,
+    canSave: !isDemo && state.isDirty && !saving && !publishing,
+    save: handleSave,
+    openInsert: () => setInsertOpen(true),
+    openShortcuts: () => setShortcutsOpen(true),
+    openPreview: () => setPreviewOpen(true),
+    remove: removeField,
+    duplicate: duplicateField,
+    move: moveFieldBy,
+    closeProperties: () => state.setEditingId(null),
+    deselect: () => state.setSelectedId(null),
+  });
 
  
   const hasPaymentField = Boolean(findPaymentField(state.fields));
@@ -135,6 +166,8 @@ export function FormBuilderPage() {
       >
         <BuilderHeader
           name={state.name}
+          onRename={state.setName}
+          onOpenShortcuts={() => setShortcutsOpen(true)}
           savedForm={state.savedForm}
           isDirty={state.isDirty}
           isDemo={isDemo}
@@ -157,7 +190,7 @@ export function FormBuilderPage() {
         <AppShell.Navbar>
           <FieldPalette
             onAdd={(type, columns) => {
-              addField(type, columns);
+              insertFieldAfter(type, columns, state.selectedId);
               closeNav();
             }}
           />
@@ -184,6 +217,18 @@ export function FormBuilderPage() {
               onDuplicate={duplicateField}
               onOpenProperties={state.setEditingId}
               onOpenFormSettings={() => setFormSettingsOpen(true)}
+              onTitleChange={state.setTitle}
+              onDescriptionChange={state.setDescription}
+              onFieldChange={updateField}
+              onInsertAt={(item, index) => insertFieldAt(item.type, item.columns, index)}
+              onQuickAdd={(type) => addField(type)}
+              onAskAi={() => setRailPanel('ai')}
+              onOpenInsert={() => setInsertOpen(true)}
+              submitLabel={state.submitLabel}
+              onSubmitLabelChange={state.setSubmitLabel}
+              submitButtonWidth={state.submitButtonWidth}
+              submitButtonAlign={state.submitButtonAlign}
+              submitButtonSize={state.submitButtonSize}
               hideHeader={state.hideHeader}
               headerAlign={state.headerAlign}
               onHideHeader={() => state.setHideHeader(true)}
@@ -209,6 +254,8 @@ export function FormBuilderPage() {
           setFormSettingsOpen={setFormSettingsOpen}
           shareOpen={shareOpen}
           setShareOpen={setShareOpen}
+          publishedOpen={publishedOpen}
+          setPublishedOpen={setPublishedOpen}
           previewOpen={previewOpen}
           setPreviewOpen={setPreviewOpen}
           pendingLeave={pendingLeave}
@@ -219,15 +266,16 @@ export function FormBuilderPage() {
           applyAiRevision={applyAiRevision}
         />
       </AppShell>
- 
+
+      <QuickInsertModal
+        opened={insertOpen}
+        onClose={() => setInsertOpen(false)}
+        onPick={(item) => insertFieldAfter(item.type, item.columns, state.selectedId)}
+      />
+      <ShortcutsModal opened={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+
       <DragOverlay dropAnimation={null}>
-        {dragging ? (
-          <div className={classes.dragChip}>
-            {dragging.kind === 'palette'
-              ? paletteByKey[dragging.paletteKey]?.label ?? 'Field'
-              : dragging.field.label || paletteByType[dragging.field.type]?.label || 'Field'}
-          </div>
-        ) : null}
+        {dragging ? <DragChip data={dragging} /> : null}
       </DragOverlay>
     </DndContext>
   );

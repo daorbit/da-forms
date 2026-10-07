@@ -20,6 +20,7 @@ export function resolveTextColor(theme?: FormTheme): string | undefined {
   const mode = theme?.textMode ?? 'auto';
   if (mode === 'light') return '#f8f9fa';
   if (mode === 'dark') return '#1a1b1e';
-  if (!theme?.cardBg) return undefined;
-  return isLightColor(theme.cardBg) ? '#1a1b1e' : '#f8f9fa';
+  const surface = theme?.surface === 'flat' && theme.scope !== 'card' ? (theme.pageBg ?? theme.cardBg) : theme?.cardBg;
+  if (!surface) return undefined;
+  return isLightColor(surface) ? '#1a1b1e' : '#f8f9fa';
 }

@@ -1,0 +1,97 @@
+.skin {
+  --fs-accent-fallback: var(--mantine-color-emerald-6);
+}
+
+.padded {
+  padding: var(--fs-pad, var(--mantine-spacing-xl));
+}
+
+.padded[data-surface='flat'] {
+  padding-inline: 0;
+}
+
+.skin[data-title-size='lg'] .title,
+.skin[data-title-size='xl'] .title {
+  letter-spacing: -0.022em;
+  line-height: 1.12;
+}
+
+.skin[data-title-size] .title {
+  font-weight: 700;
+}
+
+.skin[data-radius] :global(.mantine-Input-input) {
+  border-radius: var(--fs-radius);
+}
+
+.skin[data-radius] :global(.mantine-Checkbox-input) {
+  border-radius: min(var(--fs-radius), 6px);
+}
+
+.skin[data-density] :global(.mantine-Input-input:not(textarea)) {
+  min-height: var(--fs-input-h);
+  height: var(--fs-input-h);
+}
+
+.skin[data-density='spacious'] :global(.mantine-Input-input) {
+  font-size: 15px;
+}
+
+.skin[data-density] :global(.mantine-InputWrapper-label) {
+  margin-bottom: 6px;
+}
+
+.skin[data-field-style] :global(.mantine-Input-input) {
+  transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.skin[data-field-style] :global(.mantine-Input-input:focus),
+.skin[data-field-style] :global(.mantine-Input-input:focus-within) {
+  border-color: var(--fs-accent, var(--fs-accent-fallback));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-accent, var(--fs-accent-fallback)) 22%, transparent);
+}
+
+.skin[data-field-style='filled'] :global(.mantine-Input-input) {
+  background-color: color-mix(in srgb, currentColor 6%, transparent);
+  border-color: transparent;
+}
+
+.skin[data-field-style='underline'] :global(.mantine-Input-input) {
+  border-width: 0 0 1.5px;
+  border-radius: 0;
+  background-color: transparent;
+  padding-inline-end: 0;
+}
+
+.skin[data-field-style='underline'] :global(.mantine-Input-wrapper:not(:has(.mantine-Input-section[data-position='left'])) > .mantine-Input-input) {
+  padding-inline-start: 0;
+}
+
+.skin[data-field-style='underline'] :global(textarea.mantine-Input-input) {
+  border-width: 1.5px;
+  border-radius: var(--fs-radius, 8px);
+  padding-inline: 12px;
+}
+
+.skin[data-field-style='underline'] :global(.mantine-Input-input:focus),
+.skin[data-field-style='underline'] :global(.mantine-Input-input:focus-within) {
+  box-shadow: 0 1.5px 0 0 var(--fs-accent, var(--fs-accent-fallback));
+}
+
+.skin[data-field-style='underline'] :global(textarea.mantine-Input-input:focus) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fs-accent, var(--fs-accent-fallback)) 22%, transparent);
+}
+
+.skin :global(.mantine-Button-root[type='submit']) {
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.skin[data-density] :global(.mantine-Button-root) {
+  height: var(--fs-input-h);
+}
+
+.skin[data-density='spacious'] :global(.mantine-Button-root) {
+  height: calc(var(--fs-input-h) + 4px);
+  font-size: 15px;
+}

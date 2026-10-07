@@ -105,7 +105,26 @@ export interface BackgroundLayer {
   fixed?: boolean;
 }
 
-export type FontFamilyId = 'system' | 'inter' | 'serif' | 'mono' | 'rounded';
+export type FontFamilyId =
+  | 'system'
+  | 'inter'
+  | 'serif'
+  | 'mono'
+  | 'rounded'
+  | 'dmSans'
+  | 'manrope'
+  | 'jakarta'
+  | 'grotesk'
+  | 'playfair'
+  | 'fraunces';
+
+export type FieldStyle = 'outline' | 'filled' | 'underline';
+export type ButtonStyle = 'solid' | 'soft' | 'outline';
+export type ButtonShape = 'match' | 'pill';
+export type FormDensity = 'compact' | 'comfortable' | 'spacious';
+export type CardWidth = 'narrow' | 'regular' | 'wide';
+export type TitleSize = 'sm' | 'md' | 'lg' | 'xl';
+export type FormSurface = 'card' | 'flat';
 
 export interface FormTheme {
   /** 'page' themes the full share-link page (Google Forms style); 'card' themes only the card, for embeds where the host page's own background should show through. */
@@ -142,6 +161,14 @@ export interface FormTheme {
   inputTextColor?: string;
   /** 'auto' picks light or dark text based on cardBg's luminance; 'light'/'dark' pin it manually. */
   textMode?: 'auto' | 'light' | 'dark';
+  fieldStyle?: FieldStyle;
+  fieldRadius?: number;
+  buttonStyle?: ButtonStyle;
+  buttonShape?: ButtonShape;
+  density?: FormDensity;
+  cardWidth?: CardWidth;
+  titleSize?: TitleSize;
+  surface?: FormSurface;
 }
 
 /** How a multi-step form shows the respondent where they are. */

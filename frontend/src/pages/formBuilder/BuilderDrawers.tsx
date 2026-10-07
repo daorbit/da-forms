@@ -15,6 +15,7 @@ import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
 import { WebhookConnectDialog } from '@/components/apps/WebhookConnectDialog';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { ShareModal } from '@/components/share/ShareModal';
+import { PublishedDialog } from '@/components/share/PublishedDialog';
 import type { FormBuilderState } from './useFormBuilderState';
 
 interface Props {
@@ -29,6 +30,8 @@ interface Props {
   setFormSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   shareOpen: boolean;
   setShareOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  publishedOpen: boolean;
+  setPublishedOpen: React.Dispatch<React.SetStateAction<boolean>>;
   previewOpen: boolean;
   setPreviewOpen: React.Dispatch<React.SetStateAction<boolean>>;
   pendingLeave: boolean;
@@ -58,6 +61,8 @@ export function BuilderDrawers({
   setFormSettingsOpen,
   shareOpen,
   setShareOpen,
+  publishedOpen,
+  setPublishedOpen,
   previewOpen,
   setPreviewOpen,
   pendingLeave,
@@ -240,6 +245,15 @@ export function BuilderDrawers({
           onStatusChange={(status) =>
             state.savedForm && state.setSavedForm({ ...state.savedForm, status })
           }
+        />
+      )}
+
+      {state.savedForm && (
+        <PublishedDialog
+          opened={publishedOpen}
+          onClose={() => setPublishedOpen(false)}
+          form={state.savedForm}
+          onShare={() => setShareOpen(true)}
         />
       )}
 

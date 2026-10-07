@@ -16,7 +16,7 @@ import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
 import { StudioModal, studioClasses } from '@/components/studio/StudioModal';
 import { StudioTopbar } from '@/components/studio/StudioTopbar';
-import { THEME_PRESETS } from '@/lib/themes';
+import { THEME_PRESETS, matchesPreset, presetPatch } from '@/lib/themes';
 import { useFitScale } from '@/hooks/useFitScale';
 import { DeviceFrame, frameSize, type DeviceId } from './DeviceFrame';
 import { DeviceSwitch } from './DeviceSwitch';
@@ -80,13 +80,11 @@ export function PreviewModal({
     padding: { x: 80, y: 88 },
   });
 
-  const currentPreset = THEME_PRESETS.find((p) =>
-    (Object.keys(p.theme) as (keyof typeof p.theme)[]).every((k) => theme?.[k] === p.theme[k])
-  );
+  const currentPreset = THEME_PRESETS.find((p) => matchesPreset(theme, p));
 
   const picked = THEME_PRESETS.find((p) => p.id === pickedId);
   const shownTheme: FormTheme | undefined = picked
-    ? { ...theme, ...picked.theme, scope: theme?.scope ?? 'page' }
+    ? { ...theme, ...presetPatch(picked), scope: theme?.scope ?? 'page' }
     : theme;
   const showThemes = Boolean(onApplyTheme) && panelOpen;
 
@@ -95,7 +93,7 @@ export function PreviewModal({
       preset={picked}
       onReset={() => setPickedId(null)}
       onApply={() => {
-        onApplyTheme(picked.theme);
+        onApplyTheme(presetPatch(picked));
         setPickedId(null);
       }}
     />

@@ -1,21 +1,16 @@
-import { AppShell, Group, Button, ThemeIcon, ActionIcon, Tooltip, Text, Skeleton, Burger, Badge, Divider } from '@mantine/core';
-import {
-  ArrowLeftIcon,
-  EyeIcon,
-  EyeOffIcon,
-  FileTextIcon,
-  GlobeIcon,
-  Redo2Icon,
-  Undo2Icon,
-} from 'lucide-react';
+import { AppShell, Group, Button, ActionIcon, Tooltip, Burger, Badge, Divider, TextInput } from '@mantine/core';
+import { ArrowLeftIcon, EyeIcon, EyeOffIcon, GlobeIcon, KeyboardIcon, Redo2Icon, Undo2Icon } from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { DOCS } from '@/lib/docs';
+import { MOD } from '@/lib/builderShortcuts';
 import type { Form } from '@/types';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
+import { SaveStatus } from './SaveStatus';
 import classes from '../FormBuilderPage.module.css';
 
 interface Props {
   name: string;
+  onRename: (name: string) => void;
   savedForm: Form | null;
   isDirty: boolean;
   isDemo: boolean;
@@ -29,14 +24,36 @@ interface Props {
   canUndo: boolean;
   canRedo: boolean;
   onPreview: () => void;
+  onOpenShortcuts: () => void;
   onSave: () => void;
   onTogglePublish: () => void;
   saving: boolean;
   publishing: boolean;
 }
 
+function IconButton({
+  label,
+  onClick,
+  disabled,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip label={label} position="bottom" withArrow>
+      <ActionIcon variant="subtle" color="gray" size="lg" aria-label={label} disabled={disabled} onClick={onClick}>
+        {children}
+      </ActionIcon>
+    </Tooltip>
+  );
+}
+
 export function BuilderHeader({
   name,
+  onRename,
   savedForm,
   isDirty,
   isDemo,
@@ -50,149 +67,97 @@ export function BuilderHeader({
   canUndo,
   canRedo,
   onPreview,
+  onOpenShortcuts,
   onSave,
   onTogglePublish,
   saving,
   publishing,
 }: Props) {
-  // `loadingForm` is threaded through only so a future skeleton header can use
-  // it; the current header renders the same either way.
-  void loadingForm;
+  const live = savedForm?.status === 'published';
 
   return (
-    <AppShell.Header>
+    <AppShell.Header className={classes.header}>
       <Group h="100%" px="sm" gap="sm" justify="space-between" wrap="nowrap">
-        <Group gap="xs" wrap="nowrap" style={{ flex: 1 }}>
+        <Group gap={6} wrap="nowrap" className={classes.headerLeft}>
           <Burger opened={navOpened} onClick={onToggleNav} hiddenFrom="sm" size="sm" />
-          <Tooltip label="Back to all forms" position="bottom" withArrow>
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="lg"
-              aria-label="Back to all forms"
-              onClick={onBack}
-            >
-              <ArrowLeftIcon size={19} />
-            </ActionIcon>
-          </Tooltip>
-          {/* The app icon is the host's job when embedded. */}
-          {!embedded && (
-            <ThemeIcon variant="light" color="gray" radius="sm">
-              <FileTextIcon size={18} />
-            </ThemeIcon>
-          )}
-          {/* Read-only here — the name is set at creation and renamed from
-              the Entries page, not the editor. */}
-          <Text fw={600} size="sm" className={classes.nameText}>
-            {name}
-          </Text>
-          {/* Publish state belongs next to the name it describes, not inferred
-              from which way the button in the corner is pointing. A dot plus
-              text reads as status, not as a call to action — a filled pill
-              here competed with Save/Publish for attention it doesn't need. */}
+          <IconButton label="Back to all forms" onClick={onBack}>
+            <ArrowLeftIcon size={18} />
+          </IconButton>
+          <Divider orientation="vertical" my={14} visibleFrom="sm" />
+          <TextInput
+            className={classes.nameInput}
+            value={name}
+            onChange={(e) => onRename(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur();
+            }}
+            placeholder="Untitled form"
+            aria-label="Form name"
+            size="sm"
+            disabled={loadingForm || isDemo}
+          />
           {savedForm && (
-            <Group gap={6} wrap="nowrap" visibleFrom="sm" className={classes.statusText}>
-              {savedForm.status === 'published' && <span className={classes.liveDot} />}
-              <Text
-                size="xs"
-                c="dimmed"
-                fw={600}
-                className={savedForm.status === 'published' ? classes.liveStatusLabel : undefined}
-              >
-                {savedForm.status === 'published' ? 'Live' : 'Draft'}
-              </Text>
-            </Group>
+            <span className={classes.statusPill} data-live={live || undefined}>
+              <span className={classes.liveDot} />
+              {live ? 'Live' : 'Draft'}
+            </span>
           )}
-          {isDirty && (
-            <Text size="xs" c="dimmed" visibleFrom="sm">
-              Unsaved
-            </Text>
+          {!isDemo && (
+            <span className={classes.saveStatusWrap}>
+              <SaveStatus saving={saving} isDirty={isDirty} hasSaved={Boolean(savedForm)} />
+            </span>
           )}
         </Group>
+
         <Group gap={6} wrap="nowrap">
-          {/* History and preview are inspection tools; save and publish change
-              the form. The divider keeps a mis-aimed click from crossing that
-              line. */}
           <Group gap={2} wrap="nowrap" className={classes.historyGroup}>
-            <Tooltip label="Undo (Ctrl+Z)" position="bottom" withArrow>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="md"
-                aria-label="Undo"
-                disabled={!canUndo}
-                onClick={undo}
-              >
-                <Undo2Icon size={17} />
+            <Tooltip label={`Undo (${MOD}+Z)`} position="bottom" withArrow>
+              <ActionIcon variant="subtle" color="gray" size="md" aria-label="Undo" disabled={!canUndo} onClick={undo}>
+                <Undo2Icon size={16} />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="Redo (Ctrl+Y)" position="bottom" withArrow>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="md"
-                aria-label="Redo"
-                disabled={!canRedo}
-                onClick={redo}
-              >
-                <Redo2Icon size={17} />
+            <Tooltip label={`Redo (${MOD}+Shift+Z)`} position="bottom" withArrow>
+              <ActionIcon variant="subtle" color="gray" size="md" aria-label="Redo" disabled={!canRedo} onClick={redo}>
+                <Redo2Icon size={16} />
               </ActionIcon>
             </Tooltip>
           </Group>
-          <Tooltip label="Preview" position="bottom" withArrow>
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="lg"
-              aria-label="Preview"
-              onClick={onPreview}
-            >
-              <EyeIcon size={18} />
-            </ActionIcon>
-          </Tooltip>
+          <IconButton label={`Preview (${MOD}+Shift+P)`} onClick={onPreview}>
+            <EyeIcon size={18} />
+          </IconButton>
+          <span className={classes.desktopOnly}>
+            <IconButton label="Keyboard shortcuts (?)" onClick={onOpenShortcuts}>
+              <KeyboardIcon size={18} />
+            </IconButton>
+          </span>
           <DocsButton path={DOCS.forms} visibleFrom="sm" />
           <Divider orientation="vertical" my={14} />
           {isDemo ? (
-            // Nothing here can be saved, so the editor says so once instead
-            // of offering two buttons that would both be refused.
             <Badge color="gray" variant="light" radius="sm" size="lg">
               Demo — changes are not saved
             </Badge>
           ) : (
             <>
-              {/* Colours are pinned rather than left to the theme: this editor
-                  runs inside the Quantalog shell, whose palette rendered both of
-                  these as near-invisible text. Save is the primary action, so it
-                  is the filled green one; publish/unpublish is outlined so the
-                  two read as a pair without competing. */}
               <Button
-                variant="filled"
-                radius="md"
+                radius="xl"
                 size="sm"
-                className={classes.saveBtn}
+                className={live ? classes.primaryBtn : classes.secondaryBtn}
                 onClick={onSave}
                 loading={saving}
                 disabled={!isDirty || publishing}
               >
-                Save
+                {live ? 'Save changes' : 'Save'}
               </Button>
               <Button
-                variant="outline"
-                radius="md"
+                radius="xl"
                 size="sm"
-                className={classes.publishBtn}
-                leftSection={
-                  savedForm?.status === 'published' ? (
-                    <EyeOffIcon size={16} />
-                  ) : (
-                    <GlobeIcon size={16} />
-                  )
-                }
+                className={live ? classes.secondaryBtn : classes.primaryBtn}
+                leftSection={live ? <EyeOffIcon size={15} /> : <GlobeIcon size={15} />}
                 onClick={onTogglePublish}
                 loading={publishing}
                 disabled={saving}
               >
-                {savedForm?.status === 'published' ? 'Unpublish' : 'Publish'}
+                {live ? 'Unpublish' : 'Publish'}
               </Button>
             </>
           )}

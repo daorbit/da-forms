@@ -1,22 +1,5 @@
-import type { BackgroundLayer, FontFamilyId, FormTheme } from '@/types';
-
-/** Font stacks, keyed by the id stored on the theme. */
-export const FONT_STACKS: Record<FontFamilyId, string> = {
-  system:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-  inter: 'Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  serif: 'Georgia, "Times New Roman", "Noto Serif", serif',
-  mono: '"JetBrains Mono", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-  rounded: '"Nunito", "Quicksand", ui-rounded, "SF Pro Rounded", "Segoe UI", sans-serif',
-};
-
-export const FONT_OPTIONS: { value: FontFamilyId; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'inter', label: 'Inter' },
-  { value: 'serif', label: 'Serif' },
-  { value: 'mono', label: 'Mono' },
-  { value: 'rounded', label: 'Rounded' },
-];
+import type { BackgroundLayer, FormTheme } from '@/types';
+import { FONT_STACKS } from './formFonts';
 
 export interface GradientPreset {
   id: string;
@@ -125,6 +108,14 @@ export function cardShadowValue(shadow: FormTheme['cardShadow']): string | undef
  */
 export function cardSurfaceStyle(theme?: FormTheme): React.CSSProperties {
   if (!theme) return {};
+  if (theme.surface === 'flat') {
+    return {
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      boxShadow: 'none',
+      ...(theme.fontFamily ? { fontFamily: FONT_STACKS[theme.fontFamily] } : {}),
+    };
+  }
   const opacity = theme.cardOpacity ?? 100;
   const baseColor =
     theme.cardBg && opacity < 100 ? withAlpha(theme.cardBg, opacity) : theme.cardBg;

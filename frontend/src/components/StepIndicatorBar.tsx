@@ -121,9 +121,13 @@ export function StepIndicatorBar({ variant, steps, current, accent, textColor }:
       </Group>
       <Progress
         value={percent}
-        size="sm"
+        size={6}
+        radius="xl"
         color={accent ? undefined : 'emerald'}
-        styles={accent ? { section: { backgroundColor: accent } } : undefined}
+        styles={{
+          root: { backgroundColor: 'rgba(128,128,128,0.22)' },
+          section: accent ? { backgroundColor: accent } : undefined,
+        }}
       />
     </Stack>
   );

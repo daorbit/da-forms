@@ -201,7 +201,21 @@ export interface BackgroundLayer {
   fixed?: boolean;
 }
 
-export type FontFamilyId = 'system' | 'inter' | 'serif' | 'mono' | 'rounded';
+export const FONT_FAMILY_IDS = [
+  'system',
+  'inter',
+  'serif',
+  'mono',
+  'rounded',
+  'dmSans',
+  'manrope',
+  'jakarta',
+  'grotesk',
+  'playfair',
+  'fraunces',
+] as const;
+
+export type FontFamilyId = (typeof FONT_FAMILY_IDS)[number];
 
 export type StepIndicator = 'progress' | 'stepper' | 'dots' | 'counter' | 'none';
 
@@ -228,6 +242,14 @@ export interface FormTheme {
   inputBorder?: string;
   inputTextColor?: string;
   textMode?: 'auto' | 'light' | 'dark';
+  fieldStyle?: 'outline' | 'filled' | 'underline';
+  fieldRadius?: number;
+  buttonStyle?: 'solid' | 'soft' | 'outline';
+  buttonShape?: 'match' | 'pill';
+  density?: 'compact' | 'comfortable' | 'spacious';
+  cardWidth?: 'narrow' | 'regular' | 'wide';
+  titleSize?: 'sm' | 'md' | 'lg' | 'xl';
+  surface?: 'card' | 'flat';
 }
 
 export interface NotificationSettings {
@@ -420,7 +442,7 @@ const formSchema = new Schema<FormDocument>(
           cardShadow: { type: String, enum: ['none', 'sm', 'md', 'lg', 'xl'] },
           cardOpacity: { type: Number, min: 0, max: 100 },
           cardBlur: { type: Number, min: 0, max: 40 },
-          fontFamily: { type: String, enum: ['system', 'inter', 'serif', 'mono', 'rounded'] },
+          fontFamily: { type: String, enum: [...FONT_FAMILY_IDS] },
           cardBg: { type: String },
           cardBorder: { type: String },
           accentColor: { type: String },
@@ -429,6 +451,14 @@ const formSchema = new Schema<FormDocument>(
           inputBorder: { type: String },
           inputTextColor: { type: String },
           textMode: { type: String, enum: ['auto', 'light', 'dark'] },
+          fieldStyle: { type: String, enum: ['outline', 'filled', 'underline'] },
+          fieldRadius: { type: Number, min: 0, max: 24 },
+          buttonStyle: { type: String, enum: ['solid', 'soft', 'outline'] },
+          buttonShape: { type: String, enum: ['match', 'pill'] },
+          density: { type: String, enum: ['compact', 'comfortable', 'spacious'] },
+          cardWidth: { type: String, enum: ['narrow', 'regular', 'wide'] },
+          titleSize: { type: String, enum: ['sm', 'md', 'lg', 'xl'] },
+          surface: { type: String, enum: ['card', 'flat'] },
         },
         { _id: false }
       ),

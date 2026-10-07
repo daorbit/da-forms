@@ -1,7 +1,3 @@
-/*
- * AppShell pads main by the header height; box-sizing keeps the total at one
- * viewport so only the canvas inside it scrolls.
- */
 .main {
   height: 100vh;
   overflow: hidden;
@@ -11,127 +7,189 @@
   height: 100%;
 }
 
-/* Sized to the name it holds, not to the space available: stretched across the
-   header the field read as an empty search bar rather than as a title. */
+.header {
+  backdrop-filter: saturate(1.4) blur(10px);
+}
+
+.headerLeft {
+  flex: 1;
+  min-width: 0;
+}
+
 .nameInput {
   flex: 0 1 auto;
-  min-width: 0;
-  max-width: 320px;
+  min-width: 80px;
+  max-width: 300px;
 }
 
-/* `!important` throughout: when this editor is embedded in the Quantalog shell,
-   that app's global input styling paints a border and fill on every
-   `.mantine-Input-input`, which turned this title into what looked like an
-   empty search box. These rules have to win against a host stylesheet loaded
-   after ours. */
 .nameInput input {
   padding-inline: 8px !important;
-  border: none !important;
-  border-radius: 6px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
   background-color: transparent !important;
   box-shadow: none !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
   text-overflow: ellipsis;
-  transition: background-color 100ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 
-/* The title is editable, but nothing said so until you happened to hover it. */
 .nameInput input:hover {
   background-color: var(--mantine-color-default-hover) !important;
 }
 
-/* On focus the caret and a hairline ring say it is being edited — no fill,
-   which behind a short name was the loudest thing in the header. */
 .nameInput input:focus {
   background-color: transparent !important;
-  outline: 1px solid var(--mantine-color-default-border) !important;
+  border-color: var(--border-strong) !important;
 }
 
-/* Static rendering of the form name — the editor shows it as a title, and a
-   pencil beside it opens the input above. */
-.nameText {
-  max-width: 320px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.statusPill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
-.historyGroup {
-  padding: 2px;
-  border-radius: 8px;
-  background-color: var(--mantine-color-default);
+.statusPill .liveDot {
+  background: var(--muted);
+  animation: none;
 }
 
-/* What the cursor carries during a drag. */
-.dragChip {
-  padding: 8px 14px;
-  border-radius: 6px;
-  background-color: var(--surface);
-  color: var(--mantine-color-white);
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: var(--mantine-shadow-md);
-  cursor: grabbing;
+.statusPill[data-live] {
+  border-color: color-mix(in srgb, #16a34a 35%, transparent);
+  background: color-mix(in srgb, #16a34a 10%, transparent);
+  color: #15803d;
 }
 
-/* Publish-state indicator in the header: a dot plus text, not a pill — a
-   filled badge competed with Save/Publish for attention, and inherited
-   invisible text whenever the embedding shell's accent was too light for
-   Mantine's hardcoded white-on-filled to read. */
-.statusText {
-  line-height: 1;
+.statusPill[data-live] .liveDot {
+  background: #16a34a;
+  animation: live-dot 1.8s ease-in-out infinite;
 }
 
-/* The pulsing dot that reads as "this is serving traffic right now". */
+:global(html[data-mantine-color-scheme='dark']) .statusPill[data-live] {
+  color: #4ade80;
+}
+
+:global(html[data-mantine-color-scheme='dark']) .statusPill[data-live] .liveDot {
+  background: #4ade80;
+}
+
 .liveDot {
   display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #16a34a;
-  animation: live-dot 1.8s ease-in-out infinite;
-}
-
-.liveStatusLabel {
-  color: #15803d !important;
-}
-
-:global(html[data-mantine-color-scheme='dark']) .liveDot {
-  background: #4ade80;
-}
-
-:global(html[data-mantine-color-scheme='dark']) .liveStatusLabel {
-  color: #4ade80 !important;
 }
 
 @keyframes live-dot {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .liveDot { animation: none; }
+  .statusPill[data-live] .liveDot { animation: none; }
 }
 
-.saveBtn {
+.saveStatusWrap {
+  flex: none;
+}
+
+.saveStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.saveStatus[data-state='saved'] {
+  color: var(--text-2);
+}
+
+.saveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+.desktopOnly {
+  display: inline-flex;
+}
+
+@media (max-width: 62em) {
+  .saveStatusWrap,
+  .desktopOnly {
+    display: none;
+  }
+}
+
+.historyGroup {
+  padding: 2px;
+  border-radius: 10px;
+  background-color: var(--mantine-color-default);
+}
+
+.dragChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background-color: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.45);
+  cursor: grabbing;
+}
+
+.dragChipIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.primaryBtn {
   background-color: var(--cta) !important;
   color: var(--cta-fg) !important;
   border: none !important;
 }
-.saveBtn:hover {
+
+.primaryBtn:hover {
   background-color: var(--cta-hover) !important;
 }
-.saveBtn:disabled {
-  background-color: var(--cta) !important;
-  opacity: 0.45 !important;
-}
 
-.publishBtn {
+.secondaryBtn {
   border: 1px solid var(--mantine-color-default-border) !important;
   color: var(--mantine-color-text) !important;
   background-color: transparent !important;
 }
-.publishBtn:hover {
+
+.secondaryBtn:hover {
   background-color: var(--mantine-color-default-hover) !important;
 }
-.publishBtn:disabled {
+
+.primaryBtn:disabled,
+.secondaryBtn:disabled {
   opacity: 0.45 !important;
+}
+
+.primaryBtn:disabled {
+  background-color: var(--cta) !important;
 }

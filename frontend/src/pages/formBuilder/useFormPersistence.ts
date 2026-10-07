@@ -14,6 +14,7 @@ interface Params {
   setPublishing: React.Dispatch<React.SetStateAction<boolean>>;
   setShareOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setRailPanel: React.Dispatch<React.SetStateAction<RailPanel | null>>;
+  onPublished: () => void;
 }
 
 /**
@@ -29,6 +30,7 @@ export function useFormPersistence({
   setPublishing,
   setShareOpen,
   setRailPanel,
+  onPublished,
 }: Params) {
   async function saveForm() {
     // Belt and braces alongside the hidden buttons: a keyboard shortcut or a
@@ -116,7 +118,7 @@ export function useFormPersistence({
       const nextStatus = base.status === 'published' ? 'draft' : 'published';
       const updated = await updateForm(base._id, { status: nextStatus }, workspaceId);
       state.setSavedForm(updated);
-      if (nextStatus === 'published') notify.success('Form published');
+      if (nextStatus === 'published') onPublished();
       else notify.info('Form moved back to draft');
     } catch {
       notify.error('Could not update publish status');

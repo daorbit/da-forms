@@ -100,6 +100,49 @@ export function cloneWithNewIds(field: FormField): FormField {
   return copy;
 }
 
+function moveInList(list: FormField[], from: number, delta: number): FormField[] {
+  const to = from + delta;
+  if (to < 0 || to >= list.length) return list;
+  const next = [...list];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}
+
+export function moveField(fields: FormField[], id: string, delta: number): FormField[] {
+  const place = locateField(fields, id);
+  if (!place) return fields;
+  if (!('gridId' in place)) return moveInList(fields, place.index, delta);
+  return fields.map((field) =>
+    field.id === place.gridId && field.columns
+      ? {
+          ...field,
+          columns: field.columns.map((column, i) =>
+            i === place.columnIndex ? moveInList(column, place.index, delta) : column
+          ),
+        }
+      : field
+  );
+}
+
+export function insertAfter(fields: FormField[], afterId: string | null, field: FormField): FormField[] {
+  if (!afterId) return [...fields, field];
+  const place = locateField(fields, afterId);
+  if (!place) return [...fields, field];
+  if ('gridId' in place) {
+    if (field.type === 'grid' || field.type === 'repeater' || field.type === 'pageBreak') {
+      const gridIndex = fields.findIndex((f) => f.id === place.gridId);
+      const next = [...fields];
+      next.splice(gridIndex + 1, 0, field);
+      return next;
+    }
+    return insertIntoColumn(fields, place.gridId, place.columnIndex, field, place.index + 1);
+  }
+  const next = [...fields];
+  next.splice(place.index + 1, 0, field);
+  return next;
+}
+
 /** Where a field lives, so a drag can lift it out of the right place. */
 export function locateField(
   fields: FormField[],

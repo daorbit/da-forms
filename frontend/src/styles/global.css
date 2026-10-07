@@ -43,7 +43,7 @@
 }
 
 .dfs__viewport > * {
-  flex: 1;
+  flex: 1 0 auto;
   min-height: 100%;
 }
 
@@ -101,14 +101,14 @@
 }
 
 .da-forms-light-surface
-  :is(input:not([type='checkbox']):not([type='radio']), textarea, select, .mantine-Input-input) {
+  :is(input:not([type='checkbox']):not([type='radio']):not([data-inline]), textarea:not([data-inline]), select, .mantine-Input-input) {
   background-color: #ffffff;
   color: #1a1b1e;
   border-color: #dee2e6;
 }
 
 .da-forms-light-surface
-  :is(input:not([type='checkbox']):not([type='radio']), textarea, .mantine-Input-input)::placeholder {
+  :is(input:not([type='checkbox']):not([type='radio']):not([data-inline]), textarea:not([data-inline]), .mantine-Input-input)::placeholder {
   color: #adb5bd;
 }
 

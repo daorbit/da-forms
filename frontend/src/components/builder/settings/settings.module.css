@@ -143,9 +143,8 @@
 }
 
 .choice[data-active] {
-  border-color: var(--accent-2);
-  background: var(--accent-soft);
-  box-shadow: 0 0 0 1px var(--accent-2);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
 }
 
 .choiceHead {
@@ -158,16 +157,34 @@
 }
 
 .radio {
-  width: 16px;
-  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
   border-radius: 50%;
   border: 1.5px solid var(--border-strong);
-  transition: border 120ms ease;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.radio::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-contrast);
+  transform: scale(0);
+  transition: transform 120ms ease;
 }
 
 .choice[data-active] .radio {
-  border: 5px solid var(--accent);
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.choice[data-active] .radio::after {
+  transform: scale(1);
 }
 
 .choiceHint {

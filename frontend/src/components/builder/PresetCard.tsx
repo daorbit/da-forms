@@ -9,9 +9,15 @@ interface Props {
   onSelect: () => void;
 }
 
-/** Shows the preset's actual palette rather than a mock screenshot, so it never drifts from the theme. */
+function swatchBackground(theme: ThemePreset['theme']): string | undefined {
+  const gradient = theme.pageBackground?.gradient;
+  if (gradient && theme.pageBg) return `${gradient}, ${theme.pageBg}`;
+  return gradient ?? theme.pageBg;
+}
+
 export function PresetCard({ preset, selected, onSelect }: Props) {
   const t = preset.theme;
+  const flat = t.surface === 'flat';
 
   return (
     <button
@@ -21,17 +27,21 @@ export function PresetCard({ preset, selected, onSelect }: Props) {
       aria-pressed={selected}
       data-selected={selected}
     >
-      <span
-        className={classes.swatch}
-        style={{ background: t.pageBackground?.gradient ?? t.pageBg }}
-      >
-        <span className={classes.miniCard} style={{ backgroundColor: t.cardBg, borderColor: t.cardBorder }}>
+      <span className={classes.swatch} style={{ background: swatchBackground(t) }}>
+        <span
+          className={classes.miniCard}
+          data-flat={flat || undefined}
+          data-field-style={t.fieldStyle}
+          style={{ backgroundColor: flat ? 'transparent' : t.cardBg, borderColor: flat ? 'transparent' : t.cardBorder }}
+        >
           <span className={classes.line} style={{ backgroundColor: t.labelColor }} />
+          <span className={classes.input} style={{ backgroundColor: t.inputBg, borderColor: t.inputBorder }} />
+          <span className={classes.input} style={{ backgroundColor: t.inputBg, borderColor: t.inputBorder }} />
           <span
-            className={classes.input}
-            style={{ backgroundColor: t.inputBg, borderColor: t.inputBorder }}
+            className={classes.accent}
+            data-pill={t.buttonShape === 'pill' || undefined}
+            style={{ backgroundColor: t.accentColor }}
           />
-          <span className={classes.accent} style={{ backgroundColor: t.accentColor }} />
         </span>
         {selected && (
           <span className={classes.check}>

@@ -25,6 +25,16 @@ import { StepIndicatorBar } from '@/components/StepIndicatorBar';
 import { valueFields } from '@/lib/fieldTree';
 import { resolveTextColor } from '@/lib/formTheme';
 import { cardSurfaceStyle } from '@/lib/formBackground';
+import {
+  buttonRadius,
+  buttonVariant,
+  fieldGap,
+  skinAttributes,
+  skinVars,
+  titleSize,
+} from '@/lib/formSkin';
+import { useFormFont } from '@/hooks/useFormFont';
+import skinClasses from './FormSkin.module.css';
 import { resolveSteps, splitIntoPages } from '@/lib/formSteps';
 import { activePageIndexes, shownFieldIds } from '@/utils/conditionalLogic';
 import { uploadFormFile } from '@/lib/api';
@@ -166,10 +176,12 @@ export function FormRenderer({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [showErrors, setShowErrors] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const editedRef = useRef<Set<string>>(new Set());
   const stepHeadingRef = useRef<HTMLDivElement>(null);
   const hasAdvanced = useRef(false);
   const textColor = resolveTextColor(theme);
   const accent = theme?.accentColor;
+  useFormFont(theme?.fontFamily);
 
   const pages = useMemo(() => splitIntoPages(fields), [fields]);
   const resolvedSteps = useMemo(() => resolveSteps(fields, steps), [fields, steps]);
@@ -365,6 +377,7 @@ export function FormRenderer({
         onBlur={(e) => {
           if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
           if (!shown.has(field.id)) return;
+          if (!editedRef.current.has(field.id) && !errors[field.id]) return;
           const message = validateField(field, values[field.id] ?? '');
           setErrors((prev) => {
             if (message) return { ...prev, [field.id]: message };
@@ -387,6 +400,7 @@ export function FormRenderer({
         siblingFields={valueFields(fields)}
         error={showErrors ? errors[field.id] : undefined}
         onChange={(v) => {
+          editedRef.current.add(field.id);
           setValues((prev) => ({ ...prev, [field.id]: v }));
           // Clears the moment the answer becomes acceptable, rather than
           // making someone submit again to find out that they fixed it.
@@ -421,8 +435,10 @@ export function FormRenderer({
     <Paper
       withBorder
       radius="md"
-      p="xl"
+      className={`${skinClasses.skin} ${skinClasses.padded}`}
+      {...skinAttributes(theme)}
       style={{
+        ...skinVars(theme),
         ...cardSurfaceStyle(theme),
         color: textColor,
         // Lets field labels/links pick up the accent without threading a prop
@@ -434,7 +450,14 @@ export function FormRenderer({
         {header}
         {!hideHeader && (
           <>
-            <Title order={3} ta={headerAlign ?? 'center'} mb={4} c={textColor}>
+            <Title
+              order={3}
+              className={skinClasses.title}
+              size={titleSize(theme)}
+              ta={headerAlign ?? 'center'}
+              mb={theme?.titleSize ? 8 : 4}
+              c={textColor}
+            >
               {title || 'Untitled form'}
             </Title>
             {description && (
@@ -495,7 +518,7 @@ export function FormRenderer({
           </Stack>
         )}
 
-        <Stack gap="md" mt="lg">
+        <Stack gap={fieldGap(theme)} mt="lg">
           {fields.length === 0 ? (
             <Text c="dimmed" size="sm" ta="center" py="xl">
               This form has no fields yet.
@@ -556,6 +579,7 @@ export function FormRenderer({
                   <Button
                     type="button"
                     variant="default"
+                    radius={buttonRadius(theme)}
                     size={buttonSize[submitButtonSize ?? 'medium']}
                     onClick={() => {
                       setShowErrors(false);
@@ -572,6 +596,8 @@ export function FormRenderer({
                   disabled={isUploading}
                   size={buttonSize[submitButtonSize ?? 'medium']}
                   color={accent ?? 'emerald'}
+                  variant={buttonVariant(theme)}
+                  radius={buttonRadius(theme)}
                   autoContrast
                   style={{ flex: 1 }}
                 >

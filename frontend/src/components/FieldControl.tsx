@@ -343,7 +343,7 @@ export function FieldControl({
             <div>
               <TextInput
                 styles={base.styles}
-                placeholder="Last"
+                placeholder="Last name"
                 value={last}
                 readOnly={readOnly}
                 onChange={(e) => !readOnly && onChange(`${first} ${e.target.value}`.trim())}

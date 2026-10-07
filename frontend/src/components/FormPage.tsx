@@ -1,6 +1,7 @@
 import { Box, Container } from '@mantine/core';
 import type { FormTheme } from '@/types';
 import { cardSurfaceStyle, pageSurfaceStyle } from '@/lib/formBackground';
+import { containerWidth } from '@/lib/formSkin';
 
 interface Props {
   theme?: FormTheme;
@@ -25,7 +26,7 @@ export function FormPage({ theme, minHeight, children }: Props) {
           : pageSurfaceStyle(theme)),
       }}
     >
-      <Container size={cardScope ? '100%' : 'sm'} py={cardScope ? 0 : 'xl'} px={cardScope ? 0 : 'md'}>
+      <Container size={cardScope ? '100%' : (containerWidth(theme) ?? 'sm')} py={cardScope ? 0 : 'xl'} px={cardScope ? 0 : 'md'}>
         {children}
       </Container>
     </Box>

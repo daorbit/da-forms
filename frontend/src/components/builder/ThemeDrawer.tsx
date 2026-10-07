@@ -1,8 +1,9 @@
-import { SegmentedControl, Select, Slider, Tabs, Text } from '@mantine/core';
+import { SegmentedControl, Tabs, Text } from '@mantine/core';
 import { PaletteIcon } from 'lucide-react';
-import type { BackgroundLayer, FontFamilyId, FormTheme } from '@/types';
+import type { BackgroundLayer, FormTheme } from '@/types';
 import { BackgroundEditor } from './BackgroundEditor';
-import { FONT_OPTIONS } from '@/lib/formBackground';
+import { LooksPanel } from './themeDrawer/LooksPanel';
+import { StylePanel } from './themeDrawer/StylePanel';
 import { SettingsDrawer } from './settings/SettingsDrawer';
 import { SettingsGroup, SettingRow, SettingsStack } from './settings/SettingsGroup';
 import { ChoiceCards } from './settings/ChoiceCards';
@@ -29,32 +30,6 @@ const SCOPES = [
   { value: 'page' as const, label: 'Standalone link', hint: 'A full page with its own background.' },
   { value: 'card' as const, label: 'Embedded on a site', hint: "Only the card. Your site's background shows behind it." },
 ];
-
-function SliderRow({
-  label,
-  hint,
-  value,
-  unit,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  hint?: string;
-  value: number;
-  unit: string;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <SettingRow stacked label={`${label} · ${value}${unit}`} hint={hint}>
-      <Slider value={value} onChange={onChange} min={min} max={max} step={step} color="emerald" label={null} />
-    </SettingRow>
-  );
-}
 
 export function ThemeDrawer({ opened, onClose, theme, onChange }: Props) {
   const scope = theme.scope ?? 'page';
@@ -86,6 +61,7 @@ export function ThemeDrawer({ opened, onClose, theme, onChange }: Props) {
           <Tabs.Tab value="colors">Colours</Tabs.Tab>
           <Tabs.Tab value="background">Background</Tabs.Tab>
           <Tabs.Tab value="style">Style</Tabs.Tab>
+          <Tabs.Tab value="looks">Looks</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="colors">
@@ -183,67 +159,11 @@ export function ThemeDrawer({ opened, onClose, theme, onChange }: Props) {
         </Tabs.Panel>
 
         <Tabs.Panel value="style">
-          <SettingsStack>
-            <SettingsGroup title="Typography">
-              <SettingRow label="Font">
-                <Select
-                  size="xs"
-                  w={180}
-                  value={theme.fontFamily ?? 'system'}
-                  onChange={(value) => onChange({ fontFamily: (value ?? 'system') as FontFamilyId })}
-                  data={FONT_OPTIONS}
-                  allowDeselect={false}
-                  aria-label="Font"
-                />
-              </SettingRow>
-            </SettingsGroup>
+          <StylePanel theme={theme} onChange={onChange} />
+        </Tabs.Panel>
 
-            <SettingsGroup title="Card">
-              <SettingRow label="Shadow">
-                <SegmentedControl
-                  size="xs"
-                  value={theme.cardShadow ?? 'none'}
-                  onChange={(value) => onChange({ cardShadow: value as FormTheme['cardShadow'] })}
-                  data={[
-                    { value: 'none', label: 'None' },
-                    { value: 'sm', label: 'S' },
-                    { value: 'md', label: 'M' },
-                    { value: 'lg', label: 'L' },
-                    { value: 'xl', label: 'XL' },
-                  ]}
-                />
-              </SettingRow>
-              <SliderRow
-                label="Corner radius"
-                value={theme.cardRadius ?? 8}
-                unit="px"
-                min={0}
-                max={48}
-                step={1}
-                onChange={(value) => onChange({ cardRadius: value })}
-              />
-              <SliderRow
-                label="Opacity"
-                hint="Below 100% the page background shows through."
-                value={theme.cardOpacity ?? 100}
-                unit="%"
-                min={20}
-                max={100}
-                step={5}
-                onChange={(value) => onChange({ cardOpacity: value })}
-              />
-              <SliderRow
-                label="Glass blur"
-                hint="Blurs what's behind a see-through card. No effect at 100% opacity."
-                value={theme.cardBlur ?? 0}
-                unit="px"
-                min={0}
-                max={40}
-                step={1}
-                onChange={(value) => onChange({ cardBlur: value })}
-              />
-            </SettingsGroup>
-          </SettingsStack>
+        <Tabs.Panel value="looks">
+          <LooksPanel theme={theme} onChange={onChange} />
         </Tabs.Panel>
       </Tabs>
     </SettingsDrawer>

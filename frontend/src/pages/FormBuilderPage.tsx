@@ -7,6 +7,7 @@ import { findPaymentField } from '@/lib/payment';
 import { isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
+import { useHostEditorOpen } from '@/hooks/useHostEditorOpen';
 import type { PaymentSettings } from '@/types';
 import {
   DndContext,
@@ -38,6 +39,7 @@ export function FormBuilderPage() {
   const workspaceId = useWorkspaceId();
   const isDemo = isDemoWorkspace(workspaceId);
   const embedded = useEmbedded();
+  useHostEditorOpen();
   const locationState = (location.state as BuilderLocationState | null) ?? null;
 
   const state = useFormBuilderState({ routeFormId, workspaceId, isDemo, locationState });

@@ -42,6 +42,7 @@ interface Props {
   steps?: FormStep[];
   stepIndicator?: StepIndicator;
   showStepHeadings?: boolean;
+  oneQuestionAtATime?: boolean;
   onApplyTheme?: (patch: Partial<FormTheme>) => void;
 }
 
@@ -62,6 +63,7 @@ export function PreviewModal({
   steps,
   stepIndicator,
   showStepHeadings,
+  oneQuestionAtATime,
   onApplyTheme,
 }: Props) {
   const phone = useMediaQuery(PHONE_QUERY) ?? false;
@@ -117,6 +119,7 @@ export function PreviewModal({
         steps={steps}
         stepIndicator={stepIndicator}
         showStepHeadings={showStepHeadings}
+        oneQuestionAtATime={oneQuestionAtATime}
       />
     </FormPage>
   );

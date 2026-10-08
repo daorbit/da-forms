@@ -7,11 +7,13 @@ import {
   publicPaymentRouter,
 } from './form.route.js';
 import { cronRouter } from './cron.route.js';
+import { internalRouter } from './internal.route.js';
 
 export const routes = Router();
 
 routes.use('/health', healthRouter);
 routes.use('/cron', cronRouter);
+routes.use('/internal', internalRouter);
 routes.use('/workspaces/:workspaceId/forms', workspaceFormRouter);
 routes.use('/workspaces/:workspaceId/settings', workspaceSettingsRouter);
 routes.use('/public/forms', publicFormRouter);

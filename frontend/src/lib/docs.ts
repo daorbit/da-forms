@@ -4,6 +4,7 @@ export const DOCS = {
   forms: '/lead-capture',
   fieldLogic: '/forms-logic#show-fields',
   stepLogic: '/forms-logic#skip-steps',
+  oneQuestion: '/lead-capture#one-question',
   endings: '/forms-logic#endings',
   routing: '/forms-logic#routing',
   notifications: '/forms-notifications-and-apps',

@@ -1,7 +1,7 @@
-import { Router, type RequestHandler } from 'express';
-import { timingSafeEqual } from 'node:crypto';
+import { Router } from 'express';
 import { env } from '../config/env.js';
 import { asyncHandler } from '../middleware/async-handler.js';
+import { requireBearerSecret } from '../middleware/require-bearer-secret.js';
 import { sweepAbandonedUploads } from '../services/media.service.js';
 import { sweepAbandonedPayments, sweepAbandonedPartials } from '../services/form.service.js';
 
@@ -16,27 +16,9 @@ import { sweepAbandonedPayments, sweepAbandonedPartials } from '../services/form
  * `Authorization: Bearer <CRON_SECRET>` — the same value real-ana-be uses, so
  * one scheduler credential covers both services.
  */
-const requireCronSecret: RequestHandler = (req, res, next) => {
-  const expected = env.cronSecret;
-  if (!expected) {
-    return res.status(503).json({ error: 'cron_disabled', message: 'CRON_SECRET is not configured' });
-  }
-
-  const header = req.get('authorization') ?? '';
-  const provided = header.startsWith('Bearer ') ? header.slice(7) : '';
-
-  const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    return res.status(401).json({ error: 'unauthorized', message: 'Bad cron secret' });
-  }
-
-  next();
-};
-
 export const cronRouter = Router();
 
-cronRouter.use(requireCronSecret);
+cronRouter.use(requireBearerSecret(() => env.cronSecret, 'CRON_SECRET'));
 
 /**
  * Delete files a respondent uploaded and then never submitted.

@@ -1,4 +1,4 @@
-import { AppShell, Group, Button, ActionIcon, Tooltip, Burger, Badge, Divider, TextInput } from '@mantine/core';
+import { AppShell, Group, Button, ActionIcon, Tooltip, Burger, Badge, Divider, Text } from '@mantine/core';
 import { ArrowLeftIcon, EyeIcon, EyeOffIcon, GlobeIcon, KeyboardIcon, Redo2Icon, Undo2Icon } from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { DOCS } from '@/lib/docs';
@@ -10,12 +10,10 @@ import classes from '../FormBuilderPage.module.css';
 
 interface Props {
   name: string;
-  onRename: (name: string) => void;
   savedForm: Form | null;
   isDirty: boolean;
   isDemo: boolean;
   embedded: boolean;
-  loadingForm: boolean;
   navOpened: boolean;
   onToggleNav: () => void;
   onBack: () => void;
@@ -53,12 +51,10 @@ function IconButton({
 
 export function BuilderHeader({
   name,
-  onRename,
   savedForm,
   isDirty,
   isDemo,
   embedded,
-  loadingForm,
   navOpened,
   onToggleNav,
   onBack,
@@ -84,18 +80,9 @@ export function BuilderHeader({
             <ArrowLeftIcon size={18} />
           </IconButton>
           <Divider orientation="vertical" my={14} visibleFrom="sm" />
-          <TextInput
-            className={classes.nameInput}
-            value={name}
-            onChange={(e) => onRename(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur();
-            }}
-            placeholder="Untitled form"
-            aria-label="Form name"
-            size="sm"
-            disabled={loadingForm || isDemo}
-          />
+          <Text className={classes.nameText} title={name || 'Untitled form'}>
+            {name || 'Untitled form'}
+          </Text>
           {savedForm && (
             <span className={classes.statusPill} data-live={live || undefined}>
               <span className={classes.liveDot} />

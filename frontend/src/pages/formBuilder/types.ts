@@ -39,6 +39,7 @@ export interface EditableState {
   steps: FormStep[];
   stepIndicator: StepIndicator;
   showStepHeadings: boolean;
+  oneQuestionAtATime: boolean;
   collectIp: boolean;
   requireCaptcha: boolean;
   collectPartials: boolean;

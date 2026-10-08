@@ -334,6 +334,7 @@ export interface Form {
   stepIndicator?: StepIndicator;
   /** Shows the step title/description block above each page's fields. */
   showStepHeadings?: boolean;
+  oneQuestionAtATime?: boolean;
   /** Records the respondent's IP with each submission. Off by default. */
   collectIp?: boolean;
   notifications?: NotificationSettings;

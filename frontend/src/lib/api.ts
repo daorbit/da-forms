@@ -192,6 +192,7 @@ export function createForm(
     steps?: Form['steps'];
     stepIndicator?: Form['stepIndicator'];
     showStepHeadings?: Form['showStepHeadings'];
+    oneQuestionAtATime?: Form['oneQuestionAtATime'];
     collectIp?: boolean;
     notifications?: Form['notifications'];
   },

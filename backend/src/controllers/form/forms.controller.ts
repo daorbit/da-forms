@@ -61,6 +61,7 @@ export const createForm: RequestHandler = async (req, res) => {
     steps,
     stepIndicator,
     showStepHeadings,
+    oneQuestionAtATime,
     collectIp,
     notifications,
   } = req.body;
@@ -104,6 +105,7 @@ export const createForm: RequestHandler = async (req, res) => {
     steps,
     stepIndicator,
     showStepHeadings,
+    oneQuestionAtATime,
     collectIp,
     notifications,
     workspaceId,

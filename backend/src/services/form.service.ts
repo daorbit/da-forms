@@ -159,6 +159,7 @@ export function createForm(input: {
   steps?: FormStep[];
   stepIndicator?: StepIndicator;
   showStepHeadings?: boolean;
+  oneQuestionAtATime?: boolean;
   collectIp?: boolean;
   notifications?: NotificationSettings;
   requireCaptcha?: boolean;
@@ -192,6 +193,7 @@ export function updateForm(
     steps: FormStep[];
     stepIndicator: StepIndicator;
     showStepHeadings: boolean;
+    oneQuestionAtATime: boolean;
     collectIp: boolean;
     notifications: NotificationSettings;
     webhook: WebhookSettings;
@@ -334,6 +336,7 @@ const PORTABLE_FIELDS = [
   'steps',
   'stepIndicator',
   'showStepHeadings',
+  'oneQuestionAtATime',
   'collectIp',
   'notifications',
   'requireCaptcha',

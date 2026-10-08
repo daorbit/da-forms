@@ -47,4 +47,6 @@ uploadSchema.index({ submissionId: 1, createdAt: 1 });
 // since that is all the submitted payload carries.
 uploadSchema.index({ url: 1 });
 
+uploadSchema.index({ workspaceId: 1 }, { sparse: true });
+
 export const UploadModel = model<UploadDocument>('Upload', uploadSchema);

@@ -160,6 +160,7 @@ export function BuilderDrawers({
           steps: state.steps,
           stepIndicator: state.stepIndicator,
           showStepHeadings: state.showStepHeadings,
+          oneQuestionAtATime: state.oneQuestionAtATime,
         }}
         accent={state.theme.accentColor}
         onChange={(patch) => {
@@ -167,6 +168,8 @@ export function BuilderDrawers({
           if (patch.stepIndicator) state.setStepIndicator(patch.stepIndicator);
           if (patch.showStepHeadings !== undefined)
             state.setShowStepHeadings(patch.showStepHeadings);
+          if (patch.oneQuestionAtATime !== undefined)
+            state.setOneQuestionAtATime(patch.oneQuestionAtATime);
         }}
       />
 
@@ -234,6 +237,7 @@ export function BuilderDrawers({
         steps={state.steps}
         stepIndicator={state.stepIndicator}
         showStepHeadings={state.showStepHeadings}
+        oneQuestionAtATime={state.oneQuestionAtATime}
         onApplyTheme={setTheme}
       />
 

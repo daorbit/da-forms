@@ -70,6 +70,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
   const [steps, setSteps] = useState<FormStep[]>([]);
   const [stepIndicator, setStepIndicator] = useState<StepIndicator>('progress');
   const [showStepHeadings, setShowStepHeadings] = useState(false);
+  const [oneQuestionAtATime, setOneQuestionAtATime] = useState(false);
   const [collectIp, setCollectIp] = useState(false);
   const [requireCaptcha, setRequireCaptcha] = useState(false);
   const [collectPartials, setCollectPartials] = useState(false);
@@ -103,6 +104,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
         steps,
         stepIndicator,
         showStepHeadings,
+        oneQuestionAtATime,
         collectIp,
         requireCaptcha,
         collectPartials,
@@ -130,6 +132,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       steps,
       stepIndicator,
       showStepHeadings,
+      oneQuestionAtATime,
       collectIp,
       requireCaptcha,
       collectPartials,
@@ -162,6 +165,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       steps,
       stepIndicator,
       showStepHeadings,
+      oneQuestionAtATime,
       collectIp,
       requireCaptcha,
       collectPartials,
@@ -189,6 +193,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
       steps,
       stepIndicator,
       showStepHeadings,
+      oneQuestionAtATime,
       collectIp,
       requireCaptcha,
       collectPartials,
@@ -218,6 +223,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
     setSteps(state.steps);
     setStepIndicator(state.stepIndicator);
     setShowStepHeadings(state.showStepHeadings);
+    setOneQuestionAtATime(state.oneQuestionAtATime);
     setCollectIp(state.collectIp);
     setRequireCaptcha(state.requireCaptcha);
     setCollectPartials(state.collectPartials);
@@ -300,6 +306,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
         setSteps(form.steps ?? []);
         setStepIndicator(form.stepIndicator ?? 'progress');
         setShowStepHeadings(form.showStepHeadings ?? false);
+        setOneQuestionAtATime(form.oneQuestionAtATime ?? false);
         setCollectIp(form.collectIp ?? false);
         setRequireCaptcha(form.requireCaptcha ?? false);
         setCollectPartials(form.collectPartials ?? false);
@@ -328,6 +335,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
             steps: form.steps ?? [],
             stepIndicator: form.stepIndicator ?? 'progress',
             showStepHeadings: form.showStepHeadings ?? false,
+            oneQuestionAtATime: form.oneQuestionAtATime ?? false,
             collectIp: form.collectIp ?? false,
             requireCaptcha: form.requireCaptcha ?? false,
             collectPartials: form.collectPartials ?? false,
@@ -374,6 +382,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
     steps,
     stepIndicator,
     showStepHeadings,
+    oneQuestionAtATime,
     collectIp,
     requireCaptcha,
     collectPartials,
@@ -407,6 +416,7 @@ export function useFormBuilderState({ routeFormId, workspaceId, isDemo, location
     setSteps,
     setStepIndicator,
     setShowStepHeadings,
+    setOneQuestionAtATime,
     setCollectIp,
     setRequireCaptcha,
     setCollectPartials,

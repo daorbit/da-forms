@@ -95,3 +95,37 @@
   height: calc(var(--fs-input-h) + 4px);
   font-size: 15px;
 }
+
+.question {
+  min-height: 220px;
+  justify-content: center;
+  animation: questionIn 220ms ease-out;
+}
+
+.question :global(.mantine-InputWrapper-label) {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 10px;
+}
+
+.question :global(.mantine-InputWrapper-description) {
+  font-size: 0.9rem;
+}
+
+@keyframes questionIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .question {
+    animation: none;
+  }
+}

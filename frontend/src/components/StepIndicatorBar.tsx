@@ -9,6 +9,7 @@ interface Props {
   accent?: string;
   /** The form's resolved body text color, so the indicator reads on any card background. */
   textColor?: string;
+  questions?: boolean;
 }
 
 const DEFAULT_ACCENT = 'var(--mantine-color-emerald-6)';
@@ -18,7 +19,7 @@ const DEFAULT_ACCENT = 'var(--mantine-color-emerald-6)';
  * same `current`/`steps` pair, so switching between them never changes what
  * counts as a step.
  */
-export function StepIndicatorBar({ variant, steps, current, accent, textColor }: Props) {
+export function StepIndicatorBar({ variant, steps, current, accent, textColor, questions }: Props) {
   if (variant === 'none' || steps.length < 2) return null;
 
   const color = accent || DEFAULT_ACCENT;
@@ -28,7 +29,9 @@ export function StepIndicatorBar({ variant, steps, current, accent, textColor }:
   if (variant === 'counter') {
     return (
       <Text size="sm" fw={500} mt="md" mb="xs" c={textColor ? undefined : 'dimmed'} style={muted}>
-        Step {current + 1} of {steps.length} — {steps[current].title}
+        {questions
+          ? `Question ${current + 1} of ${steps.length}`
+          : `Step ${current + 1} of ${steps.length} — ${steps[current].title}`}
       </Text>
     );
   }

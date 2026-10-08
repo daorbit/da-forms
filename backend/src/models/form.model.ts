@@ -330,6 +330,7 @@ export interface FormDocument {
   steps?: FormStep[];
   stepIndicator?: StepIndicator;
   showStepHeadings?: boolean;
+  oneQuestionAtATime?: boolean;
   collectIp?: boolean;
   notifications?: NotificationSettings;
   webhook?: WebhookSettings;
@@ -466,6 +467,7 @@ const formSchema = new Schema<FormDocument>(
     steps: { type: [stepSchema], default: undefined },
     stepIndicator: { type: String, enum: ['progress', 'stepper', 'dots', 'counter', 'none'] },
     showStepHeadings: { type: Boolean },
+    oneQuestionAtATime: { type: Boolean },
     collectIp: { type: Boolean },
     notifications: {
       type: new Schema<NotificationSettings>(

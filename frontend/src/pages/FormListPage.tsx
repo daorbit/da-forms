@@ -237,6 +237,7 @@ export function FormListPage() {
           steps={previewing.steps}
           stepIndicator={previewing.stepIndicator}
           showStepHeadings={previewing.showStepHeadings}
+          oneQuestionAtATime={previewing.oneQuestionAtATime}
           onApplyTheme={isDemo ? undefined : (patch) => applyTheme(previewing, patch)}
         />
       )}

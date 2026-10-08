@@ -166,13 +166,11 @@ export function FormBuilderPage() {
       >
         <BuilderHeader
           name={state.name}
-          onRename={state.setName}
           onOpenShortcuts={() => setShortcutsOpen(true)}
           savedForm={state.savedForm}
           isDirty={state.isDirty}
           isDemo={isDemo}
           embedded={embedded}
-          loadingForm={state.loadingForm}
           navOpened={navOpened}
           onToggleNav={toggleNav}
           onBack={handleBack}

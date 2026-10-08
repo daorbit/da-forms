@@ -55,6 +55,7 @@ export function useFormPersistence({
       steps: state.steps,
       stepIndicator: state.stepIndicator,
       showStepHeadings: state.showStepHeadings,
+      oneQuestionAtATime: state.oneQuestionAtATime,
       collectIp: state.collectIp,
       requireCaptcha: state.requireCaptcha,
       collectPartials: state.collectPartials,

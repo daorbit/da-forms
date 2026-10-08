@@ -16,31 +16,17 @@
   min-width: 0;
 }
 
-.nameInput {
+.nameText {
   flex: 0 1 auto;
-  min-width: 80px;
+  min-width: 0;
   max-width: 300px;
-}
-
-.nameInput input {
-  padding-inline: 8px !important;
-  border: 1px solid transparent !important;
-  border-radius: 8px !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
+  padding-inline: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
-  transition: background-color 120ms ease, border-color 120ms ease;
-}
-
-.nameInput input:hover {
-  background-color: var(--mantine-color-default-hover) !important;
-}
-
-.nameInput input:focus {
-  background-color: transparent !important;
-  border-color: var(--border-strong) !important;
 }
 
 .statusPill {

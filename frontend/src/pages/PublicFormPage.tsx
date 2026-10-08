@@ -446,6 +446,7 @@ export function PublicFormPage() {
         steps={form.steps}
         stepIndicator={form.stepIndicator}
         showStepHeadings={form.showStepHeadings}
+        oneQuestionAtATime={form.oneQuestionAtATime}
         submitting={submitting}
         collectPartials={form.collectPartials && !isPreview}
         requireCaptcha={form.requireCaptcha && !isPreview}

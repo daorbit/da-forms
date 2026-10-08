@@ -37,6 +37,14 @@ import { useFormFont } from '@/hooks/useFormFont';
 import skinClasses from './FormSkin.module.css';
 import { resolveSteps, splitIntoPages } from '@/lib/formSteps';
 import { activePageIndexes, shownFieldIds } from '@/utils/conditionalLogic';
+import {
+  activeQuestionIndexes,
+  advancesOnAnswer,
+  asksQuestion,
+  questionIndicator,
+  questionSteps,
+  splitIntoQuestions,
+} from '@/lib/questionPages';
 import { uploadFormFile } from '@/lib/api';
 import { fileTypes, acceptFor } from '@/lib/fieldPalette';
 import { validateField, validateFields, type FieldErrors } from '@/lib/formValidation';
@@ -44,6 +52,8 @@ import { usePartialSave } from '@/hooks/usePartialSave';
 import { TurnstileGate } from '@/components/TurnstileGate';
 
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+
+const AUTO_ADVANCE_MS = 280;
 
 interface Props {
   formId?: string;
@@ -61,6 +71,7 @@ interface Props {
   steps?: FormStep[];
   stepIndicator?: StepIndicator;
   showStepHeadings?: boolean;
+  oneQuestionAtATime?: boolean;
   submitting?: boolean;
   collectPartials?: boolean;
   requireCaptcha?: boolean;
@@ -145,6 +156,7 @@ export function FormRenderer({
   steps,
   stepIndicator,
   showStepHeadings,
+  oneQuestionAtATime,
   submitting,
   collectPartials,
   requireCaptcha,
@@ -179,14 +191,26 @@ export function FormRenderer({
   const editedRef = useRef<Set<string>>(new Set());
   const stepHeadingRef = useRef<HTMLDivElement>(null);
   const hasAdvanced = useRef(false);
+  const advanceTimer = useRef<number | undefined>(undefined);
   const textColor = resolveTextColor(theme);
   const accent = theme?.accentColor;
   useFormFont(theme?.fontFamily);
 
-  const pages = useMemo(() => splitIntoPages(fields), [fields]);
-  const resolvedSteps = useMemo(() => resolveSteps(fields, steps), [fields, steps]);
+  const questionLayout = useMemo(
+    () => (oneQuestionAtATime ? splitIntoQuestions(fields) : null),
+    [oneQuestionAtATime, fields]
+  );
+  const pages = useMemo(() => questionLayout?.pages ?? splitIntoPages(fields), [questionLayout, fields]);
+  const resolvedSteps = useMemo(
+    () => (questionLayout ? questionSteps(questionLayout.pages) : resolveSteps(fields, steps)),
+    [questionLayout, fields, steps]
+  );
   const shown = useMemo(() => shownFieldIds(fields, values), [fields, values]);
-  const activePages = useMemo(() => activePageIndexes(fields, values), [fields, values]);
+  const activePages = useMemo(() => {
+    const sections = activePageIndexes(fields, values);
+    return questionLayout ? activeQuestionIndexes(questionLayout, sections, shown) : sections;
+  }, [questionLayout, fields, values, shown]);
+  const indicator = questionIndicator(stepIndicator, Boolean(questionLayout));
   const stepPages = activePages.includes(pageIndex)
     ? activePages
     : [...activePages, pageIndex].sort((a, b) => a - b);
@@ -218,8 +242,17 @@ export function FormRenderer({
       hasAdvanced.current = true;
       return;
     }
-    stepHeadingRef.current?.focus();
-  }, [pageIndex, isMultiPage]);
+    if (!oneQuestionAtATime) {
+      stepHeadingRef.current?.focus();
+      return;
+    }
+    formRef.current
+      ?.querySelector<HTMLElement>('[data-field-id] input:not([type="hidden"]), [data-field-id] textarea, [data-field-id] button')
+      ?.focus({ preventScroll: true });
+  }, [pageIndex, isMultiPage, oneQuestionAtATime]);
+
+  const autoAdvances =
+    Boolean(oneQuestionAtATime) && !isLastPage && currentPageFields.filter(asksQuestion).length === 1;
 
 
   useEffect(() => {
@@ -402,6 +435,10 @@ export function FormRenderer({
         onChange={(v) => {
           editedRef.current.add(field.id);
           setValues((prev) => ({ ...prev, [field.id]: v }));
+          if (autoAdvances && v && advancesOnAnswer(field)) {
+            window.clearTimeout(advanceTimer.current);
+            advanceTimer.current = window.setTimeout(() => formRef.current?.requestSubmit(), AUTO_ADVANCE_MS);
+          }
           // Clears the moment the answer becomes acceptable, rather than
           // making someone submit again to find out that they fixed it.
           if (errors[field.id]) {
@@ -477,7 +514,8 @@ export function FormRenderer({
         {isMultiPage && (
           <>
             <StepIndicatorBar
-              variant={stepIndicator ?? 'progress'}
+              variant={indicator}
+              questions={oneQuestionAtATime}
               steps={visibleSteps}
               current={stepPosition}
               accent={accent}
@@ -493,7 +531,7 @@ export function FormRenderer({
               style={{ outline: 'none' }}
             >
               <Text size="xs" style={{ position: 'absolute', left: -9999, width: 1, height: 1, overflow: 'hidden' }}>
-                {`Step ${stepPosition + 1} of ${visibleSteps.length}${
+                {`${oneQuestionAtATime ? 'Question' : 'Step'} ${stepPosition + 1} of ${visibleSteps.length}${
                   resolvedSteps[pageIndex]?.title ? `, ${resolvedSteps[pageIndex].title}` : ''
                 }`}
               </Text>
@@ -501,7 +539,7 @@ export function FormRenderer({
           </>
         )}
 
-        {isMultiPage && showStepHeadings && (
+        {isMultiPage && showStepHeadings && !oneQuestionAtATime && (
           <Stack gap={2} mt="md">
             <Text fw={600} size="md" c={textColor}>
               {resolvedSteps[pageIndex]?.title}
@@ -518,7 +556,12 @@ export function FormRenderer({
           </Stack>
         )}
 
-        <Stack gap={fieldGap(theme)} mt="lg">
+        <Stack
+          gap={fieldGap(theme)}
+          mt="lg"
+          className={oneQuestionAtATime ? skinClasses.question : undefined}
+          key={oneQuestionAtATime ? pageIndex : undefined}
+        >
           {fields.length === 0 ? (
             <Text c="dimmed" size="sm" ta="center" py="xl">
               This form has no fields yet.

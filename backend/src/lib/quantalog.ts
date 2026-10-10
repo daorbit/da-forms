@@ -337,6 +337,37 @@ export async function notifyFormSubmission(
   }
 }
 
+export interface AuditEvent {
+  action: string;
+  actorId?: string;
+  target?: { kind: string; id?: string; label?: string };
+  meta?: Record<string, string | number | boolean>;
+  ip: string;
+  userAgent: string;
+}
+
+export async function recordAuditEvent(workspaceId: string, event: AuditEvent): Promise<void> {
+  if (!isConfigured()) return;
+
+  try {
+    const res = await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/audit/${encodeURIComponent(workspaceId)}`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${env.formsServiceSecret}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(event),
+        signal: AbortSignal.timeout(2500),
+      }
+    );
+    if (!res.ok) console.error(`[quantalog] audit event rejected: ${res.status}`);
+  } catch (err) {
+    console.error('[quantalog] could not record audit event:', err);
+  }
+}
+
 export async function recordSubmission(workspaceId: string): Promise<void> {
   if (!isConfigured()) return;
 

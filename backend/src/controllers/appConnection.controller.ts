@@ -1,7 +1,6 @@
 import type { RequestHandler } from 'express';
 import * as apps from '../services/appConnection.service.js';
-
- 
+import { audit } from '../lib/audit.js';
 
 export const listApps: RequestHandler = async (req, res) => {
   res.json(await apps.listApps(req.params.workspaceId));
@@ -31,6 +30,7 @@ export const saveApp: RequestHandler = async (req, res) => {
       values: req.body?.values ?? req.body,
       enabled: typeof req.body?.enabled === 'boolean' ? req.body.enabled : undefined,
     });
+    await audit(req, res, 'form.app_connected', { kind: 'app', id: req.params.appId, label: req.params.appId });
     res.json(view);
   } catch (err) {
     if (err instanceof apps.UnknownAppError) {
@@ -59,7 +59,9 @@ export const testApp: RequestHandler = async (req, res) => {
 
 export const disconnectApp: RequestHandler = async (req, res) => {
   try {
-    res.json(await apps.disconnectApp(req.params.workspaceId, req.params.appId));
+    const view = await apps.disconnectApp(req.params.workspaceId, req.params.appId);
+    await audit(req, res, 'form.app_disconnected', { kind: 'app', id: req.params.appId, label: req.params.appId });
+    res.json(view);
   } catch (err) {
     if (err instanceof apps.UnknownAppError) {
       return res.status(404).json({ error: 'unknown_app', message: err.message });

@@ -60,5 +60,6 @@ export const requireWorkspaceToken: RequestHandler = (req, res, next) => {
     });
   }
 
+  res.locals.actorId = result.actorId;
   next();
 };

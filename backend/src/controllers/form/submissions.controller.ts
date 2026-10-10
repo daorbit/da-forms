@@ -2,6 +2,7 @@ import type { RequestHandler, Response } from "express";
 import * as formService from "../../services/form.service.js";
 import * as pipelineService from "../../services/pipeline.service.js";
 import { loadOwnedForm } from "./shared.js";
+import { audit, formTarget } from "../../lib/audit.js";
 
 const SORTS = ["newest", "oldest", "score"] as const;
 
@@ -152,6 +153,7 @@ export const deleteSubmission: RequestHandler = async (req, res) => {
     return res
       .status(404)
       .json({ error: "not_found", message: "Submission not found" });
+  await audit(req, res, "form.submission_deleted", formTarget(form), { submissionId: req.params.subId });
   res.status(204).send();
 };
 
@@ -164,6 +166,9 @@ export const bulkDeleteSubmissions: RequestHandler = async (req, res) => {
     ids,
     req.params.id,
   );
+  if (deletedCount) {
+    await audit(req, res, "form.submissions_deleted", formTarget(form), { count: deletedCount });
+  }
   res.json({ deletedCount });
 };
 

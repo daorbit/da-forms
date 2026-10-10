@@ -50,6 +50,7 @@ export type TokenFailure = 'malformed' | 'bad_signature' | 'expired' | 'wrong_wo
 export interface TokenResult {
   ok: boolean;
   reason?: TokenFailure;
+  actorId?: string;
 }
 
 /**
@@ -60,10 +61,11 @@ export interface TokenResult {
  */
 export function verifyWorkspaceToken(token: string, workspaceId: string): TokenResult {
   const parts = token.split('.');
-  if (parts.length !== 3) return { ok: false, reason: 'malformed' };
+  if (parts.length !== 3 && parts.length !== 4) return { ok: false, reason: 'malformed' };
 
-  const [claimedWorkspace, expiresAtRaw, signature] = parts;
-  const expected = sign(`${claimedWorkspace}.${expiresAtRaw}`);
+  const signature = parts[parts.length - 1];
+  const [claimedWorkspace, expiresAtRaw, actorId = ''] = parts.slice(0, -1);
+  const expected = sign(parts.slice(0, -1).join('.'));
 
   // Constant time, so a mismatch leaks nothing about how far it matched.
   const a = Buffer.from(signature);
@@ -82,5 +84,5 @@ export function verifyWorkspaceToken(token: string, workspaceId: string): TokenR
     return { ok: false, reason: 'expired' };
   }
 
-  return { ok: true };
+  return { ok: true, actorId: /^[a-f0-9]{24}$/i.test(actorId) ? actorId : undefined };
 }

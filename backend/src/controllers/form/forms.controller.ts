@@ -3,6 +3,7 @@ import * as formService from "../../services/form.service.js";
 import { getFormLimits } from "../../lib/quantalog.js";
 import { planLimit } from "../../lib/plan-limit.js";
 import { workspaceIdOf } from "./shared.js";
+import { audit, formTarget } from "../../lib/audit.js";
 
 export const listForms: RequestHandler = async (req, res) => {
   const { page, limit, q, sort, status } = req.query as Record<
@@ -110,6 +111,7 @@ export const createForm: RequestHandler = async (req, res) => {
     notifications,
     workspaceId,
   });
+  await audit(req, res, "form.created", formTarget(form));
   res.status(201).json(form);
 };
 
@@ -124,6 +126,14 @@ export const updateForm: RequestHandler = async (req, res) => {
     return res
       .status(404)
       .json({ error: "not_found", message: "Form not found" });
+  if (patch.status === "published" || patch.status === "draft") {
+    await audit(
+      req,
+      res,
+      patch.status === "published" ? "form.published" : "form.unpublished",
+      formTarget(form),
+    );
+  }
   res.json(form);
 };
 
@@ -152,6 +162,7 @@ export const duplicateForm: RequestHandler = async (req, res) => {
     return res
       .status(404)
       .json({ error: "not_found", message: "Form not found" });
+  await audit(req, res, "form.duplicated", formTarget(copy), { sourceId: req.params.id });
   res.status(201).json(copy);
 };
 
@@ -189,6 +200,7 @@ export const importFormConfig: RequestHandler = async (req, res) => {
 
   try {
     const form = await formService.importFormConfig(req.body?.config, workspaceId);
+    await audit(req, res, "form.imported", formTarget(form));
     res.status(201).json(form);
   } catch (err) {
     if (err instanceof formService.InvalidFormConfigError) {
@@ -206,5 +218,6 @@ export const deleteForm: RequestHandler = async (req, res) => {
     return res
       .status(404)
       .json({ error: "not_found", message: "Form not found" });
+  await audit(req, res, "form.deleted", formTarget(form));
   res.status(204).send();
 };

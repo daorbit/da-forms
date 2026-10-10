@@ -3,6 +3,7 @@ import * as settingsService from '../services/workspaceSettings.service.js';
 import { isEncryptionConfigured } from '../lib/crypto.js';
 import { isPaymentProvider } from '../services/gateways/index.js';
 import type { PaymentProvider } from '../models/workspaceSettings.model.js';
+import { audit } from '../lib/audit.js';
 
 function readProvider(value: unknown): PaymentProvider {
   return isPaymentProvider(value) ? value : 'razorpay';
@@ -52,6 +53,12 @@ export const savePaymentSettings: RequestHandler = async (req, res) => {
       keySecret,
       webhookSecret,
     });
+    await audit(req, res, 'form.payments_updated', { kind: 'payments', label: provider }, {
+      provider,
+      mode: typeof mode === 'string' ? mode : '',
+      enabled: Boolean(enabled),
+      credentialsChanged: Boolean(keyId || keySecret || webhookSecret),
+    });
     res.json(settings);
   } catch (err) {
     if (err instanceof settingsService.KeyModeMismatchError) {
@@ -77,6 +84,7 @@ export const disconnectPayments: RequestHandler = async (req, res) => {
     provider,
     mode
   );
+  await audit(req, res, 'form.payments_disconnected', { kind: 'payments', label: provider }, { provider, mode });
   res.json(settings);
 };
 
@@ -90,5 +98,6 @@ export const saveWebhookApp: RequestHandler = async (req, res) => {
     req.params.workspaceId,
     Boolean(req.body?.enabled)
   );
+  await audit(req, res, 'form.webhook_updated', { kind: 'app', label: 'Webhook' }, { enabled: Boolean(enabled) });
   res.json({ enabled });
 };

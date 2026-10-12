@@ -10,6 +10,7 @@ export type FormAuditAction =
   | 'form.deleted'
   | 'form.submission_deleted'
   | 'form.submissions_deleted'
+  | 'form.submissions_imported'
   | 'form.payments_updated'
   | 'form.payments_disconnected'
   | 'form.app_connected'

@@ -1,6 +1,6 @@
 import { ActionIcon, Button, Group, Skeleton, TextInput, Tooltip } from '@mantine/core';
 import { Link } from 'react-router-dom';
-import { ArrowLeftIcon, CheckIcon, LinkIcon, PencilIcon, XIcon } from 'lucide-react';
+import { ArrowLeftIcon, ChartColumnIcon, CheckIcon, LinkIcon, PencilIcon, XIcon } from 'lucide-react';
 import { StatusText } from '@/components/ui/StatusText';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
@@ -20,9 +20,11 @@ export function EntriesTopbar({
   onSaveName,
   onCancelEditingName,
   onCopyShareLink,
+  onOpenInsights,
   total,
 }: {
   total?: number;
+  onOpenInsights: () => void;
   form: Form | null;
   workspaceId: string;
   editingName: boolean;
@@ -118,6 +120,9 @@ export function EntriesTopbar({
         <>
           <Button component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} leftSection={<PencilIcon size={16} />}>
             Edit form
+          </Button>
+          <Button variant="default" leftSection={<ChartColumnIcon size={16} />} onClick={onOpenInsights}>
+            Insights
           </Button>
           <Button variant="default" leftSection={<LinkIcon size={16} />} onClick={onCopyShareLink}>
             Copy link

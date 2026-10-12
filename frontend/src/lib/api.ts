@@ -318,6 +318,18 @@ export function bulkUpdateSubmissions(
   });
 }
 
+export function importSubmissions(
+  formId: string,
+  rows: Record<string, string>[],
+  tags: string[],
+  workspaceId = DEFAULT_WORKSPACE
+) {
+  return request<{ imported: number; skipped: number }>(`${ws(workspaceId)}/${formId}/submissions/import`, {
+    method: 'POST',
+    body: JSON.stringify({ rows, tags }),
+  });
+}
+
 export interface SourceBreakdownEntry {
   source: string;
   count: number;

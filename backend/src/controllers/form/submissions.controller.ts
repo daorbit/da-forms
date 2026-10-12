@@ -1,6 +1,7 @@
 import type { RequestHandler, Response } from "express";
 import * as formService from "../../services/form.service.js";
 import * as pipelineService from "../../services/pipeline.service.js";
+import * as importService from "../../services/submission-import.service.js";
 import { loadOwnedForm } from "./shared.js";
 import { audit, formTarget } from "../../lib/audit.js";
 
@@ -110,6 +111,31 @@ export const bulkUpdateSubmissions: RequestHandler = async (req, res) => {
     patch,
   );
   res.json({ matchedCount });
+};
+
+export const importSubmissions: RequestHandler = async (req, res) => {
+  const form = await loadOwnedForm(req, res);
+  if (!form) return;
+  const rows = req.body?.rows;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({ error: "no_rows", message: "The file has no rows to import" });
+  }
+  if (rows.length > importService.IMPORT_ROW_LIMIT) {
+    return res.status(400).json({
+      error: "too_many_rows",
+      message: `Import at most ${importService.IMPORT_ROW_LIMIT} rows at a time`,
+    });
+  }
+  const result = await importService.importSubmissions(
+    req.params.id,
+    form.fields,
+    rows,
+    importService.cleanTags(req.body?.tags),
+  );
+  if (result.imported) {
+    await audit(req, res, "form.submissions_imported", formTarget(form), { count: result.imported });
+  }
+  res.status(201).json(result);
 };
 
 export const addSubmissionNote: RequestHandler = async (req, res) => {

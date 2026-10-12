@@ -13,6 +13,7 @@ import {
   RefreshCwIcon,
   SquareKanbanIcon,
   TableIcon,
+  UploadIcon,
 } from 'lucide-react';
 import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
 import { SearchField } from '@/components/ui/SearchField';
@@ -63,6 +64,7 @@ interface Props {
   onOpenFiles?: () => void;
   pipelineFilters?: ReactNode;
   calendarAvailable?: boolean;
+  onImport?: () => void;
 }
 
 export function EntriesFilterBar({
@@ -81,6 +83,7 @@ export function EntriesFilterBar({
   onOpenFiles,
   pipelineFilters,
   calendarAvailable,
+  onImport,
 }: Props) {
   const viewTabs = calendarAvailable ? VIEW_TABS : VIEW_TABS.filter((tab) => tab.value !== 'calendar');
   const datedView = view !== 'calendar';
@@ -211,6 +214,11 @@ export function EntriesFilterBar({
               <PaperclipIcon size={16} />
             </ActionIcon>
           </Tooltip>
+        )}
+        {onImport && (
+          <Button variant="default" radius="xl" leftSection={<UploadIcon size={15} />} onClick={onImport}>
+            Import
+          </Button>
         )}
         <Button variant="default" radius="xl" leftSection={<DownloadIcon size={15} />} onClick={onExportCsv}>
           Export

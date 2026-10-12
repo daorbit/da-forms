@@ -127,7 +127,7 @@ export function PublicFormPage() {
     const transparent = form?.theme?.scope === "card";
     document.body.classList.toggle("da-forms-transparent-page", transparent);
     const root = document.getElementById("root");
-    if (!root) return;
+    if (!root || (!form && !error)) return;
     const post = () =>
       window.parent.postMessage(
         { type: "da-forms:height", formId: id, height: root.scrollHeight },
@@ -136,6 +136,7 @@ export function PublicFormPage() {
     const observer = new ResizeObserver(post);
     observer.observe(root);
     post();
+    window.parent.postMessage({ type: "da-forms:ready", formId: id }, "*");
     return () => {
       observer.disconnect();
       document.body.classList.remove(

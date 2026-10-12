@@ -1,23 +1,12 @@
 import classes from './FormLoader.module.css';
 
-interface Props {
-  brand?: string;
-  label?: string;
-}
-
-export function FormLoader({ brand = 'Quantalog', label }: Props) {
+export function FormLoader({ label = 'Loading form' }: { label?: string }) {
   return (
-    <div className={classes.wrap} role="status" aria-live="polite" aria-label={label ?? 'Loading form'}>
-      <div className={classes.mark} aria-hidden>
-        <div className={classes.wordmark}>
-          <span className={classes.word}>{brand}</span>
-          <span className={classes.dot} />
-        </div>
-        <div className={classes.rule}>
-          <span />
-        </div>
+    <div className={classes.wrap} role="status" aria-live="polite" aria-label={label}>
+      <span className={classes.dot} aria-hidden />
+      <div className={classes.rule} aria-hidden>
+        <span />
       </div>
-      {label && <p className={classes.label}>{label}</p>}
     </div>
   );
 }

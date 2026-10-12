@@ -33,6 +33,7 @@
     "dayjs": "^1.11.23",
     "exceljs": "^4.4.0",
     "jspdf": "^4.2.1",
+    "jszip": "^3.10.2",
     "lucide-react": "^1.45.0",
     "postcss": "^8.5.26",
     "postcss-preset-mantine": "^1.18.0",

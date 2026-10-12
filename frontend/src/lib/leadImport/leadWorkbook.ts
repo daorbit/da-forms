@@ -1,6 +1,7 @@
 import type { CellValue, Workbook } from 'exceljs';
 import { columnHint, hasDropdown, MAX_IMPORT_ROWS, normalizeValue, type ImportColumn } from './importColumns';
 import { sampleRows } from './sampleLeads';
+import { withoutCellNotes } from './cleanWorkbook';
 
 const SHEET = 'Leads';
 const VALIDATED_ROWS = 1000;
@@ -126,7 +127,8 @@ function cellText(value: CellValue): unknown {
 
 export async function parseLeadFile(file: File, columns: ImportColumn[]): Promise<ParsedImport> {
   const workbook = await newWorkbook();
-  await workbook.xlsx.load((await file.arrayBuffer()) as unknown as Parameters<Workbook['xlsx']['load']>[0]);
+  const buffer = await withoutCellNotes(await file.arrayBuffer());
+  await workbook.xlsx.load(buffer as unknown as Parameters<Workbook['xlsx']['load']>[0]);
   const sheet = workbook.getWorksheet(SHEET) ?? workbook.worksheets[0];
   if (!sheet) return { rows: [], matched: [], unmatched: [], missingRequired: 0, truncated: false };
 

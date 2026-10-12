@@ -1141,6 +1141,10 @@ export function FieldControl({
             onChange={onChange}
             readOnly={readOnly}
             invalid={Boolean(error)}
+            accentColor={accentColor}
+            textColor={inputTextColor ?? labelColor}
+            borderColor={inputBorder}
+            surfaceColor={inputBg}
           />
         </div>
       );

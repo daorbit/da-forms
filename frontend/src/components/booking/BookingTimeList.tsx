@@ -1,51 +1,73 @@
-import { Loader, Text, UnstyledButton } from '@mantine/core';
+import { Loader, UnstyledButton } from '@mantine/core';
+import { CheckIcon } from 'lucide-react';
 import type { BookingTimeFormat } from '@/types';
 import { formatSlotTime } from '@/lib/booking';
 import classes from './BookingInput.module.css';
 
 interface Props {
   slots: string[];
-  selected: string;
+  confirmed: string;
+  pending: string | null;
   timeZone: string;
   timeFormat?: BookingTimeFormat;
   loading: boolean;
-  disabled?: boolean;
   onPick: (iso: string) => void;
+  onConfirm: (iso: string) => void;
 }
 
-export function BookingTimeList({ slots, selected, timeZone, timeFormat, loading, disabled, onPick }: Props) {
+export function BookingTimeList({
+  slots,
+  confirmed,
+  pending,
+  timeZone,
+  timeFormat,
+  loading,
+  onPick,
+  onConfirm,
+}: Props) {
   if (loading) {
     return (
       <div className={classes.timesEmpty}>
-        <Loader size="sm" />
+        <Loader size="sm" color="var(--bk-accent)" />
       </div>
     );
   }
 
   if (!slots.length) {
-    return (
-      <Text size="sm" className={classes.timesEmpty}>
-        No times left on this day.
-      </Text>
-    );
+    return <div className={classes.timesEmpty}>No times left on this day.</div>;
   }
 
   return (
-    <div className={classes.timeList} role="listbox" aria-label="Available times">
-      {slots.map((iso) => (
-        <UnstyledButton
-          key={iso}
-          type="button"
-          role="option"
-          aria-selected={iso === selected}
-          data-selected={iso === selected || undefined}
-          className={classes.time}
-          disabled={disabled}
-          onClick={() => onPick(iso)}
-        >
-          {formatSlotTime(iso, timeZone, timeFormat)}
-        </UnstyledButton>
-      ))}
+    <div className={classes.timeList}>
+      {slots.map((iso) => {
+        const time = formatSlotTime(iso, timeZone, timeFormat);
+
+        if (iso === confirmed) {
+          return (
+            <UnstyledButton key={iso} type="button" className={classes.timeConfirmed} onClick={() => onPick(iso)}>
+              <CheckIcon size={16} strokeWidth={2.6} />
+              {time}
+            </UnstyledButton>
+          );
+        }
+
+        if (iso === pending) {
+          return (
+            <div key={iso} className={classes.timeSplit}>
+              <span className={classes.timePicked}>{time}</span>
+              <UnstyledButton type="button" className={classes.timeConfirm} onClick={() => onConfirm(iso)}>
+                Confirm
+              </UnstyledButton>
+            </div>
+          );
+        }
+
+        return (
+          <UnstyledButton key={iso} type="button" className={classes.time} onClick={() => onPick(iso)}>
+            {time}
+          </UnstyledButton>
+        );
+      })}
     </div>
   );
 }

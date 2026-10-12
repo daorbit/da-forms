@@ -106,6 +106,7 @@ export function FormCanvas({
       inputBg={theme?.inputBg}
       inputBorder={theme?.inputBorder}
       inputTextColor={theme?.inputTextColor}
+      accentColor={theme?.accentColor}
     />
   );
 

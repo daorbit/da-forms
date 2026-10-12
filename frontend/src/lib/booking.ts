@@ -70,6 +70,17 @@ export function formatBookingRange(
   return `${formatSlotDay(start, timeZone)}, ${formatSlotTime(start, timeZone, timeFormat)} – ${formatSlotTime(end, timeZone, timeFormat)}`;
 }
 
+export function timeZoneLabel(timeZone: string): string {
+  try {
+    const name = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'long' })
+      .formatToParts(new Date())
+      .find((part) => part.type === 'timeZoneName')?.value;
+    return name || timeZone;
+  } catch {
+    return timeZone;
+  }
+}
+
 export function bookingEnd(field: FormField, startIso: string): string {
   return new Date(new Date(startIso).getTime() + (field.booking?.duration ?? 30) * 60_000).toISOString();
 }

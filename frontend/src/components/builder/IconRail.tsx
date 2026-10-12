@@ -6,7 +6,7 @@ import {
   ListOrderedIcon,
   MailIcon,
   PaletteIcon,
-  PlugIcon,
+  BlocksIcon,
   Share2Icon,
   SlidersHorizontalIcon,
   WebhookIcon,
@@ -42,7 +42,7 @@ const GROUPS: RailItem[][] = [
   ],
   [
     { id: 'webhook', label: 'Webhook', icon: <WebhookIcon {...ICON} /> },
-    { id: 'integrations', label: 'Integrations', icon: <PlugIcon {...ICON} /> },
+    { id: 'integrations', label: 'Integrations', icon: <BlocksIcon {...ICON} /> },
   ],
 ];
 

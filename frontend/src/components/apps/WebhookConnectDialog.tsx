@@ -19,7 +19,7 @@ import {
   CircleCheckIcon,
   CircleDashedIcon,
   CircleXIcon,
-  PlugIcon,
+  Link2Icon,
   TriangleAlertIcon,
   UnplugIcon,
   XIcon,
@@ -275,7 +275,7 @@ export function WebhookConnectDialog({
                       </Button>
                     )}
                     <Button
-                      leftSection={<PlugIcon size={16} />}
+                      leftSection={<Link2Icon size={16} />}
                       onClick={() => save(true)}
                       disabled={!url.trim() || appEnabled === false}
                     >

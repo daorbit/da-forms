@@ -1,5 +1,5 @@
 import { Anchor, Button, Group, Text } from '@mantine/core';
-import { CheckIcon, PauseIcon, PlugIcon } from 'lucide-react';
+import { CheckIcon, PauseIcon, Link2Icon } from 'lucide-react';
 import { relativeTime } from '@/lib/relativeTime';
 import classes from './apps.module.css';
 import type { AppCard as AppCardData } from '@/types';
@@ -131,7 +131,7 @@ export function AppCard({ card, onOpen, busy = false }: Props) {
             <Button
               size="sm"
               loading={busy}
-              leftSection={<PlugIcon size={15} />}
+              leftSection={<Link2Icon size={15} />}
               onClick={() => onOpen(card)}
             >
               {card.kind === 'webhook' ? 'Turn on webhooks' : `Connect ${card.name}`}

@@ -34,7 +34,7 @@ import {
   ExternalLinkIcon,
   FlaskConicalIcon,
   KeyIcon,
-  PlugIcon,
+  Link2Icon,
   RocketIcon,
   TriangleAlertIcon,
   WebhookIcon,
@@ -670,7 +670,7 @@ export function PaymentsModal({ opened, onClose, workspaceId, webhookUrl, focusP
                           </Button>
                           <Button
                             variant="light"
-                            leftSection={<PlugIcon size={16} />}
+                            leftSection={<Link2Icon size={16} />}
                             onClick={handleTest}
                             loading={testing}
                             disabled={!pair?.hasKeyId}

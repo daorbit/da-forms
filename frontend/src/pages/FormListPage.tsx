@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
-import { InfoIcon, PlugIcon, PlusIcon } from 'lucide-react';
+import { InfoIcon, BlocksIcon, PlusIcon } from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
@@ -153,7 +153,7 @@ export function FormListPage() {
                 New form
               </Button>
             )}
-            <Button variant="default" leftSection={<PlugIcon size={16} />} onClick={() => setIntegrationsOpen(true)}>
+            <Button variant="default" leftSection={<BlocksIcon size={16} />} onClick={() => setIntegrationsOpen(true)}>
               Integrations
             </Button>
             {!hostPhone && <DocsButton path="/lead-capture" />}

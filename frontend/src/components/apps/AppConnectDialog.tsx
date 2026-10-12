@@ -26,7 +26,7 @@ import {
   ExternalLinkIcon,
   FlaskConicalIcon,
   MailIcon,
-  PlugIcon,
+  Link2Icon,
   TriangleAlertIcon,
   XIcon,
 } from 'lucide-react';
@@ -417,7 +417,7 @@ export function AppConnectDialog({
                       </Button>
                     )}
                     <Button
-                      leftSection={<PlugIcon size={16} />}
+                      leftSection={<Link2Icon size={16} />}
                       loading={busy === 'save'}
                       onClick={() => handleSave(true)}
                     >
@@ -432,7 +432,7 @@ export function AppConnectDialog({
                       <Group gap="sm" wrap="nowrap">
                         <Button
                           variant="default"
-                          leftSection={<PlugIcon size={16} />}
+                          leftSection={<Link2Icon size={16} />}
                           loading={busy === 'verify'}
                           disabled={dirty || busy !== null}
                           onClick={() => handleTest(false)}

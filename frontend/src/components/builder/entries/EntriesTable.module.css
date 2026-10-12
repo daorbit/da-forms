@@ -1,4 +1,5 @@
 .card {
+  overflow: hidden;
   border-radius: var(--radius-lg);
 }
 
@@ -30,10 +31,10 @@
 }
 
 .th {
-  height: 40px;
-  padding: 0 14px !important;
+  height: 42px;
+  padding: 0 16px !important;
   border-bottom: 1px solid var(--border) !important;
-  background: color-mix(in srgb, var(--text) 2%, transparent);
+  background: transparent;
   font-size: 12px;
   font-weight: 500;
   color: var(--muted);
@@ -68,7 +69,12 @@
 }
 
 .checkCol {
-  width: 48px;
+  width: 44px;
+  padding-right: 0 !important;
+}
+
+.whoCol {
+  width: 240px;
 }
 
 .dateCol {
@@ -76,11 +82,11 @@
 }
 
 .actionsCol {
-  width: 112px;
+  width: 56px;
 }
 
 .stageCol {
-  width: 120px;
+  width: 130px;
 }
 
 .scoreCol {
@@ -88,11 +94,15 @@
 }
 
 .td {
-  height: 52px;
-  padding: 8px 14px !important;
+  height: 60px;
+  padding: 10px 16px !important;
   border-bottom: 1px solid var(--border);
   font-size: 13.5px;
   color: var(--text);
+}
+
+.table tbody tr:last-child .td {
+  border-bottom: 0;
 }
 
 .row {
@@ -101,30 +111,11 @@
 }
 
 .row:hover .td {
-  background: color-mix(in srgb, var(--text) 3%, transparent);
+  background: color-mix(in srgb, var(--text) 2.5%, transparent);
 }
 
-.table tbody tr:last-child .td {
-  border-bottom: 0;
-}
-
-.row[data-unread] .td {
-  font-weight: 600;
-}
-
-.firstCell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.unreadDot {
-  flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
+.row[data-selected] .td {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
 }
 
 .cellText {
@@ -134,6 +125,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow-wrap: anywhere;
+  color: var(--text-2);
 }
 
 .empty {
@@ -142,29 +134,19 @@
 }
 
 .date {
-  color: var(--text-2);
-  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
   white-space: nowrap;
+}
+
+.score {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 2px;
-}
-
-.action {
-  color: var(--text-2);
-}
-
-.action:hover {
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-  color: var(--text);
-}
-
-.danger:hover {
-  background: color-mix(in srgb, var(--mantine-color-red-6) 12%, transparent);
-  color: var(--mantine-color-red-5);
 }
 
 .loading {
@@ -177,7 +159,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 14px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
 }
 
 .count {

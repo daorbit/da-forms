@@ -36,6 +36,13 @@ export function respondentIdentity(fields: FormField[], submission: Submission):
   return { name, email, phone, initials: initialsOf(name ?? email) };
 }
 
+export function identityFieldIds(fields: FormField[]): string[] {
+  const name =
+    fields.find((f) => f.type === 'name') ?? fields.find((f) => f.type === 'text' && /\bname\b/i.test(f.label ?? ''));
+  const email = fields.find((f) => f.type === 'email');
+  return [name?.id, email?.id].filter((id): id is string => Boolean(id));
+}
+
 export function sourceHost(url: string | undefined): string | undefined {
   if (!url) return undefined;
   try {

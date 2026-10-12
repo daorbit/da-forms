@@ -7,6 +7,7 @@ import { DocsButton } from '@/components/ui/DocsButton';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import type { Form } from '@/types';
+import { EntriesMoreMenu } from './EntriesMoreMenu';
 import classes from '../../../pages/EntriesPage.module.css';
 
 export function EntriesTopbar({
@@ -21,10 +22,16 @@ export function EntriesTopbar({
   onCancelEditingName,
   onCopyShareLink,
   onOpenInsights,
+  onImport,
+  onExportCsv,
+  onOpenFiles,
   total,
 }: {
   total?: number;
   onOpenInsights: () => void;
+  onImport?: () => void;
+  onExportCsv: () => void;
+  onOpenFiles?: () => void;
   form: Form | null;
   workspaceId: string;
   editingName: boolean;
@@ -118,15 +125,16 @@ export function EntriesTopbar({
       }
       actions={
         <>
-          <Button component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} leftSection={<PencilIcon size={16} />}>
-            Edit form
-          </Button>
           <Button variant="default" leftSection={<ChartColumnIcon size={16} />} onClick={onOpenInsights}>
             Insights
           </Button>
           <Button variant="default" leftSection={<LinkIcon size={16} />} onClick={onCopyShareLink}>
-            Copy link
+            Share
           </Button>
+          <Button component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} leftSection={<PencilIcon size={16} />}>
+            Edit form
+          </Button>
+          <EntriesMoreMenu onImport={onImport} onExportCsv={onExportCsv} onOpenFiles={onOpenFiles} />
           <DocsButton path="/forms-entries-and-links" />
           {IS_EMBEDDED && <HostNotificationsBell />}
         </>

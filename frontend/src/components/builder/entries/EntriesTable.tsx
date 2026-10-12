@@ -1,16 +1,22 @@
-import { ActionIcon, Badge, Checkbox, Pagination, Table, Tooltip } from '@mantine/core';
-import { EyeIcon, InboxIcon, Share2Icon, Trash2Icon } from 'lucide-react';
+import { Checkbox, Pagination, Table, Tooltip } from '@mantine/core';
+import { InboxIcon, Share2Icon } from 'lucide-react';
 import type { Form, FormField, Submission } from '@/types';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
 import { relativeTime } from '@/lib/relativeTime';
+import { identityFieldIds } from '@/lib/respondent';
+import { valueFields } from '@/lib/fieldTree';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { FileTypeIcon } from './fileTypeIcon';
 import { EntryCell } from './EntryCell';
+import { RespondentCell } from './table/RespondentCell';
+import { StageLabel } from './table/StageLabel';
+import { RowActions } from './table/RowActions';
 import { formatDateTime, PAGE_SIZE } from './entriesTypes';
-import { STAGE_BY_ID, stageOf } from '@/lib/stages';
 import classes from './EntriesTable.module.css';
 
 type Column = FormField & { retired?: boolean };
+
+const COLUMN_PX = 180;
+const FIXED_PX = 44 + 240 + 130 + 120 + 56;
 
 interface Props {
   form: Form | null;
@@ -24,6 +30,7 @@ interface Props {
   onToggleSelectAll: (checked: boolean) => void;
   onPageChange: (page: number) => void;
   onMarkRead?: (submission: Submission) => void;
+  onToggleRead?: (submission: Submission) => void;
   onView: (submission: Submission) => void;
   onDelete: (submission: Submission) => void;
   onCopyShareLink: () => void;
@@ -57,18 +64,22 @@ export function EntriesTable({
   onToggleSelect,
   onToggleSelectAll,
   onPageChange,
+  onToggleRead,
   onView,
   onDelete,
   onCopyShareLink,
   onOpenAttachment,
   scored = false,
 }: Props) {
+  const fields = form ? valueFields(form.fields) : [];
+  const identity = identityFieldIds(fields);
+  const answerColumns = columns.filter((c) => !identity.includes(c.id));
   const allSelected = submissions.length > 0 && submissions.every((s) => selected.has(s._id));
   const someSelected = !allSelected && submissions.some((s) => selected.has(s._id));
 
   if (submissions.length === 0 && !loading) {
     return (
-      <div className="surface-card">
+      <div className={`surface-card ${classes.card}`}>
         <EmptyState
           compact
           icon={InboxIcon}
@@ -84,7 +95,7 @@ export function EntriesTable({
     <>
       <div className={`surface-card ${classes.card}`}>
         <Table.ScrollContainer
-          minWidth={columns.length * 170 + 48 + 120 + 112 + 120 + (scored ? 80 : 0)}
+          minWidth={answerColumns.length * COLUMN_PX + FIXED_PX + (scored ? 80 : 0)}
           className={classes.scroll}
         >
           <Table className={`${classes.table} ${loading ? classes.loading : ''}`} aria-busy={loading}>
@@ -93,13 +104,15 @@ export function EntriesTable({
                 <Table.Th className={`${classes.th} ${classes.checkCol}`}>
                   <Checkbox
                     size="xs"
+                    radius="sm"
                     checked={allSelected}
                     indeterminate={someSelected}
                     onChange={(e) => onToggleSelectAll(e.currentTarget.checked)}
                     aria-label="Select all responses on this page"
                   />
                 </Table.Th>
-                {columns.map((field) => (
+                <Table.Th className={`${classes.th} ${classes.whoCol}`}>Respondent</Table.Th>
+                {answerColumns.map((field) => (
                   <Table.Th key={field.id} className={classes.th}>
                     <ColumnHeading field={field} />
                   </Table.Th>
@@ -118,42 +131,29 @@ export function EntriesTable({
                   onClick={() => onView(submission)}
                   className={classes.row}
                   data-unread={!submission.read || undefined}
+                  data-selected={selected.has(submission._id) || undefined}
                 >
                   <Table.Td className={classes.td} onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       size="xs"
+                      radius="sm"
                       checked={selected.has(submission._id)}
                       onChange={() => onToggleSelect(submission._id)}
                       aria-label={`Select response from ${formatDateTime(submission.createdAt)}`}
                     />
                   </Table.Td>
-                  {columns.map((field, i) => (
+                  <Table.Td className={classes.td}>
+                    <RespondentCell fields={fields} submission={submission} />
+                  </Table.Td>
+                  {answerColumns.map((field) => (
                     <Table.Td key={field.id} className={classes.td}>
-                      {i === 0 ? (
-                        <div className={classes.firstCell}>
-                          {!submission.read && <span className={classes.unreadDot} aria-label="Unread" />}
-                          <EntryCell
-                            field={field}
-                            submission={submission}
-                            onView={onView}
-                            onOpenAttachment={onOpenAttachment}
-                          />
-                        </div>
-                      ) : (
-                        <EntryCell field={field} submission={submission} onView={onView} onOpenAttachment={onOpenAttachment} />
-                      )}
+                      <EntryCell field={field} submission={submission} onView={onView} onOpenAttachment={onOpenAttachment} />
                     </Table.Td>
                   ))}
                   <Table.Td className={classes.td}>
-                    <Badge size="sm" variant="light" color={STAGE_BY_ID[stageOf(submission)].color}>
-                      {STAGE_BY_ID[stageOf(submission)].label}
-                    </Badge>
+                    <StageLabel submission={submission} />
                   </Table.Td>
-                  {scored && (
-                    <Table.Td className={classes.td}>
-                      {submission.leadScore ?? '—'}
-                    </Table.Td>
-                  )}
+                  {scored && <Table.Td className={`${classes.td} ${classes.score}`}>{submission.leadScore ?? '—'}</Table.Td>}
                   <Table.Td className={classes.td}>
                     <Tooltip label={formatDateTime(submission.createdAt)} withArrow openDelay={300}>
                       <span className={classes.date}>{relativeTime(submission.createdAt)}</span>
@@ -161,42 +161,13 @@ export function EntriesTable({
                   </Table.Td>
                   <Table.Td className={classes.td} onClick={(e) => e.stopPropagation()}>
                     <div className={classes.actions}>
-                      <Tooltip label="View response" withArrow>
-                        <ActionIcon
-                          variant="subtle"
-                          size={28}
-                          radius="md"
-                          className={classes.action}
-                          onClick={() => onView(submission)}
-                          aria-label="View response"
-                        >
-                          <EyeIcon size={15} />
-                        </ActionIcon>
-                      </Tooltip>
-                      <Tooltip label="Download PDF" withArrow>
-                        <ActionIcon
-                          variant="subtle"
-                          size={28}
-                          radius="md"
-                          className={classes.action}
-                          onClick={() => downloadSubmissionPdf(form?.title ?? '', columns, submission)}
-                          aria-label="Download PDF"
-                        >
-                          <FileTypeIcon fileName="response.pdf" size={15} />
-                        </ActionIcon>
-                      </Tooltip>
-                      <Tooltip label="Delete response" withArrow>
-                        <ActionIcon
-                          variant="subtle"
-                          size={28}
-                          radius="md"
-                          className={`${classes.action} ${classes.danger}`}
-                          onClick={() => onDelete(submission)}
-                          aria-label="Delete response"
-                        >
-                          <Trash2Icon size={15} />
-                        </ActionIcon>
-                      </Tooltip>
+                      <RowActions
+                        submission={submission}
+                        onView={() => onView(submission)}
+                        onPdf={() => downloadSubmissionPdf(form?.title ?? '', columns, submission)}
+                        onToggleRead={onToggleRead ? () => onToggleRead(submission) : undefined}
+                        onDelete={() => onDelete(submission)}
+                      />
                     </div>
                   </Table.Td>
                 </Table.Tr>
@@ -204,18 +175,24 @@ export function EntriesTable({
             </Table.Tbody>
           </Table>
         </Table.ScrollContainer>
-      </div>
 
-      {total > 0 && (
-        <div className={classes.footer}>
-          <span className={classes.count}>
-            {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total.toLocaleString()}
-          </span>
-          {total > PAGE_SIZE && (
-            <Pagination size="sm" radius="md" total={Math.ceil(total / PAGE_SIZE)} value={page} onChange={onPageChange} />
-          )}
-        </div>
-      )}
+        {total > 0 && (
+          <div className={classes.footer}>
+            <span className={classes.count}>
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total.toLocaleString()}
+            </span>
+            {total > PAGE_SIZE && (
+              <Pagination
+                size="sm"
+                radius="md"
+                total={Math.ceil(total / PAGE_SIZE)}
+                value={page}
+                onChange={onPageChange}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 }

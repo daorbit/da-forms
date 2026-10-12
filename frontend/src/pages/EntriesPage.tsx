@@ -54,7 +54,6 @@ import classes from "./EntriesPage.module.css";
 import { notify } from "@/lib/notify";
 import { isDemoWorkspace } from "@/lib/demoWorkspace";
 import { STAGE_BY_ID, formHasLeadScore, stageOf } from "@/lib/stages";
-import { PipelineFilters } from "@/components/builder/entries/PipelineFilters";
 import type { PipelineFilterState } from "@/components/builder/entries/entriesTypes";
 import { useLeadPipeline } from "./entries/useLeadPipeline";
 
@@ -391,12 +390,8 @@ export function EntriesPage() {
         onCancelEditingName={() => setEditingName(false)}
         onCopyShareLink={copyShareLink}
         onOpenInsights={() => setInsightsOpen(true)}
-        total={analytics?.submissionCount}
-      />
-
-      <EntriesFilterBar
-        search={search}
-        onSearchChange={setSearch}
+        onExportCsv={() => exportCsv()}
+        onImport={isDemoWorkspace(workspaceId) ? undefined : () => setImportOpen(true)}
         onOpenFiles={
           hasUploadFields
             ? () => {
@@ -412,35 +407,32 @@ export function EntriesPage() {
               }
             : undefined
         }
+        total={analytics?.submissionCount}
+      />
+
+      <EntriesFilterBar
+        search={search}
+        onSearchChange={setSearch}
         status={status}
         day={day}
         customRange={customRange}
         view={view}
         loading={loading}
+        pipeline={pipelineFilter}
+        facets={pipeline.facets}
+        scored={scored}
+        calendarAvailable={hasBooking}
         onFilter={setFilter}
         onCustomRangeChange={setCustomDateRange}
+        onPipelineChange={changePipelineFilter}
         onSetView={(v) => {
           setView(v);
-
           setSelected(new Set());
         }}
-        onCopyShareLink={copyShareLink}
         onRefresh={() => {
           loadSubmissions();
           loadAnalytics();
         }}
-        onExportCsv={() => exportCsv()}
-        calendarAvailable={hasBooking}
-        onImport={isDemoWorkspace(workspaceId) ? undefined : () => setImportOpen(true)}
-        pipelineFilters={
-          <PipelineFilters
-            value={pipelineFilter}
-            facets={pipeline.facets}
-            showStage={view !== "kanban"}
-            scored={scored}
-            onChange={changePipelineFilter}
-          />
-        }
       />
 
       {!form || (loading && submissions.length === 0) ? (
@@ -481,6 +473,7 @@ export function EntriesPage() {
           onToggleSelectAll={toggleSelectAll}
           onPageChange={setPage}
           onMarkRead={markRead}
+          onToggleRead={toggleRead}
           onView={openResponse}
           onDelete={setPendingDelete}
           onCopyShareLink={copyShareLink}

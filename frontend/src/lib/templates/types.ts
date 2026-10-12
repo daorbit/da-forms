@@ -4,6 +4,7 @@ import { makeField } from '@/lib/fieldPalette';
 /** The groups the picker's filter bar offers, in the order they are shown. */
 export const templateCategories = [
   'Featured',
+  'Scheduling',
   'Basics',
   'Support',
   'Commerce',

@@ -27,8 +27,19 @@ export interface WebhookCardData {
   enabled: boolean;
 }
 
+export interface CalendarCardData {
+  kind: 'calendar';
+  id: 'google-calendar';
+  name: string;
+  category: 'scheduling';
+  description: string;
+  connected: boolean;
+  enabled: boolean;
+  account?: string;
+}
+
 type GenericCard = { kind: 'generic' } & AppCardData;
-export type AnyCard = GenericCard | PaymentCardData | WebhookCardData;
+export type AnyCard = GenericCard | PaymentCardData | WebhookCardData | CalendarCardData;
 
 interface Props {
   card: AnyCard;
@@ -41,6 +52,7 @@ const ACTION_HINT: Record<string, string> = {
   notification: 'Connect a channel to get every new response posted there.',
   payments: 'Connect your account to take payments on forms with a payment field.',
   automation: 'Turn it on, then set a URL from any form’s Webhook panel.',
+  scheduling: 'Connect it so booking fields skip your busy times and add Meet links.',
 };
 
 /**
@@ -74,7 +86,11 @@ export function AppCard({ card, onOpen, busy = false }: Props) {
           <Group gap={8} wrap="nowrap">
             <CheckIcon size={14} color="var(--mantine-color-teal-6)" style={{ flexShrink: 0 }} />
             <Text size="xs" c="dimmed" truncate>
-              {card.kind === 'webhook' ? 'On for this workspace' : 'Connected'}
+              {card.kind === 'webhook'
+                ? 'On for this workspace'
+                : card.kind === 'calendar' && card.account
+                  ? card.account
+                  : 'Connected'}
               {lastUsed ? ` · last used ${relativeTime(lastUsed)}` : ''}
             </Text>
             <Anchor

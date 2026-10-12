@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CalendarStatus } from '@/types';
 import { ApiError, disconnectCalendar, getCalendarConnectUrl, getCalendarStatus } from '@/lib/api';
-import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { notify } from '@/lib/notify';
 
 const POPUP_FEATURES = 'width=520,height=680,menubar=no,toolbar=no';
 
-export function useCalendarConnection() {
-  const workspaceId = useWorkspaceId();
+export function useCalendarConnection(workspaceId: string, enabled = true) {
   const [status, setStatus] = useState<CalendarStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const watcher = useRef<number | undefined>(undefined);
@@ -21,11 +19,12 @@ export function useCalendarConnection() {
   );
 
   useEffect(() => {
-    void refresh();
+    if (enabled) void refresh();
     return () => window.clearInterval(watcher.current);
-  }, [refresh]);
+  }, [enabled, refresh]);
 
   useEffect(() => {
+    if (!enabled) return;
     function onMessage(event: MessageEvent) {
       if (event.data?.source !== 'forms-google-calendar') return;
       if (event.data.status === 'connected') notify.success('Google Calendar connected.');
@@ -33,7 +32,7 @@ export function useCalendarConnection() {
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [refresh]);
+  }, [enabled, refresh]);
 
   async function connect() {
     const popup = window.open('', 'forms-google-calendar', POPUP_FEATURES);
@@ -71,5 +70,5 @@ export function useCalendarConnection() {
     }
   }
 
-  return { status, busy, connect, disconnect };
+  return { status, busy, connect, disconnect, refresh };
 }

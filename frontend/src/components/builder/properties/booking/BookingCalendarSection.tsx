@@ -3,6 +3,7 @@ import type { BookingConfig, FormField } from '@/types';
 import { withBookingDefaults } from '@/lib/booking';
 import { flattenFields } from '@/lib/fieldTree';
 import { useCalendarConnection } from '@/hooks/useCalendarConnection';
+import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { PropertySection, ToggleList, ToggleRow } from '../PropertySection';
 import type { SectionProps } from '../types';
 import { CalendarConnectionCard } from './CalendarConnectionCard';
@@ -10,12 +11,13 @@ import classes from './BookingSection.module.css';
 
 interface Props extends SectionProps {
   allFields: FormField[];
+  onOpenIntegrations?: () => void;
 }
 
-export function BookingCalendarSection({ field, set, allFields }: Props) {
+export function BookingCalendarSection({ field, set, allFields, onOpenIntegrations }: Props) {
   const config = withBookingDefaults(field.booking);
   const setBooking = (patch: Partial<BookingConfig>) => set({ booking: { ...config, ...patch } });
-  const { status, busy, connect, disconnect } = useCalendarConnection();
+  const { status } = useCalendarConnection(useWorkspaceId());
   const connected = Boolean(status?.connected);
   const calendars = status?.calendars ?? [];
   const writable = calendars.filter((c) => c.canWrite);
@@ -28,7 +30,13 @@ export function BookingCalendarSection({ field, set, allFields }: Props) {
       title="Google Calendar"
       description="Block times you are busy, add each booking to your calendar and send a Meet link."
     >
-      <CalendarConnectionCard status={status} busy={busy} onConnect={connect} onDisconnect={disconnect} />
+      <CalendarConnectionCard status={status} onManage={onOpenIntegrations} />
+
+      {status && !connected && status.configured && (
+        <div className={classes.hint}>
+          Connect Google Calendar once from Apps. Every booking field in this workspace can then use it.
+        </div>
+      )}
 
       {connected && (
         <>

@@ -4,12 +4,10 @@ import statusClasses from '../PaymentSection.module.css';
 
 interface Props {
   status: CalendarStatus | null;
-  busy: boolean;
-  onConnect: () => void;
-  onDisconnect: () => void;
+  onManage?: () => void;
 }
 
-export function CalendarConnectionCard({ status, busy, onConnect, onDisconnect }: Props) {
+export function CalendarConnectionCard({ status, onManage }: Props) {
   const state = !status ? 'idle' : status.connected ? 'live' : 'off';
   const label = !status
     ? 'Checking Google Calendar…'
@@ -18,7 +16,7 @@ export function CalendarConnectionCard({ status, busy, onConnect, onDisconnect }
       : status.connected
         ? `Connected as ${status.email || 'Google account'}`
         : status.status === 'revoked'
-          ? 'Google sign-in expired — reconnect'
+          ? 'Google sign-in expired'
           : 'Google Calendar not connected';
 
   return (
@@ -27,16 +25,9 @@ export function CalendarConnectionCard({ status, busy, onConnect, onDisconnect }
         <span className={statusClasses.dot} data-state={state} />
         {label}
       </span>
-      {status?.configured && (
-        <Anchor
-          component="button"
-          type="button"
-          size="xs"
-          className={statusClasses.manage}
-          disabled={busy}
-          onClick={status.connected ? onDisconnect : onConnect}
-        >
-          {busy ? 'Working…' : status.connected ? 'Disconnect' : 'Connect'}
+      {status?.configured && onManage && (
+        <Anchor component="button" type="button" size="xs" className={statusClasses.manage} onClick={onManage}>
+          {status.connected ? 'Manage' : 'Connect in Apps'}
         </Anchor>
       )}
     </div>

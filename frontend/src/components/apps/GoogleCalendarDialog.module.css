@@ -1,0 +1,107 @@
+.head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: color-mix(in srgb, #4285f4 12%, transparent);
+}
+
+.headText {
+  min-width: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px 6px;
+}
+
+.label {
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.uses {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+.uses li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.check {
+  flex-shrink: 0;
+  color: var(--mantine-color-teal-6);
+}
+
+.calendars {
+  max-height: 220px;
+  margin-bottom: 14px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.calendar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+}
+
+.calendar + .calendar {
+  border-top: 1px solid var(--border);
+}
+
+.calendarIcon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.calendarName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.readOnly {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.empty {
+  padding: 14px 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.foot {
+  padding: 14px 22px 18px;
+  border-top: 1px solid var(--border);
+}

@@ -2,11 +2,12 @@
   --bk-accent: var(--mantine-color-emerald-6);
   --bk-on-accent: #fff;
   --bk-text: currentColor;
-  --bk-border: color-mix(in srgb, var(--bk-text) 14%, transparent);
+  --bk-border: color-mix(in srgb, var(--bk-text) 11%, transparent);
   --bk-surface: transparent;
-  --bk-muted: color-mix(in srgb, var(--bk-text) 45%, transparent);
-  --bk-tint: color-mix(in srgb, var(--bk-accent) 10%, transparent);
-  --bk-tint-strong: color-mix(in srgb, var(--bk-accent) 18%, transparent);
+  --bk-muted: color-mix(in srgb, var(--bk-text) 50%, transparent);
+  --bk-faint: color-mix(in srgb, var(--bk-text) 28%, transparent);
+  --bk-tint: color-mix(in srgb, var(--bk-accent) 8%, transparent);
+  --bk-tint-strong: color-mix(in srgb, var(--bk-accent) 15%, transparent);
   overflow: hidden;
   border: 1px solid var(--bk-border);
   border-radius: 14px;
@@ -22,16 +23,16 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 18px;
-  padding: 14px 20px;
+  gap: 6px 16px;
+  padding: 12px 18px;
   border-bottom: 1px solid var(--bk-border);
 }
 
 .metaItem {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 13.5px;
+  gap: 6px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--bk-muted);
 }
@@ -41,12 +42,13 @@
   align-items: center;
   gap: 6px;
   margin-left: auto;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--bk-tint);
-  color: var(--bk-accent);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--bk-text);
+}
+
+.chosen svg {
+  color: var(--bk-accent);
 }
 
 .body {
@@ -55,31 +57,31 @@
 }
 
 .body[data-open] {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 200px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 232px);
 }
 
 .calendarPane {
-  padding: 20px 20px 16px;
   min-width: 0;
+  padding: 18px 18px 14px;
 }
 
 .timesPane {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 20px 16px 16px;
+  padding: 18px 16px 0;
   border-left: 1px solid var(--bk-border);
 }
 
 .paneTitle {
-  margin-bottom: 16px;
-  font-size: 15px;
-  font-weight: 650;
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .calendar {
-  max-width: 340px;
+  max-width: 300px;
   margin: 0 auto;
 }
 
@@ -87,48 +89,45 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .monthTitle {
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 600;
 }
 
 .monthNav {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--bk-tint);
   color: var(--bk-accent);
   transition: background-color 140ms ease;
 }
 
 .monthNav:hover:not(:disabled) {
-  background: var(--bk-tint-strong);
+  background: var(--bk-tint);
 }
 
 .monthNav:disabled {
-  background: transparent;
-  color: var(--bk-muted);
-  opacity: 0.5;
+  color: var(--bk-faint);
   cursor: default;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  row-gap: 6px;
+  row-gap: 4px;
   justify-items: center;
 }
 
 .weekday {
-  margin-bottom: 4px;
-  font-size: 11px;
+  padding-bottom: 6px;
+  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--bk-muted);
 }
@@ -137,12 +136,12 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-variant-numeric: tabular-nums;
-  color: var(--bk-muted);
+  color: var(--bk-faint);
   transition: background-color 140ms ease, color 140ms ease;
 }
 
@@ -153,7 +152,7 @@
 .day[data-available] {
   background: var(--bk-tint);
   color: var(--bk-accent);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .day[data-available]:hover {
@@ -169,9 +168,9 @@
 .day[data-today]::after {
   content: '';
   position: absolute;
-  bottom: 5px;
-  width: 4px;
-  height: 4px;
+  bottom: 4px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
   background: currentColor;
 }
@@ -179,10 +178,16 @@
 .timeList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 340px;
+  gap: 6px;
+  max-height: 268px;
+  padding-bottom: 16px;
   overflow-y: auto;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+}
+
+.timeList::-webkit-scrollbar {
+  display: none;
 }
 
 .time,
@@ -192,36 +197,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 46px;
-  border-radius: 8px;
-  font-size: 14.5px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
+  gap: 5px;
+  height: 38px;
   flex-shrink: 0;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .time {
-  border: 1px solid color-mix(in srgb, var(--bk-accent) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bk-accent) 35%, transparent);
   color: var(--bk-accent);
-  transition: border-color 140ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .time:hover {
   border-color: var(--bk-accent);
+  background: var(--bk-tint);
 }
 
 .timeSplit {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 6px;
   flex-shrink: 0;
 }
 
 .timePicked {
-  border: 1px solid var(--bk-accent);
-  background: var(--bk-tint);
-  color: var(--bk-accent);
+  background: color-mix(in srgb, var(--bk-text) 8%, transparent);
+  color: var(--bk-text);
 }
 
 .timeConfirm {
@@ -231,7 +237,7 @@
 }
 
 .timeConfirm:hover {
-  opacity: 0.9;
+  opacity: 0.88;
 }
 
 .timeConfirmed {
@@ -242,7 +248,7 @@
 
 .timesEmpty,
 .notice {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--bk-muted);
 }
 
@@ -254,17 +260,17 @@
 }
 
 .notice {
-  margin-top: 14px;
+  margin-top: 12px;
   text-align: center;
 }
 
 .footer {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 12px 20px;
+  gap: 6px;
+  padding: 10px 18px;
   border-top: 1px solid var(--bk-border);
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--bk-muted);
 }
 
@@ -274,21 +280,23 @@
   }
 
   .timesPane {
+    padding-bottom: 4px;
     border-left: none;
     border-top: 1px solid var(--bk-border);
   }
 
   .timeList {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     max-height: none;
+    mask-image: none;
   }
 
   .timeSplit {
     grid-column: 1 / -1;
   }
 
-  .header .chosen {
+  .chosen {
     margin-left: 0;
   }
 }

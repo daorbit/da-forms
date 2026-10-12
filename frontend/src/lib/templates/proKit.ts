@@ -1,6 +1,32 @@
-import type { FormField, FormTheme } from '@/types';
+import type { BookingConfig, FormField, FormTheme, TimeRange } from '@/types';
 import { studioPresets } from '@/lib/themes/studio';
+import { defaultBookingConfig } from '@/lib/booking';
 import { field } from './types';
+
+export function hours(start: string, end: string): TimeRange[] {
+  return [{ start, end }];
+}
+
+export function week(
+  weekday: TimeRange[],
+  options: { saturday?: TimeRange[]; sunday?: TimeRange[]; days?: number[] } = {}
+): TimeRange[][] {
+  const open = options.days ?? [1, 2, 3, 4, 5];
+  return Array.from({ length: 7 }, (_, day) => {
+    if (day === 6 && options.saturday) return options.saturday;
+    if (day === 0 && options.sunday) return options.sunday;
+    return open.includes(day) ? weekday : [];
+  });
+}
+
+export function booking(label: string, config: Partial<BookingConfig>, overrides: Partial<FormField> = {}): FormField {
+  return field('booking', {
+    label,
+    required: true,
+    booking: { ...defaultBookingConfig(), ...config },
+    ...overrides,
+  });
+}
 
 export function look(id: string, overrides: Partial<FormTheme> = {}, scope: FormTheme['scope'] = 'page'): FormTheme {
   const preset = studioPresets.find((p) => p.id === id);

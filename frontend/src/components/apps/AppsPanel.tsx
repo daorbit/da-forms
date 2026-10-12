@@ -4,13 +4,16 @@ import { InfoIcon, TriangleAlertIcon } from 'lucide-react';
 import classes from './apps.module.css';
 import { listApps, getPaymentSettings, getWebhookApp, saveWebhookApp, ApiError } from '@/lib/api';
 import type { AppCard as AppCardData, PaymentSettings, PaymentProvider } from '@/types';
-import { AppCard, type PaymentCardData, type WebhookCardData } from './AppCard';
+import { AppCard, type CalendarCardData, type PaymentCardData, type WebhookCardData } from './AppCard';
 import { AppConnectDialog } from './AppConnectDialog';
+import { GoogleCalendarDialog } from './GoogleCalendarDialog';
+import { useCalendarConnection } from '@/hooks/useCalendarConnection';
 import { PaymentsModal } from '../builder/PaymentsModal';
 
 const CATEGORY_TITLE = {
   email: 'Email delivery',
   payments: 'Payments',
+  scheduling: 'Scheduling',
   notification: 'Notifications',
   crm: 'CRM',
   automation: 'Automation',
@@ -21,12 +24,13 @@ type Category = keyof typeof CATEGORY_TITLE;
 const CATEGORY_HINT: Record<Category, string> = {
   email: 'Where this workspace’s notification emails are sent from. One provider is active at a time.',
   payments: 'Gateways your forms can charge through. Keys stay encrypted on the server.',
+  scheduling: 'Calendars your booking fields check for busy times and add events to.',
   notification: 'Places a new response can be announced.',
   crm: 'Tools a response can be copied into.',
   automation: 'Send each submission on to your own systems.',
 };
 
-const CATEGORY_ORDER: Category[] = ['email', 'payments', 'notification', 'crm', 'automation'];
+const CATEGORY_ORDER: Category[] = ['email', 'payments', 'scheduling', 'notification', 'crm', 'automation'];
 
 const PAYMENT_PROVIDERS: { id: PaymentProvider; name: string; description: string }[] = [
   { id: 'razorpay', name: 'Razorpay', description: 'Take payments on your forms through Razorpay.' },
@@ -67,6 +71,13 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [payFocus, setPayFocus] = useState<PaymentProvider | null>(null);
   const [webhookBusy, setWebhookBusy] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const calendar = useCalendarConnection(workspaceId, !isDemo);
+  const refreshCalendar = calendar.refresh;
+
+  useEffect(() => {
+    if (!isDemo && reloadKey) void refreshCalendar();
+  }, [isDemo, reloadKey, refreshCalendar]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -106,7 +117,21 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
       connected: webhookEnabled,
       enabled: webhookEnabled,
     };
-    const all = [...generic, ...paymentCards(payments), webhookCard];
+    const calendarCards: CalendarCardData[] = calendar.status?.configured
+      ? [
+          {
+            kind: 'calendar',
+            id: 'google-calendar',
+            name: 'Google Calendar',
+            category: 'scheduling',
+            description: 'Block busy times on booking fields, add every booking to your calendar and send a Google Meet link.',
+            connected: calendar.status.connected,
+            enabled: calendar.status.connected,
+            account: calendar.status.email,
+          },
+        ]
+      : [];
+    const all = [...generic, ...paymentCards(payments), ...calendarCards, webhookCard];
     const map = new Map<Category, (typeof all)[number][]>();
     for (const card of all) {
       const list = map.get(card.category as Category) ?? [];
@@ -117,7 +142,7 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
       category: c,
       cards: map.get(c)!,
     }));
-  }, [apps, payments, webhookEnabled]);
+  }, [apps, payments, webhookEnabled, calendar.status]);
 
   function replaceCard(card: AppCardData) {
     setApps((prev) => prev.map((a) => (a.id === card.id ? card : a)));
@@ -168,10 +193,14 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
                 <AppCard
                   key={card.id}
                   card={card}
-                  busy={card.kind === 'webhook' ? webhookBusy : false}
+                  busy={card.kind === 'webhook' ? webhookBusy : card.kind === 'calendar' ? calendar.busy : false}
                   onOpen={() => {
                     if (card.kind === 'payment') setPayFocus(card.id as PaymentProvider);
                     else if (card.kind === 'webhook') toggleWebhook();
+                    else if (card.kind === 'calendar') {
+                      if (card.connected) setCalendarOpen(true);
+                      else void calendar.connect();
+                    }
                     else setOpenId(card.id);
                   }}
                 />
@@ -189,6 +218,17 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
             onClose={() => setOpenId(null)}
             onSaved={replaceCard}
             onDisconnected={setApps}
+          />
+          <GoogleCalendarDialog
+            opened={calendarOpen && Boolean(calendar.status?.connected)}
+            status={calendar.status}
+            busy={calendar.busy}
+            onClose={() => setCalendarOpen(false)}
+            onReconnect={() => void calendar.connect()}
+            onDisconnect={async () => {
+              await calendar.disconnect();
+              setCalendarOpen(false);
+            }}
           />
           <PaymentsModal
             opened={payFocus !== null}

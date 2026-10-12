@@ -71,6 +71,24 @@ export function SmtpLogo({ height = 20 }: LogoProps) {
   );
 }
 
+export function GoogleCalendarLogo({ height = 20 }: LogoProps) {
+  return (
+    <svg height={height} width={height} viewBox="0 0 48 48" role="img" aria-label="Google Calendar" style={{ display: "block" }}>
+      <path fill="#fff" d="M37 11H11v26h26z" />
+      <path fill="#EA4335" d="M37 48l11-11H37z" />
+      <path fill="#FBBC04" d="M48 11H37v26h11z" />
+      <path fill="#34A853" d="M37 37H11v11h26z" />
+      <path fill="#188038" d="M0 37v7.33A3.67 3.67 0 0 0 3.67 48H11V37z" />
+      <path fill="#1967D2" d="M48 11V3.67A3.67 3.67 0 0 0 44.33 0H37v11z" />
+      <path fill="#4285F4" d="M37 0H3.67A3.67 3.67 0 0 0 0 3.67V37h11V11h26z" />
+      <path
+        fill="#4285F4"
+        d="M17.03 31.87c-.97-.66-1.65-1.62-2.01-2.88l2.25-.93c.2.78.56 1.38 1.07 1.8.5.43 1.12.64 1.84.64.74 0 1.37-.22 1.9-.67.53-.45.79-1.02.79-1.71 0-.71-.28-1.29-.84-1.74-.56-.45-1.26-.67-2.1-.67h-1.3v-2.23h1.17c.72 0 1.33-.2 1.82-.59.5-.39.74-.92.74-1.6 0-.6-.22-1.08-.66-1.44-.44-.36-1-.54-1.67-.54-.66 0-1.18.18-1.57.53a3.1 3.1 0 0 0-.85 1.3l-2.22-.93c.29-.84.84-1.58 1.64-2.22.8-.64 1.82-.96 3.06-.96.92 0 1.75.18 2.48.53.73.36 1.31.85 1.72 1.47.42.63.62 1.33.62 2.11 0 .8-.19 1.47-.58 2.03-.38.55-.86.98-1.41 1.27v.13a4.3 4.3 0 0 1 1.81 1.41c.47.63.7 1.39.7 2.27 0 .88-.22 1.67-.67 2.36-.45.69-1.07 1.24-1.86 1.63-.79.4-1.68.6-2.67.6a5.52 5.52 0 0 1-3.17-1.01zM30.8 20.6l-2.47 1.79-1.24-1.88 4.43-3.2h1.7V32.4H30.8z"
+      />
+    </svg>
+  );
+}
+
 /** Razorpay's mark alone — the two slashes from its logo, without the name. */
 function RazorpayMark({ size = 24 }: { size?: number }) {
   return (
@@ -125,6 +143,7 @@ export const APP_TINT: Record<string, string> = {
   webhook: "#8B5CF6",
   slack: "#4A154B",
   discord: "#5865F2",
+  "google-calendar": "#4285F4",
 };
 
 export function isWordmark(appId: string): boolean {
@@ -143,6 +162,7 @@ export function AppLogo({
   if (appId === "webhook") return <WebhookIcon size={height} />;
   if (appId === "slack") return <SlackLogo height={height} />;
   if (appId === "discord") return <DiscordLogo height={height} />;
+  if (appId === "google-calendar") return <GoogleCalendarLogo height={height} />;
   if (isWordmark(appId)) {
     return (
       <GatewayLogo

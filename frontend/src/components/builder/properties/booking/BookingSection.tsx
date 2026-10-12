@@ -3,14 +3,17 @@ import { NumberInput, SegmentedControl, Select } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import type { BookingConfig, BookingTimeFormat } from '@/types';
 import { DURATION_OPTIONS, timeZoneOptions, withBookingDefaults } from '@/lib/booking';
+import { DocsLink } from '@/components/ui/DocsLink';
+import { DOCS } from '@/lib/docs';
 import { FieldPair, PropertySection } from '../PropertySection';
 import type { SectionProps } from '../types';
 import { WeeklyHoursEditor } from './WeeklyHoursEditor';
-import { DocsLink } from '@/components/ui/DocsLink';
-import { DOCS } from '@/lib/docs';
 import statusClasses from '../PaymentSection.module.css';
+import classes from './BookingSection.module.css';
 
 const optionalNumber = (v: string | number) => (v === '' ? undefined : Number(v));
+
+const numberProps = { hideControls: true, allowNegative: false, allowDecimal: false } as const;
 
 export function BookingSection({ field, set }: SectionProps) {
   const config = withBookingDefaults(field.booking);
@@ -33,49 +36,55 @@ export function BookingSection({ field, set }: SectionProps) {
             allowDeselect={false}
           />
           <NumberInput
-            label="Start a slot every"
-            description="Minutes. Blank uses the duration."
+            {...numberProps}
+            label="Slot interval"
+            placeholder="Same as duration"
+            suffix=" min"
             min={5}
-            step={5}
             value={config.interval ?? ''}
             onChange={(v) => setBooking({ interval: optionalNumber(v) })}
           />
         </FieldPair>
         <FieldPair>
           <NumberInput
+            {...numberProps}
             label="Buffer before"
-            description="Minutes kept free."
-            min={0}
-            step={5}
+            placeholder="None"
+            suffix=" min"
             value={config.bufferBefore ?? ''}
             onChange={(v) => setBooking({ bufferBefore: optionalNumber(v) })}
           />
           <NumberInput
+            {...numberProps}
             label="Buffer after"
-            description="Minutes kept free."
-            min={0}
-            step={5}
+            placeholder="None"
+            suffix=" min"
             value={config.bufferAfter ?? ''}
             onChange={(v) => setBooking({ bufferAfter: optionalNumber(v) })}
           />
         </FieldPair>
         <FieldPair>
           <NumberInput
+            {...numberProps}
             label="Seats per slot"
-            description="People who can book the same time."
             min={1}
             max={500}
             value={config.seats ?? 1}
             onChange={(v) => setBooking({ seats: Math.max(1, Number(v) || 1) })}
           />
           <NumberInput
-            label="Max bookings a day"
-            description="Optional."
+            {...numberProps}
+            label="Daily limit"
+            placeholder="Unlimited"
+            suffix=" bookings"
             min={1}
             value={config.dailyLimit ?? ''}
             onChange={(v) => setBooking({ dailyLimit: optionalNumber(v) })}
           />
         </FieldPair>
+        <div className={classes.hint}>
+          Buffers keep time free around other meetings. More than one seat lets a group book the same slot.
+        </div>
       </PropertySection>
 
       <PropertySection title="Availability" description="When people can book you, in your own timezone.">
@@ -90,26 +99,29 @@ export function BookingSection({ field, set }: SectionProps) {
         <WeeklyHoursEditor weekly={config.weekly} onChange={(weekly) => setBooking({ weekly })} />
         <FieldPair>
           <NumberInput
+            {...numberProps}
             label="Minimum notice"
-            description="Hours before a slot."
-            min={0}
-            value={(config.minNotice ?? 0) / 60}
-            onChange={(v) => setBooking({ minNotice: Math.round((Number(v) || 0) * 60) })}
+            suffix=" hours"
+            value={Math.round((config.minNotice ?? 0) / 60)}
+            onChange={(v) => setBooking({ minNotice: (Number(v) || 0) * 60 })}
           />
           <NumberInput
-            label="Book up to"
-            description="Days into the future."
+            {...numberProps}
+            label="Booking window"
+            suffix=" days"
             min={1}
             max={365}
             value={config.maxDaysAhead ?? 30}
             onChange={(v) => setBooking({ maxDaysAhead: Math.max(1, Number(v) || 30) })}
           />
         </FieldPair>
+        <div className={classes.hint}>
+          Nobody can book closer than the notice, or further ahead than the window.
+        </div>
         <DatePickerInput
           type="multiple"
           label="Days off"
-          description="Holidays and other dates nobody can book."
-          placeholder="Pick dates"
+          placeholder="Pick holidays and other closed dates"
           clearable
           value={config.blockedDates ?? []}
           onChange={(dates) => setBooking({ blockedDates: dates.length ? [...dates].sort() : undefined })}

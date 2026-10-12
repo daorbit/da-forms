@@ -70,6 +70,18 @@ export function formatBookingRange(
   return `${formatSlotDay(start, timeZone)}, ${formatSlotTime(start, timeZone, timeFormat)} – ${formatSlotTime(end, timeZone, timeFormat)}`;
 }
 
+export function formatShortRange(
+  start: string,
+  end: string,
+  timeZone: string,
+  timeFormat: BookingTimeFormat = '12h'
+): string {
+  const day = new Intl.DateTimeFormat('en-GB', { timeZone, weekday: 'short', day: 'numeric', month: 'short' }).format(
+    new Date(start)
+  );
+  return `${day} · ${formatSlotTime(start, timeZone, timeFormat)} – ${formatSlotTime(end, timeZone, timeFormat)}`;
+}
+
 export function timeZoneLabel(timeZone: string): string {
   try {
     const name = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'long' })

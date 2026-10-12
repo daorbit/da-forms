@@ -7,7 +7,7 @@ import { useBookingSlots } from '@/hooks/useBookingSlots';
 import {
   bookingEnd,
   browserTimeZone,
-  formatBookingRange,
+  formatShortRange,
   formatSlotTime,
   timeZoneLabel,
   withBookingDefaults,
@@ -102,8 +102,8 @@ export function BookingInput({
         )}
         {value && (
           <span className={classes.chosen}>
-            <CalendarCheckIcon size={14} />
-            {formatBookingRange(value, bookingEnd(field, value), zone, config.timeFormat)}
+            <CalendarCheckIcon size={15} />
+            {formatShortRange(value, bookingEnd(field, value), zone, config.timeFormat)}
           </span>
         )}
       </div>

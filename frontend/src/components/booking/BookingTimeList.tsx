@@ -45,7 +45,7 @@ export function BookingTimeList({
         if (iso === confirmed) {
           return (
             <UnstyledButton key={iso} type="button" className={classes.timeConfirmed} onClick={() => onPick(iso)}>
-              <CheckIcon size={16} strokeWidth={2.6} />
+              <CheckIcon size={14} strokeWidth={2.6} />
               {time}
             </UnstyledButton>
           );

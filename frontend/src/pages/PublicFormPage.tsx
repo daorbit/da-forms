@@ -289,19 +289,19 @@ export function PublicFormPage() {
 
   if (error)
     return (
-      <Center mih="100dvh" py={0}>
+      <Center
+        mih="100dvh"
+        py={0}
+        className="da-forms-light-surface"
+        data-mantine-color-scheme="light"
+        style={{ background: "#fff" }}
+      >
         <Text c="dimmed">Form not found.</Text>
       </Center>
     );
 
   if (!form || ((editToken || resumeToken) && !editData && !editError))
-    return (
-      <FormPage>
-        <Center mih="100dvh">
-          <FormLoader />
-        </Center>
-      </FormPage>
-    );
+    return <FormLoader fullPage />;
 
   if (editError)
     return (

@@ -1,5 +1,6 @@
 import type { FieldType, FormField } from '@/types';
 import { flattenFields } from '@/lib/fieldTree';
+import { STAGES } from '@/lib/stages';
 
 const NOT_IMPORTABLE: FieldType[] = [
   'heading',
@@ -28,24 +29,81 @@ const MULTI: FieldType[] = ['checkbox', 'multipleChoice', 'chips'];
 const SINGLE: FieldType[] = ['select', 'radio', 'likert', 'country'];
 const TOGGLES: FieldType[] = ['terms', 'decisionBox'];
 
+export type MetaKey = 'stage' | 'assignee' | 'tags' | 'note' | 'submittedAt' | 'meetLink' | 'eventLink';
+
 export interface ImportColumn {
-  field: FormField;
+  id: string;
   header: string;
+  required: boolean;
+  options?: string[];
+  field?: FormField;
+  meta?: MetaKey;
+}
+
+type BookingSetup = { calendar: boolean; meet: boolean };
+
+const META: { key: MetaKey; header: string; when?: (setup: BookingSetup) => boolean }[] = [
+  { key: 'stage', header: 'Stage' },
+  { key: 'assignee', header: 'Assignee' },
+  { key: 'tags', header: 'Tags' },
+  { key: 'note', header: 'Note' },
+  { key: 'submittedAt', header: 'Submitted at' },
+  { key: 'meetLink', header: 'Google Meet link', when: (setup) => setup.meet },
+  { key: 'eventLink', header: 'Calendar event link', when: (setup) => setup.calendar },
+];
+
+export function metaId(key: MetaKey): string {
+  return `__${key}`;
 }
 
 export function importColumns(fields: FormField[]): ImportColumn[] {
+  const flat = flattenFields(fields);
   const seen = new Map<string, number>();
-  return flattenFields(fields)
+  const unique = (base: string) => {
+    const count = (seen.get(base.toLowerCase()) ?? 0) + 1;
+    seen.set(base.toLowerCase(), count);
+    return count > 1 ? `${base} (${count})` : base;
+  };
+
+  const answers: ImportColumn[] = flat
     .filter((field) => !NOT_IMPORTABLE.includes(field.type))
-    .map((field) => {
-      const base = (field.label || 'Untitled').trim();
-      const count = (seen.get(base.toLowerCase()) ?? 0) + 1;
-      seen.set(base.toLowerCase(), count);
-      return { field, header: count > 1 ? `${base} (${count})` : base };
-    });
+    .map((field) => ({
+      id: field.id,
+      header: unique((field.label || 'Untitled').trim()),
+      required: Boolean(field.required),
+      options: field.options,
+      field,
+    }));
+
+  const booking = flat.find((field) => field.type === 'booking')?.booking;
+  const setup: BookingSetup = {
+    calendar: Boolean(booking?.syncCalendar),
+    meet: Boolean(booking?.syncCalendar && booking.addMeet),
+  };
+  const meta: ImportColumn[] = META.filter((m) => !m.when || m.when(setup)).map((m) => ({
+    id: metaId(m.key),
+    header: unique(m.header),
+    required: false,
+    options: m.key === 'stage' ? STAGES.map((s) => s.label) : undefined,
+    meta: m.key,
+  }));
+
+  return [...answers, ...meta];
 }
 
-export function formatHint(field: FormField): string {
+const META_HINT: Record<MetaKey, string> = {
+  stage: 'New, Contacted, Qualified, Won or Lost',
+  assignee: 'Who handles this lead',
+  tags: 'Labels, separated by commas',
+  note: 'An internal note',
+  submittedAt: 'Date and time, e.g. 2026-10-12 14:30',
+  meetLink: 'Existing Meet link, if the meeting has one',
+  eventLink: 'Existing Google Calendar event link',
+};
+
+export function columnHint(column: ImportColumn): string {
+  if (column.meta) return META_HINT[column.meta];
+  const field = column.field!;
   switch (field.type) {
     case 'date':
       return 'Date, e.g. 2026-10-12';
@@ -62,7 +120,6 @@ export function formatHint(field: FormField): string {
     case 'timeRange':
       return 'e.g. 09:00 to 17:00';
     case 'yesNo':
-      return 'Yes or No';
     case 'terms':
     case 'decisionBox':
       return 'Yes or No';
@@ -84,6 +141,11 @@ export function formatHint(field: FormField): string {
       if (SINGLE.includes(field.type) && field.options?.length) return 'One of the listed options';
       return 'Text';
   }
+}
+
+export function hasDropdown(column: ImportColumn): boolean {
+  if (column.meta === 'stage') return true;
+  return Boolean(column.field && ['select', 'radio', 'likert'].includes(column.field.type) && column.options?.length);
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -115,9 +177,8 @@ function isoDay(text: string): string {
   return text;
 }
 
-function matchOption(field: FormField, value: string): string {
-  const option = field.options?.find((o) => o.toLowerCase() === value.toLowerCase());
-  return option ?? value;
+function matchOption(options: string[] | undefined, value: string): string {
+  return options?.find((o) => o.toLowerCase() === value.toLowerCase()) ?? value;
 }
 
 const TRUTHY = ['yes', 'y', 'true', '1', 'x', '✓'];
@@ -139,13 +200,26 @@ function localInstant(value: Date | string): string {
   return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString();
 }
 
-export function normalizeValue(field: FormField, value: unknown): string {
+function instantOf(value: unknown): string {
+  if (value instanceof Date) return localInstant(value);
+  const raw = String(value).trim();
+  return raw ? localInstant(raw) : '';
+}
+
+function normalizeMeta(key: MetaKey, value: unknown): string {
+  if (key === 'submittedAt') return instantOf(value);
+  const text = String(value).trim();
+  if (!text) return '';
+  if (key === 'stage') return STAGES.find((s) => s.label.toLowerCase() === text.toLowerCase() || s.id === text.toLowerCase())?.id ?? '';
+  if (key === 'meetLink' || key === 'eventLink') return /^https:\/\//i.test(text) ? text : '';
+  return text;
+}
+
+export function normalizeValue(column: ImportColumn, value: unknown): string {
   if (value === null || value === undefined) return '';
-  if (field.type === 'booking') {
-    if (value instanceof Date) return localInstant(value);
-    const raw = String(value).trim();
-    return raw ? localInstant(raw) : '';
-  }
+  if (column.meta) return normalizeMeta(column.meta, value);
+  const field = column.field!;
+  if (field.type === 'booking') return instantOf(value);
   if (value instanceof Date) return fromDate(field.type, value);
   const text = String(value).trim();
   if (!text) return '';
@@ -166,11 +240,11 @@ export function normalizeValue(field: FormField, value: unknown): string {
       if (MULTI.includes(field.type)) {
         return text
           .split(/[,;]/)
-          .map((part) => matchOption(field, part.trim()))
+          .map((part) => matchOption(field.options, part.trim()))
           .filter(Boolean)
           .join(', ');
       }
-      if (SINGLE.includes(field.type)) return matchOption(field, text);
+      if (SINGLE.includes(field.type)) return matchOption(field.options, text);
       return text;
   }
 }

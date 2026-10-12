@@ -2,7 +2,9 @@ import { Switch } from '@mantine/core';
 import { CheckIcon, FileSpreadsheetIcon, MinusIcon } from 'lucide-react';
 import type { ImportColumn } from '@/lib/leadImport/importColumns';
 import type { ParsedImport } from '@/lib/leadImport/leadWorkbook';
-import { formatAnswer } from '../entriesTypes';
+import type { SubmissionStage } from '@/types';
+import { STAGE_BY_ID } from '@/lib/stages';
+import { formatAnswer, formatDateTime } from '../entriesTypes';
 import classes from './ImportLeadsModal.module.css';
 
 const PREVIEW_ROWS = 3;
@@ -17,9 +19,54 @@ interface Props {
   onAsTestChange: (value: boolean) => void;
 }
 
+function previewText(column: ImportColumn, value: string): string {
+  if (!value) return '';
+  if (column.meta === 'stage') return STAGE_BY_ID[value as SubmissionStage]?.label ?? value;
+  if (column.meta === 'submittedAt') return formatDateTime(value);
+  if (column.meta) return value;
+  return formatAnswer(column.field!.type, value);
+}
+
+function ColumnStatus({
+  title,
+  columns,
+  matched,
+  optional,
+}: {
+  title: string;
+  columns: ImportColumn[];
+  matched: Set<string>;
+  optional?: boolean;
+}) {
+  if (!columns.length) return null;
+  return (
+    <div className={classes.block}>
+      <span className={classes.blockTitle}>
+        {title}
+        {optional && <span className={classes.blockHint}>Optional</span>}
+      </span>
+      <ul className={classes.mapList}>
+        {columns.map((column) => {
+          const found = matched.has(column.id);
+          return (
+            <li key={column.id} className={classes.mapItem} data-found={found || undefined}>
+              <span className={classes.mapMark}>{found ? <CheckIcon size={12} /> : <MinusIcon size={12} />}</span>
+              <span className={classes.mapName}>{column.header}</span>
+              <span className={classes.mapState}>{found ? 'Found' : optional ? 'Not used' : 'Not in file'}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function ImportPreview({ fileName, columns, parsed, asTest, disabled, onAsTestChange }: Props) {
-  const matched = new Set(parsed.matched.map((c) => c.field.id));
-  const cols = parsed.matched.slice(0, PREVIEW_COLS);
+  const matched = new Set(parsed.matched.map((c) => c.id));
+  const cols = [...parsed.matched.filter((c) => !c.meta), ...parsed.matched.filter((c) => c.meta)].slice(0, PREVIEW_COLS);
+  const questions = columns.filter((c) => !c.meta);
+  const details = columns.filter((c) => c.meta);
+  const foundQuestions = questions.filter((c) => matched.has(c.id)).length;
   const notes = [
     parsed.truncated && 'Only the first 2,000 rows will be imported.',
     parsed.missingRequired > 0 &&
@@ -37,7 +84,7 @@ export function ImportPreview({ fileName, columns, parsed, asTest, disabled, onA
         <div className={classes.summaryBody}>
           <span className={classes.summaryName}>{fileName}</span>
           <span className={classes.summaryMeta}>
-            {parsed.matched.length} of {columns.length} columns found
+            {foundQuestions} of {questions.length} questions found
           </span>
         </div>
         <div className={classes.summaryCount}>
@@ -46,21 +93,8 @@ export function ImportPreview({ fileName, columns, parsed, asTest, disabled, onA
         </div>
       </div>
 
-      <div className={classes.block}>
-        <span className={classes.blockTitle}>Columns</span>
-        <ul className={classes.mapList}>
-          {columns.map((column) => {
-            const found = matched.has(column.field.id);
-            return (
-              <li key={column.field.id} className={classes.mapItem} data-found={found || undefined}>
-                <span className={classes.mapMark}>{found ? <CheckIcon size={12} /> : <MinusIcon size={12} />}</span>
-                <span className={classes.mapName}>{column.header}</span>
-                <span className={classes.mapState}>{found ? 'Found' : 'Not in file'}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+      <ColumnStatus title="Form questions" columns={questions} matched={matched} />
+      <ColumnStatus title="Lead details" columns={details} matched={matched} optional />
 
       <div className={classes.block}>
         <span className={classes.blockTitle}>Preview</span>
@@ -69,7 +103,7 @@ export function ImportPreview({ fileName, columns, parsed, asTest, disabled, onA
             <thead>
               <tr>
                 {cols.map((column) => (
-                  <th key={column.field.id}>{column.header}</th>
+                  <th key={column.id}>{column.header}</th>
                 ))}
               </tr>
             </thead>
@@ -77,7 +111,7 @@ export function ImportPreview({ fileName, columns, parsed, asTest, disabled, onA
               {parsed.rows.slice(0, PREVIEW_ROWS).map((row, i) => (
                 <tr key={i}>
                   {cols.map((column) => (
-                    <td key={column.field.id}>{formatAnswer(column.field.type, row[column.field.id] ?? '') || '—'}</td>
+                    <td key={column.id}>{previewText(column, row[column.id] ?? '') || '—'}</td>
                   ))}
                 </tr>
               ))}

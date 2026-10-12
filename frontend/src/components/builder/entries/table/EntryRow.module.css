@@ -1,34 +1,14 @@
 .respondent {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
 }
 
-.avatar {
-  position: relative;
-  display: grid;
+.unreadDot {
   flex-shrink: 0;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: var(--surface-2);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--text-2);
-}
-
-.avatar[data-unread]::after {
-  content: '';
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  width: 9px;
-  height: 9px;
-  border: 2px solid var(--surface);
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--accent);
 }
@@ -49,7 +29,7 @@
   color: var(--text);
 }
 
-[data-unread] .name {
+.respondent[data-unread] .name {
   font-weight: 600;
 }
 

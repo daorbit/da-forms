@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Button, Menu } from '@mantine/core';
 import { ChevronDownIcon, DownloadIcon, FileSpreadsheetIcon, UsersIcon } from 'lucide-react';
-import { formatHint, type ImportColumn } from '@/lib/leadImport/importColumns';
+import { columnHint, type ImportColumn } from '@/lib/leadImport/importColumns';
 import { sampleRows } from '@/lib/leadImport/sampleLeads';
 import classes from './ImportLeadsModal.module.css';
 
@@ -25,6 +25,7 @@ function letter(index: number): string {
 
 export function ImportTemplateStep({ columns, busy, onDownload }: Props) {
   const samples = useMemo(() => sampleRows(columns, PREVIEW_ROWS), [columns]);
+  const questions = columns.filter((column) => !column.meta).length;
 
   return (
     <section className={classes.help}>
@@ -32,7 +33,7 @@ export function ImportTemplateStep({ columns, busy, onDownload }: Props) {
         <div className={classes.helpTitles}>
           <span className={classes.helpTitle}>Template</span>
           <span className={classes.helpMeta}>
-            {columns.length} {columns.length === 1 ? 'column' : 'columns'} from this form ·{' '}
+            {questions} {questions === 1 ? 'question' : 'questions'} · {columns.length - questions} lead details ·{' '}
             <span className={classes.required}>*</span> required
           </span>
         </div>
@@ -78,7 +79,7 @@ export function ImportTemplateStep({ columns, busy, onDownload }: Props) {
             <tr>
               <th className={classes.sheetCorner} />
               {columns.map((column, i) => (
-                <th key={column.field.id} className={classes.sheetLetter}>
+                <th key={column.id} className={classes.sheetLetter}>
                   {letter(i)}
                 </th>
               ))}
@@ -88,12 +89,12 @@ export function ImportTemplateStep({ columns, busy, onDownload }: Props) {
             <tr>
               <td className={classes.sheetRowNum}>1</td>
               {columns.map((column) => (
-                <td key={column.field.id} className={classes.sheetHeader}>
+                <td key={column.id} className={classes.sheetHeader} data-meta={column.meta ? true : undefined}>
                   <span className={classes.sheetHeaderName}>
                     {column.header}
-                    {column.field.required && <span className={classes.required}> *</span>}
+                    {column.required && <span className={classes.required}> *</span>}
                   </span>
-                  <span className={classes.sheetHint}>{formatHint(column.field)}</span>
+                  <span className={classes.sheetHint}>{columnHint(column)}</span>
                 </td>
               ))}
             </tr>
@@ -101,7 +102,7 @@ export function ImportTemplateStep({ columns, busy, onDownload }: Props) {
               <tr key={r}>
                 <td className={classes.sheetRowNum}>{r + 2}</td>
                 {row.map((value, c) => (
-                  <td key={columns[c].field.id} className={classes.sheetCell}>
+                  <td key={columns[c].id} className={classes.sheetCell}>
                     {value || '—'}
                   </td>
                 ))}

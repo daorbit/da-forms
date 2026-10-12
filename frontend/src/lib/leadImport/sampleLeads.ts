@@ -1,5 +1,5 @@
 import type { FormField } from '@/types';
-import type { ImportColumn } from './importColumns';
+import type { ImportColumn, MetaKey } from './importColumns';
 
 const PEOPLE = [
   { first: 'Aarav', last: 'Sharma', company: 'Northwind Labs', city: 'Bengaluru' },
@@ -96,6 +96,26 @@ function sampleValue(field: FormField, i: number): string {
   }
 }
 
+function sampleMeta(key: MetaKey, i: number): string {
+  switch (key) {
+    case 'stage':
+      return ['New', 'Contacted', 'Qualified', 'Won', 'Lost'][i % 5];
+    case 'assignee':
+      return ['Ajay', 'Neha', '', 'Ajay', 'Rahul'][i % 5];
+    case 'tags':
+      return ['webinar', 'webinar, priority', 'referral', 'event', 'priority'][i % 5];
+    case 'note':
+      return ['Asked for a pricing call', 'Follow up next week', '', 'Signed the annual plan', 'Budget not approved'][i % 5];
+    case 'submittedAt':
+      return `${dayOffset(-(i + 1))} ${pad(9 + i)}:15`;
+    case 'meetLink':
+    case 'eventLink':
+      return '';
+  }
+}
+
 export function sampleRows(columns: ImportColumn[], count = 5): string[][] {
-  return Array.from({ length: count }, (_, i) => columns.map(({ field }) => sampleValue(field, i)));
+  return Array.from({ length: count }, (_, i) =>
+    columns.map((column) => (column.meta ? sampleMeta(column.meta, i) : sampleValue(column.field!, i))),
+  );
 }

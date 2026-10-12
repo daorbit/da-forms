@@ -197,6 +197,10 @@
   vertical-align: top;
 }
 
+.sheetHeader[data-meta] {
+  background: color-mix(in srgb, var(--mantine-color-indigo-6) 7%, var(--surface));
+}
+
 .sheetHeaderName {
   display: block;
   font-weight: 600;
@@ -302,6 +306,12 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text-2);
+}
+
+.blockHint {
+  margin-left: 8px;
+  font-weight: 400;
+  color: var(--muted);
 }
 
 .mapList {

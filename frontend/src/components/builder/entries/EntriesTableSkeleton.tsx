@@ -38,13 +38,10 @@ export function EntriesTableSkeleton() {
                   <Skeleton height={14} width={14} radius={4} />
                 </Table.Td>
                 <Table.Td className={classes.td}>
-                  <Group gap={12} wrap="nowrap">
-                    <Skeleton height={34} circle />
-                    <Stack gap={6} w="100%">
-                      <Skeleton height={10} width="60%" radius="sm" />
-                      <Skeleton height={8} width="80%" radius="sm" />
-                    </Stack>
-                  </Group>
+                  <Stack gap={6}>
+                    <Skeleton height={10} width="60%" radius="sm" />
+                    <Skeleton height={8} width="80%" radius="sm" />
+                  </Stack>
                 </Table.Td>
                 {Array.from({ length: SKELETON_COLS }).map((_, j) => (
                   <Table.Td key={j} className={classes.td}>

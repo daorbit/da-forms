@@ -13,10 +13,8 @@ export function RespondentCell({ fields, submission }: Props) {
   const secondary = who.name ? who.email : who.phone;
 
   return (
-    <div className={classes.respondent}>
-      <span className={classes.avatar} data-unread={!submission.read || undefined}>
-        {who.initials}
-      </span>
+    <div className={classes.respondent} data-unread={!submission.read || undefined}>
+      {!submission.read && <span className={classes.unreadDot} aria-label="Unread" />}
       <span className={classes.who}>
         <span className={classes.name}>{primary}</span>
         {secondary && <span className={classes.sub}>{secondary}</span>}

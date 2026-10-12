@@ -1,33 +1,23 @@
-import type { FormTheme } from '@/types';
 import classes from './FormLoader.module.css';
 
 interface Props {
-  theme?: FormTheme;
+  brand?: string;
   label?: string;
 }
 
- 
-export function FormLoader({ theme, label = 'Loading form' }: Props) {
-  const accent = theme?.accentColor ?? '#5b5bd6';
-
+export function FormLoader({ brand = 'Quantalog', label }: Props) {
   return (
-    <div
-      className={classes.wrap}
-      role="status"
-      aria-live="polite"
-      style={
-        {
-          '--da-loader-accent': accent,
-          '--da-loader-label': theme?.labelColor ?? 'rgba(0, 0, 0, 0.55)',
-        } as React.CSSProperties
-      }
-    >
-      <div className={classes.mark}>
-        <span className={classes.ring} />
-        <span className={classes.ringInner} />
-        <span className={classes.dot} />
+    <div className={classes.wrap} role="status" aria-live="polite" aria-label={label ?? 'Loading form'}>
+      <div className={classes.mark} aria-hidden>
+        <div className={classes.wordmark}>
+          <span className={classes.word}>{brand}</span>
+          <span className={classes.dot} />
+        </div>
+        <div className={classes.rule}>
+          <span />
+        </div>
       </div>
-      <span className={classes.label}>{label}</span>
+      {label && <p className={classes.label}>{label}</p>}
     </div>
   );
 }

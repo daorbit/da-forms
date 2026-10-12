@@ -22,6 +22,8 @@ import { staticTypes } from "@/lib/fieldPalette";
 import { valueFields } from "@/lib/fieldTree";
 import { EntriesKanban } from "@/components/builder/EntriesKanban";
 import { EntriesExcel } from "@/components/builder/entries/EntriesExcel";
+import { EntriesCalendar } from "@/components/builder/entries/calendar/EntriesCalendar";
+import { findBookingField } from "@/lib/booking";
 import { AnalyticsBar } from "@/components/builder/AnalyticsBar";
 import { paymentCellText } from "@/lib/payment";
 import { repeaterSummaryText } from "@/lib/repeater";
@@ -102,14 +104,14 @@ export function EntriesPage() {
     // Kanban and the spreadsheet both show the whole set at once: one moves
     // cards between stages, the other is scrolled and sorted as a grid, and
     // neither makes sense a page at a time. Only the list view paginates.
-    const wholeSet = view === "kanban" || view === "excel";
+    const wholeSet = view === "kanban" || view === "excel" || view === "calendar";
 
     listSubmissions(id, workspaceId, {
       page: wholeSet ? 1 : page,
       limit: wholeSet ? 200 : PAGE_SIZE,
       status: wholeSet ? "all" : status,
       q: debouncedSearch,
-      ...dayFilterToRange(day, customRange),
+      ...(view === "calendar" ? {} : dayFilterToRange(day, customRange)),
       stage: view === "kanban" ? undefined : pipelineFilter.stage,
       assignee: pipelineFilter.assignee,
       tag: pipelineFilter.tag,
@@ -306,6 +308,7 @@ export function EntriesPage() {
     if (!form) return;
     const header = [
       ...columns.map((f) => f.label),
+      ...(hasBooking ? ["Google Meet link"] : []),
       "Stage",
       "Assignee",
       "Tags",
@@ -322,6 +325,7 @@ export function EntriesPage() {
               : formatAnswer(f.type, s.data[f.id] ?? ""),
         ),
       ),
+      ...(hasBooking ? [JSON.stringify(s.booking?.meetLink ?? "")] : []),
       JSON.stringify(STAGE_BY_ID[stageOf(s)].label),
       JSON.stringify(s.assignee ?? ""),
       JSON.stringify((s.tags ?? []).join(", ")),
@@ -345,6 +349,7 @@ export function EntriesPage() {
     : [];
 
   const scored = form ? formHasLeadScore(valueFields(form.fields)) : false;
+  const hasBooking = Boolean(form && findBookingField(form.fields));
   const hasPaidResponses = submissions.some((s) => s.payment);
   const formHasPaymentField = currentColumns.some((f) => f.type === "payment");
 
@@ -425,6 +430,7 @@ export function EntriesPage() {
           loadAnalytics();
         }}
         onExportCsv={() => exportCsv()}
+        calendarAvailable={hasBooking}
         pipelineFilters={
           <PipelineFilters
             value={pipelineFilter}
@@ -443,6 +449,13 @@ export function EntriesPage() {
           submissions={submissions}
           columns={columns}
           onMove={pipeline.patchSubmission}
+          onOpen={openResponse}
+        />
+      ) : view === "calendar" && hasBooking ? (
+        <EntriesCalendar
+          fields={form.fields}
+          submissions={submissions}
+          loading={loading}
           onOpen={openResponse}
         />
       ) : view === "excel" ? (

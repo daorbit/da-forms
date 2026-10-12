@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ActionIcon, Button, Menu, Tooltip } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import {
+  CalendarDaysIcon,
   CalendarIcon,
   CalendarRangeIcon,
   CheckIcon,
@@ -42,6 +43,7 @@ const VIEW_TABS: { value: EntriesView; label: ReactNode; title: string }[] = [
   { value: 'list', title: 'List', label: <><LayoutListIcon size={14} /><span className={classes.viewText}>List</span></> },
   { value: 'kanban', title: 'Board', label: <><SquareKanbanIcon size={14} /><span className={classes.viewText}>Board</span></> },
   { value: 'excel', title: 'Sheet', label: <><TableIcon size={14} /><span className={classes.viewText}>Sheet</span></> },
+  { value: 'calendar', title: 'Calendar', label: <><CalendarDaysIcon size={14} /><span className={classes.viewText}>Calendar</span></> },
 ];
 
 interface Props {
@@ -60,6 +62,7 @@ interface Props {
   onSearchChange: (value: string) => void;
   onOpenFiles?: () => void;
   pipelineFilters?: ReactNode;
+  calendarAvailable?: boolean;
 }
 
 export function EntriesFilterBar({
@@ -77,7 +80,11 @@ export function EntriesFilterBar({
   onSearchChange,
   onOpenFiles,
   pipelineFilters,
+  calendarAvailable,
 }: Props) {
+  const viewTabs = calendarAvailable ? VIEW_TABS : VIEW_TABS.filter((tab) => tab.value !== 'calendar');
+  const datedView = view !== 'calendar';
+
   return (
     <div className={classes.root}>
       <div className={classes.start}>
@@ -98,6 +105,7 @@ export function EntriesFilterBar({
           />
         )}
 
+        {datedView && (
         <Menu width={180} position="bottom-start">
           <Menu.Target>
             <Button
@@ -124,7 +132,9 @@ export function EntriesFilterBar({
               ))}
           </Menu.Dropdown>
         </Menu>
+        )}
 
+        {datedView && (
         <Menu width="auto" closeOnItemClick={false}>
           <Menu.Target>
             <Tooltip label="Custom date range" withArrow>
@@ -169,12 +179,13 @@ export function EntriesFilterBar({
             )}
           </Menu.Dropdown>
         </Menu>
+        )}
 
         {pipelineFilters}
       </div>
 
       <div className={classes.end}>
-        <SegmentedTabs ariaLabel="View" value={view} onChange={onSetView} data={VIEW_TABS} />
+        <SegmentedTabs ariaLabel="View" value={view} onChange={onSetView} data={viewTabs} />
         <Tooltip label="Refresh responses" withArrow>
           <ActionIcon
             variant="subtle"

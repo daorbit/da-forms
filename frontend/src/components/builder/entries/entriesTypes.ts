@@ -6,7 +6,7 @@ import type { PipelineSort, SubmissionStage } from '@/types';
  * `excel` scans many at once in a spreadsheet. They differ in how much they
  * fetch as well as how they draw: kanban and excel want the whole set, while
  * list pages through it. */
-export type EntriesView = 'list' | 'kanban' | 'excel';
+export type EntriesView = 'list' | 'kanban' | 'excel' | 'calendar';
 
 export type StatusFilter = 'all' | 'unread' | 'read';
 

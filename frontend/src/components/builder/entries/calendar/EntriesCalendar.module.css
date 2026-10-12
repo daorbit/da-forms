@@ -1,0 +1,580 @@
+.root {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  align-items: start;
+  transition: opacity 120ms ease;
+}
+
+.root[data-loading] {
+  opacity: 0.6;
+}
+
+.main {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.arrows {
+  display: flex;
+  gap: 2px;
+}
+
+.period {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.periodCount {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.month {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.monthHead {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.monthDay {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 128px;
+  padding: 8px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.monthDay:nth-child(7n) {
+  border-right: 0;
+}
+
+.monthDay:nth-last-child(-n + 7) {
+  border-bottom: 0;
+}
+
+.monthDay[data-weekend] {
+  background: color-mix(in srgb, var(--text) 1.5%, transparent);
+}
+
+.monthDay[data-outside] .monthDate {
+  color: var(--muted);
+  opacity: 0.55;
+}
+
+.monthDayHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.monthDate {
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.monthDay[data-today] .monthDate {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+}
+
+.monthStack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+
+.chip:hover {
+  border-color: var(--border-strong);
+}
+
+.chip[data-state='past'] {
+  background: transparent;
+  color: var(--text-2);
+}
+
+.chip[data-state='past']:hover {
+  border-color: var(--border-strong);
+}
+
+.chipName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.chipMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-2);
+}
+
+.chipTime {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+
+.chipIcon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.chip[data-state='past'] .chipIcon {
+  color: var(--muted);
+}
+
+.more {
+  align-self: flex-start;
+  padding: 2px 7px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.more:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+}
+
+.week {
+  display: flex;
+  flex-direction: column;
+}
+
+.weekHead {
+  display: grid;
+  grid-template-columns: 64px repeat(7, minmax(0, 1fr));
+  border-bottom: 1px solid var(--border);
+}
+
+.weekGutterHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 10px 8px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.weekDayHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 0 8px;
+  border-left: 1px solid var(--border);
+}
+
+.weekDayName {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.weekDayNum {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 17px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.weekDayHead[data-today] .weekDayName {
+  color: var(--accent);
+}
+
+.weekDayHead[data-today] .weekDayNum {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+}
+
+.weekBody {
+  height: min(640px, calc(100vh - 360px));
+  min-height: 420px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.weekGrid {
+  display: grid;
+  grid-template-columns: 64px repeat(7, minmax(0, 1fr));
+}
+
+.weekGutter {
+  position: relative;
+}
+
+.weekHourLabel {
+  position: relative;
+  height: var(--hour);
+}
+
+.weekHourLabel span {
+  position: absolute;
+  top: -7px;
+  right: 10px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.weekCol {
+  position: relative;
+  border-left: 1px solid var(--border);
+}
+
+.weekCol[data-weekend] {
+  background: color-mix(in srgb, var(--text) 1.5%, transparent);
+}
+
+.weekCol[data-today] {
+  background: color-mix(in srgb, var(--accent) 3%, transparent);
+}
+
+.weekSlot {
+  height: var(--hour);
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.weekSlot:first-child {
+  border-top: 0;
+}
+
+.nowLine {
+  position: absolute;
+  top: calc(var(--top) / 60 * var(--hour));
+  right: 0;
+  left: 0;
+  z-index: 3;
+  height: 2px;
+  background: var(--mantine-color-red-6);
+  pointer-events: none;
+}
+
+.nowLine::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mantine-color-red-6);
+}
+
+.block {
+  position: absolute;
+  top: calc(var(--top) / 60 * var(--hour) + 1px);
+  left: calc(var(--lane) / var(--lanes) * (100% - 6px) + 3px);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: calc(100% / var(--lanes) - 6px / var(--lanes) - 2px);
+  height: calc(var(--len) / 60 * var(--hour) - 3px);
+  min-height: 20px;
+  overflow: hidden;
+  padding: 4px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--surface-2);
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+
+.block:hover {
+  border-color: var(--text-2);
+}
+
+.block[data-state='past'] {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+}
+
+.block[data-state='past']:hover {
+  border-color: var(--border-strong);
+}
+
+.block[data-compact] {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.blockName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.blockTime {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.avatar[data-state='past'] {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  color: var(--text-2);
+}
+
+.cardWho {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cardTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cardSub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.stateBadge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.stateBadge[data-state='live'] {
+  background: color-mix(in srgb, var(--mantine-color-green-6) 16%, transparent);
+  color: var(--mantine-color-green-6);
+}
+
+.stateBadge[data-state='past'] {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  color: var(--text-2);
+}
+
+.cardRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.cardRow svg,
+.meetRow svg {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.cardMuted {
+  color: var(--muted);
+}
+
+.meetRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 6px 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 12.5px;
+}
+
+.meetUrl {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.meetUrl:hover {
+  text-decoration: underline;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+[data-motion='off'] .root,
+[data-motion='off'] .chip,
+[data-motion='off'] .block {
+  transition: none;
+}
+
+@container (max-width: 1080px) {
+  .root {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 48em) {
+  .monthDay {
+    min-height: 84px;
+    padding: 5px;
+  }
+
+  .chipTime,
+  .chipIcon {
+    display: none;
+  }
+
+  .weekHead,
+  .weekGrid {
+    grid-template-columns: 44px repeat(7, minmax(56px, 1fr));
+  }
+
+  .main {
+    overflow-x: auto;
+  }
+}

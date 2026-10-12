@@ -5,6 +5,7 @@ import { parseRepeaterRows } from '@/lib/repeater';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from './fileTypeIcon';
 import { FileSizeBadge } from './FileSizeBadge';
+import { BookingCell } from './BookingCell';
 import { answerText, formatAnswer, isImageUrl } from './entriesTypes';
 import classes from './EntriesTable.module.css';
 
@@ -17,6 +18,8 @@ interface Props {
 
 export function EntryCell({ field, submission, onView, onOpenAttachment }: Props) {
   if (field.type === 'payment') return <PaymentCell payment={submission.payment} />;
+
+  if (field.type === 'booking') return <BookingCell field={field} submission={submission} />;
 
   if (field.type === 'repeater') {
     const rowCount = parseRepeaterRows(submission.data[field.id]).length;

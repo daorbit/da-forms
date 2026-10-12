@@ -1,7 +1,7 @@
 import { Anchor } from '@mantine/core';
 import { CalendarCheckIcon, VideoIcon } from 'lucide-react';
 import type { BookingTimeFormat, SubmissionBooking } from '@/types';
-import { browserTimeZone, formatBookingRange } from '@/lib/booking';
+import { browserTimeZone, formatBookingRange, timeZoneLabel } from '@/lib/booking';
 import classes from './BookingConfirmation.module.css';
 
 interface Props {
@@ -17,7 +17,7 @@ export function BookingConfirmation({ booking, timeFormat }: Props) {
         <CalendarCheckIcon size={18} className={classes.icon} />
         <div>
           <div className={classes.title}>{formatBookingRange(booking.start, booking.end, zone, timeFormat)}</div>
-          <div className={classes.hint}>{zone}</div>
+          <div className={classes.hint}>{timeZoneLabel(zone)}</div>
         </div>
       </div>
       {booking.meetLink && (
@@ -28,7 +28,6 @@ export function BookingConfirmation({ booking, timeFormat }: Props) {
           </Anchor>
         </div>
       )}
-      {booking.eventLink && <div className={classes.hint}>A calendar invite is on its way to your email.</div>}
     </div>
   );
 }

@@ -28,6 +28,8 @@ import type { Form, SubmissionBooking } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
 import { BookingConfirmation } from '@/components/public/BookingConfirmation';
 import { bookingEnd, findBookingField } from '@/lib/booking';
+import { thankYouCopy } from '@/lib/thankYou';
+import { contrastOn } from '@/lib/formTheme';
 import { PoweredBy } from '@/components/public/PoweredBy';
 import { BrandHeader } from '@/components/public/BrandHeader';
 import { FormPage } from '@/components/FormPage';
@@ -377,6 +379,11 @@ export function PublicFormPage() {
   if (submitted) {
 
     const accent = form?.theme?.accentColor;
+    const copy = thankYouCopy({
+      edited: Boolean(editToken),
+      message: endingMessage || form.thankYouMessage,
+      booking,
+    });
     return (
 
       <Center
@@ -397,7 +404,7 @@ export function PublicFormPage() {
               radius="xl"
               color={accent ? undefined : "green"}
               variant="filled"
-              style={accent ? { backgroundColor: accent } : undefined}
+              style={accent ? { backgroundColor: accent, color: contrastOn(accent) } : undefined}
             >
               <CheckIcon size={30} strokeWidth={3} />
             </ThemeIcon>
@@ -409,19 +416,14 @@ export function PublicFormPage() {
             mt="xl"
             style={{ lineHeight: 1.15, letterSpacing: "-0.02em" }}
           >
-            {editToken
-              ? "Your changes are saved."
-              : endingMessage || form.thankYouMessage || "Thanks — that reached us."}
+            {copy.title}
           </Text>
           <Stack align="center" gap={2} mt="md">
-            <Text size="sm" c="dimmed">
-              {editToken
-                ? "Your response has been updated."
-                : "Your response has been recorded."}
-            </Text>
-            <Text size="sm" c="dimmed">
-              You can safely close this page now.
-            </Text>
+            {copy.lines.map((line) => (
+              <Text key={line} size="sm" c="dimmed">
+                {line}
+              </Text>
+            ))}
           </Stack>
 
           {booking && !editToken && (
@@ -433,8 +435,8 @@ export function PublicFormPage() {
 
           {!editToken && (
             <Button
-              color={accent ? undefined : "emerald"}
-              style={accent ? { backgroundColor: accent } : undefined}
+              color={accent ?? "emerald"}
+              autoContrast
               radius="md"
               mt="xl"
               onClick={() => {
@@ -442,7 +444,7 @@ export function PublicFormPage() {
                 setSubmitted(false);
               }}
             >
-              Submit another response
+              {copy.againLabel}
             </Button>
           )}
           <PoweredBy branding={form.branding} />

@@ -173,7 +173,7 @@ export interface FormTheme {
 }
 
 /** How a multi-step form shows the respondent where they are. */
-export type StepIndicator = 'progress' | 'stepper' | 'dots' | 'counter' | 'none';
+export type StepIndicator = 'progress' | 'stepper' | 'stepperCompact' | 'dots' | 'counter' | 'none';
 
 export interface FormStep {
   /** Shown as the step's name in the stepper, and above the step's fields. */

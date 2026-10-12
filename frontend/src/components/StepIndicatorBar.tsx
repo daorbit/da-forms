@@ -1,6 +1,8 @@
 import { Box, Group, Progress, Stack, Text } from '@mantine/core';
 import { CheckIcon } from 'lucide-react';
 import type { FormStep, StepIndicator } from '@/types';
+import { contrastOn } from '@/lib/formTheme';
+import classes from './StepIndicatorBar.module.css';
 
 interface Props {
   variant: StepIndicator;
@@ -56,59 +58,35 @@ export function StepIndicatorBar({ variant, steps, current, accent, textColor, q
     );
   }
 
-  if (variant === 'stepper') {
+  if (variant === 'stepper' || variant === 'stepperCompact') {
+    const withTitles = variant === 'stepper';
+    const vars = {
+      ...(accent ? { '--step-accent': accent, '--step-on-accent': contrastOn(accent) } : {}),
+      ...(textColor ? { '--step-text': textColor } : {}),
+    } as React.CSSProperties;
     return (
-      <Group gap={0} align="flex-start" wrap="nowrap" mt="md" mb="xs">
+      <ol className={classes.stepper} style={vars} aria-label="Progress">
         {steps.map((step, index) => {
           const done = index < current;
           const active = index === current;
           return (
-            <Group key={index} gap={0} align="flex-start" wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
-              <Stack gap={6} align="center" style={{ flex: 1, minWidth: 0 }}>
-                <Box
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 999,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: done || active ? '#fff' : undefined,
-                    backgroundColor: done || active ? color : 'rgba(128,128,128,0.22)',
-                    border: active ? `2px solid ${color}` : '2px solid transparent',
-                  }}
-                >
-                  {done ? <CheckIcon size={15} strokeWidth={3} /> : index + 1}
-                </Box>
-                <Text
-                  size="xs"
-                  ta="center"
-                  fw={active ? 600 : 400}
-                  lineClamp={2}
-                  c={textColor ? undefined : active ? undefined : 'dimmed'}
-                  style={textColor ? { color: textColor, opacity: active ? 1 : 0.7 } : undefined}
-                >
-                  {step.title}
-                </Text>
-              </Stack>
-              {/* Connector between circles — never after the last one. */}
-              {index < steps.length - 1 && (
-                <Box
-                  style={{
-                    flex: 1,
-                    height: 2,
-                    marginTop: 13,
-                    minWidth: 12,
-                    backgroundColor: index < current ? color : 'rgba(128,128,128,0.25)',
-                  }}
-                />
-              )}
-            </Group>
+            <li
+              key={index}
+              className={classes.step}
+              data-reached={index <= current || undefined}
+              data-active={active || undefined}
+              aria-current={active ? 'step' : undefined}
+              aria-label={withTitles ? undefined : step.title}
+              title={withTitles ? undefined : step.title}
+            >
+              <span className={classes.circle}>
+                {done ? <CheckIcon size={14} strokeWidth={3} /> : index + 1}
+              </span>
+              {withTitles && <span className={classes.title}>{step.title}</span>}
+            </li>
           );
         })}
-      </Group>
+      </ol>
     );
   }
 

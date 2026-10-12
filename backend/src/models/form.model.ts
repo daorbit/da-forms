@@ -249,7 +249,7 @@ export const FONT_FAMILY_IDS = [
 
 export type FontFamilyId = (typeof FONT_FAMILY_IDS)[number];
 
-export type StepIndicator = 'progress' | 'stepper' | 'dots' | 'counter' | 'none';
+export type StepIndicator = 'progress' | 'stepper' | 'stepperCompact' | 'dots' | 'counter' | 'none';
 
 export interface FormStep {
   title?: string;
@@ -498,7 +498,7 @@ const formSchema = new Schema<FormDocument>(
       ),
     },
     steps: { type: [stepSchema], default: undefined },
-    stepIndicator: { type: String, enum: ['progress', 'stepper', 'dots', 'counter', 'none'] },
+    stepIndicator: { type: String, enum: ['progress', 'stepper', 'stepperCompact', 'dots', 'counter', 'none'] },
     showStepHeadings: { type: Boolean },
     oneQuestionAtATime: { type: Boolean },
     collectIp: { type: Boolean },

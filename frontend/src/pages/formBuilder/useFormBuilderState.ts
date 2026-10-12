@@ -21,8 +21,7 @@ import type {
 } from '@/types';
 import type { EditableState } from './types';
 import { notify } from '@/lib/notify';
-
-const DEFAULT_THANK_YOU = 'Thanks! Your response has been recorded.';
+import { DEFAULT_THANK_YOU } from '@/lib/thankYou';
 
 export interface BuilderLocationState {
   title?: string;

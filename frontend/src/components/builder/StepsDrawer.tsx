@@ -47,6 +47,7 @@ export function StepsDrawer({ opened, onClose, fields, settings, onChange, accen
   const preview = oneQuestion ? questions : resolveSteps(fields, settings.steps);
   const indicator = questionIndicator(settings.stepIndicator, oneQuestion);
   const showsProgress = oneQuestion ? questions.length > 1 : count > 1;
+  const isStepper = indicator === 'stepper' || indicator === 'stepperCompact';
 
   function setStep(index: number, patch: Partial<FormStep>) {
     // Padded to `index` so naming step 3 before step 2 doesn't leave a hole.
@@ -94,10 +95,21 @@ export function StepsDrawer({ opened, onClose, fields, settings, onChange, accen
               <div className={classes.label}>Progress indicator</div>
               <SegmentedControl
                 fullWidth
-                value={indicator}
+                value={isStepper ? 'stepper' : indicator}
                 onChange={(value) => onChange({ stepIndicator: value as StepIndicator })}
                 data={oneQuestion ? QUESTION_INDICATORS : INDICATORS}
               />
+              {isStepper && (
+                <Switch
+                  mt="md"
+                  label="Show step names under the circles"
+                  description="Off shows numbered circles only."
+                  checked={indicator === 'stepper'}
+                  onChange={(e) =>
+                    onChange({ stepIndicator: e.currentTarget.checked ? 'stepper' : 'stepperCompact' })
+                  }
+                />
+              )}
               <Box mt="md" className={classes.preview}>
                 <StepIndicatorBar
                   variant={indicator}
@@ -108,7 +120,9 @@ export function StepsDrawer({ opened, onClose, fields, settings, onChange, accen
                 />
                 {indicator === 'none' && (
                   <Text size="xs" c="dimmed" ta="center">
-                    No indicator shown.
+                    {!oneQuestion && settings.showStepHeadings
+                      ? 'No progress indicator. Step names still show above the fields — turn off the switch below to hide them too.'
+                      : 'No indicator shown.'}
                   </Text>
                 )}
               </Box>

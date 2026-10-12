@@ -50,6 +50,7 @@ import { fileTypes, acceptFor } from '@/lib/fieldPalette';
 import { validateField, validateFields, type FieldErrors } from '@/lib/formValidation';
 import { usePartialSave } from '@/hooks/usePartialSave';
 import { TurnstileGate } from '@/components/TurnstileGate';
+import { FormIdContext } from '@/components/FormIdContext';
 
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
@@ -469,6 +470,7 @@ export function FormRenderer({
   }
 
   return (
+    <FormIdContext.Provider value={formId}>
     <Paper
       withBorder
       radius="md"
@@ -722,5 +724,6 @@ export function FormRenderer({
           thing being submitted. */}
       {footer}
     </Paper>
+    </FormIdContext.Provider>
   );
 }

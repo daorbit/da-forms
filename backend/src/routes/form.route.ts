@@ -4,6 +4,7 @@ import multer from 'multer';
 import * as formController from '../controllers/form.controller.js';
 import * as settingsController from '../controllers/settings.controller.js';
 import * as appController from '../controllers/appConnection.controller.js';
+import * as calendarController from '../controllers/calendar.controller.js';
 import { uploadFormFile, uploadBackgroundImage } from '../controllers/upload.controller.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import { blockDemoWorkspaceWrites } from '../middleware/demo-workspace.js';
@@ -144,6 +145,10 @@ workspaceSettingsRouter.post(
 );
 workspaceSettingsRouter.delete('/apps/:appId', asyncHandler(appController.disconnectApp));
 
+workspaceSettingsRouter.get('/calendar', asyncHandler(calendarController.getCalendar));
+workspaceSettingsRouter.get('/calendar/connect', asyncHandler(calendarController.getCalendarConnectUrl));
+workspaceSettingsRouter.delete('/calendar', asyncHandler(calendarController.disconnectCalendar));
+
 workspaceSettingsRouter.get('/webhook-app', asyncHandler(settingsController.getWebhookApp));
 workspaceSettingsRouter.put('/webhook-app', asyncHandler(settingsController.saveWebhookApp));
 
@@ -170,12 +175,30 @@ const partialLimiter = rateLimit({
 
 publicFormRouter.put('/:id/partial', partialLimiter, asyncHandler(formController.savePartial));
 
+const slotsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited', message: 'Too many requests — try again in a minute.' },
+});
+
+publicFormRouter.get(
+  '/:id/booking/:fieldId/slots',
+  slotsLimiter,
+  asyncHandler(formController.getBookingSlots)
+);
+
 publicFormRouter.post('/:id/resume', submitLimiter, asyncHandler(formController.emailResumeLink));
 publicFormRouter.get('/:id/resume', submitLimiter, asyncHandler(formController.getPartialForResume));
 publicFormRouter.get('/:id/edit', submitLimiter, asyncHandler(formController.getSubmissionForEdit));
 publicFormRouter.put('/:id/edit', submitLimiter, asyncHandler(formController.updateSubmissionByToken));
 publicFormRouter.post('/:id/view', asyncHandler(formController.recordView));
 publicFormRouter.get('/:id/payments/:orderId', asyncHandler(formController.getPaymentStatus));
+
+export const googleCalendarRouter = Router();
+
+googleCalendarRouter.get('/callback', asyncHandler(calendarController.calendarCallback));
 
 export const publicPaymentRouter = Router();
 

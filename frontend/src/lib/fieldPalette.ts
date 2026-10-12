@@ -1,8 +1,10 @@
 import type { FieldType, FormField } from '@/types';
+import { defaultBookingConfig } from '@/lib/booking';
 import {
   ArrowDownWideNarrowIcon,
   BinaryIcon,
   BookOpenIcon,
+  CalendarCheckIcon,
   CalendarClockIcon,
   CalendarDaysIcon,
   CalendarIcon,
@@ -156,6 +158,10 @@ export const fieldPalette: PaletteGroup[] = [
   {
     group: 'Payment',
     items: [{ type: 'payment', label: 'Payment', icon: CreditCardIcon, color: 'lime' }],
+  },
+  {
+    group: 'Scheduling',
+    items: [{ type: 'booking', label: 'Booking', icon: CalendarCheckIcon, color: 'blue' }],
   },
   {
     group: 'Survey',
@@ -319,6 +325,11 @@ export function makeField(type: FieldType, columns?: number): FormField {
     field.pay = { mode: 'fixed', amount: 0, currency: 'INR' };
     field.label = 'Payment';
     field.required = true;
+  }
+  if (type === 'booking') {
+    field.label = 'Pick a time';
+    field.required = true;
+    field.booking = defaultBookingConfig();
   }
   if (type === 'hidden') field.label = 'Hidden value';
   if (type === 'heading') field.content = 'Heading';

@@ -5,6 +5,7 @@ import {
   workspaceSettingsRouter,
   publicFormRouter,
   publicPaymentRouter,
+  googleCalendarRouter,
 } from './form.route.js';
 import { cronRouter } from './cron.route.js';
 import { internalRouter } from './internal.route.js';
@@ -18,3 +19,4 @@ routes.use('/workspaces/:workspaceId/forms', workspaceFormRouter);
 routes.use('/workspaces/:workspaceId/settings', workspaceSettingsRouter);
 routes.use('/public/forms', publicFormRouter);
 routes.use('/public/workspaces', publicPaymentRouter);
+routes.use('/google-calendar', googleCalendarRouter);

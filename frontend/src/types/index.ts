@@ -52,6 +52,7 @@ export type FieldType =
   | 'yesNo'
   | 'signature'
   | 'payment'
+  | 'booking'
   | 'matrix'
   | 'calculated'
   | 'hidden'
@@ -219,6 +220,7 @@ export interface FormField {
   paramName?: string;
   showIf?: Condition;
   pay?: PaymentConfig;
+  booking?: BookingConfig;
   formula?: string;
   formulaFormat?: 'number' | 'currency';
   formulaCurrency?: string;
@@ -260,6 +262,66 @@ export interface PaymentConfig {
   /** Shown on the Razorpay checkout. Falls back to the form's title. */
   description?: string;
   buttonLabel?: string;
+}
+
+export interface TimeRange {
+  start: string;
+  end: string;
+}
+
+export type BookingTimeFormat = '12h' | '24h';
+
+export interface BookingConfig {
+  duration: number;
+  interval?: number;
+  bufferBefore?: number;
+  bufferAfter?: number;
+  minNotice?: number;
+  maxDaysAhead?: number;
+  timezone: string;
+  weekly: TimeRange[][];
+  blockedDates?: string[];
+  seats?: number;
+  dailyLimit?: number;
+  syncCalendar?: boolean;
+  calendarId?: string;
+  conflictCalendarIds?: string[];
+  addMeet?: boolean;
+  eventTitle?: string;
+  eventDescription?: string;
+  location?: string;
+  attendeeEmailFieldId?: string;
+  attendeeNameFieldId?: string;
+  timeFormat?: BookingTimeFormat;
+}
+
+export interface SubmissionBooking {
+  fieldId: string;
+  start: string;
+  end: string;
+  timezone: string;
+  meetLink?: string;
+  eventLink?: string;
+}
+
+export interface BookingSlots {
+  timezone: string;
+  slots: string[];
+}
+
+export interface CalendarSummary {
+  id: string;
+  summary: string;
+  primary: boolean;
+  canWrite: boolean;
+}
+
+export interface CalendarStatus {
+  configured: boolean;
+  connected: boolean;
+  status?: 'active' | 'revoked';
+  email?: string;
+  calendars: CalendarSummary[];
 }
 
 export type ShowIfOperator =
@@ -463,7 +525,8 @@ export interface Submission {
   sourceUrl?: string;
   status?: 'complete' | 'pending_payment';
   payment?: SubmissionPayment;
- 
+  booking?: SubmissionBooking;
+
   quiz?: { score: number; total: number; correct: number; questions: number };
   leadScore?: number;
   stage?: SubmissionStage;

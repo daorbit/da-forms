@@ -25,6 +25,15 @@ export interface SubmissionPayment {
   method?: string;
 }
 
+export interface SubmissionBooking {
+  fieldId: string;
+  start: Date;
+  end: Date;
+  timezone: string;
+  meetLink?: string;
+  eventLink?: string;
+}
+
 export const SUBMISSION_STAGES = ['new', 'contacted', 'qualified', 'won', 'lost'] as const;
 
 export type SubmissionStage = (typeof SUBMISSION_STAGES)[number];
@@ -87,6 +96,7 @@ export interface SubmissionDocument {
   /** Bumped on every autosave, so the sweep can age rows out by inactivity. */
   updatedAt?: Date;
   payment?: SubmissionPayment;
+  booking?: SubmissionBooking;
   /**
    * What this response scored, on a form that has an answer key.
    *
@@ -134,6 +144,19 @@ const submissionSchema = new Schema<SubmissionDocument>(
           payerEmail: { type: String },
           payerContact: { type: String },
           method: { type: String },
+        },
+        { _id: false }
+      ),
+    },
+    booking: {
+      type: new Schema<SubmissionBooking>(
+        {
+          fieldId: { type: String, required: true },
+          start: { type: Date, required: true },
+          end: { type: Date, required: true },
+          timezone: { type: String, required: true },
+          meetLink: { type: String },
+          eventLink: { type: String },
         },
         { _id: false }
       ),

@@ -1,7 +1,8 @@
 import { sendMail, mailConfigured } from '../lib/mailer.js';
 import { renderEmail } from '../lib/emailTemplates.js';
 import type { FormDocument, FormField } from '../models/form.model.js';
-import type { SubmissionPayment } from '../models/submission.model.js';
+import type { SubmissionBooking, SubmissionPayment } from '../models/submission.model.js';
+import { formatBookingTime } from '../lib/bookingFormat.js';
 import { flattenFields, fillPlaceholders, repeaterText } from '../lib/pipe.js';
 import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
@@ -41,11 +42,22 @@ function formatPaid(payment: SubmissionPayment): string {
   return payment.method ? `${amount} (${payment.method.toUpperCase()})` : amount;
 }
 
+function bookingText(field: FormField, raw: string, booking?: SubmissionBooking): string {
+  const start = booking ? new Date(booking.start) : new Date(raw);
+  if (Number.isNaN(start.getTime())) return raw;
+  const end = booking
+    ? new Date(booking.end)
+    : new Date(start.getTime() + (field.booking?.duration ?? 30) * 60_000);
+  const when = formatBookingTime(start, end, booking?.timezone ?? field.booking?.timezone ?? 'UTC', field.booking?.timeFormat);
+  return booking?.meetLink ? `${when}\nGoogle Meet: ${booking.meetLink}` : when;
+}
+
 /** Every answered field as a label/value pair, in the order they appear on the form. */
 function answersOf(
   fields: FormField[],
   data: Record<string, string>,
-  payment?: SubmissionPayment
+  payment?: SubmissionPayment,
+  booking?: SubmissionBooking
 ) {
   return flattenFields(fields)
     .filter((f) => {
@@ -62,7 +74,9 @@ function answersOf(
           ? formatPaid(payment)
           : f.type === 'repeater'
             ? repeaterText(f, data[f.id])
-            : data[f.id],
+            : f.type === 'booking'
+              ? bookingText(f, data[f.id], booking?.fieldId === f.id ? booking : undefined)
+              : data[f.id],
     }));
 }
 
@@ -72,10 +86,11 @@ async function sendEmailNotifications(
   data: Record<string, string>,
   /** Present for a paid form — shown as a line in the emailed summary. */
   payment?: SubmissionPayment,
- 
+
   submissionId?: string,
- 
-  formId?: string
+
+  formId?: string,
+  booking?: SubmissionBooking
 ): Promise<void> {
   const notifications = form.notifications;
   if (!notifications) return;
@@ -88,7 +103,7 @@ async function sendEmailNotifications(
       form.workspaceId,
       formId ?? String(form._id),
       form.title,
-      answersOf(form.fields, data, payment)
+      answersOf(form.fields, data, payment, booking)
     );
   }
 
@@ -141,7 +156,7 @@ async function sendEmailNotifications(
       );
  
       const editHref =
-        form.allowEdit && submissionId && formId && env.editTokenSecret && env.publicFormBaseUrl
+        form.allowEdit && !booking && submissionId && formId && env.editTokenSecret && env.publicFormBaseUrl
           ? `${env.publicFormBaseUrl}/form/${formId}/view?edit=${mintEditToken(submissionId)}`
           : undefined;
 
@@ -149,7 +164,7 @@ async function sendEmailNotifications(
         layout: notifications.respondentLayout,
         formName: form.title,
         body,
-        answers: answersOf(form.fields, data, payment),
+        answers: answersOf(form.fields, data, payment, booking),
         cta: notifications.respondentCtaHref
           ? { label: notifications.respondentCtaLabel || 'Continue', href: notifications.respondentCtaHref }
           : editHref
@@ -177,7 +192,7 @@ async function sendEmailNotifications(
 
   if (notifications.ownerEnabled && ownerRecipients.length) {
     const subject = notifications.ownerSubject || `New submission: ${form.title}`;
-    const answers = answersOf(form.fields, data, payment);
+    const answers = answersOf(form.fields, data, payment, booking);
     // The owner's own alert is always the receipt: it exists to carry the
     // answers, and there is no author-written body to lay out around them.
     const text = answers.map((a) => `${a.label}: ${a.value}`).join('\n');
@@ -210,7 +225,8 @@ async function sendEmailNotifications(
 async function sendChatNotifications(
   form: FormDocument & { _id: unknown },
   data: Record<string, string>,
-  payment?: SubmissionPayment
+  payment?: SubmissionPayment,
+  booking?: SubmissionBooking
 ): Promise<void> {
   const notifications = form.notifications;
   if (!notifications?.ownerEnabled && !notifications?.ownerInAppEnabled) return;
@@ -218,7 +234,7 @@ async function sendChatNotifications(
   const connections = await resolveChatConnections(form.workspaceId);
   if (!connections.length) return;
 
-  const alert = { title: `New submission: ${form.title}`, answers: answersOf(form.fields, data, payment) };
+  const alert = { title: `New submission: ${form.title}`, answers: answersOf(form.fields, data, payment, booking) };
   const results = await Promise.allSettled(
     connections.map((c) => postChatAlert(c.appId, String(c.secrets.webhookUrl ?? ''), alert))
   );
@@ -234,10 +250,11 @@ export async function sendSubmissionNotifications(
   data: Record<string, string>,
   payment?: SubmissionPayment,
   submissionId?: string,
-  formId?: string
+  formId?: string,
+  booking?: SubmissionBooking
 ): Promise<void> {
   await Promise.all([
-    sendEmailNotifications(form, data, payment, submissionId, formId),
-    sendChatNotifications(form, data, payment),
+    sendEmailNotifications(form, data, payment, submissionId, formId, booking),
+    sendChatNotifications(form, data, payment, booking),
   ]);
 }

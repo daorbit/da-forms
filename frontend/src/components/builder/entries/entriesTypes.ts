@@ -102,6 +102,7 @@ export function formatAnswer(type: string, input: unknown): string {
     case 'date':
       return fmtDate(raw);
     case 'datetime':
+    case 'booking':
       return formatDateTime(raw);
     case 'monthYear':
       return fmtMonth(raw);

@@ -5,7 +5,9 @@ import { FormDailyViewModel } from '../models/formDailyView.model.js';
 import { UploadModel } from '../models/upload.model.js';
 import { AppConnectionModel } from '../models/appConnection.model.js';
 import { WorkspaceSettingsModel } from '../models/workspaceSettings.model.js';
+import { BookingModel } from '../models/booking.model.js';
 import { destroyUploads } from './media.service.js';
+import { disconnectCalendar } from './calendarConnection.service.js';
 
 export async function purgeWorkspace(workspaceId: string) {
   const forms = await FormModel.find({ workspaceId }).select('_id').lean();
@@ -23,6 +25,8 @@ export async function purgeWorkspace(workspaceId: string) {
     FormDailyViewModel.deleteMany({ formId: { $in: formIdStrings } }),
     AppConnectionModel.deleteMany({ workspaceId }),
     WorkspaceSettingsModel.deleteMany({ workspaceId }),
+    BookingModel.deleteMany({ workspaceId }),
+    disconnectCalendar(workspaceId),
   ]);
 
   await FormModel.deleteMany({ workspaceId });

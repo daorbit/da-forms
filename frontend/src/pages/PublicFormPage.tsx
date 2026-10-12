@@ -24,8 +24,10 @@ import {
 import { waitForPayment } from '@/lib/razorpay';
 import { openGatewayCheckout, providerRedirectsAway } from '@/lib/payment';
 import { rememberPayuPayment, takePayuPayment } from '@/lib/payu';
-import type { Form } from '@/types';
+import type { Form, SubmissionBooking } from '@/types';
 import { FormRenderer } from '@/components/FormRenderer';
+import { BookingConfirmation } from '@/components/public/BookingConfirmation';
+import { bookingEnd, findBookingField } from '@/lib/booking';
 import { PoweredBy } from '@/components/public/PoweredBy';
 import { BrandHeader } from '@/components/public/BrandHeader';
 import { FormPage } from '@/components/FormPage';
@@ -54,6 +56,13 @@ function prefillFrom(form: Form | null, values: Record<string, string>) {
   };
 }
 
+function bookingFromValues(form: Form | null, values: Record<string, string>): SubmissionBooking | null {
+  const field = form ? findBookingField(form.fields) : undefined;
+  const start = field ? values[field.id] : '';
+  if (!field || !start) return null;
+  return { fieldId: field.id, start, end: bookingEnd(field, start), timezone: field.booking?.timezone ?? 'UTC' };
+}
+
 export function PublicFormPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
@@ -68,6 +77,7 @@ export function PublicFormPage() {
   const [editData, setEditData] = useState<Record<string, string> | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [resumeKey, setResumeKey] = useState<string | null>(null);
+  const [booking, setBooking] = useState<SubmissionBooking | null>(null);
   const lastOrderId = useRef<string | null>(null);
  
   const embedded = window.self !== window.top;
@@ -238,6 +248,7 @@ export function PublicFormPage() {
           return true;
         }
       }
+      setBooking(isPaymentRequired(result) ? bookingFromValues(form, values) : (result.booking ?? null));
     } catch (e) {
       setSubmitting(false);
       if (e instanceof ApiError && e.code === "phone_required") {
@@ -251,7 +262,9 @@ export function PublicFormPage() {
           e.code === "duplicate_value" ||
           e.code === "spam_detected" ||
           e.code === "invalid_amount" ||
-          e.code === "payment_unavailable")
+          e.code === "payment_unavailable" ||
+          e.code === "slot_taken" ||
+          e.code === "invalid_booking")
       ) {
         notify.error(e.message);
         return false;
@@ -411,13 +424,23 @@ export function PublicFormPage() {
             </Text>
           </Stack>
 
+          {booking && !editToken && (
+            <BookingConfirmation
+              booking={booking}
+              timeFormat={findBookingField(form.fields)?.booking?.timeFormat}
+            />
+          )}
+
           {!editToken && (
             <Button
               color={accent ? undefined : "emerald"}
               style={accent ? { backgroundColor: accent } : undefined}
               radius="md"
               mt="xl"
-              onClick={() => setSubmitted(false)}
+              onClick={() => {
+                setBooking(null);
+                setSubmitted(false);
+              }}
             >
               Submit another response
             </Button>

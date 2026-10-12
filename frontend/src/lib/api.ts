@@ -15,6 +15,8 @@ import type {
   PipelinePatch,
   PipelineSort,
   SubmissionStage,
+  BookingSlots,
+  CalendarStatus,
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
 import type { GeneratedForm } from './generatedForm';
@@ -571,6 +573,28 @@ export function disconnectApp(appId: string, workspaceId = DEFAULT_WORKSPACE) {
 }
 
  
+export function getBookingSlots(formId: string, fieldId: string, from: string, to: string) {
+  return request<BookingSlots>(
+    `/public/forms/${formId}/booking/${encodeURIComponent(fieldId)}/slots?from=${from}&to=${to}`
+  );
+}
+
+function calendarBase(workspaceId: string) {
+  return `/workspaces/${encodeURIComponent(workspaceId)}/settings/calendar`;
+}
+
+export function getCalendarStatus(workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<CalendarStatus>(calendarBase(workspaceId));
+}
+
+export function getCalendarConnectUrl(workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<{ url: string }>(`${calendarBase(workspaceId)}/connect`);
+}
+
+export function disconnectCalendar(workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<CalendarStatus>(calendarBase(workspaceId), { method: 'DELETE' });
+}
+
 export function getWebhookApp(workspaceId = DEFAULT_WORKSPACE) {
   return authedRequest<{ enabled: boolean }>(
     `/workspaces/${encodeURIComponent(workspaceId)}/settings/webhook-app`

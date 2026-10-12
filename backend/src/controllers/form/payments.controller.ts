@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import * as formService from "../../services/form.service.js";
 import * as paymentService from "../../services/payment.service.js";
+import * as bookingService from "../../services/booking.service.js";
 import type { PaymentProvider } from "../../models/workspaceSettings.model.js";
 import * as workspaceSettingsService from "../../services/workspaceSettings.service.js";
 import { sendSubmissionNotifications } from "../../services/notification.service.js";
@@ -56,11 +57,21 @@ async function applyPaymentEvent(
 
   if (!submission) return "already";
 
-  const limits = await getFormLimits(workspaceId);
+  const [limits, booking] = await Promise.all([
+    getFormLimits(workspaceId),
+    bookingService.finalizeBooking(form, submission._id, submission.data),
+  ]);
 
   await Promise.allSettled([
     !limits || limits.notificationEmails
-      ? sendSubmissionNotifications(form, submission.data, submission.payment)
+      ? sendSubmissionNotifications(
+          form,
+          submission.data,
+          submission.payment,
+          undefined,
+          undefined,
+          booking,
+        )
       : null,
     deliverWebhook(form, submission.data, String(submission._id), submission.payment),
     workspaceSettingsService.markCharged(workspaceId, provider),

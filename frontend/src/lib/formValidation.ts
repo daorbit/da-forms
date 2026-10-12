@@ -78,6 +78,7 @@ export function validateField(field: FormField, raw: string): string {
 
   if (field.required && !value && !isPaymentSummary) {
     if (field.type === 'signature') return 'Please sign in the box.';
+    if (field.type === 'booking') return 'Pick a day and time to continue.';
     return `${field.label || 'This field'} is required.`;
   }
 

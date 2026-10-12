@@ -4,6 +4,7 @@ import { uploadedTypes } from '@/lib/fieldPalette';
 import { repeaterDisplayRows } from '@/lib/repeater';
 import { PaymentCell } from '@/components/builder/PaymentCell';
 import { FileTypeIcon } from '../fileTypeIcon';
+import { BookingAnswer } from '../BookingAnswer';
 import { FileSizeBadge } from '../FileSizeBadge';
 import { answerText, formatAnswer, isImageUrl } from '../entriesTypes';
 import type { ResponseColumn } from './types';
@@ -31,6 +32,7 @@ export function hasAnswer(field: ResponseColumn, submission: Submission): boolea
 
 export function AnswerValue({ field, submission, onOpenAttachment }: Props) {
   if (field.type === 'payment') return <PaymentCell payment={submission.payment} />;
+  if (field.type === 'booking') return <BookingAnswer field={field} submission={submission} />;
 
   const raw = answerText(submission.data[field.id]);
 

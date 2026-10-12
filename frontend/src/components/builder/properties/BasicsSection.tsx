@@ -15,6 +15,7 @@ export function BasicsSection({ field, set }: SectionProps) {
           autosize
           minRows={1}
         />
+        {field.type !== 'booking' && (
         <FieldPair>
           <TextInput
             label="Placeholder"
@@ -29,6 +30,7 @@ export function BasicsSection({ field, set }: SectionProps) {
             onChange={(e) => set({ hoverText: e.target.value })}
           />
         </FieldPair>
+        )}
       </PropertySection>
 
       <PropertySection title="Behaviour">
@@ -39,7 +41,7 @@ export function BasicsSection({ field, set }: SectionProps) {
             checked={field.required}
             onChange={(required) => set({ required })}
           />
-          {field.type !== 'repeater' && (
+          {field.type !== 'repeater' && field.type !== 'booking' && (
             <ToggleRow
               label="Must be unique"
               hint="Rejects an answer that matches an earlier response."

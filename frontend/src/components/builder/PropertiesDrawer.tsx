@@ -8,6 +8,8 @@ import { ContentSection } from './properties/ContentSection';
 import { ChoicesSection } from './properties/ChoicesSection';
 import { RepeaterSection } from './properties/RepeaterSection';
 import { PaymentSection } from './properties/PaymentSection';
+import { BookingSection } from './properties/booking/BookingSection';
+import { BookingCalendarSection } from './properties/booking/BookingCalendarSection';
 import { FormulaSection } from './properties/FormulaSection';
 import { HiddenValueSection } from './properties/HiddenValueSection';
 import { ScoringSection } from './properties/ScoringSection';
@@ -46,6 +48,18 @@ function Sections({
   }
 
   const hasOptions = optionTypes.includes(field.type);
+
+  if (field.type === 'booking') {
+    return (
+      <>
+        <BasicsSection field={field} set={set} />
+        <BookingSection field={field} set={set} />
+        <BookingCalendarSection field={field} set={set} allFields={allFields} />
+        <LogicSection field={field} set={set} allFields={allFields} />
+        <AppearanceSection field={field} set={set} />
+      </>
+    );
+  }
 
   return (
     <>

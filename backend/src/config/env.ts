@@ -56,4 +56,8 @@ export const env = {
   editWindowDays: Number(process.env.EDIT_WINDOW_DAYS ?? 7),
  
   publicFormBaseUrl: (process.env.PUBLIC_FORM_BASE_URL ?? '').replace(/\/+$/, ''),
+
+  googleCalendarClientId: process.env.GOOGLE_CALENDAR_CLIENT_ID ?? '',
+  googleCalendarClientSecret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET ?? '',
+  googleCalendarRedirectUri: process.env.GOOGLE_CALENDAR_REDIRECT_URI ?? '',
 };

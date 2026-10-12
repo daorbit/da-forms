@@ -25,6 +25,8 @@ import {
   destroyUploadsForForm,
   destroyUploadsForSubmissions,
 } from './media.service.js';
+import { releaseBookings } from './booking.service.js';
+import { BookingModel } from '../models/booking.model.js';
 import type {
   FormField,
   SubmitButtonWidth,
@@ -475,6 +477,7 @@ export async function deleteForm(id: string, workspaceId: string) {
   await destroyFormBackground(form.get('theme'));
 
   await SubmissionModel.deleteMany({ formId: form._id });
+  await BookingModel.deleteMany({ formId: form._id });
 
   await FormViewModel.deleteMany({ formId: String(form._id) });
   await FormDailyViewModel.deleteMany({ formId: String(form._id) });
@@ -798,7 +801,7 @@ export async function sweepAbandonedPayments(graceMinutes: number) {
   if (!stale.length) return { deleted: 0 };
 
   const ids = stale.map((s) => s._id);
-  await destroyUploadsForSubmissions(ids);
+  await Promise.all([destroyUploadsForSubmissions(ids), releaseBookings(ids)]);
   const result = await SubmissionModel.deleteMany({ _id: { $in: ids } });
   return { deleted: result.deletedCount ?? 0 };
 }
@@ -1111,7 +1114,10 @@ export async function deleteSubmission(id: string, formId: string) {
   const submission = await SubmissionModel.findOne({ _id: id, formId });
   if (!submission) return null;
 
-  await destroyUploadsForSubmissions([submission._id]);
+  await Promise.all([
+    destroyUploadsForSubmissions([submission._id]),
+    releaseBookings([submission._id]),
+  ]);
   await SubmissionModel.deleteOne({ _id: submission._id });
   return submission;
 }
@@ -1121,7 +1127,7 @@ export async function bulkDeleteSubmissions(ids: string[], formId: string) {
   const matchedIds = submissions.map((s) => s._id);
   if (matchedIds.length === 0) return { deletedCount: 0 };
 
-  await destroyUploadsForSubmissions(matchedIds);
+  await Promise.all([destroyUploadsForSubmissions(matchedIds), releaseBookings(matchedIds)]);
   const result = await SubmissionModel.deleteMany({ _id: { $in: matchedIds } });
   return { deletedCount: result.deletedCount ?? matchedIds.length };
 }

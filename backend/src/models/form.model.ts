@@ -39,6 +39,7 @@ export type FieldType =
   | 'yesNo'
   | 'signature'
   | 'payment'
+  | 'booking'
   | 'matrix'
   | 'calculated'
   | 'hidden'
@@ -100,6 +101,8 @@ export interface FormField {
 
   pay?: PaymentConfig;
 
+  booking?: BookingConfig;
+
   formula?: string;
 
   formulaFormat?: 'number' | 'currency';
@@ -138,6 +141,35 @@ export interface PaymentConfig {
 
   description?: string;
   buttonLabel?: string;
+}
+
+export interface TimeRange {
+  start: string;
+  end: string;
+}
+
+export interface BookingConfig {
+  duration: number;
+  interval?: number;
+  bufferBefore?: number;
+  bufferAfter?: number;
+  minNotice?: number;
+  maxDaysAhead?: number;
+  timezone: string;
+  weekly: TimeRange[][];
+  blockedDates?: string[];
+  seats?: number;
+  dailyLimit?: number;
+  syncCalendar?: boolean;
+  calendarId?: string;
+  conflictCalendarIds?: string[];
+  addMeet?: boolean;
+  eventTitle?: string;
+  eventDescription?: string;
+  location?: string;
+  attendeeEmailFieldId?: string;
+  attendeeNameFieldId?: string;
+  timeFormat?: '12h' | '24h';
 }
 
 export type ShowIfOperator =
@@ -380,6 +412,7 @@ const fieldSchema = new Schema<FormField>(
     paramName: { type: String },
     showIf: { type: Schema.Types.Mixed },
     pay: { type: Schema.Types.Mixed },
+    booking: { type: Schema.Types.Mixed },
     formula: { type: String },
     formulaFormat: { type: String, enum: ['number', 'currency'] },
     formulaCurrency: { type: String },

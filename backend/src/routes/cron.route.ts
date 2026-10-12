@@ -4,6 +4,7 @@ import { asyncHandler } from '../middleware/async-handler.js';
 import { requireBearerSecret } from '../middleware/require-bearer-secret.js';
 import { sweepAbandonedUploads } from '../services/media.service.js';
 import { sweepAbandonedPayments, sweepAbandonedPartials } from '../services/form.service.js';
+import { sweepStaleHolds } from '../services/booking.service.js';
 
 /**
  * Only the scheduler may run these.
@@ -45,8 +46,11 @@ cronRouter.all(
 cronRouter.all(
   '/sweep-payments',
   asyncHandler(async (_req, res) => {
-    const result = await sweepAbandonedPayments(env.paymentGraceMinutes);
-    res.json({ ok: true, ...result });
+    const [result, holds] = await Promise.all([
+      sweepAbandonedPayments(env.paymentGraceMinutes),
+      sweepStaleHolds(env.paymentGraceMinutes),
+    ]);
+    res.json({ ok: true, ...result, staleBookingHolds: holds.deleted });
   })
 );
 

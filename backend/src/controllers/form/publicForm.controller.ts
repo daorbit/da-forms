@@ -1,6 +1,7 @@
 import type { RequestHandler, Response } from "express";
 import * as formService from "../../services/form.service.js";
 import * as paymentService from "../../services/payment.service.js";
+import * as bookingService from "../../services/booking.service.js";
 import { sendSubmissionNotifications, sendResumeLink } from "../../services/notification.service.js";
 import { getFormLimits, recordSubmission, getBranding } from "../../lib/quantalog.js";
 import { turnstileConfigured, verifyTurnstileToken } from "../../lib/turnstile.js";
@@ -170,6 +171,13 @@ export const updateSubmissionByToken: RequestHandler = async (req, res) => {
     return res.status(409).json({
       error: "edit_unsupported",
       message: "Responses that include a payment cannot be edited.",
+    });
+  }
+
+  if (bookingService.findBookingField(form.fields)) {
+    return res.status(409).json({
+      error: "edit_unsupported",
+      message: "Responses that include a booking cannot be edited.",
     });
   }
 
@@ -397,8 +405,26 @@ export const submitForm: RequestHandler = async (req, res) => {
   const sourceUrl = req.get("referer");
 
   const payField = paymentService.activePaymentField(form.fields, data);
+  const bookingField = bookingService.activeBookingField(form.fields, data);
+  let hold: Awaited<ReturnType<typeof bookingService.reserveSlot>> | undefined;
+  let attached = false;
 
   try {
+    if (payField && req.body._retryOrderId) {
+      const discarded = await formService.discardPendingSubmission(String(req.body._retryOrderId));
+      if (discarded) await bookingService.releaseBookings([discarded._id]);
+    }
+
+    if (bookingField) {
+      const picked = typeof data[bookingField.id] === "string" ? data[bookingField.id] : "";
+      if (picked) {
+        hold = await bookingService.reserveSlot(form, bookingField, picked);
+        data[bookingField.id] = hold.start.toISOString();
+      } else if (bookingField.required) {
+        throw new bookingService.InvalidBookingError("Pick a time for your booking.");
+      }
+    }
+
     if (payField) {
       const amount = paymentService.resolveAmount(payField, data, form.fields);
       const currency = payField.pay?.currency ?? "INR";
@@ -431,12 +457,6 @@ export const submitForm: RequestHandler = async (req, res) => {
         customer.phone = supplied;
       }
 
-      if (req.body._retryOrderId) {
-        await formService.discardPendingSubmission(
-          String(req.body._retryOrderId),
-        );
-      }
-
       const submission = await formService.submitForm(
         req.params.id,
         form.fields,
@@ -453,6 +473,10 @@ export const submitForm: RequestHandler = async (req, res) => {
         fileMeta,
         typeof _partialKey === "string" ? _partialKey : undefined,
       );
+      if (hold) {
+        await bookingService.attachBooking(hold._id, submission._id, false);
+        attached = true;
+      }
 
       const order = await paymentService.createCheckout(credentials, {
         amount,
@@ -500,6 +524,13 @@ export const submitForm: RequestHandler = async (req, res) => {
       typeof _partialKey === "string" ? _partialKey : undefined,
     );
 
+    let booking;
+    if (hold) {
+      await bookingService.attachBooking(hold._id, submission._id, true);
+      attached = true;
+      booking = await bookingService.finalizeBooking(form, submission._id, data);
+    }
+
     await Promise.allSettled([
       !limits || limits.notificationEmails
         ? sendSubmissionNotifications(
@@ -508,6 +539,7 @@ export const submitForm: RequestHandler = async (req, res) => {
             undefined,
             String(submission._id),
             String(form._id),
+            booking,
           )
         : null,
       deliverWebhook(form, data, String(submission._id)),
@@ -516,8 +548,23 @@ export const submitForm: RequestHandler = async (req, res) => {
       }),
     ]);
 
-    res.status(201).json(submission);
+    res.status(201).json(booking ? { ...submission.toJSON(), booking } : submission);
   } catch (err) {
+    if (hold && !attached) await bookingService.dropHold(hold._id);
+    if (err instanceof bookingService.SlotUnavailableError) {
+      return res.status(409).json({
+        error: "slot_taken",
+        message: err.message,
+        fieldId: bookingField?.id,
+      });
+    }
+    if (err instanceof bookingService.InvalidBookingError) {
+      return res.status(400).json({
+        error: "invalid_booking",
+        message: err.message,
+        fieldId: bookingField?.id,
+      });
+    }
     if (err instanceof formService.DuplicateValueError) {
       return res.status(409).json({
         error: "duplicate_value",

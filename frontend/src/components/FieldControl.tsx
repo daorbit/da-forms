@@ -45,6 +45,7 @@ import { SignaturePad } from '@/components/SignaturePad';
 import { MatrixInput } from '@/components/MatrixInput';
 import { RankingInput } from '@/components/RankingInput';
 import { RepeaterInput } from '@/components/RepeaterInput';
+import { BookingInput } from '@/components/booking/BookingInput';
 import { countryOptions } from '@/lib/countries';
 import { sanitizeRichText } from '@/lib/richText';
 import richTextClasses from '@/components/RichTextBlock.module.css';
@@ -298,7 +299,7 @@ export function FieldControl({
   const ownsErrorDisplay: FormField['type'][] = [
     'name', 'address', 'rating', 'slider', 'multipleChoice', 'chips', 'decisionBox', 'terms',
     'signature', 'matrix', 'ranking', 'numberRange', 'repeater',
-    'nps', 'likert', 'dateRange', 'timeRange',
+    'nps', 'likert', 'dateRange', 'timeRange', 'booking',
   ];
 
   if (noLabelTypes.includes(field.type)) return renderControl();
@@ -1117,6 +1118,29 @@ export function FieldControl({
             inputBorder={inputBorder}
             penColor={inputTextColor}
             error={Boolean(error)}
+          />
+        </div>
+      );
+
+    case 'booking':
+      return (
+        <div style={base.style}>
+          {label && (
+            <Text size="sm" fw={500} mb={field.instructions ? 2 : 6} style={labelColor ? { color: labelColor } : undefined}>
+              {label}
+            </Text>
+          )}
+          {label && field.instructions && (
+            <Text size="xs" c="dimmed" mb={8}>
+              {field.instructions}
+            </Text>
+          )}
+          <BookingInput
+            field={field}
+            value={value}
+            onChange={onChange}
+            readOnly={readOnly}
+            invalid={Boolean(error)}
           />
         </div>
       );

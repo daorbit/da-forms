@@ -12,6 +12,7 @@ import {
   updateInTree,
 } from '@/lib/fieldTree';
 import { findPaymentField } from '@/lib/payment';
+import { findBookingField } from '@/lib/booking';
 import { parseColumnDroppableId, type DragData } from '@/components/builder/dnd';
 import { notify } from '@/lib/notify';
 
@@ -37,6 +38,10 @@ export function useFieldOps({
 }: Params) {
 
   function refusesSecondPayment(type: FieldType): boolean {
+    if (type === 'booking' && findBookingField(fields)) {
+      notify.warn('A form can only have one booking field. Edit the one you already have.');
+      return true;
+    }
     if (type !== 'payment' || !findPaymentField(fields)) return false;
     notify.warn('A form can only take one payment. Edit the payment field you already have.');
     return true;
@@ -86,8 +91,10 @@ export function useFieldOps({
     setFields((prev) => {
       const source = findField(prev, id);
       if (!source) return prev;
-      if (source.type === 'payment') {
-        notify.warn('A form can only take one payment.');
+      if (source.type === 'payment' || source.type === 'booking') {
+        notify.warn(
+          source.type === 'payment' ? 'A form can only take one payment.' : 'A form can only have one booking field.'
+        );
         return prev;
       }
 

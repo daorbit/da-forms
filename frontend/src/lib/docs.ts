@@ -11,6 +11,7 @@ export const DOCS = {
   pipeline: '/forms-entries-and-links#pipeline',
   quickSettings: '/forms-settings-and-analytics#quick-settings',
   scoring: '/forms-settings-and-analytics#quizzes',
+  booking: '/forms-booking',
 } as const;
 
 export function docsUrl(path: string): string {

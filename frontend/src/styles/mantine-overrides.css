@@ -180,12 +180,97 @@
   --switch-thumb-bg: var(--text-2);
 }
 
-.mantine-Checkbox-input:checked:not(.da-forms-light-surface *) {
-  --checkbox-icon-color: var(--accent-contrast);
+.mantine-Checkbox-input:not(.da-forms-light-surface *) {
+  background-color: var(--surface);
+  border-color: var(--border-strong);
+}
+
+.mantine-Checkbox-input:checked:not(.da-forms-light-surface *),
+.mantine-Checkbox-input:indeterminate:not(.da-forms-light-surface *) {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  --checkbox-icon-color: #ffffff;
+}
+
+.mantine-Radio-radio:not(.da-forms-light-surface *) {
+  background-color: var(--surface);
+  border-color: var(--border-strong);
 }
 
 .mantine-Radio-radio:checked:not(.da-forms-light-surface *) {
-  --radio-icon-color: var(--accent-contrast);
+  background-color: var(--accent);
+  border-color: var(--accent);
+  --radio-icon-color: #ffffff;
+}
+
+.mantine-DatePicker-calendarHeaderLevel,
+.mantine-DatePicker-weekday,
+.mantine-DatePicker-calendarHeaderControl {
+  color: var(--text-2);
+}
+
+.mantine-DatePicker-calendarHeaderLevel:hover,
+.mantine-DatePicker-calendarHeaderControl:hover {
+  background-color: var(--surface-2);
+  color: var(--text);
+}
+
+.mantine-DatePicker-day,
+.mantine-Day-day {
+  color: var(--text);
+  border-radius: 8px;
+}
+
+.mantine-DatePicker-day:hover:not([data-disabled]):not([data-selected]),
+.mantine-Day-day:hover:not([data-disabled]):not([data-selected]) {
+  background-color: var(--surface-2);
+}
+
+.mantine-DatePicker-day[data-weekend],
+.mantine-Day-day[data-weekend] {
+  color: var(--text);
+}
+
+.mantine-DatePicker-day[data-outside],
+.mantine-Day-day[data-outside] {
+  color: var(--muted);
+}
+
+.mantine-DatePicker-day[data-in-range],
+.mantine-Day-day[data-in-range] {
+  background-color: var(--accent-soft);
+  color: var(--text);
+}
+
+.mantine-DatePicker-day[data-in-range]:hover:not([data-disabled]),
+.mantine-Day-day[data-in-range]:hover:not([data-disabled]) {
+  background-color: color-mix(in srgb, var(--accent) 26%, transparent);
+}
+
+.mantine-DatePicker-day[data-selected],
+.mantine-DatePicker-day[data-first-in-range],
+.mantine-DatePicker-day[data-last-in-range],
+.mantine-Day-day[data-selected],
+.mantine-Day-day[data-first-in-range],
+.mantine-Day-day[data-last-in-range] {
+  background-color: var(--accent);
+  color: #ffffff;
+}
+
+.mantine-DatePicker-day[data-selected]:hover:not([data-disabled]),
+.mantine-DatePicker-day[data-first-in-range]:hover:not([data-disabled]),
+.mantine-DatePicker-day[data-last-in-range]:hover:not([data-disabled]),
+.mantine-Day-day[data-selected]:hover:not([data-disabled]),
+.mantine-Day-day[data-first-in-range]:hover:not([data-disabled]),
+.mantine-Day-day[data-last-in-range]:hover:not([data-disabled]) {
+  background-color: color-mix(in srgb, var(--accent) 85%, var(--text));
+  color: #ffffff;
+}
+
+.mantine-DatePicker-day[data-disabled],
+.mantine-Day-day[data-disabled] {
+  color: var(--muted);
+  opacity: 0.45;
 }
 
 .skeleton-shimmer[data-visible][data-animate]::after {

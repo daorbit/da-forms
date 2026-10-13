@@ -13,11 +13,13 @@ export function SortableField({
   field,
   children,
   className,
+  fresh,
   onClick,
 }: {
   field: FormField;
   children: React.ReactNode;
   className?: string;
+  fresh?: boolean;
   onClick?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver, active, data } = useSortable({
@@ -36,6 +38,7 @@ export function SortableField({
       ref={setNodeRef}
       className={`${className ?? ''} ${isDragging ? classes.rowDragging : ''}`}
       data-drop-before={showDropLine || undefined}
+      data-fresh={fresh || undefined}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       onClick={onClick}
       {...attributes}

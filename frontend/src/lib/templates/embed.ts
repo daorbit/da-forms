@@ -7,37 +7,6 @@ import { field, row } from './types';
  */
 export const embedTemplates: FormTemplate[] = [
   {
-    id: 'embedContact',
-    name: 'Inline contact card',
-    description: 'A compact contact block sized to sit in a sidebar or footer.',
-    category: 'Basics',
-    keywords: ['embed', 'widget', 'inline', 'sidebar', 'contact'],
-    title: 'Get in touch',
-    formDescription: 'We reply to everything within one business day.',
-    submitLabel: 'Send',
-    fields: [
-      row(
-        [field('name', { label: 'Name', required: true })],
-        [field('email', { label: 'Email', required: true })]
-      ),
-      field('textarea', { label: 'Message', required: true, placeholder: 'How can we help?' }),
-    ],
-    theme: {
-      scope: 'card',
-      cardBg: '#ffffff',
-      cardBorder: '#e2e8f0',
-      accentColor: '#2563eb',
-      labelColor: '#0f172a',
-      inputBg: '#f8fafc',
-      inputBorder: '#cbd5e1',
-      inputTextColor: '#0f172a',
-      textMode: 'dark',
-      cardRadius: 12,
-      cardShadow: 'sm',
-      fontFamily: 'inter',
-    },
-  },
-  {
     id: 'embedLeadCapture',
     name: 'Lead capture block',
     description: 'Email and company on one line — a landing page conversion block.',

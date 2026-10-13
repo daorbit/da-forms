@@ -64,7 +64,7 @@ export function TemplateSwitcher({ onClose, current, fields, theme, onApply }: P
   }, []);
 
   const apply = () => {
-    onApply({ template: shown, mode, fields: nextFields });
+    onApply({ template: shown, mode, fields: nextFields, added: mode === 'full' ? diff.added.map((field) => field.id) : [] });
     onClose();
   };
 

@@ -8,6 +8,8 @@ import { isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useEmbedded } from '@/hooks/useEmbedded';
 import { useHostEditorOpen } from '@/hooks/useHostEditorOpen';
+import { useBuilderTooSmall } from '@/hooks/useBuilderTooSmall';
+import { MobileBuilder } from '@/components/builder/mobile/MobileBuilder';
 import type { PaymentSettings } from '@/types';
 import {
   DndContext,
@@ -44,6 +46,7 @@ export function FormBuilderPage() {
   const workspaceId = useWorkspaceId();
   const isDemo = isDemoWorkspace(workspaceId);
   const embedded = useEmbedded();
+  const tooSmall = useBuilderTooSmall();
   useHostEditorOpen();
   const locationState = (location.state as BuilderLocationState | null) ?? null;
 
@@ -103,7 +106,7 @@ export function FormBuilderPage() {
   });
 
   const { aiSnapshot, applyAiRevision } = useAiRevision(state);
-  const { applyTemplate } = useTemplateSwitch(state);
+  const { applyTemplate, freshIds } = useTemplateSwitch(state);
 
   useBuilderShortcuts({
     selectedId: state.selectedId,
@@ -156,6 +159,61 @@ export function FormBuilderPage() {
   }
 
   const editingField = state.editingId ? findField(state.fields, state.editingId) : null;
+
+  const drawers = (
+    <BuilderDrawers
+      state={state}
+      workspaceId={workspaceId}
+      isDemo={isDemo}
+      editingField={editingField}
+      paymentSettings={paymentSettings}
+      railPanel={railPanel}
+      setRailPanel={setRailPanel}
+      formSettingsOpen={formSettingsOpen}
+      setFormSettingsOpen={setFormSettingsOpen}
+      shareOpen={shareOpen}
+      setShareOpen={setShareOpen}
+      publishedOpen={publishedOpen}
+      setPublishedOpen={setPublishedOpen}
+      previewOpen={previewOpen}
+      setPreviewOpen={setPreviewOpen}
+      pendingLeave={pendingLeave}
+      setPendingLeave={setPendingLeave}
+      onLeave={() => navigate(`/${workspaceId}/forms`)}
+      updateField={updateField}
+      aiSnapshot={aiSnapshot}
+      applyAiRevision={applyAiRevision}
+    />
+  );
+
+  const insertModal = (
+    <QuickInsertModal
+      opened={insertOpen}
+      onClose={() => setInsertOpen(false)}
+      onPick={(item) => insertFieldAfter(item.type, item.columns, state.selectedId)}
+    />
+  );
+
+  if (tooSmall) {
+    return (
+      <>
+        <MobileBuilder
+          state={state}
+          actions={{ onChange: updateField, onMove: moveFieldBy, onDuplicate: duplicateField, onRemove: removeField }}
+          isDemo={isDemo}
+          saving={saving}
+          publishing={publishing}
+          onBack={handleBack}
+          onSave={handleSave}
+          onTogglePublish={handleTogglePublish}
+          onAddField={() => setInsertOpen(true)}
+          onAskAi={() => setRailPanel('ai')}
+        />
+        {drawers}
+        {insertModal}
+      </>
+    );
+  }
 
   return (
     <DndContext
@@ -230,6 +288,8 @@ export function FormBuilderPage() {
               onQuickAdd={(type) => addField(type)}
               onAskAi={() => setRailPanel('ai')}
               onOpenInsert={() => setInsertOpen(true)}
+              onOpenTemplates={() => setTemplatesOpen(true)}
+              freshIds={freshIds}
               submitLabel={state.submitLabel}
               onSubmitLabelChange={state.setSubmitLabel}
               submitButtonWidth={state.submitButtonWidth}
@@ -248,36 +308,10 @@ export function FormBuilderPage() {
           <IconRail active={railPanel} onSelect={handleRailSelect} />
         </AppShell.Aside>
 
-        <BuilderDrawers
-          state={state}
-          workspaceId={workspaceId}
-          isDemo={isDemo}
-          editingField={editingField}
-          paymentSettings={paymentSettings}
-          railPanel={railPanel}
-          setRailPanel={setRailPanel}
-          formSettingsOpen={formSettingsOpen}
-          setFormSettingsOpen={setFormSettingsOpen}
-          shareOpen={shareOpen}
-          setShareOpen={setShareOpen}
-          publishedOpen={publishedOpen}
-          setPublishedOpen={setPublishedOpen}
-          previewOpen={previewOpen}
-          setPreviewOpen={setPreviewOpen}
-          pendingLeave={pendingLeave}
-          setPendingLeave={setPendingLeave}
-          onLeave={() => navigate(`/${workspaceId}/forms`)}
-          updateField={updateField}
-          aiSnapshot={aiSnapshot}
-          applyAiRevision={applyAiRevision}
-        />
+        {drawers}
       </AppShell>
 
-      <QuickInsertModal
-        opened={insertOpen}
-        onClose={() => setInsertOpen(false)}
-        onPick={(item) => insertFieldAfter(item.type, item.columns, state.selectedId)}
-      />
+      {insertModal}
       <ShortcutsModal opened={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       {templatesOpen && (
         <TemplateSwitcher

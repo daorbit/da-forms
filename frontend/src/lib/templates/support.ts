@@ -1,63 +1,8 @@
 import type { FormTemplate } from './types';
-import { field, pageBreak, row } from './types';
+import { field, row } from './types';
 
 /** Forms that collect a report or a rating rather than a lead. */
 export const supportTemplates: FormTemplate[] = [
-  {
-    id: 'support',
-    name: 'Support request',
-    description: 'Dark themed contact form with a topic dropdown, side-by-side fields, and a message box.',
-    category: 'Support',
-    title: 'Contact us',
-    fields: [
-      {
-        id: crypto.randomUUID(),
-        type: 'grid',
-        label: '',
-        required: false,
-        columns: [
-          [field('text', { label: 'Your name', required: true, placeholder: 'Ada Lovelace' })],
-          [field('email', { label: 'Email', required: true, placeholder: 'ada@example.com' })],
-        ],
-      },
-      {
-        id: crypto.randomUUID(),
-        type: 'grid',
-        label: '',
-        required: false,
-        columns: [
-          [field('text', { label: 'Company', required: false, placeholder: 'Acme Inc.' })],
-          [
-            field('select', {
-              label: 'What is this about?',
-              required: true,
-              options: [
-                'General enquiry',
-                'Pricing and plans',
-                'Help with my account',
-                'Platform API / white label',
-                'Privacy and compliance',
-                'Something else',
-              ],
-            }),
-          ],
-        ],
-      },
-      field('textarea', {
-        label: 'Message',
-        required: true,
-        placeholder: 'Tell us what you are trying to do, and we will tell you whether it fits.',
-      }),
-    ],
-    theme: {
-      scope: 'page',
-      pageBg: '#0f1115',
-      cardBg: '#1a1c20',
-      cardBorder: '#2b2e34',
-      accentColor: '#12b5a6',
-      textMode: 'light',
-    },
-  },
   {
     id: 'productFeedback',
     name: 'Product feedback',

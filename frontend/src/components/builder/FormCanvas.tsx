@@ -45,6 +45,8 @@ interface Props {
   onQuickAdd: (type: FieldType) => void;
   onAskAi: () => void;
   onOpenInsert: () => void;
+  onOpenTemplates: () => void;
+  freshIds?: ReadonlySet<string>;
   submitLabel: string;
   onSubmitLabelChange: (value: string) => void;
   submitButtonWidth?: SubmitButtonWidth;
@@ -77,6 +79,8 @@ export function FormCanvas({
   onQuickAdd,
   onAskAi,
   onOpenInsert,
+  onOpenTemplates,
+  freshIds,
   submitLabel,
   onSubmitLabelChange,
   submitButtonWidth,
@@ -153,6 +157,7 @@ export function FormCanvas({
       <SortableField
         key={field.id}
         field={field}
+        fresh={freshIds?.has(field.id)}
         className={`${classes.fieldRow} ${isSelected ? classes.fieldRowSelected : ''} ${isDarkCard ? classes.fieldRowDark : ''}`}
         onClick={() => {
           onSelect(field.id);
@@ -294,7 +299,13 @@ export function FormCanvas({
             <div ref={setRootRef} className={`${classes.rootDrop} ${isOverRoot && fields.length > 0 ? classes.rootDropOver : ''}`}>
               <SortableContext id="root" items={fields.map((field) => field.id)} strategy={verticalListSortingStrategy}>
                 {fields.length === 0 ? (
-                  <EmptyCanvas isOver={isOverRoot} onAskAi={onAskAi} onOpenInsert={onOpenInsert} onQuickAdd={onQuickAdd} />
+                  <EmptyCanvas
+                    isOver={isOverRoot}
+                    onAskAi={onAskAi}
+                    onOpenInsert={onOpenInsert}
+                    onOpenTemplates={onOpenTemplates}
+                    onQuickAdd={onQuickAdd}
+                  />
                 ) : (
                   <>
                     {fields.map((field, index) => (

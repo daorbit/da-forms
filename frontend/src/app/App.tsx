@@ -13,11 +13,7 @@ import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 function NewFormRoute() {
   const workspaceId = useWorkspaceId();
   if (isDemoWorkspace(workspaceId)) return <Navigate to={`/${workspaceId}/forms`} replace />;
-  return (
-    <SmallScreenGate>
-      <FormBuilderPage />
-    </SmallScreenGate>
-  );
+  return <FormBuilderPage />;
 }
 
 /**
@@ -52,11 +48,7 @@ export function App() {
         <Route path="/:workspaceId/forms/create" element={<CreateFormRoute />} />
         <Route
           path="/:workspaceId/forms/:id/edit"
-          element={
-            <SmallScreenGate>
-              <FormBuilderPage />
-            </SmallScreenGate>
-          }
+          element={<FormBuilderPage />}
         />
         <Route path="/:workspaceId/forms/:id/entries" element={<EntriesRoute />} />
         <Route path="/form/:id/view" element={<PublicFormPage />} />

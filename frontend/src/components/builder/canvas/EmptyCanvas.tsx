@@ -1,30 +1,48 @@
-import { ArrowRightIcon, PlusIcon } from 'lucide-react';
+import type { ReactNode, SyntheticEvent } from 'react';
+import { LayoutTemplateIcon, PlusIcon } from 'lucide-react';
 import type { FieldType } from '@/types';
 import { paletteByType } from '@/lib/fieldPalette';
+import { formTemplates } from '@/lib/templates';
 import { OrbitMark } from '@/components/OrbitMark';
 import classes from './EmptyCanvas.module.css';
 
-const STARTERS: { type: FieldType; hint: string }[] = [
-  { type: 'name', hint: 'First and last' },
-  { type: 'email', hint: 'Validated address' },
-  { type: 'phone', hint: 'With country code' },
-  { type: 'textarea', hint: 'Long answer' },
-  { type: 'select', hint: 'Pick one option' },
-  { type: 'rating', hint: 'Stars 1–5' },
-];
+const QUICK: FieldType[] = ['name', 'email', 'phone', 'textarea', 'select', 'rating'];
+const TEMPLATE_COUNT = formTemplates.length - 1;
 
 interface Props {
   isOver: boolean;
   onAskAi: () => void;
   onOpenInsert: () => void;
+  onOpenTemplates: () => void;
   onQuickAdd: (type: FieldType) => void;
 }
 
-function stop(e: React.SyntheticEvent) {
+function stop(e: SyntheticEvent) {
   e.stopPropagation();
 }
 
-export function EmptyCanvas({ isOver, onAskAi, onOpenInsert, onQuickAdd }: Props) {
+function Choice({ icon, title, body, aside, onPick }: { icon: ReactNode; title: string; body: string; aside?: ReactNode; onPick: () => void }) {
+  return (
+    <button
+      type="button"
+      className={classes.choice}
+      onPointerDown={stop}
+      onClick={(e) => {
+        stop(e);
+        onPick();
+      }}
+    >
+      <span className={classes.choiceTop}>
+        <span className={classes.choiceIcon}>{icon}</span>
+        {aside}
+      </span>
+      <span className={classes.choiceTitle}>{title}</span>
+      <span className={classes.choiceBody}>{body}</span>
+    </button>
+  );
+}
+
+export function EmptyCanvas({ isOver, onAskAi, onOpenInsert, onOpenTemplates, onQuickAdd }: Props) {
   if (isOver) {
     return (
       <div className={classes.root} data-over>
@@ -38,69 +56,50 @@ export function EmptyCanvas({ isOver, onAskAi, onOpenInsert, onQuickAdd }: Props
 
   return (
     <div className={classes.root}>
-      <button
-        type="button"
-        className={classes.primary}
-        onPointerDown={stop}
-        onClick={(e) => {
-          stop(e);
-          onOpenInsert();
-        }}
-      >
-        <span className={classes.primaryIcon}>
-          <PlusIcon size={18} strokeWidth={2.4} />
-        </span>
-        <span className={classes.primaryText}>
-          <span className={classes.primaryTitle}>Add your first question</span>
-          <span className={classes.primaryHint}>Search every field type</span>
-        </span>
-        <kbd className={classes.kbd}>/</kbd>
-      </button>
-
-      <div className={classes.divider}>
-        <span>or start with</span>
+      <div className={classes.intro}>
+        <p className={classes.title}>Start your form</p>
+        <p className={classes.lead}>Pick a starting point. Everything can be changed later.</p>
       </div>
 
-      <div className={classes.grid}>
-        {STARTERS.map(({ type, hint }) => {
+      <div className={classes.choices}>
+        <Choice
+          icon={<PlusIcon size={18} strokeWidth={2.2} />}
+          title="Add a question"
+          body="Search every field type"
+          aside={<kbd className={classes.kbd}>/</kbd>}
+          onPick={onOpenInsert}
+        />
+        <Choice
+          icon={<LayoutTemplateIcon size={18} strokeWidth={1.9} />}
+          title="Use a template"
+          body={`${TEMPLATE_COUNT} ready-made forms`}
+          onPick={onOpenTemplates}
+        />
+        <Choice icon={<OrbitMark size={22} />} title="Build with Orbit" body="Describe it in a sentence" onPick={onAskAi} />
+      </div>
+
+      <div className={classes.quick}>
+        <span className={classes.quickLabel}>Quick add</span>
+        {QUICK.map((type) => {
           const item = paletteByType[type];
           const Icon = item.icon;
           return (
             <button
               key={type}
               type="button"
-              className={classes.tile}
+              className={classes.chip}
               onPointerDown={stop}
               onClick={(e) => {
                 stop(e);
                 onQuickAdd(type);
               }}
             >
-              <span className={classes.tileIcon}>
-                <Icon size={15} strokeWidth={1.8} />
-              </span>
-              <span className={classes.tileText}>
-                <span className={classes.tileLabel}>{item.label}</span>
-                <span className={classes.tileHint}>{hint}</span>
-              </span>
+              <Icon size={13} strokeWidth={2} />
+              {item.label}
             </button>
           );
         })}
       </div>
-
-      <button
-        type="button"
-        className={classes.orbit}
-        onPointerDown={stop}
-        onClick={(e) => {
-          stop(e);
-          onAskAi();
-        }}
-      >
-        <OrbitMark size={20} />
-        <span>Describe your form and let Orbit build it</span>
-        <ArrowRightIcon size={14} className={classes.orbitArrow} />
-      </button>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { makeField } from '@/lib/fieldPalette';
 export const templateCategories = [
   'Featured',
   'Scheduling',
+  'Contact',
   'Basics',
   'Support',
   'Commerce',

@@ -38,6 +38,10 @@ export function scopeLabel(tpl: FormTemplate): string {
   return templateScope(tpl) === 'card' ? 'Embedded' : 'Standalone';
 }
 
+export function rowMetaLine(tpl: FormTemplate): string[] {
+  return [scopeLabel(tpl), ...templateMetaLine(tpl)];
+}
+
 export function swatchVars(tpl: FormTemplate): CSSProperties {
   const theme = tpl.theme;
   return {

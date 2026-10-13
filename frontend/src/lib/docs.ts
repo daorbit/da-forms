@@ -10,6 +10,7 @@ export const DOCS = {
   notifications: '/forms-notifications-and-apps',
   pipeline: '/forms-entries-and-links#pipeline',
   quickSettings: '/forms-settings-and-analytics#quick-settings',
+  switchTemplate: '/forms-settings-and-analytics#switch-template',
   scoring: '/forms-settings-and-analytics#quizzes',
   booking: '/forms-booking',
 } as const;

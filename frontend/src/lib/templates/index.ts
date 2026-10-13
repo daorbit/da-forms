@@ -18,6 +18,7 @@ import { proBusinessTemplates } from './pro/business';
 import { proPeopleTemplates } from './pro/people';
 import { proServicesTemplates } from './pro/services';
 import { proSchedulingTemplates } from './pro/scheduling';
+import { proContactTemplates } from './pro/contact';
 import { modernize } from './modernize';
 
 export type { FormTemplate, TemplateCategory } from './types';
@@ -26,6 +27,7 @@ export { templateCategories } from './types';
 export const formTemplates = [
   ...featuredTemplates,
   ...proSchedulingTemplates,
+  ...proContactTemplates,
   ...proBusinessTemplates,
   ...proPeopleTemplates,
   ...proServicesTemplates,

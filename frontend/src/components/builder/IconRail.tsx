@@ -7,6 +7,7 @@ import {
   MailIcon,
   PaletteIcon,
   BlocksIcon,
+  LayoutTemplateIcon,
   Share2Icon,
   SlidersHorizontalIcon,
   WebhookIcon,
@@ -14,7 +15,7 @@ import {
 import { OrbitMark } from '@/components/OrbitMark';
 import classes from './IconRail.module.css';
 
-export type RailPanel = 'ai' | 'quickSettings' | 'thankYou' | 'embed' | 'theme' | 'steps' | 'notifications' | 'drawerNotify' | 'webhook' | 'payments' | 'integrations';
+export type RailPanel = 'ai' | 'templates' | 'quickSettings' | 'thankYou' | 'embed' | 'theme' | 'steps' | 'notifications' | 'drawerNotify' | 'webhook' | 'payments' | 'integrations';
 
 interface Props {
   active: RailPanel | null;
@@ -32,6 +33,7 @@ const ICON = { size: 18, strokeWidth: 1.7 };
 const GROUPS: RailItem[][] = [
   [
     { id: 'quickSettings', label: 'Quick settings', icon: <SlidersHorizontalIcon {...ICON} /> },
+    { id: 'templates', label: 'Templates', icon: <LayoutTemplateIcon {...ICON} /> },
     { id: 'theme', label: 'Theme', icon: <PaletteIcon {...ICON} /> },
     { id: 'steps', label: 'Steps & progress', icon: <ListOrderedIcon {...ICON} /> },
   ],

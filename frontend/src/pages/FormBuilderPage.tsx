@@ -30,6 +30,8 @@ import { useFormBuilderState, type BuilderLocationState } from './formBuilder/us
 import { useFieldOps } from './formBuilder/useFieldOps';
 import { useFormPersistence } from './formBuilder/useFormPersistence';
 import { useAiRevision } from './formBuilder/useAiRevision';
+import { useTemplateSwitch } from './formBuilder/useTemplateSwitch';
+import { TemplateSwitcher } from '@/components/builder/templateSwitch/TemplateSwitcher';
 import { BuilderHeader } from './formBuilder/BuilderHeader';
 import { BuilderDrawers } from './formBuilder/BuilderDrawers';
 import classes from './FormBuilderPage.module.css';
@@ -61,6 +63,7 @@ export function FormBuilderPage() {
   const [pendingLeave, setPendingLeave] = useState(false);
   const [insertOpen, setInsertOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   // A few pixels of travel before a drag starts, so clicking a field to open
   // its properties is not read as the beginning of one.
@@ -100,6 +103,7 @@ export function FormBuilderPage() {
   });
 
   const { aiSnapshot, applyAiRevision } = useAiRevision(state);
+  const { applyTemplate } = useTemplateSwitch(state);
 
   useBuilderShortcuts({
     selectedId: state.selectedId,
@@ -124,6 +128,10 @@ export function FormBuilderPage() {
   }, [hasPaymentField, workspaceId, isDemo, railPanel]);
 
   function handleRailSelect(panel: RailPanel) {
+    if (panel === 'templates') {
+      setTemplatesOpen(true);
+      return;
+    }
     if (panel !== 'embed') {
       setRailPanel(panel);
       return;
@@ -271,6 +279,31 @@ export function FormBuilderPage() {
         onPick={(item) => insertFieldAfter(item.type, item.columns, state.selectedId)}
       />
       <ShortcutsModal opened={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      {templatesOpen && (
+        <TemplateSwitcher
+          onClose={() => setTemplatesOpen(false)}
+          fields={state.fields}
+          theme={state.theme}
+          onApply={applyTemplate}
+          current={{
+            title: state.title,
+            description: state.description,
+            fields: state.fields,
+            hideHeader: state.hideHeader,
+            headerAlign: state.headerAlign,
+            labelPlacement: state.labelPlacement,
+            submitLabel: state.submitLabel,
+            submitButtonSize: state.submitButtonSize,
+            submitButtonWidth: state.submitButtonWidth,
+            submitButtonAlign: state.submitButtonAlign,
+            theme: state.theme,
+            steps: state.steps,
+            stepIndicator: state.stepIndicator,
+            showStepHeadings: state.showStepHeadings,
+            oneQuestionAtATime: state.oneQuestionAtATime,
+          }}
+        />
+      )}
 
       <DragOverlay dropAnimation={null}>
         {dragging ? <DragChip data={dragging} /> : null}

@@ -22,11 +22,11 @@ import {
   Link2Icon,
   TriangleAlertIcon,
   UnplugIcon,
+  WebhookIcon,
   XIcon,
 } from 'lucide-react';
 import type { WebhookSettings } from '@/types';
 import { getWebhookApp } from '@/lib/api';
-import { AppLogo } from './AppLogos';
 
 import classes from '../builder/PaymentsModal.module.css';
 
@@ -111,7 +111,7 @@ export function WebhookConnectDialog({
           {/* ---- Left panel: identity + status ---- */}
           <Box className={classes.panel}>
             <Group px={20} wrap="nowrap" className={classes.panelHeader} align="center">
-              <AppLogo appId="webhook" height={26} />
+              <WebhookIcon size={26} />
               <Text fw={600}>Webhook</Text>
             </Group>
 
@@ -204,8 +204,8 @@ export function WebhookConnectDialog({
                     >
                       <Stack gap="sm">
                         <Text size="sm">
-                          Turn on the Webhook app in Integrations first — a URL and secret saved
-                          here will not deliver anything until it is on.
+                          Turn on Webhook in Quantalog Settings → Connections first — a URL and
+                          secret saved here will not deliver anything until it is on.
                         </Text>
                         <Button
                           variant="default"
@@ -213,7 +213,7 @@ export function WebhookConnectDialog({
                           onClick={onOpenIntegrations}
                           style={{ alignSelf: 'flex-start' }}
                         >
-                          Open Integrations
+                          Open Connections
                         </Button>
                       </Stack>
                     </Alert>

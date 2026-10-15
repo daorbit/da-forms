@@ -54,12 +54,7 @@ function Sections({
       <>
         <BasicsSection field={field} set={set} />
         <BookingSection field={field} set={set} />
-        <BookingCalendarSection
-          field={field}
-          set={set}
-          allFields={allFields}
-          onOpenIntegrations={onOpenPaymentSettings}
-        />
+        <BookingCalendarSection field={field} set={set} allFields={allFields} />
         <LogicSection field={field} set={set} allFields={allFields} />
         <AppearanceSection field={field} set={set} />
       </>

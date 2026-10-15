@@ -7,6 +7,7 @@ import {
   Button,
   ActionIcon,
   Alert,
+  Anchor,
   Divider,
   Stack,
   Switch,
@@ -26,6 +27,7 @@ import {
 } from 'lucide-react';
 import type { Editor } from '@tiptap/react';
 import { listApps } from '@/lib/api';
+import { openConnections } from '@/lib/hostConnections';
 import type { EmailLayout, FormField, FormTheme, NotificationSettings } from '@/types';
 import { EMAIL_LAYOUTS, partsOfLayout, renderEmail } from '@/lib/emailTemplates';
 import { EmailBodyEditor } from './EmailBodyEditor';
@@ -331,8 +333,12 @@ export function NotificationsModal({
               >
                 <Text size="sm">
                   We can&apos;t see an email app switched on for this workspace, so these
-                  messages may not send. Check <b>Integrations</b> — if you have just
-                  connected one, reopen this panel and the notice will clear.
+                  messages may not send.{' '}
+                  <Anchor component="button" type="button" size="sm" onClick={() => openConnections('brevo')}>
+                    Connect an email app
+                  </Anchor>{' '}
+                  in Quantalog Settings → Connections. If you have just connected one, reopen this panel and the
+                  notice will clear.
                 </Text>
               </Alert>
             )}

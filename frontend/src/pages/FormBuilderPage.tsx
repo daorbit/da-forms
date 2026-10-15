@@ -3,6 +3,7 @@ import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { AppShell, Stack, Skeleton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { getPaymentSettings } from '@/lib/api';
+import { onReturnFromConnections, openConnections } from '@/lib/hostConnections';
 import { findPaymentField } from '@/lib/payment';
 import { isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
@@ -101,7 +102,6 @@ export function FormBuilderPage() {
     setSaving,
     setPublishing,
     setShareOpen,
-    setRailPanel,
     onPublished: () => setPublishedOpen(true),
   });
 
@@ -126,11 +126,19 @@ export function FormBuilderPage() {
  
   const hasPaymentField = Boolean(findPaymentField(state.fields));
   useEffect(() => {
-    if (!hasPaymentField || isDemo || railPanel === 'payments') return;
-    getPaymentSettings(workspaceId).then(setPaymentSettings).catch(() => {});
-  }, [hasPaymentField, workspaceId, isDemo, railPanel]);
+    if (!hasPaymentField || isDemo) return;
+    const load = () => {
+      getPaymentSettings(workspaceId).then(setPaymentSettings).catch(() => {});
+    };
+    load();
+    return onReturnFromConnections(load);
+  }, [hasPaymentField, workspaceId, isDemo]);
 
   function handleRailSelect(panel: RailPanel) {
+    if (panel === 'integrations') {
+      openConnections();
+      return;
+    }
     if (panel === 'templates') {
       setTemplatesOpen(true);
       return;

@@ -1,7 +1,7 @@
 import { createForm, updateForm } from '@/lib/api';
 import { findPaymentField, paymentFieldProblem, paymentStepProblem } from '@/lib/payment';
 import type { PaymentSettings } from '@/types';
-import type { RailPanel } from '@/components/builder/IconRail';
+import { openConnections } from '@/lib/hostConnections';
 import type { FormBuilderState } from './useFormBuilderState';
 import { notify } from '@/lib/notify';
 
@@ -13,7 +13,6 @@ interface Params {
   setSaving: React.Dispatch<React.SetStateAction<boolean>>;
   setPublishing: React.Dispatch<React.SetStateAction<boolean>>;
   setShareOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setRailPanel: React.Dispatch<React.SetStateAction<RailPanel | null>>;
   onPublished: () => void;
 }
 
@@ -29,7 +28,6 @@ export function useFormPersistence({
   setSaving,
   setPublishing,
   setShareOpen,
-  setRailPanel,
   onPublished,
 }: Params) {
   async function saveForm() {
@@ -107,7 +105,7 @@ export function useFormPersistence({
           'Connect Razorpay and turn payments on, or this form cannot charge anyone.',
           'Payments are switched off',
         );
-        setRailPanel('payments');
+        openConnections(paymentSettings?.defaultProvider ?? 'razorpay');
         return;
       }
     }

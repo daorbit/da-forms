@@ -15,7 +15,7 @@ import {
 import { OrbitMark } from '@/components/OrbitMark';
 import classes from './IconRail.module.css';
 
-export type RailPanel = 'ai' | 'templates' | 'quickSettings' | 'thankYou' | 'embed' | 'theme' | 'steps' | 'notifications' | 'drawerNotify' | 'webhook' | 'payments' | 'integrations';
+export type RailPanel = 'ai' | 'templates' | 'quickSettings' | 'thankYou' | 'embed' | 'theme' | 'steps' | 'notifications' | 'drawerNotify' | 'webhook' | 'integrations';
 
 interface Props {
   active: RailPanel | null;
@@ -44,7 +44,7 @@ const GROUPS: RailItem[][] = [
   ],
   [
     { id: 'webhook', label: 'Webhook', icon: <WebhookIcon {...ICON} /> },
-    { id: 'integrations', label: 'Integrations', icon: <BlocksIcon {...ICON} /> },
+    { id: 'integrations', label: 'Connections', icon: <BlocksIcon {...ICON} /> },
   ],
 ];
 

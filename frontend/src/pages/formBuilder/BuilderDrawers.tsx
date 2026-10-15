@@ -11,8 +11,8 @@ import { StepsDrawer } from '@/components/builder/StepsDrawer';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
 import { NotificationsModal } from '@/components/builder/NotificationsModal';
 import { DrawerNotifyModal } from '@/components/builder/DrawerNotifyModal';
-import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
 import { WebhookConnectDialog } from '@/components/apps/WebhookConnectDialog';
+import { openConnections } from '@/lib/hostConnections';
 import { PreviewModal } from '@/components/builder/PreviewModal';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PublishedDialog } from '@/components/share/PublishedDialog';
@@ -83,10 +83,7 @@ export function BuilderDrawers({
         onClose={() => state.setEditingId(null)}
         onChange={updateField}
         paymentSettings={paymentSettings}
-        onOpenPaymentSettings={() => {
-          state.setEditingId(null);
-          setRailPanel('integrations');
-        }}
+        onOpenPaymentSettings={() => openConnections(paymentSettings?.defaultProvider ?? 'razorpay')}
       />
 
       <FormSettings
@@ -203,13 +200,6 @@ export function BuilderDrawers({
         onChange={(enabled) => state.setEmailNotifications((prev) => ({ ...prev, ownerInAppEnabled: enabled }))}
       />
 
-      <IntegrationsModal
-        opened={railPanel === 'integrations'}
-        onClose={() => setRailPanel(null)}
-        workspaceId={workspaceId}
-        isDemo={isDemo}
-      />
-
       <WebhookConnectDialog
         opened={railPanel === 'webhook'}
         workspaceId={workspaceId}
@@ -217,7 +207,7 @@ export function BuilderDrawers({
         webhook={state.webhook}
         onChange={(patch) => state.setWebhook((prev) => ({ ...prev, ...patch }))}
         onClose={() => setRailPanel(null)}
-        onOpenIntegrations={() => setRailPanel('integrations')}
+        onOpenIntegrations={() => openConnections('webhook')}
       />
 
       <PreviewModal

@@ -6,11 +6,7 @@ import type {
   Paginated,
   PaymentRequired,
   PaymentSettings,
-  RazorpayMode,
-  PaymentProvider,
-  ConnectionTestResult,
   AppCard,
-  AppTestResult,
   PipelineFacets,
   PipelinePatch,
   PipelineSort,
@@ -495,93 +491,8 @@ export function getPaymentSettings(workspaceId = DEFAULT_WORKSPACE) {
   return authedRequest<PaymentSettings>(`/workspaces/${encodeURIComponent(workspaceId)}/settings/payments`);
 }
 
-export function savePaymentSettings(
-  input: {
- 
-    provider?: PaymentProvider;
-    defaultProvider?: PaymentProvider;
-    enabled?: boolean;
-    mode?: RazorpayMode;
-    /** Which key set is being edited. Defaults to the active mode. */
-    target?: RazorpayMode;
-    keyId?: string;
-    keySecret?: string;
-    webhookSecret?: string;
-  },
-  workspaceId = DEFAULT_WORKSPACE
-) {
-  return authedRequest<PaymentSettings>(
-    `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments`,
-    { method: 'PUT', body: JSON.stringify(input) }
-  );
-}
-
-export function testPaymentConnection(
-  mode: RazorpayMode,
-  workspaceId = DEFAULT_WORKSPACE,
-  provider: PaymentProvider = 'razorpay'
-) {
-  return authedRequest<ConnectionTestResult>(
-    `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments/test`,
-    { method: 'POST', body: JSON.stringify({ mode, provider }) }
-  );
-}
-
-export function disconnectPayments(
-  mode: RazorpayMode,
-  workspaceId = DEFAULT_WORKSPACE,
-  provider: PaymentProvider = 'razorpay'
-) {
-  return authedRequest<PaymentSettings>(
-    `/workspaces/${encodeURIComponent(workspaceId)}/settings/payments?mode=${mode}&provider=${provider}`,
-    { method: 'DELETE' }
-  );
-}
-
-/* ---- Workspace app connections (third-party integrations) ---- */
-
-function appsBase(workspaceId: string) {
-  return `/workspaces/${encodeURIComponent(workspaceId)}/settings/apps`;
-}
-
 export function listApps(workspaceId = DEFAULT_WORKSPACE) {
-  return authedRequest<AppCard[]>(appsBase(workspaceId));
-}
-
-export function getApp(appId: string, workspaceId = DEFAULT_WORKSPACE) {
-  return authedRequest<AppCard>(`${appsBase(workspaceId)}/${encodeURIComponent(appId)}`);
-}
-
-/**
- * Create or update one app connection.
- *
- * Only the fields in `values` are written; omit a secret key to keep the stored
- * one. `enabled` toggles the connection live — for email apps the server turns
- * the others off, since one mail transport is active at a time.
- */
-export function saveApp(
-  appId: string,
-  input: { values: Record<string, unknown>; enabled?: boolean },
-  workspaceId = DEFAULT_WORKSPACE
-) {
-  return authedRequest<AppCard>(`${appsBase(workspaceId)}/${encodeURIComponent(appId)}`, {
-    method: 'PUT',
-    body: JSON.stringify(input),
-  });
-}
-
- 
-export function testApp(appId: string, to?: string, workspaceId = DEFAULT_WORKSPACE) {
-  return authedRequest<AppTestResult>(
-    `${appsBase(workspaceId)}/${encodeURIComponent(appId)}/test`,
-    { method: 'POST', body: JSON.stringify(to ? { to } : {}) }
-  );
-}
-
-export function disconnectApp(appId: string, workspaceId = DEFAULT_WORKSPACE) {
-  return authedRequest<AppCard[]>(`${appsBase(workspaceId)}/${encodeURIComponent(appId)}`, {
-    method: 'DELETE',
-  });
+  return authedRequest<AppCard[]>(`/workspaces/${encodeURIComponent(workspaceId)}/settings/apps`);
 }
 
  
@@ -591,32 +502,13 @@ export function getBookingSlots(formId: string, fieldId: string, from: string, t
   );
 }
 
-function calendarBase(workspaceId: string) {
-  return `/workspaces/${encodeURIComponent(workspaceId)}/settings/calendar`;
-}
-
 export function getCalendarStatus(workspaceId = DEFAULT_WORKSPACE) {
-  return authedRequest<CalendarStatus>(calendarBase(workspaceId));
-}
-
-export function getCalendarConnectUrl(workspaceId = DEFAULT_WORKSPACE) {
-  return authedRequest<{ url: string }>(`${calendarBase(workspaceId)}/connect`);
-}
-
-export function disconnectCalendar(workspaceId = DEFAULT_WORKSPACE) {
-  return authedRequest<CalendarStatus>(calendarBase(workspaceId), { method: 'DELETE' });
+  return authedRequest<CalendarStatus>(`/workspaces/${encodeURIComponent(workspaceId)}/settings/calendar`);
 }
 
 export function getWebhookApp(workspaceId = DEFAULT_WORKSPACE) {
   return authedRequest<{ enabled: boolean }>(
     `/workspaces/${encodeURIComponent(workspaceId)}/settings/webhook-app`
-  );
-}
-
-export function saveWebhookApp(enabled: boolean, workspaceId = DEFAULT_WORKSPACE) {
-  return authedRequest<{ enabled: boolean }>(
-    `/workspaces/${encodeURIComponent(workspaceId)}/settings/webhook-app`,
-    { method: 'PUT', body: JSON.stringify({ enabled }) }
   );
 }
 

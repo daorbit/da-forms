@@ -27,7 +27,7 @@ export function CalendarConnectionCard({ status, onManage }: Props) {
       </span>
       {status?.configured && onManage && (
         <Anchor component="button" type="button" size="xs" className={statusClasses.manage} onClick={onManage}>
-          {status.connected ? 'Manage' : 'Connect in Apps'}
+          {status.connected ? 'Manage' : 'Connect'}
         </Anchor>
       )}
     </div>

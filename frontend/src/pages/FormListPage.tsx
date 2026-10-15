@@ -17,7 +17,7 @@ import { NewFormModal } from '@/components/NewFormModal';
 import { CreateFormPage } from './CreateFormPage';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
-import { IntegrationsModal } from '@/components/apps/IntegrationsModal';
+import { openConnections } from '@/lib/hostConnections';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FormListToolbar } from './formList/FormListToolbar';
 import { FormList } from './formList/FormList';
@@ -33,7 +33,6 @@ export function FormListPage() {
   const navigate = useNavigate();
   const list = useFormList(workspaceId, isDemo);
   const [newFormOpen, setNewFormOpen] = useState(false);
-  const [integrationsOpen, setIntegrationsOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Form | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState<Form | null>(null);
@@ -153,8 +152,8 @@ export function FormListPage() {
                 New form
               </Button>
             )}
-            <Button variant="default" leftSection={<BlocksIcon size={16} />} onClick={() => setIntegrationsOpen(true)}>
-              Integrations
+            <Button variant="default" leftSection={<BlocksIcon size={16} />} onClick={() => openConnections()}>
+              Connections
             </Button>
             {!hostPhone && <DocsButton path="/lead-capture" />}
             {IS_EMBEDDED && <HostNotificationsBell />}
@@ -252,13 +251,6 @@ export function FormListPage() {
           }
         />
       )}
-
-      <IntegrationsModal
-        opened={integrationsOpen}
-        onClose={() => setIntegrationsOpen(false)}
-        workspaceId={workspaceId}
-        isDemo={isDemo}
-      />
 
       <DeleteFormModal
         form={pendingDelete}

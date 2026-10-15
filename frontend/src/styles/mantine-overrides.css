@@ -104,12 +104,6 @@
   color: var(--text);
 }
 
-.mantine-Modal-content.integrations-page {
-  background-color: var(--shell);
-  border: 0;
-  box-shadow: none;
-}
-
 .mantine-Popover-dropdown {
   border: 1px solid var(--border);
   box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.45);

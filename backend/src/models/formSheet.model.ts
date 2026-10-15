@@ -6,6 +6,7 @@ export interface FormSheetDocument {
   spreadsheetId: string;
   spreadsheetUrl: string;
   columns: string[];
+  header: string[];
   rows: number;
   lastRowAt?: Date;
   createdAt: Date;
@@ -19,6 +20,7 @@ const formSheetSchema = new Schema<FormSheetDocument>(
     spreadsheetId: { type: String, required: true },
     spreadsheetUrl: { type: String, required: true },
     columns: { type: [String], default: [] },
+    header: { type: [String], default: [] },
     rows: { type: Number, default: 0 },
     lastRowAt: { type: Date },
   },

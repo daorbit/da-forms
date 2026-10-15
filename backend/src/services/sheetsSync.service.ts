@@ -15,12 +15,22 @@ type SyncForm = Pick<FormDocument, 'title' | 'workspaceId' | 'fields'> & { _id: 
 interface SheetLink {
   spreadsheetId: string;
   columns: string[];
+  header?: string[];
 }
 
-function headerFor(columns: string[], fields: Map<string, FormField>): string[] {
-  return columns.map((id) =>
-    id === SUBMITTED_AT ? 'Submitted at' : id === SUBMISSION_ID ? 'Response ID' : fields.get(id)?.label || id
-  );
+function sameHeader(a: string[] | undefined, b: string[]): boolean {
+  return Boolean(a) && a!.length === b.length && a!.every((label, i) => label === b[i]);
+}
+
+function headerFor(columns: string[], fields: Map<string, FormField>, previous?: SheetLink): string[] {
+  return columns.map((id) => {
+    if (id === SUBMITTED_AT) return 'Submitted at';
+    if (id === SUBMISSION_ID) return 'Response ID';
+    const label = fields.get(id)?.label;
+    if (label) return label;
+    const index = previous?.columns.indexOf(id) ?? -1;
+    return (index >= 0 ? previous?.header?.[index] : undefined) || 'Removed question';
+  });
 }
 
 function rowFor(
@@ -42,7 +52,8 @@ function rowFor(
 
 async function createLink(token: string, form: SyncForm, columns: string[], fields: Map<string, FormField>): Promise<SheetLink> {
   const formId = String(form._id);
-  const created = await createSpreadsheet(token, `${form.title || 'Form'} — responses`, headerFor(columns, fields));
+  const header = headerFor(columns, fields);
+  const created = await createSpreadsheet(token, `${form.title || 'Form'} — responses`, header);
   try {
     await FormSheetModel.create({
       workspaceId: form.workspaceId,
@@ -50,12 +61,13 @@ async function createLink(token: string, form: SyncForm, columns: string[], fiel
       spreadsheetId: created.spreadsheetId,
       spreadsheetUrl: created.spreadsheetUrl,
       columns,
+      header,
     });
-    return { spreadsheetId: created.spreadsheetId, columns };
+    return { spreadsheetId: created.spreadsheetId, columns, header };
   } catch (err) {
     if ((err as { code?: number }).code !== DUPLICATE_KEY) throw err;
     await deleteSpreadsheet(token, created.spreadsheetId).catch(() => undefined);
-    const existing = await FormSheetModel.findOne({ formId }).select('spreadsheetId columns').lean();
+    const existing = await FormSheetModel.findOne({ formId }).select('spreadsheetId columns header').lean();
     if (!existing) throw err;
     return existing;
   }
@@ -69,10 +81,11 @@ async function ensureColumns(
   fields: Map<string, FormField>
 ): Promise<string[]> {
   const missing = wanted.filter((id) => !link.columns.includes(id));
-  if (!missing.length) return link.columns;
-  const columns = [...link.columns, ...missing];
-  await writeHeader(token, link.spreadsheetId, headerFor(columns, fields));
-  await FormSheetModel.updateOne({ formId }, { $set: { columns } });
+  const columns = missing.length ? [...link.columns, ...missing] : link.columns;
+  const header = headerFor(columns, fields, link);
+  if (!missing.length && sameHeader(link.header, header)) return columns;
+  await writeHeader(token, link.spreadsheetId, header);
+  await FormSheetModel.updateOne({ formId }, { $set: { columns, header } });
   return columns;
 }
 
@@ -84,7 +97,7 @@ async function appendTo(
   values: (columns: string[]) => string[]
 ): Promise<void> {
   const formId = String(form._id);
-  const stored = await FormSheetModel.findOne({ formId }).select('spreadsheetId columns').lean();
+  const stored = await FormSheetModel.findOne({ formId }).select('spreadsheetId columns header').lean();
   const link = stored ?? (await createLink(token, form, wanted, fields));
   const columns = await ensureColumns(token, formId, link, wanted, fields);
   await appendRow(token, link.spreadsheetId, values(columns));

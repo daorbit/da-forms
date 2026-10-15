@@ -173,7 +173,7 @@ export const APP_CATALOG: AppDescriptor[] = [
     name: 'Telegram',
     category: 'notification',
     description: 'Get a Telegram message from your own bot for every new response.',
-    docsUrl: 'https://quantalog.daorbit.in/docs/forms-notifications-and-apps#telegram',
+    docsUrl: 'https://core.telegram.org/bots/tutorial#obtain-your-bot-token',
     testable: true,
     fields: [
       {

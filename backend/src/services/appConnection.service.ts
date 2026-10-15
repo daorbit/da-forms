@@ -10,6 +10,7 @@ import {
 import { isValidChatSecret, isValidChatSetting, sendChatAlert } from '../lib/chatAlert.js';
 import { encrypt, decrypt, maskTail, isEncryptionConfigured } from '../lib/crypto.js';
 import { invalidateMailCache } from '../lib/mailer.js';
+import { findTelegramChats, TelegramLookupError, type TelegramChatList } from '../lib/telegramChats.js';
 
 /**
  * The read model for one app card.
@@ -395,4 +396,14 @@ export async function testApp(
   }
 }
 
-export { isEncryptionConfigured };
+export async function findChats(workspaceId: string, appId: string, botToken?: string): Promise<TelegramChatList> {
+  if (appId !== 'telegram') throw new UnknownAppError(`Chat lookup is not available for ${appId}`);
+  const supplied = botToken?.trim();
+  if (supplied) return findTelegramChats(supplied);
+  const connection = await resolveConnection(workspaceId, appId);
+  const saved = connection?.secrets.botToken;
+  if (!saved) throw new TelegramLookupError('Paste your bot token first.');
+  return findTelegramChats(saved);
+}
+
+export { isEncryptionConfigured, TelegramLookupError };

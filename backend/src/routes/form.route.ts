@@ -145,6 +145,11 @@ workspaceSettingsRouter.post(
   appTestLimiter,
   asyncHandler(appController.testApp)
 );
+workspaceSettingsRouter.post(
+  '/apps/:appId/chats',
+  appTestLimiter,
+  asyncHandler(appController.findAppChats)
+);
 workspaceSettingsRouter.delete('/apps/:appId', asyncHandler(appController.disconnectApp));
 
 workspaceSettingsRouter.get('/calendar', asyncHandler(calendarController.getCalendar));

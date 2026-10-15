@@ -192,7 +192,7 @@ export const APP_CATALOG: AppDescriptor[] = [
         secret: false,
         required: true,
         placeholder: '123456789 or @yourchannel',
-        help: 'Send your bot a message, then open api.telegram.org/bot<token>/getUpdates and copy chat.id. For a public channel, use @channelname and add the bot as an admin.',
+        help: 'Send your bot a message, then use Find my chat below to pick it. For a public channel, use @channelname and add the bot as an admin.',
       },
     ],
   },

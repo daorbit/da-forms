@@ -7,7 +7,7 @@ export function PoweredBy({ branding }: { branding?: FormBranding }) {
   return (
     <Group justify="center" mt="lg">
       <Anchor
-        href="https://quantalog.com"
+        href="https://quantalog.daorbit.in/"
         target="_blank"
         rel="noreferrer noopener"
         underline="never"

@@ -1,14 +1,14 @@
 import { sendMail, mailConfigured } from '../lib/mailer.js';
 import { renderEmail } from '../lib/emailTemplates.js';
-import type { FormDocument, FormField } from '../models/form.model.js';
+import type { FormDocument } from '../models/form.model.js';
 import type { SubmissionBooking, SubmissionPayment } from '../models/submission.model.js';
-import { formatBookingTime } from '../lib/bookingFormat.js';
-import { flattenFields, fillPlaceholders, repeaterText } from '../lib/pipe.js';
+import { flattenFields, fillPlaceholders } from '../lib/pipe.js';
+import { answersOf } from '../lib/submissionAnswers.js';
 import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
 import { getBranding, notifyFormSubmission } from '../lib/quantalog.js';
 import { bannerAttachment } from '../lib/email-banner.js';
-import { postChatAlert } from '../lib/chatAlert.js';
+import { sendChatAlert } from '../lib/chatAlert.js';
 import { resolveChatConnections } from './appConnection.service.js';
 import { routedOwnerEmails } from '../lib/conditions.js';
 
@@ -33,51 +33,6 @@ export async function sendResumeLink(
 
  
   await sendMail(workspaceId, to, `Finish your response to ${form.title}`, html, `${body}\n\n${link}`);
-}
-
-/** Minor units to a readable figure — 50000 paise reads as ₹500.00. */
-function formatPaid(payment: SubmissionPayment): string {
-  const major = (payment.amount / 100).toFixed(2);
-  const amount = payment.currency === 'INR' ? `₹${major}` : `${major} ${payment.currency}`;
-  return payment.method ? `${amount} (${payment.method.toUpperCase()})` : amount;
-}
-
-function bookingText(field: FormField, raw: string, booking?: SubmissionBooking): string {
-  const start = booking ? new Date(booking.start) : new Date(raw);
-  if (Number.isNaN(start.getTime())) return raw;
-  const end = booking
-    ? new Date(booking.end)
-    : new Date(start.getTime() + (field.booking?.duration ?? 30) * 60_000);
-  const when = formatBookingTime(start, end, booking?.timezone ?? field.booking?.timezone ?? 'UTC', field.booking?.timeFormat);
-  return booking?.meetLink ? `${when}\nGoogle Meet: ${booking.meetLink}` : when;
-}
-
-/** Every answered field as a label/value pair, in the order they appear on the form. */
-function answersOf(
-  fields: FormField[],
-  data: Record<string, string>,
-  payment?: SubmissionPayment,
-  booking?: SubmissionBooking
-) {
-  return flattenFields(fields)
-    .filter((f) => {
-      // A paid payment field earns a row even though it has no answer in
-      // `data` — otherwise someone who just paid gets a receipt that does not
-      // mention the payment at all.
-      if (f.type === 'payment') return Boolean(f.label && payment?.status === 'paid');
-      return Boolean(f.label && data[f.id] !== undefined && data[f.id] !== '');
-    })
-    .map((f) => ({
-      label: f.label,
-      value:
-        f.type === 'payment' && payment
-          ? formatPaid(payment)
-          : f.type === 'repeater'
-            ? repeaterText(f, data[f.id])
-            : f.type === 'booking'
-              ? bookingText(f, data[f.id], booking?.fieldId === f.id ? booking : undefined)
-              : data[f.id],
-    }));
 }
 
  
@@ -236,7 +191,7 @@ async function sendChatNotifications(
 
   const alert = { title: `New submission: ${form.title}`, answers: answersOf(form.fields, data, payment, booking) };
   const results = await Promise.allSettled(
-    connections.map((c) => postChatAlert(c.appId, String(c.secrets.webhookUrl ?? ''), alert))
+    connections.map((c) => sendChatAlert(c, alert))
   );
   for (const result of results) {
     if (result.status === 'rejected') {

@@ -8,6 +8,7 @@ import { WorkspaceSettingsModel } from '../models/workspaceSettings.model.js';
 import { BookingModel } from '../models/booking.model.js';
 import { destroyUploads } from './media.service.js';
 import { disconnectCalendar } from './calendarConnection.service.js';
+import { disconnectSheets } from './sheetsConnection.service.js';
 
 export async function purgeWorkspace(workspaceId: string) {
   const forms = await FormModel.find({ workspaceId }).select('_id').lean();
@@ -27,6 +28,7 @@ export async function purgeWorkspace(workspaceId: string) {
     WorkspaceSettingsModel.deleteMany({ workspaceId }),
     BookingModel.deleteMany({ workspaceId }),
     disconnectCalendar(workspaceId),
+    disconnectSheets(workspaceId),
   ]);
 
   await FormModel.deleteMany({ workspaceId });

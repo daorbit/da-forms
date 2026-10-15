@@ -6,6 +6,7 @@ import { sendSubmissionNotifications, sendResumeLink } from "../../services/noti
 import { getFormLimits, recordSubmission, getBranding } from "../../lib/quantalog.js";
 import { turnstileConfigured, verifyTurnstileToken } from "../../lib/turnstile.js";
 import { deliverWebhook } from "../../services/webhook.service.js";
+import { syncSubmissionToSheet } from "../../services/sheetsSync.service.js";
 import { readEditToken, mintResumeToken } from "../../lib/edit-token.js";
 import { env } from "../../config/env.js";
 import { paymentReturnUrl } from "./payments.controller.js";
@@ -543,6 +544,7 @@ export const submitForm: RequestHandler = async (req, res) => {
           )
         : null,
       deliverWebhook(form, data, String(submission._id)),
+      syncSubmissionToSheet(form, data, String(submission._id), undefined, booking),
       recordSubmission(form.workspaceId).catch((e: unknown) => {
         console.error("[submit] recordSubmission failed:", e instanceof Error ? e.message : e);
       }),

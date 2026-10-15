@@ -3,15 +3,25 @@ import type { AppId } from '../models/appConnection.model.js';
 const TIMEOUT_MS = 6_000;
 const MAX_FIELDS = 12;
 const MAX_VALUE = 300;
+const TELEGRAM_MAX_TEXT = 4000;
 
 const ALLOWED_HOSTS: Record<string, RegExp> = {
   slack: /^hooks\.slack\.com$/,
   discord: /^(?:discord|discordapp)\.com$/,
 };
 
+const TELEGRAM_TOKEN = /^\d{5,15}:[A-Za-z0-9_-]{30,64}$/;
+const TELEGRAM_CHAT = /^(?:-?\d{1,20}|@[A-Za-z][A-Za-z0-9_]{4,31})$/;
+
 export interface ChatAlert {
   title: string;
   answers: { label: string; value: string }[];
+}
+
+export interface ChatConnection {
+  appId: AppId;
+  config: Record<string, unknown>;
+  secrets: Record<string, string>;
 }
 
 export function isValidChatUrl(appId: string, raw: string): boolean {
@@ -23,11 +33,25 @@ export function isValidChatUrl(appId: string, raw: string): boolean {
   }
 }
 
+export function isValidChatSecret(appId: string, key: string, raw: string): boolean {
+  if (appId === 'telegram') return key !== 'botToken' || TELEGRAM_TOKEN.test(raw);
+  return isValidChatUrl(appId, raw);
+}
+
+export function isValidChatSetting(appId: string, key: string, raw: string): boolean {
+  if (appId === 'telegram' && key === 'chatId') return TELEGRAM_CHAT.test(raw);
+  return true;
+}
+
 function clip(value: string): string {
   return value.length > MAX_VALUE ? `${value.slice(0, MAX_VALUE)}…` : value;
 }
 
-function bodyFor(appId: string, alert: ChatAlert): unknown {
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function webhookBody(appId: string, alert: ChatAlert): unknown {
   const answers = alert.answers.slice(0, MAX_FIELDS);
   if (appId === 'discord') {
     return {
@@ -43,14 +67,50 @@ function bodyFor(appId: string, alert: ChatAlert): unknown {
   return { text: `${alert.title}\n${lines.join('\n')}` };
 }
 
-export async function postChatAlert(appId: AppId, url: string, alert: ChatAlert): Promise<void> {
+function telegramText(alert: ChatAlert): string {
+  const lines = alert.answers
+    .slice(0, MAX_FIELDS)
+    .map((a) => `<b>${escapeHtml(clip(a.label))}:</b> ${escapeHtml(clip(a.value))}`);
+  const text = [`<b>${escapeHtml(alert.title)}</b>`, ...lines].join('\n');
+  return text.length > TELEGRAM_MAX_TEXT ? `${text.slice(0, TELEGRAM_MAX_TEXT)}…` : text;
+}
+
+async function postTelegram(connection: ChatConnection, alert: ChatAlert): Promise<void> {
+  const token = String(connection.secrets.botToken ?? '');
+  const chatId = String(connection.config.chatId ?? '');
+  if (!TELEGRAM_TOKEN.test(token) || !TELEGRAM_CHAT.test(chatId)) {
+    throw new Error('Save a valid bot token and chat ID first.');
+  }
+
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: telegramText(alert),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+    }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (res.ok) return;
+  const body = (await res.json().catch(() => null)) as { description?: string } | null;
+  throw new Error(body?.description ? `Telegram: ${body.description}` : `Telegram returned HTTP ${res.status}`);
+}
+
+async function postWebhook(appId: AppId, url: string, alert: ChatAlert): Promise<void> {
   if (!isValidChatUrl(appId, url)) throw new Error('The webhook URL is not a valid address for this app.');
 
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(bodyFor(appId, alert)),
+    body: JSON.stringify(webhookBody(appId, alert)),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`${appId} returned HTTP ${res.status}`);
+}
+
+export function sendChatAlert(connection: ChatConnection, alert: ChatAlert): Promise<void> {
+  if (connection.appId === 'telegram') return postTelegram(connection, alert);
+  return postWebhook(connection.appId, String(connection.secrets.webhookUrl ?? ''), alert);
 }

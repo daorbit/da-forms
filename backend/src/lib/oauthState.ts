@@ -3,9 +3,12 @@ import { env } from '../config/env.js';
 
 const STATE_TTL_SECONDS = 10 * 60;
 
+export type OAuthKind = 'calendar' | 'sheets';
+
 export interface OAuthState {
   workspaceId: string;
   actorId?: string;
+  kind?: OAuthKind;
 }
 
 function sign(payload: string): string {
@@ -17,6 +20,7 @@ export function signOAuthState(state: OAuthState): string {
     JSON.stringify({
       w: state.workspaceId,
       a: state.actorId ?? '',
+      k: state.kind ?? 'calendar',
       e: Math.floor(Date.now() / 1000) + STATE_TTL_SECONDS,
       n: randomBytes(8).toString('hex'),
     })
@@ -37,10 +41,15 @@ export function readOAuthState(raw: unknown): OAuthState | null {
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as {
       w?: string;
       a?: string;
+      k?: string;
       e?: number;
     };
     if (!data.w || !data.e || data.e < Math.floor(Date.now() / 1000)) return null;
-    return { workspaceId: data.w, actorId: data.a || undefined };
+    return {
+      workspaceId: data.w,
+      actorId: data.a || undefined,
+      kind: data.k === 'sheets' ? 'sheets' : 'calendar',
+    };
   } catch {
     return null;
   }

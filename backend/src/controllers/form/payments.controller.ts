@@ -7,6 +7,7 @@ import * as workspaceSettingsService from "../../services/workspaceSettings.serv
 import { sendSubmissionNotifications } from "../../services/notification.service.js";
 import { getFormLimits, recordSubmission } from "../../lib/quantalog.js";
 import { deliverWebhook } from "../../services/webhook.service.js";
+import { syncSubmissionToSheet } from "../../services/sheetsSync.service.js";
 import { env } from "../../config/env.js";
 
 export function paymentReturnUrl(
@@ -74,6 +75,7 @@ async function applyPaymentEvent(
         )
       : null,
     deliverWebhook(form, submission.data, String(submission._id), submission.payment),
+    syncSubmissionToSheet(form, submission.data, String(submission._id), submission.payment, booking),
     workspaceSettingsService.markCharged(workspaceId, provider),
     recordSubmission(workspaceId),
   ]);

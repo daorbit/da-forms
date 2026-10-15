@@ -7,7 +7,7 @@ import {
   type AppField,
   CHAT_APP_IDS,
 } from '../lib/app-catalog.js';
-import { isValidChatUrl, postChatAlert } from '../lib/chatAlert.js';
+import { isValidChatSecret, isValidChatSetting, sendChatAlert } from '../lib/chatAlert.js';
 import { encrypt, decrypt, maskTail, isEncryptionConfigured } from '../lib/crypto.js';
 import { invalidateMailCache } from '../lib/mailer.js';
 
@@ -154,8 +154,8 @@ export async function saveApp(
     if (field.secret) {
       const raw = supplied ? String(values[field.key] ?? '').trim() : '';
       if (raw) {
-        if (descriptor.category === 'notification' && !isValidChatUrl(appId, raw)) {
-          throw new ConfigInvalidError(`${field.label} is not a valid ${descriptor.name} address.`);
+        if (descriptor.category === 'notification' && !isValidChatSecret(appId, field.key, raw)) {
+          throw new ConfigInvalidError(`${field.label} is not a valid ${descriptor.name} value.`);
         }
         secrets[field.key] = encrypt(raw);
         secretChanged = true;
@@ -164,7 +164,16 @@ export async function saveApp(
     }
 
     if (supplied) {
-      config[field.key] = coerce(field, values[field.key]);
+      const value = coerce(field, values[field.key]);
+      if (
+        descriptor.category === 'notification' &&
+        typeof value === 'string' &&
+        value &&
+        !isValidChatSetting(appId, field.key, value)
+      ) {
+        throw new ConfigInvalidError(`${field.label} is not a valid ${descriptor.name} value.`);
+      }
+      config[field.key] = value;
     } else if (field.default !== undefined && config[field.key] === undefined) {
       config[field.key] = field.default;
     }
@@ -342,10 +351,9 @@ export async function testApp(
 
   if (descriptor.category === 'notification') {
     const connection = await resolveConnection(workspaceId, appId);
-    const url = String(connection?.secrets.webhookUrl ?? '');
-    if (!url) return { ok: false, message: 'Save the webhook URL first.' };
+    if (!connection) return { ok: false, message: 'Save the connection details first.' };
     try {
-      await postChatAlert(appId as AppId, url, {
+      await sendChatAlert(connection, {
         title: 'Test message from your form notifications',
         answers: [{ label: 'Status', value: 'Connected' }],
       });

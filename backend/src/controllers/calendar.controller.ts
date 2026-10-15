@@ -4,6 +4,7 @@ import { renderOAuthPopup } from '../lib/oauthPopup.js';
 import { recordAuditEvent } from '../lib/quantalog.js';
 import { readOAuthState } from '../lib/oauthState.js';
 import { audit } from '../lib/audit.js';
+import { sheetsCallback } from './sheets.controller.js';
 
 const CALENDAR_TARGET = { kind: 'app', id: 'google-calendar', label: 'Google Calendar' };
 
@@ -40,6 +41,9 @@ export const disconnectCalendar: RequestHandler = async (req, res) => {
 };
 
 export const calendarCallback: RequestHandler = async (req, res) => {
+  const requested = readOAuthState(req.query.state);
+  if (requested?.kind === 'sheets') return sheetsCallback(req, res, requested);
+
   const result = await calendarService.completeConnection(req.query);
 
   if (!result.ok) {

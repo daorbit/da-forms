@@ -11,6 +11,8 @@ export const CALENDAR_LIST_SCOPE = 'https://www.googleapis.com/auth/calendar.cal
 export const CALENDAR_FREEBUSY_SCOPE = 'https://www.googleapis.com/auth/calendar.events.freebusy';
 const LEGACY_CALENDAR_READ_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 const SCOPES = ['openid', 'email', CALENDAR_EVENTS_SCOPE, CALENDAR_LIST_SCOPE, CALENDAR_FREEBUSY_SCOPE].join(' ');
+export const DRIVE_FILE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+export const SHEETS_SCOPES = ['openid', 'email', DRIVE_FILE_SCOPE].join(' ');
 
 export type GoogleErrorKind = 'revoked' | 'quota' | 'forbidden' | 'not_found' | 'unavailable' | 'unknown';
 
@@ -42,12 +44,16 @@ export function hasCalendarScopes(scope: string): boolean {
   return granted.has(CALENDAR_EVENTS_SCOPE) && canRead;
 }
 
-export function buildAuthorizeUrl(state: string): string {
+export function hasSheetsScope(scope: string): boolean {
+  return scope.split(/\s+/).includes(DRIVE_FILE_SCOPE);
+}
+
+export function buildAuthorizeUrl(state: string, scopes: string = SCOPES): string {
   const params = new URLSearchParams({
     client_id: env.googleCalendarClientId,
     redirect_uri: env.googleCalendarRedirectUri,
     response_type: 'code',
-    scope: SCOPES,
+    scope: scopes,
     access_type: 'offline',
     prompt: 'consent',
     state,

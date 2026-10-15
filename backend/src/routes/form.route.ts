@@ -5,6 +5,7 @@ import * as formController from '../controllers/form.controller.js';
 import * as settingsController from '../controllers/settings.controller.js';
 import * as appController from '../controllers/appConnection.controller.js';
 import * as calendarController from '../controllers/calendar.controller.js';
+import * as sheetsController from '../controllers/sheets.controller.js';
 import { uploadFormFile, uploadBackgroundImage } from '../controllers/upload.controller.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import { blockDemoWorkspaceWrites } from '../middleware/demo-workspace.js';
@@ -149,6 +150,10 @@ workspaceSettingsRouter.delete('/apps/:appId', asyncHandler(appController.discon
 workspaceSettingsRouter.get('/calendar', asyncHandler(calendarController.getCalendar));
 workspaceSettingsRouter.get('/calendar/connect', asyncHandler(calendarController.getCalendarConnectUrl));
 workspaceSettingsRouter.delete('/calendar', asyncHandler(calendarController.disconnectCalendar));
+
+workspaceSettingsRouter.get('/sheets', asyncHandler(sheetsController.getSheets));
+workspaceSettingsRouter.get('/sheets/connect', asyncHandler(sheetsController.getSheetsConnectUrl));
+workspaceSettingsRouter.delete('/sheets', asyncHandler(sheetsController.disconnectSheets));
 
 workspaceSettingsRouter.get('/webhook-app', asyncHandler(settingsController.getWebhookApp));
 workspaceSettingsRouter.put('/webhook-app', asyncHandler(settingsController.saveWebhookApp));

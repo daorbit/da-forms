@@ -74,6 +74,7 @@ export interface FormField {
   hideLabel?: boolean;
 
   allowMultiple?: boolean;
+  hideLastName?: boolean;
   instructions?: string;
   size?: FieldSize;
   placeholder?: string;
@@ -389,6 +390,7 @@ const fieldSchema = new Schema<FormField>(
     unique: { type: Boolean },
     hideLabel: { type: Boolean },
     allowMultiple: { type: Boolean },
+    hideLastName: { type: Boolean },
     instructions: { type: String },
     size: { type: String, enum: ['small', 'medium', 'large'] },
     placeholder: { type: String },

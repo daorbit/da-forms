@@ -318,41 +318,50 @@ export function FieldControl({
   function renderControl(): React.ReactNode {
   switch (field.type) {
     case 'name': {
-      const [first = '', last = ''] = value.split(' ');
+      const nameLabel = label && (
+        <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
+          {label}
+        </Text>
+      );
+      if (field.hideLastName) {
+        return (
+          <div style={base.style}>
+            {nameLabel}
+            <TextInput
+              styles={base.styles}
+              placeholder={field.placeholder || 'Your name'}
+              value={value}
+              readOnly={readOnly}
+              title={field.hoverText}
+              onChange={(e) => !readOnly && onChange(e.target.value)}
+              required={field.required}
+            />
+          </div>
+        );
+      }
+      const spaceAt = value.indexOf(' ');
+      const first = spaceAt === -1 ? value : value.slice(0, spaceAt);
+      const last = spaceAt === -1 ? '' : value.slice(spaceAt + 1);
       return (
         <div style={base.style}>
-          {label && (
-            <Text size="sm" fw={500} mb={4} style={labelColor ? { color: labelColor } : undefined}>
-              {label}
-            </Text>
-          )}
+          {nameLabel}
           <Group grow gap="sm">
-            <div>
-              <TextInput
-                styles={base.styles}
-                placeholder={field.placeholder || 'First'}
-                value={first}
-                readOnly={readOnly}
-                title={field.hoverText}
-                onChange={(e) => !readOnly && onChange(`${e.target.value} ${last}`.trim())}
-                required={field.required}
-              />
-              <Text size="xs" mt={4} {...captionProps}>
-                First
-              </Text>
-            </div>
-            <div>
-              <TextInput
-                styles={base.styles}
-                placeholder="Last name"
-                value={last}
-                readOnly={readOnly}
-                onChange={(e) => !readOnly && onChange(`${first} ${e.target.value}`.trim())}
-              />
-              <Text size="xs" mt={4} {...captionProps}>
-                Last
-              </Text>
-            </div>
+            <TextInput
+              styles={base.styles}
+              placeholder={field.placeholder || 'First name'}
+              value={first}
+              readOnly={readOnly}
+              title={field.hoverText}
+              onChange={(e) => !readOnly && onChange(`${e.target.value.replace(/\s+/g, '')} ${last}`.trim())}
+              required={field.required}
+            />
+            <TextInput
+              styles={base.styles}
+              placeholder="Last name"
+              value={last}
+              readOnly={readOnly}
+              onChange={(e) => !readOnly && onChange(`${first} ${e.target.value}`.trim())}
+            />
           </Group>
         </div>
       );

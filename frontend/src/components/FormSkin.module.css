@@ -63,14 +63,14 @@
   padding-inline-end: 0;
 }
 
-.skin[data-field-style='underline'] :global(.mantine-Input-wrapper:not(:has(.mantine-Input-section[data-position='left'])) > .mantine-Input-input) {
+.skin[data-field-style='underline'] :global(.mantine-Input-wrapper:not(:has(.mantine-Input-section[data-position='left'])) > .mantine-Input-input:not(textarea)) {
   padding-inline-start: 0;
 }
 
 .skin[data-field-style='underline'] :global(textarea.mantine-Input-input) {
   border-width: 1.5px;
   border-radius: var(--fs-radius, 8px);
-  padding-inline: 12px;
+  padding: 12px 14px;
 }
 
 .skin[data-field-style='underline'] :global(.mantine-Input-input:focus),

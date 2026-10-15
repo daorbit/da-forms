@@ -192,6 +192,8 @@ export interface FormField {
   hideLabel?: boolean;
   /** Chip fields only: lets the respondent pick more than one option. Off means single-select. */
   allowMultiple?: boolean;
+  /** Name fields only: one input for the whole name instead of first + last. */
+  hideLastName?: boolean;
   instructions?: string;
   size?: FieldSize;
   placeholder?: string;

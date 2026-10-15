@@ -49,6 +49,14 @@ export function BasicsSection({ field, set }: SectionProps) {
               onChange={(unique) => set({ unique })}
             />
           )}
+          {field.type === 'name' && (
+            <ToggleRow
+              label="Ask for last name"
+              hint="Off shows a single input for the whole name."
+              checked={!field.hideLastName}
+              onChange={(show) => set({ hideLastName: !show })}
+            />
+          )}
           <ToggleRow
             label="Hide label"
             hint="Show the input without its label on the form."

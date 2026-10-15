@@ -23,7 +23,7 @@ export const proSchedulingTemplates: FormTemplate[] = [
       fullName(),
       row([email('Work email', true, 'you@company.com')], [field('text', { label: 'Company', required: true, placeholder: 'Acme Inc.' })]),
       row(
-        [pick('Team size', ['1â€“10', '11â€“50', '51â€“200', '201â€“1,000', '1,000+'], { required: true })],
+        [pick('Team size', ['1–10', '11–50', '51–200', '201–1,000', '1,000+'], { required: true })],
         [pick('Your role', ['Founder / CEO', 'Marketing', 'Sales', 'Product', 'Engineering', 'Operations', 'Other'])]
       ),
       multiPills('What would you like to see?', ['Dashboards', 'Reports', 'Integrations', 'Team access', 'Pricing']),
@@ -35,7 +35,7 @@ export const proSchedulingTemplates: FormTemplate[] = [
         minNotice: 12 * 60,
         maxDaysAhead: 21,
         weekly: week(hours('10:00', '18:00')),
-        eventTitle: 'Product demo Â· {{Company}}',
+        eventTitle: 'Product demo · {{Company}}',
         eventDescription: 'Team size: {{Team size}}\nInterested in: {{What would you like to see?}}',
       }),
     ],
@@ -47,15 +47,15 @@ export const proSchedulingTemplates: FormTemplate[] = [
     description: 'A short intro call for agencies and consultants, with budget and timeline up front.',
     category: 'Scheduling',
     keywords: ['discovery', 'intro', 'call', 'agency', 'consultant', 'sales', 'meeting'],
-    title: 'Letâ€™s talk about your project',
+    title: 'Let’s talk about your project',
     formDescription: 'A 20-minute call to understand your goals and see if we are a good fit.',
     submitLabel: 'Book the call',
     fields: [
       row([fullName()], [email()]),
       field('website', { label: 'Website', placeholder: 'https://' }),
       row(
-        [pick('Budget', ['Under $5k', '$5kâ€“$15k', '$15kâ€“$50k', '$50k+'], { required: true })],
-        [pick('Timeline', ['ASAP', 'Within a month', '1â€“3 months', 'Just exploring'])]
+        [pick('Budget', ['Under $5k', '$5k–$15k', '$15k–$50k', '$50k+'], { required: true })],
+        [pick('Timeline', ['ASAP', 'Within a month', '1–3 months', 'Just exploring'])]
       ),
       longText('What are you hoping to achieve?', 'A few lines is plenty.', true),
       booking('Pick a time', {
@@ -71,8 +71,8 @@ export const proSchedulingTemplates: FormTemplate[] = [
           { start: '09:30', end: '12:30' },
           { start: '14:00', end: '17:30' },
         ]),
-        eventTitle: 'Discovery call Â· {{Full name}}',
-        eventDescription: 'Budget: {{Budget}} Â· Timeline: {{Timeline}}\n\n{{What are you hoping to achieve?}}',
+        eventTitle: 'Discovery call · {{Full name}}',
+        eventDescription: 'Budget: {{Budget}} · Timeline: {{Timeline}}\n\n{{What are you hoping to achieve?}}',
       }),
     ],
     theme: look('studio', { accentColor: '#111827', fontFamily: 'dmSans' }),
@@ -106,13 +106,13 @@ export const proSchedulingTemplates: FormTemplate[] = [
         maxDaysAhead: 30,
         dailyLimit: 3,
         weekly: week(hours('11:00', '17:00'), { days: [2, 3, 4] }),
-        eventTitle: 'Strategy session Â· {{Full name}}',
+        eventTitle: 'Strategy session · {{Full name}}',
         eventDescription: 'Focus: {{Focus area}}\n\n{{What would make this session a success?}}',
       }),
       field('payment', {
         label: 'Session fee',
         required: true,
-        pay: { mode: 'fixed', amount: 299900, currency: 'INR', description: '1:1 strategy session Â· 60 min' },
+        pay: { mode: 'fixed', amount: 299900, currency: 'INR', description: '1:1 strategy session · 60 min' },
       }),
     ],
     theme: look('studio-dark', { accentColor: '#e5c07b', fontFamily: 'manrope' }),
@@ -141,7 +141,7 @@ export const proSchedulingTemplates: FormTemplate[] = [
         minNotice: 24 * 60,
         maxDaysAhead: 10,
         weekly: week(hours('10:00', '17:00')),
-        eventTitle: 'Interview Â· {{Full name}} Â· {{Role}}',
+        eventTitle: 'Interview · {{Full name}} · {{Role}}',
       }),
       longText('Anything we should know?', 'Accessibility needs or scheduling constraints.'),
     ],
@@ -184,7 +184,7 @@ export const proSchedulingTemplates: FormTemplate[] = [
       fullName('Patient name'),
       row([field('date', { label: 'Date of birth', required: true })], [phone('Phone', true)]),
       email('Email', false),
-      field('terms', { label: 'I agree to the clinicâ€™s privacy policy', required: true }),
+      field('terms', { label: 'I agree to the clinic’s privacy policy', required: true }),
     ],
     theme: look('studio', {
       accentColor: '#0d9488',
@@ -208,7 +208,7 @@ export const proSchedulingTemplates: FormTemplate[] = [
     fields: [
       pick(
         'Service',
-        ['Haircut & style Â· 60 min', 'Colour Â· 60 min', 'Signature facial Â· 60 min', 'Deep tissue massage Â· 60 min', 'Manicure & pedicure Â· 60 min'],
+        ['Haircut & style · 60 min', 'Colour · 60 min', 'Signature facial · 60 min', 'Deep tissue massage · 60 min', 'Manicure & pedicure · 60 min'],
         { required: true }
       ),
       pills('Stylist', ['No preference', 'Aisha', 'Rohan', 'Meera']),
@@ -253,7 +253,7 @@ export const proSchedulingTemplates: FormTemplate[] = [
         maxDaysAhead: 14,
         dailyLimit: 8,
         weekly: week(hours('16:00', '18:00'), { days: [2, 4] }),
-        eventTitle: 'Office hours Â· {{Name}}',
+        eventTitle: 'Office hours · {{Name}}',
       }),
     ],
     theme: look('graphite', { accentColor: '#22c55e' }),
@@ -265,7 +265,7 @@ export const proSchedulingTemplates: FormTemplate[] = [
     category: 'Scheduling',
     keywords: ['property', 'viewing', 'real estate', 'showing', 'apartment', 'house', 'open house'],
     title: 'Book a viewing',
-    formDescription: '14 Harbour Lane Â· 3 bed Â· 2 bath Â· Sea-facing terrace.',
+    formDescription: '14 Harbour Lane · 3 bed · 2 bath · Sea-facing terrace.',
     submitLabel: 'Book viewing',
     fields: [
       booking('Viewing time', {
@@ -354,7 +354,7 @@ export const proSchedulingTemplates: FormTemplate[] = [
       row([fullName()], [phone('Phone', true)]),
       email('Email', false),
       pills('Occasion', ['None', 'Birthday', 'Anniversary', 'Business']),
-      longText('Requests', 'Dietary needs, high chair, window seatâ€¦'),
+      longText('Requests', 'Dietary needs, high chair, window seat…'),
     ],
     theme: look('editorial', { accentColor: '#7c2d12', fontFamily: 'fraunces' }),
   },

@@ -105,3 +105,44 @@
   padding: 14px 22px 18px;
   border-top: 1px solid var(--border);
 }
+
+.permissions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.permissions li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.permissionIcon {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--muted);
+}
+
+.permissionName {
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--text);
+}
+
+.permissionWhy {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.note {
+  line-height: 1.5;
+}
+
+.links {
+  margin: 8px 0 14px;
+}

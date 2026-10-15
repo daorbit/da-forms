@@ -11,7 +11,8 @@ const FAILURE_TEXT: Record<calendarService.ConnectFailure, string> = {
   invalid_state: 'That connection attempt expired. Close this window and start again.',
   denied: 'You cancelled the Google authorisation.',
   missing_code: 'Google did not return an authorisation code. Please try again.',
-  scope_declined: 'Calendar access was not granted. Tick both calendar permissions on Google’s consent screen.',
+  scope_declined:
+    'Calendar access was not granted. Tick every calendar permission on Google’s consent screen, or the booking field cannot check your busy times and add events.',
   no_refresh_token:
     'Google did not return a long-lived token. Remove this app from your Google account permissions and try again.',
   google_failed: 'Google could not complete the connection. Please try again.',

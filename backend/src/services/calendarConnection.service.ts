@@ -112,7 +112,10 @@ export async function calendarAccessToken(workspaceId: string): Promise<string |
     return tokens.accessToken;
   } catch (err) {
     if (err instanceof GoogleApiError && err.kind === 'revoked') {
-      await CalendarConnectionModel.updateOne({ _id: connection._id }, { status: 'revoked' });
+      await CalendarConnectionModel.updateOne(
+        { _id: connection._id },
+        { $set: { status: 'revoked' }, $unset: { accessTokenEnc: 1, refreshTokenEnc: 1 } }
+      );
     }
     console.error('[google-calendar] token refresh failed:', err instanceof Error ? err.message : err);
     return null;
@@ -143,10 +146,12 @@ export async function calendarStatus(workspaceId: string): Promise<CalendarStatu
 export async function disconnectCalendar(workspaceId: string): Promise<void> {
   const connection = await CalendarConnectionModel.findOne({ workspaceId }).select('+refreshTokenEnc');
   if (!connection) return;
-  try {
-    await revokeToken(decrypt(connection.refreshTokenEnc));
-  } catch {
-    console.warn('[google-calendar] stored refresh token could not be decrypted for revoke');
+  if (connection.refreshTokenEnc) {
+    try {
+      await revokeToken(decrypt(connection.refreshTokenEnc));
+    } catch {
+      console.warn('[google-calendar] stored refresh token could not be decrypted for revoke');
+    }
   }
   await CalendarConnectionModel.deleteOne({ _id: connection._id });
 }

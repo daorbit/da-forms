@@ -197,10 +197,7 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
                   onOpen={() => {
                     if (card.kind === 'payment') setPayFocus(card.id as PaymentProvider);
                     else if (card.kind === 'webhook') toggleWebhook();
-                    else if (card.kind === 'calendar') {
-                      if (card.connected) setCalendarOpen(true);
-                      else void calendar.connect();
-                    }
+                    else if (card.kind === 'calendar') setCalendarOpen(true);
                     else setOpenId(card.id);
                   }}
                 />
@@ -220,11 +217,11 @@ export function AppsPanel({ workspaceId, isDemo, reloadKey = 0 }: Props) {
             onDisconnected={setApps}
           />
           <GoogleCalendarDialog
-            opened={calendarOpen && Boolean(calendar.status?.connected)}
+            opened={calendarOpen && Boolean(calendar.status?.configured)}
             status={calendar.status}
             busy={calendar.busy}
             onClose={() => setCalendarOpen(false)}
-            onReconnect={() => void calendar.connect()}
+            onConnect={() => void calendar.connect()}
             onDisconnect={async () => {
               await calendar.disconnect();
               setCalendarOpen(false);

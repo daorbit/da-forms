@@ -7,8 +7,10 @@ const USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
 const TIMEOUT_MS = 10_000;
 
 export const CALENDAR_EVENTS_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
-export const CALENDAR_READ_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
-const SCOPES = ['openid', 'email', CALENDAR_EVENTS_SCOPE, CALENDAR_READ_SCOPE].join(' ');
+export const CALENDAR_LIST_SCOPE = 'https://www.googleapis.com/auth/calendar.calendarlist.readonly';
+export const CALENDAR_FREEBUSY_SCOPE = 'https://www.googleapis.com/auth/calendar.events.freebusy';
+const LEGACY_CALENDAR_READ_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+const SCOPES = ['openid', 'email', CALENDAR_EVENTS_SCOPE, CALENDAR_LIST_SCOPE, CALENDAR_FREEBUSY_SCOPE].join(' ');
 
 export type GoogleErrorKind = 'revoked' | 'quota' | 'forbidden' | 'not_found' | 'unavailable' | 'unknown';
 
@@ -34,8 +36,10 @@ export function googleCalendarConfigured(): boolean {
 }
 
 export function hasCalendarScopes(scope: string): boolean {
-  const granted = scope.split(/\s+/);
-  return granted.includes(CALENDAR_EVENTS_SCOPE) && granted.includes(CALENDAR_READ_SCOPE);
+  const granted = new Set(scope.split(/\s+/));
+  const canRead =
+    granted.has(LEGACY_CALENDAR_READ_SCOPE) || (granted.has(CALENDAR_LIST_SCOPE) && granted.has(CALENDAR_FREEBUSY_SCOPE));
+  return granted.has(CALENDAR_EVENTS_SCOPE) && canRead;
 }
 
 export function buildAuthorizeUrl(state: string): string {
@@ -46,7 +50,6 @@ export function buildAuthorizeUrl(state: string): string {
     scope: SCOPES,
     access_type: 'offline',
     prompt: 'consent',
-    include_granted_scopes: 'true',
     state,
   });
   return `${AUTHORIZE_URL}?${params.toString()}`;

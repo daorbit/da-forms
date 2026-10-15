@@ -1,4 +1,5 @@
 export const DOCS_BASE = 'https://quantalog.daorbit.in/docs';
+export const GOOGLE_DATA_POLICY_URL = 'https://quantalog.daorbit.in/privacy#google-user-data';
 
 export const DOCS = {
   forms: '/lead-capture',
@@ -13,6 +14,7 @@ export const DOCS = {
   switchTemplate: '/forms-settings-and-analytics#switch-template',
   scoring: '/forms-settings-and-analytics#quizzes',
   booking: '/forms-booking',
+  bookingGoogleAccess: '/forms-booking#google-access',
 } as const;
 
 export function docsUrl(path: string): string {

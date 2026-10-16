@@ -397,6 +397,63 @@ export async function getTelegramSummary(workspaceId: string): Promise<TelegramS
   }
 }
 
+export interface WhatsAppSummary {
+  configured: boolean;
+  entitled: boolean;
+  planName: string | null;
+  mobileHint: string | null;
+}
+
+export async function getWhatsAppSummary(workspaceId: string): Promise<WhatsAppSummary | null> {
+  if (!isConfigured()) return null;
+
+  try {
+    const res = await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/whatsapp/${encodeURIComponent(workspaceId)}`,
+      {
+        headers: { authorization: `Bearer ${env.formsServiceSecret}` },
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+    if (!res.ok) {
+      console.error(`[quantalog] whatsapp summary failed: ${res.status}`);
+      return null;
+    }
+    return (await res.json()) as WhatsAppSummary;
+  } catch (err) {
+    console.error('[quantalog] whatsapp summary failed:', err);
+    return null;
+  }
+}
+
+export async function sendWhatsAppAlert(
+  workspaceId: string,
+  alert: { title: string; answers: { label: string; value: string }[] }
+): Promise<void> {
+  if (!isConfigured()) return;
+
+  try {
+    const res = await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/whatsapp/${encodeURIComponent(workspaceId)}`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${env.formsServiceSecret}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(alert),
+        signal: AbortSignal.timeout(25_000),
+      }
+    );
+    const body = (await res.json().catch(() => null)) as { sent?: boolean; error?: string } | null;
+    if (!res.ok || !body?.sent) {
+      console.error(`[quantalog] whatsapp alert not sent: ${body?.error ?? res.status}`);
+    }
+  } catch (err) {
+    console.error('[quantalog] could not send whatsapp alert:', err);
+  }
+}
+
 export type TelegramImportOutcome = 'imported' | 'conflict' | null;
 
 export async function importTelegramBot(

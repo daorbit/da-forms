@@ -480,7 +480,15 @@ export interface NotificationSettings {
   /** Drops a row into the Quantalog notification bell on every submission — independent of `ownerEnabled`, which only sends email. */
   ownerInAppEnabled?: boolean;
   telegramEnabled?: boolean;
+  whatsappEnabled?: boolean;
   ownerRoutes?: OwnerRoute[];
+}
+
+export interface WhatsAppSummary {
+  configured: boolean;
+  entitled: boolean;
+  planName: string | null;
+  mobileHint: string | null;
 }
 
 export interface TelegramSummary {

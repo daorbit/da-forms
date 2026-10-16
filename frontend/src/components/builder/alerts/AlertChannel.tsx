@@ -4,7 +4,7 @@ import classes from './AlertsModal.module.css';
 
 interface Props {
   icon: ReactNode;
-  tone: 'bell' | 'telegram';
+  tone: 'bell' | 'telegram' | 'whatsapp';
   title: string;
   description: string;
   enabled: boolean;

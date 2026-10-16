@@ -22,6 +22,15 @@ export function openConnections(appId?: string) {
   window.open(connectionsUrl(appId), '_blank', 'noopener');
 }
 
+export function openProfileSettings() {
+  if (IS_EMBEDDED && window.parent !== window) {
+    window.parent.postMessage({ type: 'quantalog:open-profile' }, '*');
+    return;
+  }
+  awaitingReturn = true;
+  window.open(`${QUANTALOG_APP_URL}/app/settings/profile`, '_blank', 'noopener');
+}
+
 export function onReturnFromConnections(handler: () => void): () => void {
   const listener = () => {
     if (!awaitingReturn) return;

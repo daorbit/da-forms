@@ -8,6 +8,7 @@ const TELEGRAM_MAX_TEXT = 4000;
 const ALLOWED_HOSTS: Record<string, RegExp> = {
   slack: /^hooks\.slack\.com$/,
   discord: /^(?:discord|discordapp)\.com$/,
+  teams: /(?:^|\.)(?:logic\.azure\.com|powerplatform\.com|powerautomate\.com|webhook\.office\.com)$/,
 };
 
 export const TELEGRAM_TOKEN = /^\d{5,15}:[A-Za-z0-9_-]{30,64}$/;
@@ -22,7 +23,7 @@ const WEBHOOK_STATUS_HINT: Record<number, string> = {
   429: 'is rate limiting messages right now. Try again in a minute.',
 };
 
-const APP_NAME: Record<string, string> = { slack: 'Slack', discord: 'Discord' };
+const APP_NAME: Record<string, string> = { slack: 'Slack', discord: 'Discord', teams: 'Microsoft Teams' };
 
 export interface ChatAlert {
   title: string;
@@ -56,8 +57,33 @@ function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function teamsCard(title: string, answers: ChatAlert['answers']): unknown {
+  return {
+    type: 'message',
+    attachments: [
+      {
+        contentType: 'application/vnd.microsoft.card.adaptive',
+        contentUrl: null,
+        content: {
+          $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+          type: 'AdaptiveCard',
+          version: '1.4',
+          body: [
+            { type: 'TextBlock', text: title, weight: 'Bolder', size: 'Medium', wrap: true },
+            {
+              type: 'FactSet',
+              facts: answers.map((a) => ({ title: clip(a.label).slice(0, 250), value: clip(a.value) || '-' })),
+            },
+          ],
+        },
+      },
+    ],
+  };
+}
+
 function webhookBody(appId: string, alert: ChatAlert): unknown {
   const answers = alert.answers.slice(0, MAX_FIELDS);
+  if (appId === 'teams') return teamsCard(alert.title, answers);
   if (appId === 'discord') {
     return {
       embeds: [

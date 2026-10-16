@@ -6,7 +6,7 @@ import { flattenFields, fillPlaceholders } from '../lib/pipe.js';
 import { answersOf } from '../lib/submissionAnswers.js';
 import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
-import { getBranding, notifyFormSubmission } from '../lib/quantalog.js';
+import { getBranding, notifyFormSubmission, sendWhatsAppAlert } from '../lib/quantalog.js';
 import { bannerAttachment } from '../lib/email-banner.js';
 import { sendChatAlert, type ChatAlert } from '../lib/chatAlert.js';
 import { chatAlertsOn, telegramAlertsOn } from '../lib/notifyChannels.js';
@@ -197,6 +197,7 @@ export async function sendSubmissionNotifications(
       ? notifyFormSubmission(form.workspaceId, formId ?? String(form._id), form.title, answers)
       : null,
     telegramAlertsOn(notifications) ? sendTelegramAlerts(form.workspaceId, alert) : null,
+    notifications?.whatsappEnabled ? sendWhatsAppAlert(form.workspaceId, alert) : null,
     sendChatNotifications(form, alert),
   ]);
   for (const result of results) {

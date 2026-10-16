@@ -14,6 +14,7 @@ import type {
   BookingSlots,
   CalendarStatus,
   TelegramSummary,
+  WhatsAppSummary,
 } from '@/types';
 import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
 import type { GeneratedForm } from './generatedForm';
@@ -509,6 +510,10 @@ export function getCalendarStatus(workspaceId = DEFAULT_WORKSPACE) {
 
 export function getTelegramSummary(workspaceId = DEFAULT_WORKSPACE) {
   return authedRequest<TelegramSummary>(`/workspaces/${encodeURIComponent(workspaceId)}/settings/telegram`);
+}
+
+export function getWhatsAppSummary(workspaceId = DEFAULT_WORKSPACE) {
+  return authedRequest<WhatsAppSummary>(`/workspaces/${encodeURIComponent(workspaceId)}/settings/whatsapp`);
 }
 
 export function getWebhookApp(workspaceId = DEFAULT_WORKSPACE) {

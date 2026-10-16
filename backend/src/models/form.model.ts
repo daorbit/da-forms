@@ -316,6 +316,8 @@ export interface NotificationSettings {
 
   telegramEnabled?: boolean;
 
+  whatsappEnabled?: boolean;
+
   ownerRoutes?: OwnerRoute[];
 }
 
@@ -524,6 +526,7 @@ const formSchema = new Schema<FormDocument>(
           ownerSubject: { type: String },
           ownerInAppEnabled: { type: Boolean },
           telegramEnabled: { type: Boolean },
+          whatsappEnabled: { type: Boolean },
           ownerRoutes: { type: Schema.Types.Mixed },
         },
         { _id: false }

@@ -157,6 +157,7 @@ workspaceSettingsRouter.delete('/sheets', asyncHandler(sheetsController.disconne
 
 workspaceSettingsRouter.get('/webhook-app', asyncHandler(settingsController.getWebhookApp));
 workspaceSettingsRouter.get('/telegram', asyncHandler(settingsController.getTelegram));
+workspaceSettingsRouter.get('/whatsapp', asyncHandler(settingsController.getWhatsApp));
 workspaceSettingsRouter.put('/webhook-app', asyncHandler(settingsController.saveWebhookApp));
 
 export const publicFormRouter = Router();

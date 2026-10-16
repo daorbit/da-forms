@@ -32,6 +32,11 @@
   color: #26a5e4;
 }
 
+.channelIcon[data-tone="whatsapp"] {
+  background: color-mix(in srgb, #25d366 14%, transparent);
+  color: #25d366;
+}
+
 .channelIcon[data-tone="bell"] {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: var(--accent);

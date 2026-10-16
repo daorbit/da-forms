@@ -168,6 +168,25 @@ export const APP_CATALOG: AppDescriptor[] = [
       },
     ],
   },
+  {
+    id: 'teams',
+    name: 'Microsoft Teams',
+    category: 'notification',
+    description: 'Post a card to a Microsoft Teams channel for every new response.',
+    docsUrl: 'https://support.microsoft.com/en-us/office/create-incoming-webhooks-with-workflows-for-microsoft-teams-8ae491c7-0394-4861-ba59-055e33f75498',
+    testable: true,
+    fields: [
+      {
+        key: 'webhookUrl',
+        label: 'Workflow webhook URL',
+        type: 'password',
+        secret: true,
+        required: true,
+        placeholder: 'https://….logic.azure.com/workflows/…',
+        help: 'In the channel, open Workflows, pick "Post to a channel when a webhook request is received", and copy the URL it gives you.',
+      },
+    ],
+  },
 ];
 
 /** App ids in the 'email' category — the mailer's candidate transports. */

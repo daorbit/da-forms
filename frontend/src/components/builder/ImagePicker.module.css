@@ -1,0 +1,28 @@
+.picked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.thumb {
+  flex: 1;
+  min-width: 0;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--mantine-radius-sm);
+}
+
+.picked[data-compact] {
+  padding: 3px;
+  flex: none;
+}
+
+.picked[data-compact] .thumb {
+  flex: none;
+  width: 34px;
+  height: 34px;
+}

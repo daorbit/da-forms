@@ -49,6 +49,10 @@ import { BookingInput } from '@/components/booking/BookingInput';
 import { countryOptions } from '@/lib/countries';
 import { sanitizeRichText } from '@/lib/richText';
 import richTextClasses from '@/components/RichTextBlock.module.css';
+import { ChoiceCards } from '@/components/funnel/ChoiceCards';
+import { ImageBlock } from '@/components/funnel/ImageBlock';
+import { AnalyzingScreen } from '@/components/funnel/AnalyzingScreen';
+import { CountdownTimer } from '@/components/funnel/CountdownTimer';
 
 interface Props {
   field: FormField;
@@ -81,6 +85,7 @@ interface Props {
    * what a chosen option is worth.
    */
   siblingFields?: FormField[];
+  onComplete?: () => void;
 }
 
 /**
@@ -138,6 +143,7 @@ export function FieldControl({
   error,
   allValues,
   siblingFields,
+  onComplete,
 }: Props) {
   const showLabel = !hideLabel && !field.hideLabel;
   const sideLabel = showLabel && labelPlacement !== 'top';
@@ -288,7 +294,7 @@ export function FieldControl({
   );
 
   const noLabelTypes: FormField['type'][] = [
-    'heading', 'description', 'richText', 'divider', 'spacer', 'pageBreak',
+    'heading', 'description', 'richText', 'divider', 'spacer', 'pageBreak', 'image', 'loader', 'countdown',
     // Renders nothing; a label wrapper would leave a gap where it sits.
     'hidden',
   ];
@@ -303,6 +309,27 @@ export function FieldControl({
   ];
 
   if (noLabelTypes.includes(field.type)) return renderControl();
+
+  if ((field.type === 'radio' || field.type === 'checkbox') && field.choiceLayout === 'cards') {
+    return (
+      <div data-field-id={field.id} aria-invalid={error ? true : undefined}>
+        <ChoiceCards
+          field={field}
+          value={value}
+          onChange={onChange}
+          multiple={field.type === 'checkbox'}
+          readOnly={readOnly}
+          label={showLabel ? field.label : undefined}
+          labelColor={labelColor}
+          accentColor={accentColor}
+          inputBg={inputBg}
+          inputBorder={inputBorder}
+          inputTextColor={inputTextColor}
+          error={error}
+        />
+      </div>
+    );
+  }
 
   return (
     <div data-field-id={field.id} aria-invalid={error ? true : undefined}>
@@ -1233,6 +1260,14 @@ export function FieldControl({
           {field.content || field.label}
         </Text>
       );
+    case 'image':
+      return <ImageBlock field={field} />;
+    case 'loader':
+      return (
+        <AnalyzingScreen field={field} accentColor={accentColor} textColor={labelColor} onComplete={onComplete} />
+      );
+    case 'countdown':
+      return <CountdownTimer field={field} accentColor={accentColor} />;
     case 'divider':
       return <Divider my="xs" />;
     case 'spacer':

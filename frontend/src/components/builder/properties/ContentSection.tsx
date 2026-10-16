@@ -1,9 +1,14 @@
 import { Text, Textarea } from '@mantine/core';
 import { EmailBodyEditor } from '@/components/builder/EmailBodyEditor';
 import { PropertySection } from './PropertySection';
+import { FunnelBlockSection } from './FunnelBlockSection';
 import type { SectionProps } from './types';
 
 export function ContentSection({ field, set }: SectionProps) {
+  if (field.type === 'image' || field.type === 'loader' || field.type === 'countdown') {
+    return <FunnelBlockSection field={field} set={set} />;
+  }
+
   if (field.type === 'richText') {
     return (
       <PropertySection title="Content" description="Formatted text shown on the form.">

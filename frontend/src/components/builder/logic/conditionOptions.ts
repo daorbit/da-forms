@@ -33,7 +33,7 @@ const NUMERIC_FIELD_TYPES: FieldType[] = [
   'calculated',
 ];
 
-const EXCLUDED_TYPES: FieldType[] = ['grid', 'repeater', 'payment', 'booking', 'signature', 'pageBreak'];
+const EXCLUDED_TYPES: FieldType[] = ['grid', 'repeater', 'payment', 'booking', 'signature', 'pageBreak', 'image', 'loader', 'countdown'];
 
 export const VALUELESS_OPERATORS: ShowIfOperator[] = ['isEmpty', 'isNotEmpty'];
 

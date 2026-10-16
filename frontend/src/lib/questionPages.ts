@@ -8,6 +8,9 @@ const NOT_A_QUESTION = new Set<FieldType>([
   'divider',
   'spacer',
   'pageBreak',
+  'image',
+  'loader',
+  'countdown',
   'hidden',
   'uniqueId',
   'randomId',
@@ -23,6 +26,14 @@ export function asksQuestion(field: FormField): boolean {
 
 export function advancesOnAnswer(field: FormField): boolean {
   return AUTO_ADVANCE.has(field.type);
+}
+
+export function standsAlone(field: FormField): boolean {
+  return field.type === 'loader';
+}
+
+export function isLoaderPage(page: FormField[]): boolean {
+  return page.some(standsAlone) && !page.some(asksQuestion);
 }
 
 export interface QuestionLayout {
@@ -42,7 +53,7 @@ export function splitIntoQuestions(fields: FormField[]): QuestionLayout {
       continue;
     }
     pending.push(field);
-    if (asksQuestion(field)) {
+    if (asksQuestion(field) || standsAlone(field)) {
       pages.push(pending);
       sections.push(section);
       pending = [];
@@ -62,7 +73,10 @@ export function splitIntoQuestions(fields: FormField[]): QuestionLayout {
 
 export function questionSteps(pages: FormField[][]): Required<FormStep>[] {
   return pages.map((page, index) => ({
-    title: flattenFields(page).find(asksQuestion)?.label?.trim() || `Question ${index + 1}`,
+    title:
+      flattenFields(page).find(asksQuestion)?.label?.trim() ||
+      flattenFields(page).find(standsAlone)?.label?.trim() ||
+      `Question ${index + 1}`,
     description: '',
   }));
 }
@@ -79,7 +93,9 @@ export function activeQuestionIndexes(
 ): number[] {
   const sections = new Set(activeSections);
   const active = layout.pages.flatMap((page, index) =>
-    sections.has(layout.sections[index]) && page.some((f) => asksQuestion(f) && shown.has(f.id)) ? [index] : []
+    sections.has(layout.sections[index]) && page.some((f) => (asksQuestion(f) || standsAlone(f)) && shown.has(f.id))
+      ? [index]
+      : []
   );
   return active.length ? active : [0];
 }

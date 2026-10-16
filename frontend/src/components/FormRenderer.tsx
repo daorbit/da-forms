@@ -41,6 +41,7 @@ import {
   activeQuestionIndexes,
   advancesOnAnswer,
   asksQuestion,
+  isLoaderPage,
   questionIndicator,
   questionSteps,
   splitIntoQuestions,
@@ -254,6 +255,7 @@ export function FormRenderer({
 
   const autoAdvances =
     Boolean(oneQuestionAtATime) && !isLastPage && currentPageFields.filter(asksQuestion).length === 1;
+  const onLoaderPage = isMultiPage && isLoaderPage(currentPageFields);
 
 
   useEffect(() => {
@@ -464,6 +466,7 @@ export function FormRenderer({
         inputBorder={theme?.inputBorder}
         inputTextColor={theme?.inputTextColor}
         accentColor={accent}
+        onComplete={onLoaderPage && field.type === 'loader' ? () => formRef.current?.requestSubmit() : undefined}
       />
       </div>
     );
@@ -614,6 +617,7 @@ export function FormRenderer({
               <Group
                 gap="sm"
                 mt="sm"
+                display={onLoaderPage ? 'none' : undefined}
                 style={{
                   alignSelf:
                     submitButtonAlign === 'left' ? 'flex-start' : submitButtonAlign === 'right' ? 'flex-end' : 'center',

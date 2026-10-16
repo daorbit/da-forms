@@ -1,0 +1,30 @@
+.figure {
+  margin: 0 auto;
+  width: 100%;
+}
+
+.figure[data-width='medium'] {
+  max-width: 70%;
+}
+
+.figure[data-width='small'] {
+  max-width: 40%;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--mantine-color-default-border);
+  color: var(--mantine-color-dimmed);
+}

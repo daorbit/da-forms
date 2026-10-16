@@ -76,6 +76,8 @@ export function useFormCreation({ workspaceId, formName, scope }: Options) {
           steps: tpl.steps,
           stepIndicator: tpl.stepIndicator,
           showStepHeadings: tpl.showStepHeadings,
+          oneQuestionAtATime: tpl.oneQuestionAtATime,
+          thankYouMessage: tpl.thankYouMessage,
         },
         workspaceId
       );

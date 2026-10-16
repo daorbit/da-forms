@@ -1,0 +1,33 @@
+.root {
+  --countdown-accent: var(--mantine-color-emerald-6);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1.5px solid color-mix(in srgb, var(--countdown-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--countdown-accent) 8%, transparent);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--countdown-accent);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+}
+
+.time {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--countdown-accent);
+}
+
+.root[data-expired] {
+  opacity: 0.7;
+}

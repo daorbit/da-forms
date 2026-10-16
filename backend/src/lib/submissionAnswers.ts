@@ -3,7 +3,9 @@ import type { SubmissionBooking, SubmissionPayment } from '../models/submission.
 import { formatBookingTime } from './bookingFormat.js';
 import { flattenFields, repeaterText } from './pipe.js';
 
-const LAYOUT_TYPES: FieldType[] = ['heading', 'description', 'richText', 'divider', 'spacer', 'pageBreak', 'grid'];
+const LAYOUT_TYPES: FieldType[] = [
+  'heading', 'description', 'richText', 'divider', 'spacer', 'pageBreak', 'grid', 'image', 'loader', 'countdown',
+];
 
 function formatPaid(payment: SubmissionPayment): string {
   const major = (payment.amount / 100).toFixed(2);

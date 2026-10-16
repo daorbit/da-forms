@@ -4,6 +4,7 @@ import { makeField } from '@/lib/fieldPalette';
 /** The groups the picker's filter bar offers, in the order they are shown. */
 export const templateCategories = [
   'Featured',
+  'Quiz Funnels',
   'Travel',
   'Scheduling',
   'Contact',
@@ -38,6 +39,8 @@ export interface FormTemplate {
   steps?: FormStep[];
   stepIndicator?: StepIndicator;
   showStepHeadings?: boolean;
+  oneQuestionAtATime?: boolean;
+  thankYouMessage?: string;
 }
 
 export function field(type: Parameters<typeof makeField>[0], overrides: Partial<FormField> = {}): FormField {

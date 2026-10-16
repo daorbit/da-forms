@@ -41,6 +41,8 @@ function toDemoForm(template: (typeof formTemplates)[number], index: number): Fo
     steps: template.steps,
     stepIndicator: template.stepIndicator,
     showStepHeadings: template.showStepHeadings,
+    oneQuestionAtATime: template.oneQuestionAtATime,
+    thankYouMessage: template.thankYouMessage,
     createdAt: CREATED_AT,
     updatedAt: CREATED_AT,
   };

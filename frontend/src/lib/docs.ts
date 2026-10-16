@@ -6,6 +6,7 @@ export const DOCS = {
   fieldLogic: '/forms-logic#show-fields',
   stepLogic: '/forms-logic#skip-steps',
   oneQuestion: '/lead-capture#one-question',
+  quizFunnel: '/lead-capture#quiz-funnel',
   endings: '/forms-logic#endings',
   routing: '/forms-logic#routing',
   notifications: '/forms-notifications-and-apps',

@@ -51,6 +51,9 @@ export type FieldType =
   | 'divider'
   | 'spacer'
   | 'pageBreak'
+  | 'image'
+  | 'loader'
+  | 'countdown'
   | 'grid'
   | 'repeater';
 
@@ -114,6 +117,16 @@ export interface FormField {
   optionValues?: Record<string, number>;
 
   correctOptions?: string[];
+
+  choiceLayout?: 'list' | 'cards';
+  cardColumns?: number;
+  optionImages?: Record<string, string>;
+  optionBadges?: Record<string, string>;
+  optionHints?: Record<string, string>;
+  imageUrl?: string;
+  imageAlt?: string;
+  imageWidth?: 'small' | 'medium' | 'full';
+  duration?: number;
 
   customWidth?: number;
 
@@ -425,6 +438,15 @@ const fieldSchema = new Schema<FormField>(
     formulaPrecision: { type: Number, min: 0, max: 6 },
     optionValues: { type: Schema.Types.Mixed },
     correctOptions: { type: [String], default: undefined },
+    choiceLayout: { type: String, enum: ['list', 'cards'] },
+    cardColumns: { type: Number, min: 1, max: 4 },
+    optionImages: { type: Schema.Types.Mixed },
+    optionBadges: { type: Schema.Types.Mixed },
+    optionHints: { type: Schema.Types.Mixed },
+    imageUrl: { type: String, maxlength: 2048 },
+    imageAlt: { type: String, maxlength: 300 },
+    imageWidth: { type: String, enum: ['small', 'medium', 'full'] },
+    duration: { type: Number, min: 1, max: 1440 },
     customWidth: { type: Number },
     customHeight: { type: Number },
     cssClass: { type: String },

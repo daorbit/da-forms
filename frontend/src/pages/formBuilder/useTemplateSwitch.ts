@@ -35,6 +35,8 @@ export function useTemplateSwitch(state: FormBuilderState) {
       state.setSteps(template.steps ?? []);
       state.setShowStepHeadings(template.showStepHeadings ?? false);
       if (template.stepIndicator) state.setStepIndicator(template.stepIndicator);
+      state.setOneQuestionAtATime(template.oneQuestionAtATime ?? false);
+      if (template.thankYouMessage) state.setThankYouMessage(template.thankYouMessage);
       state.setSelectedId(null);
       state.setEditingId(null);
       setFreshIds(new Set(added));

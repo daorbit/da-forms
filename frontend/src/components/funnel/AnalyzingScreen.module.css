@@ -1,0 +1,114 @@
+.root {
+  --loader-accent: var(--mantine-color-emerald-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 0 8px;
+}
+
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+}
+
+.ringSvg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.ringTrack,
+.ringValue {
+  fill: none;
+  stroke-width: 9;
+}
+
+.ringTrack {
+  stroke: color-mix(in srgb, var(--loader-accent) 14%, transparent);
+}
+
+.ringValue {
+  stroke: var(--loader-accent);
+  stroke-linecap: round;
+  stroke-dasharray: calc(var(--loader-progress) * 100) 100;
+}
+
+.percent {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  width: 100%;
+  max-width: 360px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--loader-accent) 14%, transparent);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  width: calc(var(--loader-progress) * 100%);
+  border-radius: inherit;
+  background: var(--loader-accent);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--mantine-font-size-sm);
+  transition: opacity 200ms ease;
+}
+
+.step[data-state='waiting'] {
+  opacity: 0.4;
+}
+
+.step[data-state='active'] {
+  font-weight: 600;
+}
+
+.stepMark {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--loader-accent) 40%, transparent);
+  color: #fff;
+}
+
+.step[data-state='done'] .stepMark {
+  border-color: var(--loader-accent);
+  background: var(--loader-accent);
+}
+
+.step[data-state='active'] .stepMark {
+  border-color: var(--loader-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step {
+    transition: none;
+  }
+}

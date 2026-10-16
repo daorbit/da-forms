@@ -64,8 +64,15 @@ export type FieldType =
   | 'divider'
   | 'spacer'
   | 'pageBreak'
+  | 'image'
+  | 'loader'
+  | 'countdown'
   | 'grid'
   | 'repeater';
+
+export type ChoiceLayout = 'list' | 'cards';
+
+export type ImageWidth = 'small' | 'medium' | 'full';
 
 export type FieldSize = 'small' | 'medium' | 'large';
 
@@ -231,6 +238,15 @@ export interface FormField {
   optionValues?: Record<string, number>;
   /** Which options are correct, by their own text. Presence makes it a question. */
   correctOptions?: string[];
+  choiceLayout?: ChoiceLayout;
+  cardColumns?: number;
+  optionImages?: Record<string, string>;
+  optionBadges?: Record<string, string>;
+  optionHints?: Record<string, string>;
+  imageUrl?: string;
+  imageAlt?: string;
+  imageWidth?: ImageWidth;
+  duration?: number;
   customWidth?: number;
   /** Pixel height for this field's input, e.g. a taller text area. */
   customHeight?: number;

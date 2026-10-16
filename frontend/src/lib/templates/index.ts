@@ -14,6 +14,7 @@ import { operationsTemplates } from './operations';
 import { advancedTemplates } from './advanced';
 import { feedbackTemplates } from './feedback';
 import { featuredTemplates } from './featured';
+import { funnelTemplates } from './funnels';
 import { proBusinessTemplates } from './pro/business';
 import { proPeopleTemplates } from './pro/people';
 import { proServicesTemplates } from './pro/services';
@@ -27,6 +28,7 @@ export { templateCategories } from './types';
 
 export const formTemplates = [
   ...featuredTemplates,
+  ...funnelTemplates,
   ...travelTemplates,
   ...proSchedulingTemplates,
   ...proContactTemplates,

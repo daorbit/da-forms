@@ -30,8 +30,10 @@ import {
   GlobeIcon,
   HashIcon,
   HeadingIcon,
+  ImageIcon,
   ImageUpIcon,
   ListChecksIcon,
+  LoaderCircleIcon,
   MailIcon,
   MinusIcon,
   MoveHorizontalIcon,
@@ -50,6 +52,7 @@ import {
   TableIcon,
   TagsIcon,
   TextAlignStartIcon,
+  TimerIcon,
   TypeIcon,
   UserIcon,
   VideoIcon,
@@ -194,6 +197,14 @@ export const fieldPalette: PaletteGroup[] = [
       { type: 'divider', label: 'Divider', icon: MinusIcon, color: 'indigo' },
       { type: 'spacer', label: 'Spacer', icon: MoveVerticalIcon, color: 'indigo' },
       { type: 'pageBreak', label: 'Page Break', icon: BookOpenIcon, color: 'indigo' },
+      { type: 'image', label: 'Image', icon: ImageIcon, color: 'indigo' },
+    ],
+  },
+  {
+    group: 'Funnel',
+    items: [
+      { type: 'loader', label: 'Analyzing Screen', icon: LoaderCircleIcon, color: 'grape' },
+      { type: 'countdown', label: 'Countdown', icon: TimerIcon, color: 'grape' },
     ],
   },
 ];
@@ -217,7 +228,7 @@ export const paletteByType = Object.fromEntries(
 
 /** Layout-only elements: no label column, no value collected. */
 export const staticTypes: FieldType[] = [
-  'heading', 'description', 'richText', 'divider', 'spacer', 'pageBreak',
+  'heading', 'description', 'richText', 'divider', 'spacer', 'pageBreak', 'image', 'loader', 'countdown',
 ];
 
 export const optionTypes: FieldType[] = [
@@ -332,6 +343,20 @@ export function makeField(type: FieldType, columns?: number): FormField {
     field.booking = defaultBookingConfig();
   }
   if (type === 'hidden') field.label = 'Hidden value';
+  if (type === 'image') {
+    field.label = '';
+    field.imageWidth = 'full';
+  }
+  if (type === 'loader') {
+    field.label = 'Analyzing your answers…';
+    field.content = 'Reviewing your answers\nComparing with similar profiles\nBuilding your personal plan';
+    field.duration = 5;
+  }
+  if (type === 'countdown') {
+    field.label = 'Your discount is reserved for';
+    field.content = 'Offer time is up';
+    field.duration = 15;
+  }
   if (type === 'heading') field.content = 'Heading';
   if (type === 'description') field.content = 'Description text';
   if (textTypes.includes(type)) field.maxLength = 255;

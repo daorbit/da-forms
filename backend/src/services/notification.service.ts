@@ -8,7 +8,8 @@ import { mintEditToken } from '../lib/edit-token.js';
 import { env } from '../config/env.js';
 import { getBranding, notifyFormSubmission } from '../lib/quantalog.js';
 import { bannerAttachment } from '../lib/email-banner.js';
-import { sendChatAlert } from '../lib/chatAlert.js';
+import { sendChatAlert, type ChatAlert } from '../lib/chatAlert.js';
+import { chatAlertsOn, telegramAlertsOn } from '../lib/notifyChannels.js';
 import { resolveChatConnections } from './appConnection.service.js';
 import { sendTelegramAlerts } from './telegramAlert.service.js';
 import { routedOwnerEmails } from '../lib/conditions.js';
@@ -50,19 +51,7 @@ async function sendEmailNotifications(
 ): Promise<void> {
   const notifications = form.notifications;
   if (!notifications) return;
-
-  // Independent of the email path below: it goes to the Quantalog bell, not
-  // through the workspace's connected mail app, so an unconfigured inbox must
-  // not silently swallow it too.
-  if (notifications.ownerInAppEnabled) {
-    void notifyFormSubmission(
-      form.workspaceId,
-      formId ?? String(form._id),
-      form.title,
-      answersOf(form.fields, data, payment, booking)
-    );
-  }
-
+  if (!notifications.respondentEnabled && !notifications.ownerEnabled) return;
 
   if (!(await mailConfigured(form.workspaceId))) {
     if (notifications.respondentEnabled || notifications.ownerEnabled) {
@@ -178,22 +167,10 @@ async function sendEmailNotifications(
   }
 }
 
-async function sendChatNotifications(
-  form: FormDocument & { _id: unknown },
-  data: Record<string, string>,
-  payment?: SubmissionPayment,
-  booking?: SubmissionBooking
-): Promise<void> {
-  const notifications = form.notifications;
-  if (!notifications?.ownerEnabled && !notifications?.ownerInAppEnabled) return;
-
-  const alert = { title: `New submission: ${form.title}`, answers: answersOf(form.fields, data, payment, booking) };
-  const [telegram, connections] = await Promise.allSettled([
-    sendTelegramAlerts(form.workspaceId, alert),
-    resolveChatConnections(form.workspaceId),
-  ]);
-  const posted = connections.status === 'fulfilled' ? connections.value.map((c) => sendChatAlert(c, alert)) : [];
-  const results = [telegram, connections, ...(await Promise.allSettled(posted))];
+async function sendChatNotifications(form: FormDocument & { _id: unknown }, alert: ChatAlert): Promise<void> {
+  if (!chatAlertsOn(form.notifications)) return;
+  const connections = await resolveChatConnections(form.workspaceId);
+  const results = await Promise.allSettled(connections.map((c) => sendChatAlert(c, alert)));
   for (const result of results) {
     if (result.status === 'rejected') {
       console.error('[notifications] failed to post chat alert:', result.reason);
@@ -207,10 +184,24 @@ export async function sendSubmissionNotifications(
   payment?: SubmissionPayment,
   submissionId?: string,
   formId?: string,
-  booking?: SubmissionBooking
+  booking?: SubmissionBooking,
+  emailsAllowed = true
 ): Promise<void> {
-  await Promise.all([
-    sendEmailNotifications(form, data, payment, submissionId, formId, booking),
-    sendChatNotifications(form, data, payment, booking),
+  const notifications = form.notifications;
+  const answers = answersOf(form.fields, data, payment, booking);
+  const alert: ChatAlert = { title: `New submission: ${form.title}`, answers };
+
+  const results = await Promise.allSettled([
+    emailsAllowed ? sendEmailNotifications(form, data, payment, submissionId, formId, booking) : null,
+    notifications?.ownerInAppEnabled
+      ? notifyFormSubmission(form.workspaceId, formId ?? String(form._id), form.title, answers)
+      : null,
+    telegramAlertsOn(notifications) ? sendTelegramAlerts(form.workspaceId, alert) : null,
+    sendChatNotifications(form, alert),
   ]);
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error('[notifications] a submission notification failed:', result.reason);
+    }
+  }
 }

@@ -1,0 +1,32 @@
+.icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #26a5e4;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.status[data-tone="ok"] {
+  border-color: color-mix(in srgb, var(--mantine-color-teal-6) 35%, var(--border));
+}
+
+.status[data-tone="warn"] {
+  border-color: color-mix(in srgb, var(--mantine-color-orange-6) 40%, var(--border));
+}
+
+.statusText {
+  min-width: 0;
+}
+
+.statusAction {
+  flex-shrink: 0;
+}

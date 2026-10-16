@@ -8,6 +8,7 @@ import {
   PaletteIcon,
   BlocksIcon,
   LayoutTemplateIcon,
+  SendIcon,
   Share2Icon,
   SlidersHorizontalIcon,
   WebhookIcon,
@@ -15,7 +16,7 @@ import {
 import { OrbitMark } from '@/components/OrbitMark';
 import classes from './IconRail.module.css';
 
-export type RailPanel = 'ai' | 'templates' | 'quickSettings' | 'thankYou' | 'embed' | 'theme' | 'steps' | 'notifications' | 'drawerNotify' | 'webhook' | 'integrations';
+export type RailPanel = 'ai' | 'templates' | 'quickSettings' | 'thankYou' | 'embed' | 'theme' | 'steps' | 'notifications' | 'drawerNotify' | 'telegram' | 'webhook' | 'integrations';
 
 interface Props {
   active: RailPanel | null;
@@ -41,6 +42,7 @@ const GROUPS: RailItem[][] = [
     { id: 'thankYou', label: 'After submission', icon: <CircleCheckIcon {...ICON} /> },
     { id: 'notifications', label: 'Email notifications', icon: <MailIcon {...ICON} /> },
     { id: 'drawerNotify', label: 'Notification drawer', icon: <BellRingIcon {...ICON} /> },
+    { id: 'telegram', label: 'Telegram alerts', icon: <SendIcon {...ICON} /> },
   ],
   [
     { id: 'webhook', label: 'Webhook', icon: <WebhookIcon {...ICON} /> },

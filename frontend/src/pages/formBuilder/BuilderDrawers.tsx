@@ -11,6 +11,8 @@ import { StepsDrawer } from '@/components/builder/StepsDrawer';
 import { ThankYouDrawer } from '@/components/builder/ThankYouDrawer';
 import { NotificationsModal } from '@/components/builder/NotificationsModal';
 import { DrawerNotifyModal } from '@/components/builder/DrawerNotifyModal';
+import { TelegramNotifyModal } from '@/components/builder/TelegramNotifyModal';
+import { telegramAlertsOn } from '@/lib/notifyChannels';
 import { WebhookConnectDialog } from '@/components/apps/WebhookConnectDialog';
 import { openConnections } from '@/lib/hostConnections';
 import { PreviewModal } from '@/components/builder/PreviewModal';
@@ -198,6 +200,14 @@ export function BuilderDrawers({
         onClose={() => setRailPanel(null)}
         enabled={state.emailNotifications.ownerInAppEnabled ?? false}
         onChange={(enabled) => state.setEmailNotifications((prev) => ({ ...prev, ownerInAppEnabled: enabled }))}
+      />
+
+      <TelegramNotifyModal
+        opened={railPanel === 'telegram'}
+        onClose={() => setRailPanel(null)}
+        workspaceId={workspaceId}
+        enabled={telegramAlertsOn(state.emailNotifications)}
+        onChange={(enabled) => state.setEmailNotifications((prev) => ({ ...prev, telegramEnabled: enabled }))}
       />
 
       <WebhookConnectDialog

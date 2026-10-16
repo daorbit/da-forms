@@ -533,16 +533,15 @@ export const submitForm: RequestHandler = async (req, res) => {
     }
 
     await Promise.allSettled([
-      !limits || limits.notificationEmails
-        ? sendSubmissionNotifications(
-            form,
-            data,
-            undefined,
-            String(submission._id),
-            String(form._id),
-            booking,
-          )
-        : null,
+      sendSubmissionNotifications(
+        form,
+        data,
+        undefined,
+        String(submission._id),
+        String(form._id),
+        booking,
+        !limits || limits.notificationEmails,
+      ),
       deliverWebhook(form, data, String(submission._id)),
       syncSubmissionToSheet(form, data, String(submission._id), undefined, booking),
       recordSubmission(form.workspaceId).catch((e: unknown) => {

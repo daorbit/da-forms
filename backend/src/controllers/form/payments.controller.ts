@@ -64,16 +64,15 @@ async function applyPaymentEvent(
   ]);
 
   await Promise.allSettled([
-    !limits || limits.notificationEmails
-      ? sendSubmissionNotifications(
-          form,
-          submission.data,
-          submission.payment,
-          undefined,
-          undefined,
-          booking,
-        )
-      : null,
+    sendSubmissionNotifications(
+      form,
+      submission.data,
+      submission.payment,
+      undefined,
+      undefined,
+      booking,
+      !limits || limits.notificationEmails,
+    ),
     deliverWebhook(form, submission.data, String(submission._id), submission.payment),
     syncSubmissionToSheet(form, submission.data, String(submission._id), submission.payment, booking),
     workspaceSettingsService.markCharged(workspaceId, provider),

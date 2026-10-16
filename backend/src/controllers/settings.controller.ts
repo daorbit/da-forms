@@ -4,6 +4,7 @@ import { isEncryptionConfigured } from '../lib/crypto.js';
 import { isPaymentProvider } from '../services/gateways/index.js';
 import type { PaymentProvider } from '../models/workspaceSettings.model.js';
 import { audit } from '../lib/audit.js';
+import { getTelegramSummary } from '../lib/quantalog.js';
 
 function readProvider(value: unknown): PaymentProvider {
   return isPaymentProvider(value) ? value : 'razorpay';
@@ -91,6 +92,12 @@ export const disconnectPayments: RequestHandler = async (req, res) => {
 export const getWebhookApp: RequestHandler = async (req, res) => {
   const enabled = await settingsService.getWebhookEnabled(req.params.workspaceId);
   res.json({ enabled });
+};
+
+export const getTelegram: RequestHandler = async (req, res) => {
+  const summary = await getTelegramSummary(req.params.workspaceId);
+  if (!summary) return res.status(503).json({ error: 'telegram_unavailable', message: 'Could not reach Quantalog to check Telegram.' });
+  res.json(summary);
 };
 
 export const saveWebhookApp: RequestHandler = async (req, res) => {

@@ -320,7 +320,7 @@ export async function notifyFormSubmission(
   if (!isConfigured()) return;
 
   try {
-    await fetch(
+    const res = await fetch(
       `${env.quantalogApiUrl}/api/internal/forms/notify/${encodeURIComponent(workspaceId)}`,
       {
         method: 'POST',
@@ -329,9 +329,10 @@ export async function notifyFormSubmission(
           'content-type': 'application/json',
         },
         body: JSON.stringify({ formId, formTitle, answers }),
-        signal: AbortSignal.timeout(4000),
+        signal: AbortSignal.timeout(8000),
       }
     );
+    if (!res.ok) console.error(`[quantalog] submission notification rejected: ${res.status}`);
   } catch (err) {
     console.error('[quantalog] could not send submission notification:', err);
   }
@@ -364,6 +365,35 @@ export async function sendTelegramAlert(
     for (const f of body?.failed ?? []) console.error(`[quantalog] telegram alert to ${f.chat} failed: ${f.error}`);
   } catch (err) {
     console.error('[quantalog] could not send telegram alert:', err);
+  }
+}
+
+export interface TelegramSummary {
+  connected: boolean;
+  sender: string | null;
+  chats: number;
+  alertChats: number;
+}
+
+export async function getTelegramSummary(workspaceId: string): Promise<TelegramSummary | null> {
+  if (!isConfigured()) return null;
+
+  try {
+    const res = await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/telegram/${encodeURIComponent(workspaceId)}`,
+      {
+        headers: { authorization: `Bearer ${env.formsServiceSecret}` },
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+    if (!res.ok) {
+      console.error(`[quantalog] telegram summary failed: ${res.status}`);
+      return null;
+    }
+    return (await res.json()) as TelegramSummary;
+  } catch (err) {
+    console.error('[quantalog] telegram summary failed:', err);
+    return null;
   }
 }
 

@@ -314,6 +314,8 @@ export interface NotificationSettings {
   /** Drops a row into the Quantalog notification bell for every submission — separate from `ownerEnabled`, which only sends email. */
   ownerInAppEnabled?: boolean;
 
+  telegramEnabled?: boolean;
+
   ownerRoutes?: OwnerRoute[];
 }
 
@@ -521,6 +523,7 @@ const formSchema = new Schema<FormDocument>(
           ownerEmails: { type: [String], default: undefined },
           ownerSubject: { type: String },
           ownerInAppEnabled: { type: Boolean },
+          telegramEnabled: { type: Boolean },
           ownerRoutes: { type: Schema.Types.Mixed },
         },
         { _id: false }

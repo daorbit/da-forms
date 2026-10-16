@@ -398,10 +398,11 @@ export async function getTelegramSummary(workspaceId: string): Promise<TelegramS
 }
 
 export interface WhatsAppSummary {
-  configured: boolean;
+  available: boolean;
   entitled: boolean;
   planName: string | null;
-  mobileHint: string | null;
+  enabled: boolean;
+  alertNumbers: number;
 }
 
 export async function getWhatsAppSummary(workspaceId: string): Promise<WhatsAppSummary | null> {
@@ -445,10 +446,14 @@ export async function sendWhatsAppAlert(
         signal: AbortSignal.timeout(25_000),
       }
     );
-    const body = (await res.json().catch(() => null)) as { sent?: boolean; error?: string } | null;
-    if (!res.ok || !body?.sent) {
-      console.error(`[quantalog] whatsapp alert not sent: ${body?.error ?? res.status}`);
+    const body = (await res.json().catch(() => null)) as
+      | { failed?: { phone: string; error: string }[]; error?: string }
+      | null;
+    if (!res.ok) {
+      console.error(`[quantalog] whatsapp alert rejected: ${body?.error ?? res.status}`);
+      return;
     }
+    for (const f of body?.failed ?? []) console.error(`[quantalog] whatsapp alert to ${f.phone} failed: ${f.error}`);
   } catch (err) {
     console.error('[quantalog] could not send whatsapp alert:', err);
   }

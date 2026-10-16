@@ -49,7 +49,7 @@ export function AlertsModal({ opened, onClose, workspaceId, notifications, onCha
           icon={<MessageCircleIcon size={18} />}
           tone="whatsapp"
           title="WhatsApp"
-          description="A message with the answers on the workspace owner's WhatsApp."
+          description="A message with the answers on every WhatsApp number that has form alerts on."
           enabled={notifications.whatsappEnabled ?? false}
           onChange={(whatsappEnabled) => onChange({ whatsappEnabled })}
         >

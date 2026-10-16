@@ -1,5 +1,5 @@
-import { ArrowUpRightIcon, SmartphoneIcon } from 'lucide-react';
-import { openProfileSettings } from '@/lib/hostConnections';
+import { ArrowUpRightIcon, Settings2Icon } from 'lucide-react';
+import { openConnections } from '@/lib/hostConnections';
 import { requestUpgrade } from '@/lib/planLimit';
 import type { WhatsAppSummary } from '@/types';
 import { ChannelStatus, type ChannelAction } from './ChannelStatus';
@@ -10,8 +10,14 @@ interface Props {
   onRetry: () => void;
 }
 
+const MANAGE = (label: string): ChannelAction => ({
+  label,
+  icon: <Settings2Icon size={13} />,
+  onClick: () => openConnections('whatsapp'),
+});
+
 function describe(summary: WhatsAppSummary): { ok: boolean; text: string; action?: ChannelAction } {
-  if (!summary.configured) return { ok: false, text: 'WhatsApp alerts are not available right now.' };
+  if (!summary.available) return { ok: false, text: 'WhatsApp alerts are not available right now.' };
   if (!summary.entitled) {
     return {
       ok: false,
@@ -19,14 +25,10 @@ function describe(summary: WhatsAppSummary): { ok: boolean; text: string; action
       action: { label: 'Upgrade', icon: <ArrowUpRightIcon size={13} />, onClick: requestUpgrade },
     };
   }
-  if (!summary.mobileHint) {
-    return {
-      ok: false,
-      text: "The workspace owner hasn't added a mobile number.",
-      action: { label: 'Add number', icon: <SmartphoneIcon size={13} />, onClick: openProfileSettings },
-    };
-  }
-  return { ok: true, text: `Sends to the owner's WhatsApp, ${summary.mobileHint}` };
+  if (!summary.enabled) return { ok: false, text: 'WhatsApp is not connected yet.', action: MANAGE('Connect') };
+  if (!summary.alertNumbers) return { ok: false, text: 'No number has form alerts on.', action: MANAGE('Choose numbers') };
+  const numbers = `${summary.alertNumbers} number${summary.alertNumbers === 1 ? '' : 's'}`;
+  return { ok: true, text: `Sends to ${numbers}`, action: MANAGE('Manage') };
 }
 
 export function WhatsAppConnectionStatus({ summary, failed, onRetry }: Props) {

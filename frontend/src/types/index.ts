@@ -485,10 +485,11 @@ export interface NotificationSettings {
 }
 
 export interface WhatsAppSummary {
-  configured: boolean;
+  available: boolean;
   entitled: boolean;
   planName: string | null;
-  mobileHint: string | null;
+  enabled: boolean;
+  alertNumbers: number;
 }
 
 export interface TelegramSummary {

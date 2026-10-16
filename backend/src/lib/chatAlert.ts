@@ -9,6 +9,7 @@ const ALLOWED_HOSTS: Record<string, RegExp> = {
   slack: /^hooks\.slack\.com$/,
   discord: /^(?:discord|discordapp)\.com$/,
   teams: /(?:^|\.)(?:logic\.azure\.com|powerplatform\.com|powerautomate\.com|webhook\.office\.com)$/,
+  'google-chat': /^chat\.googleapis\.com$/,
 };
 
 export const TELEGRAM_TOKEN = /^\d{5,15}:[A-Za-z0-9_-]{30,64}$/;
@@ -23,7 +24,12 @@ const WEBHOOK_STATUS_HINT: Record<number, string> = {
   429: 'is rate limiting messages right now. Try again in a minute.',
 };
 
-const APP_NAME: Record<string, string> = { slack: 'Slack', discord: 'Discord', teams: 'Microsoft Teams' };
+const APP_NAME: Record<string, string> = {
+  slack: 'Slack',
+  discord: 'Discord',
+  teams: 'Microsoft Teams',
+  'google-chat': 'Google Chat',
+};
 
 export interface ChatAlert {
   title: string;
@@ -81,9 +87,35 @@ function teamsCard(title: string, answers: ChatAlert['answers']): unknown {
   };
 }
 
+function googleChatCard(title: string, answers: ChatAlert['answers']): unknown {
+  return {
+    text: title,
+    cardsV2: [
+      {
+        cardId: 'submission',
+        card: {
+          header: { title, subtitle: 'Quantalog Forms' },
+          sections: [
+            {
+              widgets: answers.map((a) => ({
+                decoratedText: {
+                  topLabel: clip(a.label).slice(0, 250),
+                  text: escapeHtml(clip(a.value)) || '-',
+                  wrapText: true,
+                },
+              })),
+            },
+          ],
+        },
+      },
+    ],
+  };
+}
+
 function webhookBody(appId: string, alert: ChatAlert): unknown {
   const answers = alert.answers.slice(0, MAX_FIELDS);
   if (appId === 'teams') return teamsCard(alert.title, answers);
+  if (appId === 'google-chat') return googleChatCard(alert.title, answers);
   if (appId === 'discord') {
     return {
       embeds: [

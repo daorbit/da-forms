@@ -187,6 +187,25 @@ export const APP_CATALOG: AppDescriptor[] = [
       },
     ],
   },
+  {
+    id: 'google-chat',
+    name: 'Google Chat',
+    category: 'notification',
+    description: 'Post a card to a Google Chat space for every new response.',
+    docsUrl: 'https://developers.google.com/workspace/chat/quickstart/webhooks',
+    testable: true,
+    fields: [
+      {
+        key: 'webhookUrl',
+        label: 'Webhook URL',
+        type: 'password',
+        secret: true,
+        required: true,
+        placeholder: 'https://chat.googleapis.com/v1/spaces/…',
+        help: 'In the space, open Apps & integrations, choose Webhooks, add one and copy its URL.',
+      },
+    ],
+  },
 ];
 
 /** App ids in the 'email' category — the mailer's candidate transports. */

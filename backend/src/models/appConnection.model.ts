@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 
  
-export type AppId = 'smtp' | 'brevo' | 'slack' | 'discord' | 'teams' | 'telegram';
+export type AppId = 'smtp' | 'brevo' | 'slack' | 'discord' | 'teams' | 'google-chat' | 'telegram';
 
 export type AppCategory = 'email' | 'notification' | 'crm' | 'automation';
 

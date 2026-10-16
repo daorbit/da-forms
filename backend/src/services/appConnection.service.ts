@@ -7,10 +7,9 @@ import {
   type AppField,
   CHAT_APP_IDS,
 } from '../lib/app-catalog.js';
-import { isValidChatSecret, isValidChatSetting, sendChatAlert } from '../lib/chatAlert.js';
+import { isValidChatSecret, sendChatAlert } from '../lib/chatAlert.js';
 import { encrypt, decrypt, maskTail, isEncryptionConfigured } from '../lib/crypto.js';
 import { invalidateMailCache } from '../lib/mailer.js';
-import { findTelegramChats, TelegramLookupError, type TelegramChatList } from '../lib/telegramChats.js';
 
 /**
  * The read model for one app card.
@@ -155,7 +154,7 @@ export async function saveApp(
     if (field.secret) {
       const raw = supplied ? String(values[field.key] ?? '').trim() : '';
       if (raw) {
-        if (descriptor.category === 'notification' && !isValidChatSecret(appId, field.key, raw)) {
+        if (descriptor.category === 'notification' && !isValidChatSecret(appId, raw)) {
           throw new ConfigInvalidError(`${field.label} is not a valid ${descriptor.name} value.`);
         }
         secrets[field.key] = encrypt(raw);
@@ -165,16 +164,7 @@ export async function saveApp(
     }
 
     if (supplied) {
-      const value = coerce(field, values[field.key]);
-      if (
-        descriptor.category === 'notification' &&
-        typeof value === 'string' &&
-        value &&
-        !isValidChatSetting(appId, field.key, value)
-      ) {
-        throw new ConfigInvalidError(`${field.label} is not a valid ${descriptor.name} value.`);
-      }
-      config[field.key] = value;
+      config[field.key] = coerce(field, values[field.key]);
     } else if (field.default !== undefined && config[field.key] === undefined) {
       config[field.key] = field.default;
     }
@@ -396,14 +386,4 @@ export async function testApp(
   }
 }
 
-export async function findChats(workspaceId: string, appId: string, botToken?: string): Promise<TelegramChatList> {
-  if (appId !== 'telegram') throw new UnknownAppError(`Chat lookup is not available for ${appId}`);
-  const supplied = botToken?.trim();
-  if (supplied) return findTelegramChats(supplied);
-  const connection = await resolveConnection(workspaceId, appId);
-  const saved = connection?.secrets.botToken;
-  if (!saved) throw new TelegramLookupError('Paste your bot token first.');
-  return findTelegramChats(saved);
-}
-
-export { isEncryptionConfigured, TelegramLookupError };
+export { isEncryptionConfigured };

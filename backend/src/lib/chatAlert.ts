@@ -44,14 +44,8 @@ export function isValidChatUrl(appId: string, raw: string): boolean {
   }
 }
 
-export function isValidChatSecret(appId: string, key: string, raw: string): boolean {
-  if (appId === 'telegram') return key !== 'botToken' || TELEGRAM_TOKEN.test(raw);
+export function isValidChatSecret(appId: string, raw: string): boolean {
   return isValidChatUrl(appId, raw);
-}
-
-export function isValidChatSetting(appId: string, key: string, raw: string): boolean {
-  if (appId === 'telegram' && key === 'chatId') return TELEGRAM_CHAT.test(raw);
-  return true;
 }
 
 function clip(value: string): string {

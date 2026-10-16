@@ -10,6 +10,7 @@ import { getBranding, notifyFormSubmission } from '../lib/quantalog.js';
 import { bannerAttachment } from '../lib/email-banner.js';
 import { sendChatAlert } from '../lib/chatAlert.js';
 import { resolveChatConnections } from './appConnection.service.js';
+import { sendTelegramAlerts } from './telegramAlert.service.js';
 import { routedOwnerEmails } from '../lib/conditions.js';
 
 
@@ -186,13 +187,13 @@ async function sendChatNotifications(
   const notifications = form.notifications;
   if (!notifications?.ownerEnabled && !notifications?.ownerInAppEnabled) return;
 
-  const connections = await resolveChatConnections(form.workspaceId);
-  if (!connections.length) return;
-
   const alert = { title: `New submission: ${form.title}`, answers: answersOf(form.fields, data, payment, booking) };
-  const results = await Promise.allSettled(
-    connections.map((c) => sendChatAlert(c, alert))
-  );
+  const [telegram, connections] = await Promise.allSettled([
+    sendTelegramAlerts(form.workspaceId, alert),
+    resolveChatConnections(form.workspaceId),
+  ]);
+  const posted = connections.status === 'fulfilled' ? connections.value.map((c) => sendChatAlert(c, alert)) : [];
+  const results = [telegram, connections, ...(await Promise.allSettled(posted))];
   for (const result of results) {
     if (result.status === 'rejected') {
       console.error('[notifications] failed to post chat alert:', result.reason);

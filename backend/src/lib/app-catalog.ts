@@ -168,34 +168,6 @@ export const APP_CATALOG: AppDescriptor[] = [
       },
     ],
   },
-  {
-    id: 'telegram',
-    name: 'Telegram',
-    category: 'notification',
-    description: 'Get a Telegram message from your own bot for every new response.',
-    docsUrl: 'https://core.telegram.org/bots/tutorial#obtain-your-bot-token',
-    testable: true,
-    fields: [
-      {
-        key: 'botToken',
-        label: 'Bot token',
-        type: 'password',
-        secret: true,
-        required: true,
-        placeholder: '123456789:AAH…',
-        help: 'Open @BotFather in Telegram, send /newbot, and paste the token it gives you.',
-      },
-      {
-        key: 'chatId',
-        label: 'Chat ID',
-        type: 'text',
-        secret: false,
-        required: true,
-        placeholder: '123456789 or @yourchannel',
-        help: 'Send your bot a message, then use Find my chat below to pick it. For a public channel, use @channelname and add the bot as an admin.',
-      },
-    ],
-  },
 ];
 
 /** App ids in the 'email' category — the mailer's candidate transports. */

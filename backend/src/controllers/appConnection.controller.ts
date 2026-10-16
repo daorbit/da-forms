@@ -57,24 +57,6 @@ export const testApp: RequestHandler = async (req, res) => {
   }
 };
 
-export const findAppChats: RequestHandler = async (req, res) => {
-  try {
-    const botToken = typeof req.body?.botToken === 'string' ? req.body.botToken : undefined;
-    res.json(await apps.findChats(req.params.workspaceId, req.params.appId, botToken));
-  } catch (err) {
-    if (err instanceof apps.UnknownAppError) {
-      return res.status(404).json({ error: 'unknown_app', message: err.message });
-    }
-    if (err instanceof apps.TelegramLookupError) {
-      return res.status(400).json({ error: 'lookup_failed', message: err.message });
-    }
-    if (err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
-      return res.status(504).json({ error: 'lookup_timeout', message: 'Telegram did not answer in time. Try again.' });
-    }
-    throw err;
-  }
-};
-
 export const disconnectApp: RequestHandler = async (req, res) => {
   try {
     const view = await apps.disconnectApp(req.params.workspaceId, req.params.appId);

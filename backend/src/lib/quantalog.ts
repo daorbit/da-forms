@@ -337,6 +337,71 @@ export async function notifyFormSubmission(
   }
 }
 
+export async function sendTelegramAlert(
+  workspaceId: string,
+  alert: { title: string; answers: { label: string; value: string }[] }
+): Promise<void> {
+  if (!isConfigured()) return;
+
+  try {
+    const res = await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/telegram/${encodeURIComponent(workspaceId)}`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${env.formsServiceSecret}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(alert),
+        signal: AbortSignal.timeout(12_000),
+      }
+    );
+    if (!res.ok) {
+      console.error(`[quantalog] telegram alert rejected: ${res.status}`);
+      return;
+    }
+    const body = (await res.json().catch(() => null)) as { failed?: { chat: string; error: string }[] } | null;
+    for (const f of body?.failed ?? []) console.error(`[quantalog] telegram alert to ${f.chat} failed: ${f.error}`);
+  } catch (err) {
+    console.error('[quantalog] could not send telegram alert:', err);
+  }
+}
+
+export type TelegramImportOutcome = 'imported' | 'conflict' | null;
+
+export async function importTelegramBot(
+  workspaceId: string,
+  botToken: string,
+  chatId: string,
+  formAlerts: boolean
+): Promise<TelegramImportOutcome> {
+  if (!isConfigured()) return null;
+
+  try {
+    const res = await fetch(
+      `${env.quantalogApiUrl}/api/internal/forms/telegram-import/${encodeURIComponent(workspaceId)}`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${env.formsServiceSecret}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ botToken, chatId, formAlerts }),
+        signal: AbortSignal.timeout(12_000),
+      }
+    );
+    const body = (await res.json().catch(() => null)) as { result?: TelegramImportOutcome; error?: string } | null;
+    if (!res.ok) {
+      console.error(`[quantalog] telegram import rejected: ${res.status} ${body?.error ?? ''}`);
+      return res.status === 400 ? 'conflict' : null;
+    }
+    return body?.result ?? null;
+  } catch (err) {
+    console.error('[quantalog] could not import telegram bot:', err);
+    return null;
+  }
+}
+
 export interface AuditEvent {
   action: string;
   actorId?: string;

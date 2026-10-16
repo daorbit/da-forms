@@ -1,0 +1,81 @@
+.channel {
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: border-color 120ms ease;
+}
+
+.channel[data-on] {
+  border-color: var(--border-strong);
+}
+
+.channelHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+}
+
+.channelIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.channelIcon[data-tone="telegram"] {
+  background: color-mix(in srgb, #26a5e4 14%, transparent);
+  color: #26a5e4;
+}
+
+.channelIcon[data-tone="bell"] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.channelText {
+  flex: 1;
+  min-width: 0;
+}
+
+.channelBody {
+  padding: 0 14px 14px 62px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--mantine-radius-sm);
+  background: var(--surface-2);
+}
+
+.statusText {
+  flex: 1;
+  min-width: 0;
+}
+
+.statusOk {
+  flex-shrink: 0;
+  color: var(--mantine-color-teal-5);
+}
+
+.statusWarn {
+  flex-shrink: 0;
+  color: var(--mantine-color-orange-5);
+}
+
+.footnote {
+  padding-top: 4px;
+}
+
+@media (max-width: 30em) {
+  .channelBody {
+    padding-left: 14px;
+  }
+}

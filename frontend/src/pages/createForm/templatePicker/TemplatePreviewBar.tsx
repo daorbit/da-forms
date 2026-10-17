@@ -3,7 +3,7 @@ import { ArrowRightIcon } from 'lucide-react';
 import type { FormTemplate } from '@/lib/templates';
 import { DeviceSwitch } from '@/components/builder/DeviceSwitch';
 import type { DeviceId } from '@/components/builder/DeviceFrame';
-import { scopeLabel, templateMetaLine } from './templateMeta';
+import { templateMetaLine } from './templateMeta';
 import classes from './TemplatePicker.module.css';
 
 interface Props {
@@ -23,7 +23,6 @@ export function TemplatePreviewBar({ template, device, onDeviceChange, creating,
         </Text>
         <div className={classes.previewMeta}>
           <span className={classes.badge}>{template.category}</span>
-          <span className={classes.badge}>{scopeLabel(template)}</span>
           {templateMetaLine(template).map((part) => (
             <span key={part} className={classes.metaText}>
               {part}

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { FormTheme } from '@/types';
 import { formTemplates, templateCategories } from '@/lib/templates';
-import { usedCategories, type ScopeFilter } from '@/lib/templates/search';
+import { themeForScope, usedCategories } from '@/lib/templates/search';
 import { useTemplateFilters } from '@/hooks/useTemplateFilters';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
@@ -24,8 +24,7 @@ interface Props {
 }
 
 export function TemplatePane({ scope, creating, onCreate }: Props) {
-  const initialScope: ScopeFilter = scope === 'card' ? 'card' : 'page';
-  const filters = useTemplateFilters(PICKABLE, initialScope);
+  const filters = useTemplateFilters(PICKABLE);
   const [templateId, setTemplateId] = useState(PICKABLE[0]?.id ?? formTemplates[0].id);
   const [device, setDevice] = useState<DeviceId>('macbook');
 
@@ -35,6 +34,7 @@ export function TemplatePane({ scope, creating, onCreate }: Props) {
     results[0] ??
     formTemplates.find((t) => t.id === templateId) ??
     formTemplates[0];
+  const theme = useMemo(() => themeForScope(active.theme, scope), [active, scope]);
 
   const size = frameSize(device);
   const { ref: stageRef, scale, measured } = useFitScale({
@@ -53,8 +53,6 @@ export function TemplatePane({ scope, creating, onCreate }: Props) {
         onQueryChange={filters.setQuery}
         category={filters.category}
         onCategoryChange={filters.setCategory}
-        scope={filters.scope}
-        onScopeChange={filters.setScope}
         activeId={active.id}
         onSelect={setTemplateId}
         onReset={filters.reset}
@@ -71,13 +69,13 @@ export function TemplatePane({ scope, creating, onCreate }: Props) {
 
         <div className={`${classes.stage} ${pickerClasses.canvas}`} ref={stageRef}>
           <DeviceFrame device={device} scale={scale} hidden={!measured}>
-            <FormPage theme={active.theme} minHeight="100%">
+            <FormPage theme={theme} minHeight="100%">
               <FormRenderer
-                key={`${active.id}-${device}`}
+                key={`${active.id}-${device}-${scope}`}
                 title={active.title}
                 description={active.formDescription}
                 fields={active.fields}
-                theme={active.theme}
+                theme={theme}
                 submitLabel={active.submitLabel}
                 hideHeader={active.hideHeader}
               />

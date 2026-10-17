@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Text, UnstyledButton } from '@mantine/core';
 import type { FormTemplate } from '@/lib/templates';
 import { TemplateSwatch } from './TemplateSwatch';
-import { rowMetaLine } from './templateMeta';
+import { templateMetaLine } from './templateMeta';
 import classes from './TemplatePicker.module.css';
 
 interface Props {
@@ -28,7 +28,7 @@ export const TemplateRow = memo(function TemplateRow({ template, active, onSelec
           {template.description}
         </Text>
         <span className={classes.rowMeta}>
-          {rowMetaLine(template).map((part) => (
+          {templateMetaLine(template).map((part) => (
             <span key={part}>{part}</span>
           ))}
         </span>

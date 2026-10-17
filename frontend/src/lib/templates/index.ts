@@ -22,11 +22,12 @@ import { proSchedulingTemplates } from './pro/scheduling';
 import { proContactTemplates } from './pro/contact';
 import { travelTemplates } from './pro/travel';
 import { modernize } from './modernize';
+import { uniqueByName } from './search';
 
 export type { FormTemplate, TemplateCategory } from './types';
 export { templateCategories } from './types';
 
-export const formTemplates = [
+export const formTemplates = uniqueByName([
   ...featuredTemplates,
   ...funnelTemplates,
   ...travelTemplates,
@@ -52,4 +53,4 @@ export const formTemplates = [
     ...communityTemplates,
     ...embedTemplates,
   ]),
-];
+]);

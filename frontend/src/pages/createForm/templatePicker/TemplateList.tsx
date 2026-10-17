@@ -1,7 +1,6 @@
-import { Button, CloseButton, ScrollArea, SegmentedControl, Select, Text, TextInput } from '@mantine/core';
+import { Button, CloseButton, ScrollArea, Select, Text, TextInput } from '@mantine/core';
 import { LayoutTemplateIcon, SearchIcon } from 'lucide-react';
 import type { FormTemplate, TemplateCategory } from '@/lib/templates';
-import type { ScopeFilter } from '@/lib/templates/search';
 import { TemplateRow } from './TemplateRow';
 import { groupByCategory } from './templateMeta';
 import classes from './TemplatePicker.module.css';
@@ -16,8 +15,6 @@ interface Props {
   onQueryChange: (value: string) => void;
   category: TemplateCategory | 'All';
   onCategoryChange: (value: TemplateCategory | 'All') => void;
-  scope: ScopeFilter;
-  onScopeChange: (value: ScopeFilter) => void;
   activeId: string;
   onSelect: (id: string) => void;
   onReset: () => void;
@@ -31,8 +28,6 @@ export function TemplateList({
   onQueryChange,
   category,
   onCategoryChange,
-  scope,
-  onScopeChange,
   activeId,
   onSelect,
   onReset,
@@ -76,18 +71,6 @@ export function TemplateList({
             aria-label="Category"
           />
         </div>
-
-        <SegmentedControl
-          fullWidth
-          size="xs"
-          value={scope}
-          onChange={(value) => onScopeChange(value as ScopeFilter)}
-          data={[
-            { value: 'all', label: 'All' },
-            { value: 'page', label: 'Standalone' },
-            { value: 'card', label: 'Embedded' },
-          ]}
-        />
       </header>
 
       <ScrollArea className={classes.listScroll} type="hover" scrollbarSize={6}>

@@ -3,7 +3,6 @@ import type { FormTemplate, TemplateCategory } from '@/lib/templates';
 import { staticTypes } from '@/lib/fieldPalette';
 import { valueFields } from '@/lib/fieldTree';
 import { pageCount } from '@/lib/formSteps';
-import { templateScope } from '@/lib/templates/search';
 
 export interface TemplateGroup {
   category: TemplateCategory;
@@ -32,14 +31,6 @@ export function templateMetaLine(tpl: FormTemplate): string[] {
   const parts = [`${questions} ${questions === 1 ? 'question' : 'questions'}`];
   if (pages > 1) parts.push(`${pages} steps`);
   return parts;
-}
-
-export function scopeLabel(tpl: FormTemplate): string {
-  return templateScope(tpl) === 'card' ? 'Embedded' : 'Standalone';
-}
-
-export function rowMetaLine(tpl: FormTemplate): string[] {
-  return [scopeLabel(tpl), ...templateMetaLine(tpl)];
 }
 
 export function swatchVars(tpl: FormTemplate): CSSProperties {

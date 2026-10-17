@@ -100,8 +100,6 @@ export function TemplateSwitcher({ onClose, current, fields, theme, onApply }: P
             onQueryChange={filters.setQuery}
             category={filters.category}
             onCategoryChange={filters.setCategory}
-            scope={filters.scope}
-            onScopeChange={filters.setScope}
             activeId={active.id}
             onSelect={select}
             onReset={filters.reset}

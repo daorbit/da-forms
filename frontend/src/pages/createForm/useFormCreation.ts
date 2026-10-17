@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ApiError, createForm, importFormConfig } from '@/lib/api';
 import { isPlanLimit } from '@/lib/planLimit';
 import { formTemplates } from '@/lib/templates';
+import { themeForScope } from '@/lib/templates/search';
 import type { Draft, Scope } from './types';
 import { notify } from '@/lib/notify';
 
@@ -72,7 +73,7 @@ export function useFormCreation({ workspaceId, formName, scope }: Options) {
           fields: tpl.fields,
           hideHeader: tpl.hideHeader,
           submitLabel: tpl.submitLabel,
-          theme: tpl.theme ?? { scope },
+          theme: themeForScope(tpl.theme, scope),
           steps: tpl.steps,
           stepIndicator: tpl.stepIndicator,
           showStepHeadings: tpl.showStepHeadings,

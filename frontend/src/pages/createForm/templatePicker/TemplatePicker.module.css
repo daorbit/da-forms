@@ -129,12 +129,6 @@
   overflow: hidden;
 }
 
-.swatch[data-embedded] {
-  background-color: var(--surface-2);
-  background-image: radial-gradient(color-mix(in srgb, var(--text) 14%, transparent) 1px, transparent 1px);
-  background-size: 6px 6px;
-}
-
 .swatchCard {
   display: flex;
   flex-direction: column;

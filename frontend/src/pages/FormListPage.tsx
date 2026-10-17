@@ -158,7 +158,7 @@ export function FormListPage() {
               Lead sources
             </Button>
             <Button variant="default" leftSection={<BlocksIcon size={16} />} onClick={() => openConnections()}>
-              Connections
+              Apps
             </Button>
             {!hostPhone && <DocsButton path="/lead-capture" />}
             {IS_EMBEDDED && <HostNotificationsBell />}

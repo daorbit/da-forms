@@ -34,7 +34,7 @@ export function BookingCalendarSection({ field, set, allFields }: Props) {
 
       {status && !connected && status.configured && (
         <div className={classes.hint}>
-          Connect Google Calendar once from Quantalog Settings → Connections. Every booking field in this workspace
+          Connect Google Calendar once from Quantalog Apps. Every booking field in this workspace
           can then use it.
         </div>
       )}

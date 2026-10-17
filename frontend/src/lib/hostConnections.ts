@@ -4,7 +4,7 @@ const QUANTALOG_APP_URL = (
   import.meta.env.VITE_QUANTALOG_APP_URL ?? 'https://studio-quantalog.daorbit.in'
 ).replace(/\/$/, '');
 
-const CONNECTIONS_PATH = '/app/settings/connections';
+const CONNECTIONS_PATH = '/app/apps';
 
 export function connectionsUrl(appId?: string): string {
   const query = appId ? `?app=${encodeURIComponent(appId)}` : '';

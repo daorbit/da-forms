@@ -44,7 +44,7 @@ const GROUPS: RailItem[][] = [
   ],
   [
     { id: 'webhook', label: 'Webhook', icon: <WebhookIcon {...ICON} /> },
-    { id: 'integrations', label: 'Connections', icon: <BlocksIcon {...ICON} /> },
+    { id: 'integrations', label: 'Apps', icon: <BlocksIcon {...ICON} /> },
   ],
 ];
 

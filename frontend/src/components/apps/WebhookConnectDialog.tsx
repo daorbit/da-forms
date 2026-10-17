@@ -204,7 +204,7 @@ export function WebhookConnectDialog({
                     >
                       <Stack gap="sm">
                         <Text size="sm">
-                          Turn on Webhook in Quantalog Settings → Connections first — a URL and
+                          Turn on Webhook in Quantalog Apps first — a URL and
                           secret saved here will not deliver anything until it is on.
                         </Text>
                         <Button
@@ -213,7 +213,7 @@ export function WebhookConnectDialog({
                           onClick={onOpenIntegrations}
                           style={{ alignSelf: 'flex-start' }}
                         >
-                          Open Connections
+                          Open Apps
                         </Button>
                       </Stack>
                     </Alert>

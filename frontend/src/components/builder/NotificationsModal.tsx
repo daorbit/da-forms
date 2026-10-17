@@ -337,7 +337,7 @@ export function NotificationsModal({
                   <Anchor component="button" type="button" size="sm" onClick={() => openConnections('brevo')}>
                     Connect an email app
                   </Anchor>{' '}
-                  in Quantalog Settings → Connections. If you have just connected one, reopen this panel and the
+                  in Quantalog Apps. If you have just connected one, reopen this panel and the
                   notice will clear.
                 </Text>
               </Alert>

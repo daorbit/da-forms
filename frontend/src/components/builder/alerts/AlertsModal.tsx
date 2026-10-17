@@ -67,7 +67,7 @@ export function AlertsModal({ opened, onClose, workspaceId, notifications, onCha
         </AlertChannel>
         <Text size="xs" c="dimmed" className={classes.footnote}>
           Changes apply once you save the form. Email alerts live under Email notifications; Slack, Discord and
-          Teams are set up in Connections.
+          Teams are set up in Apps.
         </Text>
       </Stack>
     </Modal>

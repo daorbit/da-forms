@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { savePartial } from '@/lib/api';
+import { attributionPayload } from '@/lib/attribution';
 
 /** How long typing must pause before a save goes out. */
 const DEBOUNCE_MS = 2500;
@@ -74,7 +75,7 @@ export function usePartialSave(formId: string | undefined, enabled: boolean) {
       timer.current = window.setTimeout(() => {
         lastSent.current = payload;
         if (!attemptKey.current) attemptKey.current = keyFor(formId);
-        savePartial(formId, values, attemptKey.current, lastFieldId, lastFieldIndex).catch(
+        savePartial(formId, values, attemptKey.current, lastFieldId, lastFieldIndex, attributionPayload(formId)).catch(
           () => {
             // Let the next keystroke try again: clearing this means an
             // unchanged payload is no longer considered already-sent.

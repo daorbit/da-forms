@@ -123,6 +123,13 @@ export function EntriesPage() {
       .then((res) => {
         setSubmissions(res.items);
         setTotal(res.total);
+        if (wholeSet && res.total > res.items.length) {
+          notify.info(
+            `Showing the newest ${res.items.length.toLocaleString()} of ${res.total.toLocaleString()} responses. Filter, or use the list view, to see the rest.`,
+            undefined,
+            6000,
+          );
+        }
         if (res.retiredColumns) setRetiredColumns(res.retiredColumns);
         if (res.facets) setFacets(res.facets);
       })

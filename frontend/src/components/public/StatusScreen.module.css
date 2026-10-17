@@ -1,0 +1,18 @@
+.screen {
+  background: #fff;
+}
+
+.body {
+  width: 100%;
+  text-align: center;
+}
+
+.title {
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.title[data-large] {
+  font-size: 34px;
+}

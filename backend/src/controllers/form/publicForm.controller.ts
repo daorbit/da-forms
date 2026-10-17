@@ -322,7 +322,7 @@ export const savePartial: RequestHandler = async (req, res) => {
   const state = await formService.availability(form);
   if (!state.open) return res.status(204).send();
 
-  const { _partialKey, _lastFieldId, _lastFieldIndex, ...data } = req.body;
+  const { _partialKey, _lastFieldId, _lastFieldIndex, _attribution, ...data } = req.body;
   if (typeof _partialKey !== "string" || !_partialKey.trim()) {
     return res
       .status(400)
@@ -336,6 +336,7 @@ export const savePartial: RequestHandler = async (req, res) => {
     typeof _lastFieldId === "string" ? _lastFieldId : undefined,
     typeof _lastFieldIndex === "number" ? _lastFieldIndex : undefined,
     req.get("referer"),
+    attributionFrom(_attribution),
   );
   res.status(204).send();
 };

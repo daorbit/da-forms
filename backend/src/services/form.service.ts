@@ -522,12 +522,13 @@ export async function savePartial(
   data: Record<string, string>,
   lastFieldId?: string,
   lastFieldIndex?: number,
-  sourceUrl?: string
+  sourceUrl?: string,
+  attribution?: SubmissionAttribution
 ) {
   return SubmissionModel.findOneAndUpdate(
     { formId, partialKey, status: 'partial' },
     {
-      $set: { data, lastFieldId, lastFieldIndex, sourceUrl },
+      $set: { data, lastFieldId, lastFieldIndex, sourceUrl, ...(attribution ? { attribution } : {}) },
       $setOnInsert: { formId, partialKey, status: 'partial' },
     },
     { upsert: true, new: true }
@@ -698,6 +699,32 @@ export class DuplicateValueError extends Error {
   }
 }
 
+async function assertUniqueValues(
+  formId: string | Types.ObjectId,
+  fields: FormField[],
+  data: Record<string, string>,
+  excludeId?: Types.ObjectId
+) {
+  const uniqueFields = flattenFields(fields).filter((field) => field.unique && data[field.id]);
+  if (!uniqueFields.length) return;
+
+  const clashes = await SubmissionModel.find(
+    {
+      ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+      formId,
+      status: 'complete',
+      $or: uniqueFields.map((field) => ({ [`data.${field.id}`]: data[field.id] })),
+    },
+    Object.fromEntries(uniqueFields.map((field) => [`data.${field.id}`, 1]))
+  )
+    .limit(uniqueFields.length)
+    .lean();
+  const clashing = uniqueFields.find((field) =>
+    clashes.some((row) => (row.data as Record<string, string>)[field.id] === data[field.id])
+  );
+  if (clashing) throw new DuplicateValueError(clashing);
+}
+
 export async function submitForm(
   formId: string,
   fields: FormField[],
@@ -712,18 +739,7 @@ export async function submitForm(
 
   applyCalculatedFields(fields, data);
 
-  const uniqueFields = flattenFields(fields).filter((field) => field.unique);
-  for (const field of uniqueFields) {
-    const value = data[field.id];
-    if (!value) continue;
-
-    const existing = await SubmissionModel.exists({
-      formId,
-      status: 'complete',
-      [`data.${field.id}`]: value,
-    });
-    if (existing) throw new DuplicateValueError(field);
-  }
+  await assertUniqueValues(formId, fields, data);
 
   const quiz = scoreSubmission(fields, data);
   const leadScore = leadScoreOf(fields, data);
@@ -880,6 +896,8 @@ export interface UploadedFile {
   submittedAt: Date;
 }
 
+const MAX_FILE_SUBMISSIONS = 500;
+
 export async function uploadedFiles(
   formId: string,
   fields: FormField[]
@@ -891,10 +909,18 @@ export async function uploadedFiles(
   );
   if (!uploadFieldIds.size) return [];
 
+  const fieldIds = [...uploadFieldIds.keys()];
   const submissions = await SubmissionModel.find(
-    { formId, status: 'complete' },
-    { data: 1, createdAt: 1 }
-  ).sort({ createdAt: -1 });
+    {
+      formId,
+      status: 'complete',
+      $or: fieldIds.map((id) => ({ [`data.${id}`]: { $regex: '^http' } })),
+    },
+    { createdAt: 1, ...Object.fromEntries(fieldIds.map((id) => [`data.${id}`, 1])) }
+  )
+    .sort({ createdAt: -1 })
+    .limit(MAX_FILE_SUBMISSIONS)
+    .lean();
 
   const files: UploadedFile[] = [];
   for (const submission of submissions) {
@@ -1041,22 +1067,7 @@ export async function editSubmission(
 
   applyCalculatedFields(fields, data);
 
-  const uniqueFields = flattenFields(fields).filter((field) => field.unique && data[field.id]);
-  if (uniqueFields.length) {
-    const clashes = await SubmissionModel.find(
-      {
-        _id: { $ne: id },
-        formId: target.formId,
-        status: 'complete',
-        $or: uniqueFields.map((field) => ({ [`data.${field.id}`]: data[field.id] })),
-      },
-      { data: 1 }
-    ).lean();
-    const clashing = uniqueFields.find((field) =>
-      clashes.some((row) => (row.data as Record<string, string>)[field.id] === data[field.id])
-    );
-    if (clashing) throw new DuplicateValueError(clashing);
-  }
+  await assertUniqueValues(target.formId, fields, data, target._id);
 
   const quiz = scoreSubmission(fields, data);
   const leadScore = leadScoreOf(fields, data);

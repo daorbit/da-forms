@@ -1,13 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import {
-  Container,
-  Text,
-  Center,
-  Stack,
-  Button,
-  ThemeIcon,
-} from '@mantine/core';
+import { Text, Stack, Button } from '@mantine/core';
 import { CheckIcon, CirclePauseIcon } from 'lucide-react';
 import {
   getPublicForm,
@@ -29,7 +22,7 @@ import { FormRenderer } from '@/components/FormRenderer';
 import { BookingConfirmation } from '@/components/public/BookingConfirmation';
 import { bookingEnd, findBookingField } from '@/lib/booking';
 import { thankYouCopy } from '@/lib/thankYou';
-import { contrastOn } from '@/lib/formTheme';
+import { StatusScreen } from '@/components/public/StatusScreen';
 import { PoweredBy } from '@/components/public/PoweredBy';
 import { BrandHeader } from '@/components/public/BrandHeader';
 import { FormPage } from '@/components/FormPage';
@@ -58,6 +51,13 @@ function prefillFrom(form: Form | null, values: Record<string, string>) {
     email: findValue(['email']),
     contact: findValue(['phone']),
   };
+}
+
+function closedTitle(reason: string | undefined): string {
+  if (reason === "notYetOpen") return "This form isn't open yet";
+  if (reason === "full") return "This form is full";
+  if (reason === "closed") return "This form has closed";
+  return "This form isn't accepting responses yet";
 }
 
 function bookingFromValues(form: Form | null, values: Record<string, string>): SubmissionBooking | null {
@@ -294,15 +294,9 @@ export function PublicFormPage() {
 
   if (error)
     return (
-      <Center
-        mih="100dvh"
-        py={0}
-        className="da-forms-light-surface"
-        data-mantine-color-scheme="light"
-        style={{ background: "#fff" }}
-      >
+      <StatusScreen compact>
         <Text c="dimmed">Form not found.</Text>
-      </Center>
+      </StatusScreen>
     );
 
   if (!form || ((editToken || resumeToken) && !editData && !editError))
@@ -310,80 +304,25 @@ export function PublicFormPage() {
 
   if (editError)
     return (
-      <Center
-        mih="100dvh"
-        py={64}
-        className="da-forms-light-surface"
-        data-mantine-color-scheme="light"
-        style={{ background: "#fff" }}
-      >
-        <Container size="xs" px="md" style={{ width: "100%", textAlign: "center" }}>
-          <Center>
-            <ThemeIcon size={64} radius="xl" color="gray" variant="light">
-              <CirclePauseIcon size={30} strokeWidth={1.8} />
-            </ThemeIcon>
-          </Center>
-          <Text
-            ta="center"
-            size="28px"
-            fw={800}
-            mt="xl"
-            style={{ lineHeight: 1.15, letterSpacing: "-0.02em" }}
-          >
-            This link has expired
-          </Text>
-          <Text size="sm" c="dimmed" mt="md">
-            {editError}
-          </Text>
-        </Container>
-      </Center>
+      <StatusScreen icon={<CirclePauseIcon size={30} strokeWidth={1.8} />} title="This link has expired">
+        <Text size="sm" c="dimmed" mt="md">
+          {editError}
+        </Text>
+      </StatusScreen>
     );
 
   const closed = form.availability && !form.availability.open;
   if (closed && !isPreview && !editToken)
     return (
-      <Center
-        mih="100dvh"
-        py={64}
-        className="da-forms-light-surface"
-        data-mantine-color-scheme="light"
-        style={{ background: "#fff" }}
-      >
-        <Container
-          size="xs"
-          px="md"
-          style={{ width: "100%", textAlign: "center" }}
-        >
-          <Center>
-            <ThemeIcon size={64} radius="xl" color="gray" variant="light">
-              <CirclePauseIcon size={30} strokeWidth={1.8} />
-            </ThemeIcon>
-          </Center>
-          <Text
-            ta="center"
-            size="28px"
-            fw={800}
-            mt="xl"
-            style={{ lineHeight: 1.15, letterSpacing: "-0.02em" }}
-          >
-            {form.availability?.reason === "notYetOpen"
-              ? "This form isn't open yet"
-              : form.availability?.reason === "full"
-                ? "This form is full"
-                : form.availability?.reason === "closed"
-                  ? "This form has closed"
-                  : "This form isn't accepting responses yet"}
-          </Text>
-          <Text size="sm" c="dimmed" mt="md">
-            {form.availability?.message ??
-              "The owner hasn't published it. Check back later or contact whoever shared this link."}
-          </Text>
-        </Container>
-      </Center>
+      <StatusScreen icon={<CirclePauseIcon size={30} strokeWidth={1.8} />} title={closedTitle(form.availability?.reason)}>
+        <Text size="sm" c="dimmed" mt="md">
+          {form.availability?.message ??
+            "The owner hasn't published it. Check back later or contact whoever shared this link."}
+        </Text>
+      </StatusScreen>
     );
 
   if (submitted) {
-
     const accent = form?.theme?.accentColor;
     const copy = thankYouCopy({
       edited: Boolean(editToken),
@@ -391,71 +330,44 @@ export function PublicFormPage() {
       booking,
     });
     return (
-
-      <Center
-        mih="100dvh"
-        py={64}
-        className="da-forms-light-surface"
-        data-mantine-color-scheme="light"
-        style={{ background: "#fff" }}
+      <StatusScreen
+        icon={<CheckIcon size={30} strokeWidth={3} />}
+        iconColor={accent ?? 'green'}
+        iconVariant="filled"
+        title={copy.title}
+        large
       >
-        <Container
-          size="xs"
-          px="md"
-          style={{ width: "100%", textAlign: "center" }}
-        >
-          <Center>
-            <ThemeIcon
-              size={64}
-              radius="xl"
-              color={accent ? undefined : "green"}
-              variant="filled"
-              style={accent ? { backgroundColor: accent, color: contrastOn(accent) } : undefined}
-            >
-              <CheckIcon size={30} strokeWidth={3} />
-            </ThemeIcon>
-          </Center>
-          <Text
-            ta="center"
-            size="34px"
-            fw={800}
+        <Stack align="center" gap={2} mt="md">
+          {copy.lines.map((line) => (
+            <Text key={line} size="sm" c="dimmed">
+              {line}
+            </Text>
+          ))}
+        </Stack>
+
+        {booking && !editToken && (
+          <BookingConfirmation
+            booking={booking}
+            timeFormat={findBookingField(form.fields)?.booking?.timeFormat}
+          />
+        )}
+
+        {!editToken && (
+          <Button
+            color={accent ?? "emerald"}
+            autoContrast
+            radius="md"
             mt="xl"
-            style={{ lineHeight: 1.15, letterSpacing: "-0.02em" }}
+            onClick={() => {
+              setBooking(null);
+              setSubmitted(false);
+            }}
           >
-            {copy.title}
-          </Text>
-          <Stack align="center" gap={2} mt="md">
-            {copy.lines.map((line) => (
-              <Text key={line} size="sm" c="dimmed">
-                {line}
-              </Text>
-            ))}
-          </Stack>
-
-          {booking && !editToken && (
-            <BookingConfirmation
-              booking={booking}
-              timeFormat={findBookingField(form.fields)?.booking?.timeFormat}
-            />
-          )}
-
-          {!editToken && (
-            <Button
-              color={accent ?? "emerald"}
-              autoContrast
-              radius="md"
-              mt="xl"
-              onClick={() => {
-                setBooking(null);
-                setSubmitted(false);
-              }}
-            >
-              {copy.againLabel}
-            </Button>
-          )}
-          <PoweredBy branding={form.branding} />
-        </Container>
-      </Center>
+            {copy.againLabel}
+          </Button>
+        )}
+        <PoweredBy branding={form.branding} />
+      </StatusScreen>
     );
   }
 

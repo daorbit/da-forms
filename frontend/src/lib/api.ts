@@ -339,6 +339,7 @@ export type LeadSourceRange = '30d' | '90d' | '365d' | 'all';
 export interface WorkspaceLeadSources {
   sources: SourceBreakdownEntry[];
   forms: number;
+  legacyEmbeds: number;
 }
 
 export function getLeadSources(range: LeadSourceRange, workspaceId = DEFAULT_WORKSPACE) {
@@ -356,6 +357,7 @@ export interface Analytics {
   submissionCount: number;
   completionRate: number;
   sources: SourceBreakdownEntry[];
+  legacyEmbeds?: number;
   /** Empty unless the form saves drafts — see `partialsEnabled`. */
   dropOff: DropOffEntry[];
   /**
@@ -396,7 +398,8 @@ export function savePartial(
   data: Record<string, string>,
   partialKey: string,
   lastFieldId?: string,
-  lastFieldIndex?: number
+  lastFieldIndex?: number,
+  attribution?: string
 ) {
   return request<void>(`/public/forms/${id}/partial`, {
     method: 'PUT',
@@ -405,6 +408,7 @@ export function savePartial(
       _partialKey: partialKey,
       _lastFieldId: lastFieldId,
       _lastFieldIndex: lastFieldIndex,
+      _attribution: attribution,
     }),
   });
 }

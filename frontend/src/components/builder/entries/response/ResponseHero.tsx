@@ -3,7 +3,6 @@ import {
   CalendarClockIcon,
   CreditCardIcon,
   GaugeIcon,
-  GlobeIcon,
   GraduationCapIcon,
   MailIcon,
   PhoneIcon,
@@ -11,7 +10,6 @@ import {
 } from 'lucide-react';
 import type { Submission } from '@/types';
 import type { RespondentIdentity } from '@/lib/respondent';
-import { sourceHost } from '@/lib/respondent';
 import { leadSourceText } from '@/lib/leadSource';
 import { formatAmount } from '@/lib/payment';
 import { formatDateTime } from '../entriesTypes';
@@ -28,7 +26,6 @@ interface Props {
 
 export function ResponseHero({ submission, identity, formTitle, onContact }: Props) {
   const source = leadSourceText(submission);
-  const host = source ? undefined : sourceHost(submission.sourceUrl);
   const payment = submission.payment;
   const quiz = submission.quiz;
 
@@ -75,14 +72,6 @@ export function ResponseHero({ submission, identity, formTitle, onContact }: Pro
             <span className={classes.chip} data-tone="source">
               <SignpostIcon size={13} />
               <span className={classes.chipText}>{source}</span>
-            </span>
-          </Tooltip>
-        )}
-        {host && (
-          <Tooltip label={submission.sourceUrl} withArrow openDelay={300} multiline maw={360}>
-            <span className={classes.chip}>
-              <GlobeIcon size={13} />
-              <span className={classes.chipText}>{host}</span>
             </span>
           </Tooltip>
         )}

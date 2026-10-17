@@ -47,7 +47,7 @@ export function ResponseInsightsModal({ opened, analytics, fields, onClose }: Pr
           <LeadSourcesCard
             items={analytics.sources}
             empty="No responses yet, so no sources to show."
-            footer={<LeadSourcesHint />}
+            footer={<LeadSourcesHint legacyEmbeds={analytics.legacyEmbeds} />}
           />
           <RankedList
             title="Where people stop"

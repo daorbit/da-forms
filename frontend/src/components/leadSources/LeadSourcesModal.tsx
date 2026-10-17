@@ -56,7 +56,7 @@ export function LeadSourcesModal({ opened, workspaceId, onClose }: Props) {
             items={data.sources}
             limit={12}
             empty={data.forms ? 'No responses in this period yet.' : 'Create a form to start collecting leads.'}
-            footer={<LeadSourcesHint />}
+            footer={<LeadSourcesHint legacyEmbeds={data.legacyEmbeds} />}
           />
         </div>
       )}

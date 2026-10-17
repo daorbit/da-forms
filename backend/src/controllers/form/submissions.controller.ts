@@ -2,7 +2,7 @@ import type { RequestHandler, Response } from "express";
 import * as formService from "../../services/form.service.js";
 import * as pipelineService from "../../services/pipeline.service.js";
 import * as importService from "../../services/submission-import.service.js";
-import { formLeadSources, workspaceLeadSources } from "../../services/leadSources.service.js";
+import { formLeadSources, formLegacyEmbeds, workspaceLeadSources } from "../../services/leadSources.service.js";
 import { loadOwnedForm, workspaceIdOf } from "./shared.js";
 import { audit, formTarget } from "../../lib/audit.js";
 
@@ -211,12 +211,13 @@ export const listUploadedFiles: RequestHandler = async (req, res) => {
 export const getAnalytics: RequestHandler = async (req, res) => {
   const form = await loadOwnedForm(req, res);
   if (!form) return;
-  const [submissionCount, sources, dropOff] = await Promise.all([
+  const [submissionCount, sources, dropOff, legacyEmbeds] = await Promise.all([
     formService.submissionCount(req.params.id),
     formLeadSources(req.params.id),
     // Empty for a form with autosave off — there is no record of where anyone
     // stopped, and an empty list says that more honestly than a zero would.
     formService.dropOffBreakdown(req.params.id),
+    formLegacyEmbeds(req.params.id),
   ]);
   const daily = await formService.dailyAnalytics(req.params.id, sources[0]?.source ?? null, 14);
   const viewCount = form.viewCount ?? 0;
@@ -226,6 +227,7 @@ export const getAnalytics: RequestHandler = async (req, res) => {
     submissionCount,
     completionRate,
     sources,
+    legacyEmbeds,
     dropOff,
     // Per-day views, responses, top-source responses and abandons for the last
     // 14 days — the stat cards' trends and week-on-week changes.

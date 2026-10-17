@@ -3,6 +3,7 @@ import type { Submission } from '@/types';
 import { relativeTime } from '@/lib/relativeTime';
 import { STAGE_BY_ID, stageOf } from '@/lib/stages';
 import { PaymentCell } from '@/components/builder/PaymentCell';
+import { NOT_TRACKED } from '@/lib/leadSource';
 import { formatDateTime } from '../entriesTypes';
 import { CopyAction } from './CopyAction';
 import classes from './ResponseDetails.module.css';
@@ -60,12 +61,8 @@ export function ResponseDetails({ submission }: { submission: Submission }) {
           )}
         </>
       ) : (
-        <Item term="Source page">
-          {submission.sourceUrl ? (
-            <ExternalUrl url={submission.sourceUrl} />
-          ) : (
-            <span className={classes.muted}>Direct link</span>
-          )}
+        <Item term="Lead source">
+          <span className={classes.muted}>{NOT_TRACKED}</span>
         </Item>
       )}
       <Item term="Status">{submission.read ? 'Read' : 'Unread'}</Item>

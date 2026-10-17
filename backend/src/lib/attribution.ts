@@ -11,12 +11,14 @@ export interface SubmissionAttribution {
   content?: string;
   referrer?: string;
   landingUrl?: string;
+  legacyEmbed?: boolean;
 }
 
 interface Touch {
   page?: string;
   referrer?: string;
   formUrl?: string;
+  legacyEmbed?: unknown;
 }
 
 const MAX_TEXT = 200;
@@ -167,5 +169,6 @@ export function attributionFrom(raw: unknown): SubmissionAttribution | undefined
     ...(content ? { content } : {}),
     ...(externalReferrer ? { referrer: externalReferrer.href.slice(0, MAX_URL) } : {}),
     ...(page ? { landingUrl: page.href.slice(0, MAX_URL) } : {}),
+    ...(touch.legacyEmbed === true ? { legacyEmbed: true } : {}),
   };
 }

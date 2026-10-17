@@ -584,6 +584,7 @@ export interface SubmissionAttribution {
   content?: string;
   referrer?: string;
   landingUrl?: string;
+  legacyEmbed?: boolean;
 }
 
 export type SubmissionStage = 'new' | 'contacted' | 'qualified' | 'won' | 'lost';

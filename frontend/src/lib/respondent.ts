@@ -42,12 +42,3 @@ export function identityFieldIds(fields: FormField[]): string[] {
   const email = fields.find((f) => f.type === 'email');
   return [name?.id, email?.id].filter((id): id is string => Boolean(id));
 }
-
-export function sourceHost(url: string | undefined): string | undefined {
-  if (!url) return undefined;
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return undefined;
-  }
-}

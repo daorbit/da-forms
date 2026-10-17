@@ -135,6 +135,7 @@ const submissionSchema = new Schema<SubmissionDocument>(
           content: { type: String },
           referrer: { type: String },
           landingUrl: { type: String },
+          legacyEmbed: { type: Boolean },
         },
         { _id: false }
       ),

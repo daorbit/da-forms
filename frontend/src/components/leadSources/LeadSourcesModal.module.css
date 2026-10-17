@@ -1,0 +1,11 @@
+.range {
+  align-self: flex-start;
+}
+
+.content {
+  transition: opacity 150ms ease;
+}
+
+.content[data-loading] {
+  opacity: 0.55;
+}

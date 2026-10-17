@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
-import { InfoIcon, BlocksIcon, PlusIcon } from 'lucide-react';
+import { InfoIcon, BlocksIcon, PlusIcon, SignpostIcon } from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
@@ -23,6 +23,7 @@ import { FormListToolbar } from './formList/FormListToolbar';
 import { FormList } from './formList/FormList';
 import { FormListEmpty } from './formList/FormListEmpty';
 import { DeleteFormModal } from './formList/DeleteFormModal';
+import { LeadSourcesModal } from '@/components/leadSources/LeadSourcesModal';
 import { useFormList } from './formList/useFormList';
 import type { FormRowActions } from './formList/FormRow';
 import classes from './FormListPage.module.css';
@@ -39,6 +40,7 @@ export function FormListPage() {
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [copyingConfigId, setCopyingConfigId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<Form | null>(null);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const builderTooSmall = useBuilderTooSmall();
   const { ref: pageRef, width: pageWidth } = useElementSize();
   const compact = pageWidth > 0 && pageWidth <= 640;
@@ -152,6 +154,9 @@ export function FormListPage() {
                 New form
               </Button>
             )}
+            <Button variant="default" leftSection={<SignpostIcon size={16} />} onClick={() => setSourcesOpen(true)}>
+              Lead sources
+            </Button>
             <Button variant="default" leftSection={<BlocksIcon size={16} />} onClick={() => openConnections()}>
               Connections
             </Button>
@@ -251,6 +256,8 @@ export function FormListPage() {
           }
         />
       )}
+
+      <LeadSourcesModal opened={sourcesOpen} workspaceId={workspaceId} onClose={() => setSourcesOpen(false)} />
 
       <DeleteFormModal
         form={pendingDelete}

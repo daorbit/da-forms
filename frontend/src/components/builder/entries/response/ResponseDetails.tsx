@@ -16,7 +16,19 @@ function Item({ term, children }: { term: string; children: ReactNode }) {
   );
 }
 
+function ExternalUrl({ url }: { url: string }) {
+  return (
+    <>
+      <a className={classes.link} href={url} target="_blank" rel="noopener noreferrer">
+        {url}
+      </a>
+      <CopyAction value={url} label="Copy URL" />
+    </>
+  );
+}
+
 export function ResponseDetails({ submission }: { submission: Submission }) {
+  const attribution = submission.attribution;
   return (
     <dl className={classes.list}>
       <Item term="Submitted">
@@ -27,18 +39,35 @@ export function ResponseDetails({ submission }: { submission: Submission }) {
         <span className={classes.mono}>{submission._id}</span>
         <CopyAction value={submission._id} label="Copy response ID" />
       </Item>
-      <Item term="Source page">
-        {submission.sourceUrl ? (
-          <>
-            <a className={classes.link} href={submission.sourceUrl} target="_blank" rel="noopener noreferrer">
-              {submission.sourceUrl}
-            </a>
-            <CopyAction value={submission.sourceUrl} label="Copy URL" />
-          </>
-        ) : (
-          <span className={classes.muted}>Direct link</span>
-        )}
-      </Item>
+      {attribution ? (
+        <>
+          <Item term="Lead source">{attribution.channel}</Item>
+          {attribution.campaign && (
+            <Item term="Campaign">
+              {attribution.campaign}
+              {attribution.medium && <span className={classes.muted}>· {attribution.medium}</span>}
+            </Item>
+          )}
+          {attribution.referrer && (
+            <Item term="Came from">
+              <ExternalUrl url={attribution.referrer} />
+            </Item>
+          )}
+          {attribution.landingUrl && (
+            <Item term="Landing page">
+              <ExternalUrl url={attribution.landingUrl} />
+            </Item>
+          )}
+        </>
+      ) : (
+        <Item term="Source page">
+          {submission.sourceUrl ? (
+            <ExternalUrl url={submission.sourceUrl} />
+          ) : (
+            <span className={classes.muted}>Direct link</span>
+          )}
+        </Item>
+      )}
       <Item term="Status">{submission.read ? 'Read' : 'Unread'}</Item>
       <Item term="Stage">{STAGE_BY_ID[stageOf(submission)].label}</Item>
       <Item term="Assignee">

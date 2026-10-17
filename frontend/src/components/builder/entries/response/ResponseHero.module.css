@@ -144,6 +144,16 @@
   color: inherit;
 }
 
+.chip[data-tone='source'] {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.chip[data-tone='source'] svg {
+  color: var(--accent);
+}
+
 @media (max-width: 480px) {
   .hero {
     padding: 18px 16px 16px;

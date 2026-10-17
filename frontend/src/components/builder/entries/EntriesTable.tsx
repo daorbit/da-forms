@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { EntryCell } from './EntryCell';
 import { RespondentCell } from './table/RespondentCell';
 import { StageLabel } from './table/StageLabel';
+import { SourceLabel } from './table/SourceLabel';
 import { RowActions } from './table/RowActions';
 import { formatDateTime, PAGE_SIZE } from './entriesTypes';
 import classes from './EntriesTable.module.css';
@@ -16,7 +17,7 @@ import classes from './EntriesTable.module.css';
 type Column = FormField & { retired?: boolean };
 
 const COLUMN_PX = 180;
-const FIXED_PX = 44 + 240 + 130 + 120 + 56;
+const FIXED_PX = 44 + 240 + 140 + 130 + 120 + 56;
 
 interface Props {
   form: Form | null;
@@ -117,6 +118,7 @@ export function EntriesTable({
                     <ColumnHeading field={field} />
                   </Table.Th>
                 ))}
+                <Table.Th className={`${classes.th} ${classes.sourceCol}`}>Source</Table.Th>
                 <Table.Th className={`${classes.th} ${classes.stageCol}`}>Stage</Table.Th>
                 {scored && <Table.Th className={`${classes.th} ${classes.scoreCol}`}>Score</Table.Th>}
                 <Table.Th className={`${classes.th} ${classes.dateCol}`}>Submitted</Table.Th>
@@ -150,6 +152,9 @@ export function EntriesTable({
                       <EntryCell field={field} submission={submission} onView={onView} onOpenAttachment={onOpenAttachment} />
                     </Table.Td>
                   ))}
+                  <Table.Td className={classes.td}>
+                    <SourceLabel submission={submission} />
+                  </Table.Td>
                   <Table.Td className={classes.td}>
                     <StageLabel submission={submission} />
                   </Table.Td>

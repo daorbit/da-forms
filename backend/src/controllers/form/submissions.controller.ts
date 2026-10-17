@@ -2,7 +2,8 @@ import type { RequestHandler, Response } from "express";
 import * as formService from "../../services/form.service.js";
 import * as pipelineService from "../../services/pipeline.service.js";
 import * as importService from "../../services/submission-import.service.js";
-import { loadOwnedForm } from "./shared.js";
+import { formLeadSources, workspaceLeadSources } from "../../services/leadSources.service.js";
+import { loadOwnedForm, workspaceIdOf } from "./shared.js";
 import { audit, formTarget } from "../../lib/audit.js";
 
 const SORTS = ["newest", "oldest", "score"] as const;
@@ -212,7 +213,7 @@ export const getAnalytics: RequestHandler = async (req, res) => {
   if (!form) return;
   const [submissionCount, sources, dropOff] = await Promise.all([
     formService.submissionCount(req.params.id),
-    formService.sourceBreakdown(req.params.id),
+    formLeadSources(req.params.id),
     // Empty for a form with autosave off — there is no record of where anyone
     // stopped, and an empty list says that more honestly than a zero would.
     formService.dropOffBreakdown(req.params.id),
@@ -233,4 +234,13 @@ export const getAnalytics: RequestHandler = async (req, res) => {
     // watching", which are the same empty list otherwise.
     partialsEnabled: Boolean(form.collectPartials),
   });
+};
+
+const LEAD_SOURCE_RANGES: Record<string, number> = { "30d": 30, "90d": 90, "365d": 365 };
+
+export const getLeadSources: RequestHandler = async (req, res) => {
+  const range = typeof req.query.range === "string" ? req.query.range : "90d";
+  const days = LEAD_SOURCE_RANGES[range];
+  const since = days ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : undefined;
+  res.json(await workspaceLeadSources(workspaceIdOf(req), since));
 };

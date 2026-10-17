@@ -11,6 +11,7 @@ export const DOCS = {
   routing: '/forms-logic#routing',
   notifications: '/forms-notifications-and-apps',
   pipeline: '/forms-entries-and-links#pipeline',
+  leadSources: '/forms-settings-and-analytics#lead-sources',
   quickSettings: '/forms-settings-and-analytics#quick-settings',
   switchTemplate: '/forms-settings-and-analytics#switch-template',
   scoring: '/forms-settings-and-analytics#quizzes',

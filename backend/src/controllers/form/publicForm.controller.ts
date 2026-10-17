@@ -8,6 +8,7 @@ import { turnstileConfigured, verifyTurnstileToken } from "../../lib/turnstile.j
 import { deliverWebhook } from "../../services/webhook.service.js";
 import { syncSubmissionToSheet } from "../../services/sheetsSync.service.js";
 import { readEditToken, mintResumeToken } from "../../lib/edit-token.js";
+import { attributionFrom } from "../../lib/attribution.js";
 import { env } from "../../config/env.js";
 import { paymentReturnUrl } from "./payments.controller.js";
 import { fingerprintOf } from "./shared.js";
@@ -361,6 +362,7 @@ export const submitForm: RequestHandler = async (req, res) => {
     _captcha,
     _partialKey,
     _payerPhone: _ignoredPayerPhone,
+    _attribution,
     ...data
   } = req.body;
   if (_hp) {
@@ -404,6 +406,7 @@ export const submitForm: RequestHandler = async (req, res) => {
   }
 
   const sourceUrl = req.get("referer");
+  const attribution = attributionFrom(_attribution);
 
   const payField = paymentService.activePaymentField(form.fields, data);
   const bookingField = bookingService.activeBookingField(form.fields, data);
@@ -473,6 +476,7 @@ export const submitForm: RequestHandler = async (req, res) => {
         },
         fileMeta,
         typeof _partialKey === "string" ? _partialKey : undefined,
+        attribution,
       );
       if (hold) {
         await bookingService.attachBooking(hold._id, submission._id, false);
@@ -523,6 +527,7 @@ export const submitForm: RequestHandler = async (req, res) => {
       undefined,
       fileMeta,
       typeof _partialKey === "string" ? _partialKey : undefined,
+      attribution,
     );
 
     let booking;

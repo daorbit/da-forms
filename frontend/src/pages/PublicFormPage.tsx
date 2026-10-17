@@ -36,6 +36,8 @@ import { FormPage } from '@/components/FormPage';
 import { FormLoader } from '@/components/FormLoader';
 import { notify } from '@/lib/notify';
 import { resolveEnding } from '@/utils/conditionalLogic';
+import { attributionPayload } from '@/lib/attribution';
+import { useLeadAttribution } from '@/hooks/useLeadAttribution';
 
 const PAYMENT_PENDING_MESSAGE =
   "Your payment went through, but confirming it is taking longer than usual. " +
@@ -83,6 +85,8 @@ export function PublicFormPage() {
   const lastOrderId = useRef<string | null>(null);
  
   const embedded = window.self !== window.top;
+
+  useLeadAttribution(id, !isPreview && !editToken);
 
   useEffect(() => {
     if (!id) return;
@@ -228,6 +232,7 @@ export function PublicFormPage() {
           ? { _partialKey: resumeKey ?? partialKey! }
           : {}),
         ...(payerPhone ? { _payerPhone: payerPhone } : {}),
+        _attribution: attributionPayload(id),
       });
 
 

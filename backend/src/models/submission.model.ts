@@ -1,4 +1,5 @@
 import { Schema, model, Types } from 'mongoose';
+import type { SubmissionAttribution } from '../lib/attribution.js';
 
 /** Where a payment got to. Only 'paid' lets its submission count as complete. */
 export type PaymentStatus = 'created' | 'paid' | 'failed';
@@ -61,6 +62,7 @@ export interface SubmissionDocument {
    */
   fileMeta?: Record<string, { bytes: number }>;
   sourceUrl?: string;
+  attribution?: SubmissionAttribution;
   /**
    * 'pending_payment' rows are invisible everywhere a customer looks — they
    * are a checkout in progress, not a response. Only the webhook promotes one
@@ -121,6 +123,22 @@ const submissionSchema = new Schema<SubmissionDocument>(
     data: { type: Schema.Types.Mixed, required: true },
     fileMeta: { type: Schema.Types.Mixed },
     sourceUrl: { type: String },
+    attribution: {
+      type: new Schema<SubmissionAttribution>(
+        {
+          channel: { type: String, required: true },
+          paid: { type: Boolean },
+          source: { type: String },
+          medium: { type: String },
+          campaign: { type: String },
+          term: { type: String },
+          content: { type: String },
+          referrer: { type: String },
+          landingUrl: { type: String },
+        },
+        { _id: false }
+      ),
+    },
     status: {
       type: String,
       enum: ['complete', 'pending_payment', 'partial'],

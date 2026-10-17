@@ -7,6 +7,7 @@ import panel from '@/components/ui/PanelDrawer.module.css';
 import { relativeTime } from '@/lib/relativeTime';
 import { respondentIdentity } from '@/lib/respondent';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
+import { stageOf } from '@/lib/stages';
 import type { Form, Submission } from '@/types';
 import { FileTypeIcon } from './fileTypeIcon';
 import { formatDateTime } from './entriesTypes';
@@ -58,6 +59,11 @@ export function ResponseModal({
     [columns, viewing]
   );
   const noteCount = viewing?.notes?.length ?? 0;
+
+  const markContacted = () => {
+    if (!viewing || !pipeline || pipeline.readOnly || stageOf(viewing) !== 'new') return;
+    void pipeline.onPatch(viewing, { stage: 'contacted' });
+  };
 
   useEffect(() => {
     if (!viewing || !onNavigate) return;
@@ -144,7 +150,12 @@ export function ResponseModal({
       {viewing && identity && (
         <div className={classes.drawer}>
           <div className={classes.scroll}>
-            <ResponseHero submission={viewing} identity={identity} />
+            <ResponseHero
+              submission={viewing}
+              identity={identity}
+              formTitle={form?.title || 'our form'}
+              onContact={markContacted}
+            />
             {pipeline && <LeadBar submission={viewing} pipeline={pipeline} />}
 
             <Tabs

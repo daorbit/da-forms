@@ -56,6 +56,7 @@ import { isDemoWorkspace } from "@/lib/demoWorkspace";
 import { STAGE_BY_ID, formHasLeadScore, stageOf } from "@/lib/stages";
 import type { PipelineFilterState } from "@/components/builder/entries/entriesTypes";
 import { useLeadPipeline } from "./entries/useLeadPipeline";
+import { leadSourceText } from "@/lib/leadSource";
 
 export function EntriesPage() {
   const { id } = useParams<{ id: string }>();
@@ -314,6 +315,7 @@ export function EntriesPage() {
       "Stage",
       "Assignee",
       "Tags",
+      "Lead source",
       ...(scored ? ["Score"] : []),
       "Added Time",
     ].map((label) => JSON.stringify(label));
@@ -331,6 +333,7 @@ export function EntriesPage() {
       JSON.stringify(STAGE_BY_ID[stageOf(s)].label),
       JSON.stringify(s.assignee ?? ""),
       JSON.stringify((s.tags ?? []).join(", ")),
+      JSON.stringify(leadSourceText(s)),
       ...(scored ? [JSON.stringify(s.leadScore ?? "")] : []),
       JSON.stringify(formatDateTime(s.createdAt)),
     ]);

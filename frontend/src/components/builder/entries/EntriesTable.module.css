@@ -93,6 +93,24 @@
   width: 80px;
 }
 
+.sourceCol {
+  width: 140px;
+}
+
+.source {
+  display: block;
+  max-width: 124px;
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source[data-untracked] {
+  color: var(--muted);
+}
+
 .td {
   height: 60px;
   padding: 10px 16px !important;

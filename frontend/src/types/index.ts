@@ -558,6 +558,7 @@ export interface Submission {
  
   fileMeta?: Record<string, { bytes: number }>;
   sourceUrl?: string;
+  attribution?: SubmissionAttribution;
   status?: 'complete' | 'pending_payment';
   payment?: SubmissionPayment;
   booking?: SubmissionBooking;
@@ -571,6 +572,18 @@ export interface Submission {
   read: boolean;
   starred: boolean;
   createdAt: string;
+}
+
+export interface SubmissionAttribution {
+  channel: string;
+  paid?: boolean;
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  term?: string;
+  content?: string;
+  referrer?: string;
+  landingUrl?: string;
 }
 
 export type SubmissionStage = 'new' | 'contacted' | 'qualified' | 'won' | 'lost';

@@ -1,11 +1,13 @@
 import { Loader, Modal } from '@mantine/core';
-import { GlobeIcon, UserXIcon } from 'lucide-react';
+import { UserXIcon } from 'lucide-react';
 import type { Analytics } from '@/lib/api';
 import type { FormField } from '@/types';
 import { valueFields } from '@/lib/fieldTree';
 import { InsightKpis } from '@/components/builder/insights/InsightKpis';
 import { ActivityChart } from '@/components/builder/insights/ActivityChart';
 import { RankedList } from '@/components/builder/insights/RankedList';
+import { LeadSourcesCard } from '@/components/builder/insights/LeadSourcesCard';
+import { LeadSourcesHint } from '@/components/builder/insights/LeadSourcesHint';
 import classes from '@/components/builder/insights/InsightsModal.module.css';
 
 interface Props {
@@ -42,30 +44,26 @@ export function ResponseInsightsModal({ opened, analytics, fields, onClose }: Pr
         <>
           <InsightKpis analytics={analytics} />
           <ActivityChart daily={analytics.daily ?? []} />
-          <div className={classes.split}>
-            <RankedList
-              title="Traffic sources"
-              icon={<GlobeIcon size={14} />}
-              unit="responses"
-              items={analytics.sources.map((s) => ({ key: s.source, label: s.source, value: s.count }))}
-              empty="No responses yet, so no sources to show."
-            />
-            <RankedList
-              title="Where people stop"
-              icon={<UserXIcon size={14} />}
-              unit="left"
-              items={analytics.dropOff.map((d) => ({
-                key: d.fieldId,
-                label: labels.get(d.fieldId) || 'Deleted question',
-                value: d.abandoned,
-              }))}
-              empty={
-                analytics.partialsEnabled
-                  ? 'Nobody has left this form unfinished yet.'
-                  : 'Turn on “Save partial responses” in Quick Settings to see which question people stop at.'
-              }
-            />
-          </div>
+          <LeadSourcesCard
+            items={analytics.sources}
+            empty="No responses yet, so no sources to show."
+            footer={<LeadSourcesHint />}
+          />
+          <RankedList
+            title="Where people stop"
+            icon={<UserXIcon size={14} />}
+            unit="left"
+            items={analytics.dropOff.map((d) => ({
+              key: d.fieldId,
+              label: labels.get(d.fieldId) || 'Deleted question',
+              value: d.abandoned,
+            }))}
+            empty={
+              analytics.partialsEnabled
+                ? 'Nobody has left this form unfinished yet.'
+                : 'Turn on “Save partial responses” in Quick Settings to see which question people stop at.'
+            }
+          />
         </>
       )}
     </Modal>

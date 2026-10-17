@@ -74,6 +74,7 @@ workspaceFormRouter.post(
 );
 
 workspaceFormRouter.get('/', asyncHandler(formController.listForms));
+workspaceFormRouter.get('/lead-sources', asyncHandler(formController.getLeadSources));
 workspaceFormRouter.post('/', asyncHandler(formController.createForm));
 workspaceFormRouter.get('/:id', asyncHandler(formController.getForm));
 workspaceFormRouter.patch('/:id', asyncHandler(formController.updateForm));

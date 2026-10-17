@@ -11,6 +11,7 @@ import { FormViewModel } from '../models/formView.model.js';
 import { FormDailyViewModel } from '../models/formDailyView.model.js';
 import { evaluateFormula, numericValues } from '../lib/formula.js';
 import { leadScoreOf } from '../lib/leadScore.js';
+import { NOT_TRACKED, type SubmissionAttribution } from '../lib/attribution.js';
 import {
   pipelineFacets,
   sortFor,
@@ -541,7 +542,8 @@ async function promotePartial(
   payment?: SubmissionPayment,
   fileMeta?: Record<string, { bytes: number }>,
   quiz?: QuizScore,
-  leadScore?: number
+  leadScore?: number,
+  attribution?: SubmissionAttribution
 ) {
   return SubmissionModel.findOneAndUpdate(
     { formId, partialKey, status: 'partial' },
@@ -550,6 +552,7 @@ async function promotePartial(
         data,
         fileMeta,
         sourceUrl,
+        ...(attribution ? { attribution } : {}),
         status: payment ? 'pending_payment' : 'complete',
         ...(payment ? { payment } : {}),
         ...(quiz ? { quiz } : {}),
@@ -703,7 +706,8 @@ export async function submitForm(
   payment?: SubmissionPayment,
   fileMeta?: Record<string, { bytes: number }>,
 
-  partialKey?: string
+  partialKey?: string,
+  attribution?: SubmissionAttribution
 ) {
 
   applyCalculatedFields(fields, data);
@@ -726,13 +730,14 @@ export async function submitForm(
 
   const submission =
     (partialKey
-      ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta, quiz, leadScore)
+      ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta, quiz, leadScore, attribution)
       : null) ??
     (await SubmissionModel.create({
       formId,
       data,
       fileMeta,
       sourceUrl,
+      attribution,
       status: payment ? 'pending_payment' : 'complete',
       payment,
       quiz,
@@ -821,15 +826,6 @@ export interface DailyPoint {
   abandoned: number;
 }
 
-function sourceOf(sourceUrl?: string | null): string {
-  if (!sourceUrl) return 'Direct';
-  try {
-    return new URL(sourceUrl).hostname;
-  } catch {
-    return 'Other';
-  }
-}
-
 /**
  * The last `days` UTC days for one form, oldest first, empty days as zero —
  * what the responses page draws its stat-card trends from. Views only exist
@@ -845,8 +841,8 @@ export async function dailyAnalytics(formId: string, topSource: string | null, d
     FormDailyViewModel.find({ formId, date: { $gte: startDate } }, { date: 1, count: 1 }),
     SubmissionModel.find(
       { formId, status: { $in: ['complete', 'partial'] }, createdAt: { $gte: start } },
-      { status: 1, sourceUrl: 1, createdAt: 1 }
-    ),
+      { status: 1, 'attribution.channel': 1, createdAt: 1 }
+    ).lean(),
   ]);
 
   const points = new Map<string, DailyPoint>();
@@ -862,13 +858,13 @@ export async function dailyAnalytics(formId: string, topSource: string | null, d
     if (p) p.views = v.count;
   }
   for (const s of submissions) {
-    const p = points.get(new Date(s.get('createdAt')).toISOString().slice(0, 10));
+    const p = points.get(new Date(s.createdAt).toISOString().slice(0, 10));
     if (!p) continue;
     if (s.status === 'partial') {
       p.abandoned += 1;
     } else {
       p.responses += 1;
-      if (topSource && sourceOf(s.sourceUrl) === topSource) p.topSource += 1;
+      if (topSource && (s.attribution?.channel ?? NOT_TRACKED) === topSource) p.topSource += 1;
     }
   }
 
@@ -915,24 +911,6 @@ export async function uploadedFiles(
     }
   }
   return files;
-}
-
-export interface SourceBreakdownEntry {
-
-  source: string;
-  count: number;
-}
-
-export async function sourceBreakdown(formId: string): Promise<SourceBreakdownEntry[]> {
-  const submissions = await SubmissionModel.find({ formId, status: 'complete' }, { sourceUrl: 1 });
-  const counts = new Map<string, number>();
-  for (const submission of submissions) {
-    const source = sourceOf(submission.sourceUrl);
-    counts.set(source, (counts.get(source) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([source, count]) => ({ source, count }))
-    .sort((a, b) => b.count - a.count);
 }
 
 export async function listSubmissions(

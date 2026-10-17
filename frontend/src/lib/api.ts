@@ -331,6 +331,18 @@ export function importSubmissions(
 export interface SourceBreakdownEntry {
   source: string;
   count: number;
+  won: number;
+}
+
+export type LeadSourceRange = '30d' | '90d' | '365d' | 'all';
+
+export interface WorkspaceLeadSources {
+  sources: SourceBreakdownEntry[];
+  forms: number;
+}
+
+export function getLeadSources(range: LeadSourceRange, workspaceId = DEFAULT_WORKSPACE) {
+  return request<WorkspaceLeadSources>(`${ws(workspaceId)}/lead-sources?range=${range}`);
 }
 
 export interface DropOffEntry {

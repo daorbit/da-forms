@@ -1020,7 +1020,7 @@ export function FieldControl({
                         figure to show yet. */}
                     {amount === null
                       ? 'Amount depends on your answers'
-                      : 'Paid securely via Razorpay'}
+                      : 'Secure online payment'}
                   </Text>
                 </Box>
               </Group>

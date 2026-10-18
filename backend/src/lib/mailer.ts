@@ -29,6 +29,12 @@ interface CachedTransport {
 const CACHE_TTL_MS = 60_000;
 const cache = new Map<string, CachedTransport>();
 
+const SMTP_TIMEOUTS = {
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 20_000,
+};
+
 /** Drop a workspace's cached transport, so the next send picks up new settings. */
 export function invalidateMailCache(workspaceId: string): void {
   cache.get(workspaceId)?.transporter.close();
@@ -56,6 +62,7 @@ function buildTransport(conn: ResolvedConnection): Transporter {
       pool: true,
       maxConnections: 1,
       maxMessages: 50,
+      ...SMTP_TIMEOUTS,
     });
   }
 
@@ -70,6 +77,7 @@ function buildTransport(conn: ResolvedConnection): Transporter {
     pool: true,
     maxConnections: 1,
     maxMessages: 50,
+    ...SMTP_TIMEOUTS,
   });
 }
 

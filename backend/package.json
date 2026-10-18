@@ -12,6 +12,7 @@
     "test": "node --import tsx --test \"src/**/*.test.ts\""
   },
   "dependencies": {
+    "@vercel/functions": "2.2.13",
     "cloudinary": "^2.10.1",
     "cors": "2.8.5",
     "dotenv": "16.4.5",

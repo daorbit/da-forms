@@ -4,10 +4,9 @@ import * as paymentService from "../../services/payment.service.js";
 import * as bookingService from "../../services/booking.service.js";
 import type { PaymentProvider } from "../../models/workspaceSettings.model.js";
 import * as workspaceSettingsService from "../../services/workspaceSettings.service.js";
-import { sendSubmissionNotifications } from "../../services/notification.service.js";
-import { getFormLimits, recordSubmission } from "../../lib/quantalog.js";
-import { deliverWebhook } from "../../services/webhook.service.js";
-import { syncSubmissionToSheet } from "../../services/sheetsSync.service.js";
+import { queueSubmissionEffects } from "../../services/submissionEffects.service.js";
+import { getFormLimits } from "../../lib/quantalog.js";
+import { runAfterResponse } from "../../lib/afterResponse.js";
 import { env } from "../../config/env.js";
 
 export function paymentReturnUrl(
@@ -60,24 +59,26 @@ async function applyPaymentEvent(
 
   const [limits, booking] = await Promise.all([
     getFormLimits(workspaceId),
-    bookingService.finalizeBooking(form, submission._id, submission.data),
+    bookingService
+      .finalizeBooking(form, submission._id, submission.data)
+      .catch((e: unknown) => {
+        console.error("[payments] finalizeBooking failed:", e instanceof Error ? e.message : e);
+        return undefined;
+      }),
   ]);
 
-  await Promise.allSettled([
-    sendSubmissionNotifications(
-      form,
-      submission.data,
-      submission.payment,
-      undefined,
-      undefined,
-      booking,
-      !limits || limits.notificationEmails,
-    ),
-    deliverWebhook(form, submission.data, String(submission._id), submission.payment),
-    syncSubmissionToSheet(form, submission.data, String(submission._id), submission.payment, booking),
+  queueSubmissionEffects({
+    form,
+    data: submission.data,
+    submissionId: String(submission._id),
+    payment: submission.payment,
+    booking,
+    emailsAllowed: !limits || limits.notificationEmails,
+    allowEditLink: false,
+  });
+  runAfterResponse(`mark ${provider} charged`, () =>
     workspaceSettingsService.markCharged(workspaceId, provider),
-    recordSubmission(workspaceId),
-  ]);
+  );
 
   return "paid";
 }

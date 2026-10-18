@@ -2,11 +2,10 @@ import type { RequestHandler, Response } from "express";
 import * as formService from "../../services/form.service.js";
 import * as paymentService from "../../services/payment.service.js";
 import * as bookingService from "../../services/booking.service.js";
-import { sendSubmissionNotifications, sendResumeLink } from "../../services/notification.service.js";
-import { getFormLimits, recordSubmission, getBranding } from "../../lib/quantalog.js";
+import { sendResumeLink } from "../../services/notification.service.js";
+import { queueSubmissionEffects } from "../../services/submissionEffects.service.js";
+import { getFormLimits, getBranding } from "../../lib/quantalog.js";
 import { turnstileConfigured, verifyTurnstileToken } from "../../lib/turnstile.js";
-import { deliverWebhook } from "../../services/webhook.service.js";
-import { syncSubmissionToSheet } from "../../services/sheetsSync.service.js";
 import { readEditToken, mintResumeToken } from "../../lib/edit-token.js";
 import { attributionFrom } from "../../lib/attribution.js";
 import { env } from "../../config/env.js";
@@ -341,6 +340,15 @@ export const savePartial: RequestHandler = async (req, res) => {
   res.status(204).send();
 };
 
+async function releasePendingOrder(orderId: string): Promise<void> {
+  try {
+    const discarded = await formService.discardPendingSubmission(orderId);
+    if (discarded) await bookingService.releaseBookings([discarded._id]);
+  } catch (e) {
+    console.error("[payments] could not release pending order:", e instanceof Error ? e.message : e);
+  }
+}
+
 export const submitForm: RequestHandler = async (req, res) => {
   const form = await formService.getForm(req.params.id);
   if (!form)
@@ -413,6 +421,7 @@ export const submitForm: RequestHandler = async (req, res) => {
   const bookingField = bookingService.activeBookingField(form.fields, data);
   let hold: Awaited<ReturnType<typeof bookingService.reserveSlot>> | undefined;
   let attached = false;
+  let pendingOrderId: string | undefined;
 
   try {
     if (payField && req.body._retryOrderId) {
@@ -462,6 +471,7 @@ export const submitForm: RequestHandler = async (req, res) => {
         customer.phone = supplied;
       }
 
+      pendingOrderId = `pending_${Date.now()}`;
       const submission = await formService.submitForm(
         req.params.id,
         form.fields,
@@ -470,7 +480,7 @@ export const submitForm: RequestHandler = async (req, res) => {
         {
           provider,
 
-          orderId: `pending_${Date.now()}`,
+          orderId: pendingOrderId,
           amount,
           currency,
           status: "created",
@@ -535,27 +545,24 @@ export const submitForm: RequestHandler = async (req, res) => {
     if (hold) {
       await bookingService.attachBooking(hold._id, submission._id, true);
       attached = true;
-      booking = await bookingService.finalizeBooking(form, submission._id, data);
+      booking = await bookingService
+        .finalizeBooking(form, submission._id, data)
+        .catch((e: unknown) => {
+          console.error("[submit] finalizeBooking failed:", e instanceof Error ? e.message : e);
+          return undefined;
+        });
     }
 
-    await Promise.allSettled([
-      sendSubmissionNotifications(
-        form,
-        data,
-        undefined,
-        String(submission._id),
-        String(form._id),
-        booking,
-        !limits || limits.notificationEmails,
-      ),
-      deliverWebhook(form, data, String(submission._id)),
-      syncSubmissionToSheet(form, data, String(submission._id), undefined, booking),
-      recordSubmission(form.workspaceId).catch((e: unknown) => {
-        console.error("[submit] recordSubmission failed:", e instanceof Error ? e.message : e);
-      }),
-    ]);
-
     res.status(201).json(booking ? { ...submission.toJSON(), booking } : submission);
+
+    queueSubmissionEffects({
+      form,
+      data,
+      submissionId: String(submission._id),
+      booking,
+      emailsAllowed: !limits || limits.notificationEmails,
+      allowEditLink: true,
+    });
   } catch (err) {
     if (hold && !attached) await bookingService.dropHold(hold._id);
     if (err instanceof bookingService.SlotUnavailableError) {
@@ -586,6 +593,7 @@ export const submitForm: RequestHandler = async (req, res) => {
     }
     if (err instanceof paymentService.PaymentConfigError) {
       console.error("[payments] configuration problem:", err.message);
+      if (pendingOrderId) await releasePendingOrder(pendingOrderId);
       return res.status(503).json({
         error: "payment_unavailable",
         message:

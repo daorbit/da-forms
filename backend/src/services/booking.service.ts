@@ -204,7 +204,10 @@ async function createCalendarEvent(
   booking: { _id: Types.ObjectId; start: Date; end: Date }
 ) {
   if (!config.syncCalendar) return null;
-  const token = await calendarAccessToken(form.workspaceId);
+  const token = await calendarAccessToken(form.workspaceId).catch((err: unknown) => {
+    console.error('[booking] calendar token failed:', err instanceof Error ? err.message : err);
+    return null;
+  });
   if (!token) return null;
 
   const attendee = attendeeFor(form.fields, data, config);

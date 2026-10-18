@@ -11,21 +11,24 @@ import { env } from './env.js';
  */
 let pending: Promise<typeof mongoose> | null = null;
 
+const CONNECTED = 1;
+const DISCONNECTED = 0;
+
 export function connectDb() {
   if (!env.mongodbUri) {
     console.warn('MONGODB_URI not set, skipping db connection');
     return Promise.resolve(null);
   }
 
-  // 1 = connected, 2 = connecting.
-  if (mongoose.connection.readyState === 1) return Promise.resolve(mongoose);
+  if (mongoose.connection.readyState === CONNECTED) return Promise.resolve(mongoose);
 
-  if (!pending) {
-    pending = mongoose.connect(env.mongodbUri).catch((error) => {
-      // Cleared so the next request retries rather than reusing a failure.
-      pending = null;
-      throw error;
-    });
+  if (!pending || mongoose.connection.readyState === DISCONNECTED) {
+    pending = mongoose
+      .connect(env.mongodbUri, { serverSelectionTimeoutMS: 10_000 })
+      .catch((error) => {
+        pending = null;
+        throw error;
+      });
   }
 
   return pending;

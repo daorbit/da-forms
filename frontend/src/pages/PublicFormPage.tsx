@@ -30,6 +30,7 @@ import { FormLoader } from '@/components/FormLoader';
 import { notify } from '@/lib/notify';
 import { resolveEnding } from '@/utils/conditionalLogic';
 import { attributionPayload } from '@/lib/attribution';
+import { formStateChanged, submitErrorMessage } from '@/lib/submitError';
 import { useLeadAttribution } from '@/hooks/useLeadAttribution';
 
 const PAYMENT_PENDING_MESSAGE =
@@ -260,25 +261,13 @@ export function PublicFormPage() {
     } catch (e) {
       setSubmitting(false);
       if (e instanceof ApiError && e.code === "phone_required") {
-        getPublicForm(id).then(setForm);
+        getPublicForm(id).then(setForm).catch(() => undefined);
         notify.warn(e.message);
         return false;
       }
-      if (
-        e instanceof ApiError &&
-        (e.code === "rate_limited" ||
-          e.code === "duplicate_value" ||
-          e.code === "spam_detected" ||
-          e.code === "invalid_amount" ||
-          e.code === "payment_unavailable" ||
-          e.code === "slot_taken" ||
-          e.code === "invalid_booking")
-      ) {
-        notify.error(e.message);
-        return false;
-      }
 
-      getPublicForm(id).then(setForm);
+      notify.error(submitErrorMessage(e));
+      if (formStateChanged(e)) getPublicForm(id).then(setForm).catch(() => undefined);
       return false;
     }
     setSubmitting(false);

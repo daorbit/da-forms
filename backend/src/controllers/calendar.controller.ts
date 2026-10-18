@@ -15,7 +15,7 @@ const FAILURE_TEXT: Record<calendarService.ConnectFailure, string> = {
   scope_declined:
     'Calendar access was not granted. Tick every calendar permission on Google’s consent screen, or the booking field cannot check your busy times and add events.',
   no_refresh_token:
-    'Google did not return a long-lived token. Remove this app from your Google account permissions and try again.',
+    'Google did not finish granting long-term access. Please try again, and contact support if it keeps happening.',
   google_failed: 'Google could not complete the connection. Please try again.',
 };
 

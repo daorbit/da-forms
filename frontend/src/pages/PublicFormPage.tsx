@@ -191,6 +191,11 @@ export function PublicFormPage() {
       .catch(() => setSubmitting(false));
   }, [id, searchParams]);
 
+  useEffect(() => {
+    if (!submitted || !embedded || isPreview) return;
+    window.parent.postMessage({ type: "da-forms:submitted", formId: id }, "*");
+  }, [submitted, embedded, isPreview, id]);
+
   async function handleSubmit(
     values: Record<string, string>,
     partialKey?: string | null,

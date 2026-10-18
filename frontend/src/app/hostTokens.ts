@@ -1,4 +1,4 @@
-import { HOST_BG_WASH, HOST_TEXTURED_BG } from '@/lib/bootParams';
+import { HOST_BG_WASH, HOST_TEXTURED_BG, IS_EMBEDDED } from '@/lib/bootParams';
 import { buildScale, luminance, shade } from '@/lib/color';
 import { FONT_SIZE_PX, RADIUS_PX, type HostTheme } from './themeParams';
 
@@ -59,6 +59,7 @@ export function applyHostTokens(host: HostTheme) {
   root.setAttribute('data-table-style', host.table);
   root.setAttribute('data-motion', host.motion ? 'on' : 'off');
 
+  if (IS_EMBEDDED) root.setAttribute('data-embedded', '');
   if (HOST_TEXTURED_BG) root.setAttribute('data-host-bg', 'textured');
   if (HOST_BG_WASH) root.style.setProperty('--host-bg-wash', HOST_BG_WASH);
 }

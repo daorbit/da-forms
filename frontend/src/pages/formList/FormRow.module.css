@@ -227,3 +227,36 @@
 [data-motion='off'] .row {
   transition: none;
 }
+
+@media (max-width: 48em) {
+  :global(html[data-embedded]) .row {
+    min-height: 64px;
+    border-color: transparent;
+    border-radius: 14px;
+  }
+
+  :global(html[data-embedded]) .title {
+    font-size: 14.5px;
+  }
+
+  :global(html[data-embedded]) .links {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    font-size: 12px;
+  }
+
+  :global(html[data-embedded]) .link[data-secondary],
+  :global(html[data-embedded]) .metaPrefix {
+    display: none;
+  }
+
+  :global(html[data-embedded]) .status + .link::before,
+  :global(html[data-embedded]) .status + .meta::before,
+  :global(html[data-embedded]) .link + .link::before,
+  :global(html[data-embedded]) .link + .meta::before {
+    margin: 0 6px;
+  }
+  :global(html[data-embedded]) .icon {
+    border-color: transparent;
+  }
+}

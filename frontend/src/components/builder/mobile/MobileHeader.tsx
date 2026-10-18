@@ -19,8 +19,8 @@ interface Props {
 export function MobileHeader({ name, live, isDemo, isDirty, hasSaved, saving, publishing, onBack, onSave, onTogglePublish }: Props) {
   return (
     <header className={classes.header}>
-      <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" onClick={onBack} aria-label="Back to all forms">
-        <ChevronLeftIcon size={20} />
+      <ActionIcon variant="transparent" size="lg" className={classes.back} onClick={onBack} aria-label="Back to all forms">
+        <ChevronLeftIcon size={24} strokeWidth={2.1} />
       </ActionIcon>
       <div className={classes.headerTitle}>
         <span className={classes.headerName}>{name || 'Untitled form'}</span>
@@ -30,12 +30,18 @@ export function MobileHeader({ name, live, isDemo, isDirty, hasSaved, saving, pu
       </div>
       {!isDemo && (
         <div className={classes.headerActions}>
-          <Button radius="xl" size="xs" variant="default" onClick={onSave} loading={saving} disabled={!isDirty || publishing}>
+          <Button
+            size="xs"
+            variant="default"
+            className={classes.saveButton}
+            onClick={onSave}
+            loading={saving}
+            disabled={!isDirty || publishing}
+          >
             Save
           </Button>
           <ActionIcon
-            radius="xl"
-            size="lg"
+            className={classes.publishButton}
             variant={live ? 'default' : 'filled'}
             onClick={onTogglePublish}
             loading={publishing}

@@ -20,7 +20,7 @@ export function PageHeader({
   leading?: ReactNode;
 }) {
   return (
-    <div className={classes.root}>
+    <div className={classes.root} data-leading={leading ? true : undefined}>
       <div className={classes.row}>
         <div className={classes.main}>
           {leading}
@@ -29,7 +29,7 @@ export function PageHeader({
               {title}
             </Title>
             {description && (
-              <Text c="dimmed" size="sm" mt={6}>
+              <Text c="dimmed" size="sm" mt={6} className={classes.description}>
                 {description}
               </Text>
             )}

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ActionIcon, Button, Tooltip } from '@mantine/core';
 import { FileTextIcon, PencilIcon, Share2Icon, TableIcon } from 'lucide-react';
 import { relativeTime } from '@/lib/relativeTime';
+import { useBuilderTooSmall } from '@/hooks/useBuilderTooSmall';
 import type { Form } from '@/types';
 import { conversionRate, formatDate } from './constants';
 import { FormRowMenu } from './FormRowMenu';
@@ -30,6 +31,8 @@ export function FormRow({ form, workspaceId, isDemo, compact, busy, actions }: P
   const responses = form.submissionCount ?? 0;
   const basePath = `/${workspaceId}/forms/${form._id}`;
   const updated = relativeTime(form.updatedAt || form.createdAt);
+  const builderTooSmall = useBuilderTooSmall();
+  const openPath = builderTooSmall && !isDemo ? `${basePath}/entries` : `${basePath}/edit`;
 
   return (
     <div className={classes.row} data-live={live || undefined}>
@@ -38,7 +41,7 @@ export function FormRow({ form, workspaceId, isDemo, compact, busy, actions }: P
           <FileTextIcon size={19} strokeWidth={1.6} />
         </span>
         <div className={classes.text}>
-          <Link to={`${basePath}/edit`} className={classes.title}>
+          <Link to={openPath} className={classes.title}>
             {form.name || form.title}
           </Link>
           <div className={classes.links}>
@@ -51,16 +54,19 @@ export function FormRow({ form, workspaceId, isDemo, compact, busy, actions }: P
                 {responses.toLocaleString()} {responses === 1 ? 'response' : 'responses'}
               </Link>
             )}
-            <button type="button" className={classes.link} onClick={() => actions.onPreview(form)}>
+            <button type="button" className={classes.link} data-secondary onClick={() => actions.onPreview(form)}>
               Preview
             </button>
             {!isDemo && (
-              <button type="button" className={classes.link} onClick={() => actions.onShare(form)}>
+              <button type="button" className={classes.link} data-secondary onClick={() => actions.onShare(form)}>
                 Share
               </button>
             )}
             <Tooltip label={`Created ${formatDate(form.createdAt)}`} withArrow openDelay={400}>
-              <span className={classes.meta}>Updated {updated}</span>
+              <span className={classes.meta}>
+                <span className={classes.metaPrefix}>Updated </span>
+                {updated}
+              </span>
             </Tooltip>
           </div>
         </div>

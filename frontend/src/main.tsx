@@ -13,6 +13,7 @@ import '@/styles/mantine-overrides.css';
 import '@/styles/dropdown.css';
 import '@/styles/surfaces.css';
 import '@/styles/global.css';
+import '@/styles/mobile.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MantineProvider } from '@mantine/core';

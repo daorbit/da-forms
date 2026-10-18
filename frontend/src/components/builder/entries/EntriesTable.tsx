@@ -1,4 +1,5 @@
-import { Checkbox, Pagination, Table, Tooltip } from '@mantine/core';
+import { Checkbox, Table, Tooltip } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { InboxIcon, Share2Icon } from 'lucide-react';
 import type { Form, FormField, Submission } from '@/types';
 import { downloadSubmissionPdf } from '@/lib/submissionPdf';
@@ -11,7 +12,9 @@ import { RespondentCell } from './table/RespondentCell';
 import { StageLabel } from './table/StageLabel';
 import { SourceLabel } from './table/SourceLabel';
 import { RowActions } from './table/RowActions';
-import { formatDateTime, PAGE_SIZE } from './entriesTypes';
+import { EntriesFooter } from './table/EntriesFooter';
+import { EntryListMobile } from './table/EntryListMobile';
+import { formatDateTime } from './entriesTypes';
 import classes from './EntriesTable.module.css';
 
 type Column = FormField & { retired?: boolean };
@@ -77,6 +80,8 @@ export function EntriesTable({
   const answerColumns = columns.filter((c) => !identity.includes(c.id));
   const allSelected = submissions.length > 0 && submissions.every((s) => selected.has(s._id));
   const someSelected = !allSelected && submissions.some((s) => selected.has(s._id));
+  const mobile = useMediaQuery('(max-width: 48em)') ?? false;
+  const downloadPdf = (submission: Submission) => downloadSubmissionPdf(form?.title ?? '', columns, submission);
 
   if (submissions.length === 0 && !loading) {
     return (
@@ -88,6 +93,25 @@ export function EntriesTable({
           description="Share your form's link to start collecting responses."
           action={{ label: 'Copy share link', onClick: onCopyShareLink, icon: Share2Icon, variant: 'default' }}
         />
+      </div>
+    );
+  }
+
+  if (mobile) {
+    return (
+      <div className={`surface-card ${classes.card}`}>
+        <EntryListMobile
+          fields={fields}
+          submissions={submissions}
+          loading={loading}
+          selected={selected}
+          onToggleSelect={onToggleSelect}
+          onView={onView}
+          onPdf={downloadPdf}
+          onToggleRead={onToggleRead}
+          onDelete={onDelete}
+        />
+        <EntriesFooter total={total} page={page} onPageChange={onPageChange} />
       </div>
     );
   }
@@ -169,7 +193,7 @@ export function EntriesTable({
                       <RowActions
                         submission={submission}
                         onView={() => onView(submission)}
-                        onPdf={() => downloadSubmissionPdf(form?.title ?? '', columns, submission)}
+                        onPdf={() => downloadPdf(submission)}
                         onToggleRead={onToggleRead ? () => onToggleRead(submission) : undefined}
                         onDelete={() => onDelete(submission)}
                       />
@@ -181,22 +205,7 @@ export function EntriesTable({
           </Table>
         </Table.ScrollContainer>
 
-        {total > 0 && (
-          <div className={classes.footer}>
-            <span className={classes.count}>
-              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total.toLocaleString()}
-            </span>
-            {total > PAGE_SIZE && (
-              <Pagination
-                size="sm"
-                radius="md"
-                total={Math.ceil(total / PAGE_SIZE)}
-                value={page}
-                onChange={onPageChange}
-              />
-            )}
-          </div>
-        )}
+        <EntriesFooter total={total} page={page} onPageChange={onPageChange} />
       </div>
     </>
   );

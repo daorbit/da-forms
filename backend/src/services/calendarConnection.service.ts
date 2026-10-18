@@ -8,7 +8,6 @@ import {
   googleCalendarConfigured,
   hasCalendarScopes,
   refreshTokens,
-  revokeToken,
 } from '../lib/googleOAuth.js';
 import { listCalendars, type CalendarSummary } from '../lib/googleCalendar.js';
 import { readOAuthState, signOAuthState } from '../lib/oauthState.js';
@@ -57,11 +56,9 @@ export async function completeConnection(query: {
   }
 
   if (tokens.scope && !hasCalendarScopes(tokens.scope)) {
-    await revokeToken(tokens.accessToken);
     return { ok: false, reason: 'scope_declined' };
   }
   if (!tokens.refreshToken) {
-    await revokeToken(tokens.accessToken);
     return { ok: false, reason: 'no_refresh_token' };
   }
 
@@ -133,25 +130,20 @@ export async function calendarStatus(workspaceId: string): Promise<CalendarStatu
 
   const token = connection.status === 'active' ? await calendarAccessToken(workspaceId) : null;
   const calendars = token ? await listCalendars(token).catch(() => []) : [];
+  const active =
+    Boolean(token) ||
+    (connection.status === 'active' &&
+      Boolean(await CalendarConnectionModel.exists({ workspaceId, status: 'active' })));
 
   return {
     configured,
-    connected: Boolean(token),
-    status: token ? 'active' : 'revoked',
+    connected: active,
+    status: active ? 'active' : 'revoked',
     email: connection.googleEmail,
     calendars,
   };
 }
 
 export async function disconnectCalendar(workspaceId: string): Promise<void> {
-  const connection = await CalendarConnectionModel.findOne({ workspaceId }).select('+refreshTokenEnc');
-  if (!connection) return;
-  if (connection.refreshTokenEnc) {
-    try {
-      await revokeToken(decrypt(connection.refreshTokenEnc));
-    } catch {
-      console.warn('[google-calendar] stored refresh token could not be decrypted for revoke');
-    }
-  }
-  await CalendarConnectionModel.deleteOne({ _id: connection._id });
+  await CalendarConnectionModel.deleteOne({ workspaceId });
 }

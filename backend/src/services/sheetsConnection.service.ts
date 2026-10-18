@@ -11,7 +11,6 @@ import {
   googleCalendarConfigured,
   hasSheetsScope,
   refreshTokens,
-  revokeToken,
 } from '../lib/googleOAuth.js';
 import { signOAuthState, type OAuthState } from '../lib/oauthState.js';
 import type { ConnectFailure } from './calendarConnection.service.js';
@@ -60,11 +59,9 @@ export async function completeSheetsConnection(
   }
 
   if (tokens.scope && !hasSheetsScope(tokens.scope)) {
-    await revokeToken(tokens.accessToken);
     return { ok: false, reason: 'scope_declined' };
   }
   if (!tokens.refreshToken) {
-    await revokeToken(tokens.accessToken);
     return { ok: false, reason: 'no_refresh_token' };
   }
 
@@ -178,11 +175,15 @@ export async function sheetsStatus(workspaceId: string): Promise<SheetsStatus> {
     connection.status === 'active' ? sheetsAccessToken(workspaceId) : Promise.resolve(null),
     linkedSheets(workspaceId),
   ]);
+  const active =
+    Boolean(token) ||
+    (connection.status === 'active' &&
+      Boolean(await SheetsConnectionModel.exists({ workspaceId, status: 'active' })));
 
   return {
     configured,
-    connected: Boolean(token),
-    status: token ? 'active' : 'revoked',
+    connected: active,
+    status: active ? 'active' : 'revoked',
     email: connection.googleEmail,
     lastUsedAt: connection.lastUsedAt,
     lastError: connection.lastError,
@@ -191,14 +192,6 @@ export async function sheetsStatus(workspaceId: string): Promise<SheetsStatus> {
 }
 
 export async function disconnectSheets(workspaceId: string): Promise<void> {
-  const connection = await SheetsConnectionModel.findOne({ workspaceId }).select('+refreshTokenEnc');
-  if (connection?.refreshTokenEnc) {
-    try {
-      await revokeToken(decrypt(connection.refreshTokenEnc));
-    } catch {
-      console.warn('[google-sheets] stored refresh token could not be decrypted for revoke');
-    }
-  }
   await Promise.all([
     SheetsConnectionModel.deleteOne({ workspaceId }),
     FormSheetModel.deleteMany({ workspaceId }),

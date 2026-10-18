@@ -2,7 +2,6 @@ import { env } from '../config/env.js';
 
 const AUTHORIZE_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
-const REVOKE_URL = 'https://oauth2.googleapis.com/revoke';
 const USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
 const TIMEOUT_MS = 10_000;
 
@@ -14,7 +13,14 @@ const SCOPES = ['openid', 'email', CALENDAR_EVENTS_SCOPE, CALENDAR_LIST_SCOPE, C
 export const DRIVE_FILE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 export const SHEETS_SCOPES = ['openid', 'email', DRIVE_FILE_SCOPE].join(' ');
 
-export type GoogleErrorKind = 'revoked' | 'quota' | 'forbidden' | 'not_found' | 'unavailable' | 'unknown';
+export type GoogleErrorKind =
+  | 'revoked'
+  | 'misconfigured'
+  | 'quota'
+  | 'forbidden'
+  | 'not_found'
+  | 'unavailable'
+  | 'unknown';
 
 export class GoogleApiError extends Error {
   constructor(
@@ -62,7 +68,9 @@ export function buildAuthorizeUrl(state: string, scopes: string = SCOPES): strin
 }
 
 function errorKind(status: number, body: string): GoogleErrorKind {
-  if (status === 401 || /invalid_grant|invalid_client/.test(body)) return 'revoked';
+  if (/invalid_grant/.test(body)) return 'revoked';
+  if (/invalid_client|unauthorized_client/.test(body)) return 'misconfigured';
+  if (status === 401) return 'revoked';
   if (status === 429 || /RATE_LIMIT|QUOTA/i.test(body)) return 'quota';
   if (status === 403) return 'forbidden';
   if (status === 404 || status === 410) return 'not_found';
@@ -133,19 +141,6 @@ export async function exchangeCode(code: string): Promise<GoogleTokens> {
 
 export async function refreshTokens(refreshToken: string): Promise<GoogleTokens> {
   return tokensFrom(await tokenRequest({ refresh_token: refreshToken, grant_type: 'refresh_token' }));
-}
-
-export async function revokeToken(token: string): Promise<void> {
-  try {
-    await fetch(REVOKE_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ token }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-  } catch (err) {
-    console.warn('[google-calendar] revoke failed:', err instanceof Error ? err.message : err);
-  }
 }
 
 export async function fetchGoogleEmail(accessToken: string): Promise<string> {

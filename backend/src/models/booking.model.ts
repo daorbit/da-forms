@@ -36,5 +36,6 @@ bookingSchema.index({ formId: 1, fieldId: 1, start: 1, seat: 1 }, { unique: true
 bookingSchema.index({ submissionId: 1 }, { sparse: true });
 bookingSchema.index({ status: 1, createdAt: 1 });
 bookingSchema.index({ workspaceId: 1 });
+bookingSchema.index({ workspaceId: 1, status: 1, start: 1 });
 
 export const BookingModel = model<BookingDocument>('Booking', bookingSchema);

@@ -238,7 +238,7 @@ export const getAnalytics: RequestHandler = async (req, res) => {
   });
 };
 
-const LEAD_SOURCE_RANGES: Record<string, number> = { "30d": 30, "90d": 90, "365d": 365 };
+const LEAD_SOURCE_RANGES: Record<string, number> = { "7d": 7, "30d": 30, "90d": 90, "365d": 365 };
 
 export const getLeadSources: RequestHandler = async (req, res) => {
   const range = typeof req.query.range === "string" ? req.query.range : "90d";

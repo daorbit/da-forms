@@ -1,5 +1,7 @@
 import type { ErrorRequestHandler } from 'express';
 import type { ApiError } from '../types/index.js';
+import { runAfterResponse } from '../lib/afterResponse.js';
+import { alertServerError } from '../lib/opsAlert.js';
 
 interface KnownError {
   name?: string;
@@ -29,6 +31,7 @@ function clientError(err: KnownError): { status: number; body: ApiError } | null
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   if (res.headersSent) {
     console.error(`[error] after response on ${req.method} ${req.originalUrl}:`, err);
+    runAfterResponse('ops alert', () => alertServerError(err, req.method, req.originalUrl));
     req.socket.destroy();
     return;
   }
@@ -40,6 +43,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   }
 
   console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
+  runAfterResponse('ops alert', () => alertServerError(err, req.method, req.originalUrl));
   const body: ApiError = {
     error: 'internal_error',
     message: 'Something went wrong. Please try again.',

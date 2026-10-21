@@ -525,6 +525,31 @@ export async function recordAuditEvent(workspaceId: string, event: AuditEvent): 
   }
 }
 
+export interface OpsAlert {
+  title: string;
+  where: string;
+  detail: string;
+}
+
+export async function relayOpsAlert(alert: OpsAlert): Promise<boolean> {
+  if (!isConfigured()) return false;
+
+  try {
+    const res = await fetch(`${env.quantalogApiUrl}/api/internal/forms/ops-alert`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${env.formsServiceSecret}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(alert),
+      signal: AbortSignal.timeout(5000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function recordSubmission(workspaceId: string): Promise<void> {
   if (!isConfigured()) return;
 

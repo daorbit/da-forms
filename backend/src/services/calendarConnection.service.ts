@@ -11,6 +11,10 @@ import {
 } from '../lib/googleOAuth.js';
 import { listCalendars, type CalendarSummary } from '../lib/googleCalendar.js';
 import { readOAuthState, signOAuthState } from '../lib/oauthState.js';
+import { createTtlCache } from '../lib/ttlCache.js';
+
+const CALENDAR_LIST_TTL_MS = 5 * 60 * 1000;
+const calendarLists = createTtlCache<CalendarSummary[]>(CALENDAR_LIST_TTL_MS);
 
 export type ConnectFailure =
   | 'invalid_state'
@@ -78,6 +82,7 @@ export async function completeConnection(query: {
     },
     { upsert: true }
   );
+  calendarLists.forget(state.workspaceId);
 
   return { ok: true };
 }
@@ -129,7 +134,9 @@ export async function calendarStatus(workspaceId: string): Promise<CalendarStatu
   if (!connection) return { configured, connected: false, calendars: [] };
 
   const token = connection.status === 'active' ? await calendarAccessToken(workspaceId) : null;
-  const calendars = token ? await listCalendars(token).catch(() => []) : [];
+  const calendars = token
+    ? await calendarLists.load(workspaceId, () => listCalendars(token)).catch(() => [])
+    : [];
   const active =
     Boolean(token) ||
     (connection.status === 'active' &&
@@ -145,5 +152,6 @@ export async function calendarStatus(workspaceId: string): Promise<CalendarStatu
 }
 
 export async function disconnectCalendar(workspaceId: string): Promise<void> {
+  calendarLists.forget(workspaceId);
   await CalendarConnectionModel.deleteOne({ workspaceId });
 }

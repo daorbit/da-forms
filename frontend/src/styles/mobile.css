@@ -21,34 +21,17 @@
   }
 
   html[data-embedded]:not([data-mantine-color-scheme='light']) {
-    --surface: #1c1c1e;
-    --surface-2: #2c2c2e;
-    --border: #2f2f31;
-    --border-strong: #3a3a3c;
-    --text-2: #aeaeb2;
-    --muted: #8e8e93;
     --m-fill: rgba(118, 118, 128, 0.24);
     --m-fill-press: rgba(118, 118, 128, 0.36);
-    --m-thumb: #5c5c61;
-    --m-separator: rgba(84, 84, 88, 0.65);
-    --shadow-sm: 0 0 #0000;
+    --m-thumb: var(--gray-9);
+    --m-separator: var(--border);
   }
 
   html[data-embedded][data-mantine-color-scheme='light'] {
-    --bg: #f2f2f7;
-    --shell: #f2f2f7;
-    --rail: #f2f2f7;
-    --surface: #ffffff;
-    --surface-2: #ececf1;
-    --border: #e0e0e5;
-    --border-strong: #d1d1d6;
-    --text-2: #5b5b60;
-    --muted: #8a8a8e;
     --m-fill: rgba(118, 118, 128, 0.12);
     --m-fill-press: rgba(118, 118, 128, 0.2);
     --m-thumb: #ffffff;
-    --m-separator: rgba(60, 60, 67, 0.29);
-    --shadow-sm: 0 0 #0000;
+    --m-separator: var(--border-strong);
   }
 
   html[data-embedded] :is(a, button, label, summary, [role='button'], [role='tab'], [role='menuitem']) {

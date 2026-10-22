@@ -1,20 +1,26 @@
 import { HOST_BG_WASH, HOST_TEXTURED_BG, IS_EMBEDDED } from '@/lib/bootParams';
-import { buildScale, luminance, shade } from '@/lib/color';
-import { FONT_SIZE_PX, RADIUS_PX, type HostTheme } from './themeParams';
+import { buildScale } from '@/lib/color';
+import { FONT_SIZE_PX, type HostTheme } from './themeParams';
 
 const FONT_BASE_PX: Record<string, number> = { xs: 12, sm: 14, md: 16, lg: 18, xl: 20 };
 
-const DEFAULT_ACCENT = { light: '#0d9488', dark: '#14b8a6' };
+const BRAND_ACCENT = '#2f6bff';
+
+const NEUTRAL_SOFT = {
+  light: 'color-mix(in srgb, var(--text) 6%, transparent)',
+  dark: 'color-mix(in srgb, var(--text) 9%, transparent)',
+};
+
+const NEUTRAL_SOFT_HOVER = {
+  light: 'color-mix(in srgb, var(--text) 10%, transparent)',
+  dark: 'color-mix(in srgb, var(--text) 14%, transparent)',
+};
 
 function applyAccent(root: HTMLElement, host: HostTheme) {
-  const accent = host.accent ?? (host.dark ? DEFAULT_ACCENT.dark : DEFAULT_ACCENT.light);
-  const accent2 = luminance(accent) > 0.75 ? 'var(--text)' : shade(accent, host.dark ? 0.12 : -0.15);
-  const accentSoft = `color-mix(in srgb, ${accent} ${host.dark ? 18 : 10}%, transparent)`;
-  const scale = buildScale(accent, host.dark ? 7 : 6);
-
-  root.style.setProperty('--accent', accent);
-  root.style.setProperty('--accent-2', accent2);
-  root.style.setProperty('--accent-soft', accentSoft);
+  if (host.accent) root.style.setProperty('--accent', host.accent);
+  const scale = buildScale(BRAND_ACCENT, 6);
+  const soft = host.dark ? NEUTRAL_SOFT.dark : NEUTRAL_SOFT.light;
+  const softHover = host.dark ? NEUTRAL_SOFT_HOVER.dark : NEUTRAL_SOFT_HOVER.light;
 
   scale.forEach((color, i) => {
     root.style.setProperty(`--mantine-color-emerald-${i}`, color);
@@ -22,22 +28,15 @@ function applyAccent(root: HTMLElement, host: HostTheme) {
   });
 
   for (const name of ['emerald', 'primary']) {
-    root.style.setProperty(`--mantine-color-${name}-filled`, 'var(--cta)');
-    root.style.setProperty(`--mantine-color-${name}-filled-hover`, 'var(--cta-hover)');
-    root.style.setProperty(`--mantine-color-${name}-light`, accentSoft);
-    root.style.setProperty(`--mantine-color-${name}-light-hover`, accentSoft);
-    root.style.setProperty(`--mantine-color-${name}-light-color`, scale[host.dark ? 4 : 6]);
-    root.style.setProperty(`--mantine-color-${name}-text`, host.dark ? scale[4] : 'var(--cta)');
-    root.style.setProperty(`--mantine-color-${name}-outline`, 'var(--cta)');
-    root.style.setProperty(`--mantine-color-${name}-outline-hover`, accentSoft);
+    root.style.setProperty(`--mantine-color-${name}-filled`, 'var(--accent)');
+    root.style.setProperty(`--mantine-color-${name}-filled-hover`, 'var(--blue-10)');
+    root.style.setProperty(`--mantine-color-${name}-light`, soft);
+    root.style.setProperty(`--mantine-color-${name}-light-hover`, softHover);
+    root.style.setProperty(`--mantine-color-${name}-light-color`, 'var(--text)');
+    root.style.setProperty(`--mantine-color-${name}-text`, 'var(--accent-text)');
+    root.style.setProperty(`--mantine-color-${name}-outline`, 'var(--accent)');
+    root.style.setProperty(`--mantine-color-${name}-outline-hover`, soft);
   }
-}
-
-function applyRadius(root: HTMLElement, px: number) {
-  root.style.setProperty('--radius', `${px}px`);
-  root.style.setProperty('--radius-sm', `${Math.round(px * 0.7)}px`);
-  root.style.setProperty('--radius-lg', `${Math.round(px * 1.25)}px`);
-  root.style.setProperty('--mantine-radius-md', `${px}px`);
 }
 
 function applyFontSize(root: HTMLElement, px: number) {
@@ -52,7 +51,6 @@ export function applyHostTokens(host: HostTheme) {
   const root = document.documentElement;
 
   applyAccent(root, host);
-  applyRadius(root, RADIUS_PX[host.radius]);
   applyFontSize(root, FONT_SIZE_PX[host.fontSize]);
 
   root.setAttribute('data-density', host.density);

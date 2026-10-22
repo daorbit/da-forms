@@ -1,8 +1,15 @@
 .rows {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
   transition: opacity 0.2s ease;
+}
+
+.rows:empty {
+  display: none;
 }
 
 .rows[data-loading] {
@@ -10,14 +17,22 @@
 }
 
 .skeleton {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
-  min-height: 76px;
+  min-height: 72px;
   padding: 14px 16px 14px 18px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface);
+}
+
+.skeleton + .skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 74px;
+  right: 0;
+  height: 1px;
+  background: var(--border);
 }
 
 .footer {

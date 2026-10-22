@@ -3,16 +3,24 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  min-height: 76px;
+  min-height: 72px;
   padding: 14px 16px 14px 18px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  transition: border-color 0.14s ease;
+  background: transparent;
+  transition: background-color 0.14s ease;
+}
+
+.row + .row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 74px;
+  right: 0;
+  height: 1px;
+  background: var(--border);
 }
 
 .row:hover {
-  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
 }
 
 .main {
@@ -27,17 +35,15 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 11px;
-  border: 1px solid var(--border);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: var(--surface-2);
   color: var(--text-2);
 }
 
 .row[data-live] .icon {
-  color: var(--accent-2);
-  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  color: var(--accent);
   background: var(--accent-soft);
 }
 
@@ -68,8 +74,7 @@
 }
 
 .title:focus-visible::after {
-  border-radius: var(--radius-sm);
-  box-shadow: inset 0 0 0 2px var(--border-strong);
+  box-shadow: inset 0 0 0 2px var(--focus-ring);
 }
 
 .status {
@@ -92,7 +97,7 @@
 }
 
 .status[data-live] .dot {
-  background: var(--accent);
+  background: var(--green);
 }
 
 .links {
@@ -134,7 +139,7 @@
 }
 
 .link:hover {
-  color: var(--accent-2);
+  color: var(--accent);
 }
 
 .meta {
@@ -214,6 +219,10 @@
     gap: 10px;
   }
 
+  .row + .row::before {
+    left: 60px;
+  }
+
   .icon {
     width: 36px;
     height: 36px;
@@ -231,8 +240,6 @@
 @media (max-width: 48em) {
   :global(html[data-embedded]) .row {
     min-height: 64px;
-    border-color: transparent;
-    border-radius: 14px;
   }
 
   :global(html[data-embedded]) .title {
@@ -255,8 +262,5 @@
   :global(html[data-embedded]) .link + .link::before,
   :global(html[data-embedded]) .link + .meta::before {
     margin: 0 6px;
-  }
-  :global(html[data-embedded]) .icon {
-    border-color: transparent;
   }
 }

@@ -21,7 +21,7 @@ interface Props {
 function SkeletonRow() {
   return (
     <div className={classes.skeleton}>
-      <Skeleton height={42} width={42} radius={11} />
+      <Skeleton height={40} width={40} radius={10} />
       <div>
         <Skeleton height={14} width={200} radius="sm" />
         <Skeleton height={10} width={260} radius="sm" mt={10} />

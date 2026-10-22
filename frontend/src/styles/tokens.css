@@ -1,64 +1,194 @@
 :root {
-  --bg: #000000;
-  --bg-2: #0a0a0a;
-  --shell: #000000;
-  --rail: #000000;
-  --surface: #161616;
-  --surface-2: #1c1c1c;
-  --border: #292929;
-  --border-strong: #3a3a3a;
-  --text: #f5f5f5;
-  --text-2: #a3a3a3;
-  --muted: #8f8f8f;
+  --gray-1: #0b0c0e;
+  --gray-2: #111214;
+  --gray-3: #16171a;
+  --gray-4: #1c1d21;
+  --gray-5: #222327;
+  --gray-6: #28292e;
+  --gray-7: #303137;
+  --gray-8: #3e4047;
+  --gray-9: #6b6d76;
+  --gray-10: #8a8c95;
+  --gray-11: #b0b2ba;
+  --gray-12: #f2f2f4;
 
-  --accent: #14b8a6;
-  --accent-2: #30c1b1;
-  --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
-  --accent-contrast: var(--cta-fg);
+  --blue-1: #0b0f1a;
+  --blue-2: #0f1524;
+  --blue-3: #14203d;
+  --blue-4: #172955;
+  --blue-5: #1b3266;
+  --blue-6: #213d78;
+  --blue-7: #2a4b91;
+  --blue-8: #335ab3;
+  --blue-9: #2f6bff;
+  --blue-10: #4776ff;
+  --blue-11: #8fb0ff;
+  --blue-12: #d6e2ff;
 
-  --cta: #fafafa;
-  --cta-hover: #e5e5e5;
-  --cta-fg: #0a0a0a;
+  --bg: var(--gray-1);
+  --bg-2: var(--gray-2);
+  --shell: var(--gray-1);
+  --rail: var(--gray-1);
+  --surface: var(--gray-3);
+  --surface-2: var(--gray-4);
+  --surface-hover: var(--gray-5);
+  --surface-active: var(--gray-6);
+  --border: var(--gray-6);
+  --border-strong: var(--gray-7);
+  --border-hover: var(--gray-8);
+  --text: var(--gray-12);
+  --text-2: var(--gray-11);
+  --muted: var(--gray-10);
+  --faint: var(--gray-9);
 
-  --green: #34d399;
-  --amber: #f59e0b;
-  --pink: #f472b6;
-  --cyan: #22d3ee;
+  --accent: var(--blue-10);
+  --accent-2: var(--text);
+  --accent-soft: color-mix(in srgb, var(--blue-9) 16%, transparent);
+  --accent-soft-hover: color-mix(in srgb, var(--blue-9) 22%, transparent);
+  --accent-text: var(--blue-11);
+  --accent-contrast: #ffffff;
+  --focus-ring: color-mix(in srgb, var(--blue-9) 55%, transparent);
 
-  --radius: 16px;
-  --radius-sm: 11px;
-  --radius-lg: 20px;
+  --cta: #f5f5f7;
+  --cta-hover: #e3e3e8;
+  --cta-fg: #1d1d1f;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px -8px rgba(0, 0, 0, 0.5);
-  --shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 20px 48px -20px rgba(0, 0, 0, 0.6);
+  --violet: var(--accent);
+  --violet-2: var(--accent-2);
+  --violet-soft: var(--accent-soft);
+
+  --selected-border: var(--accent);
+  --selected-fg: var(--accent-text);
+  --selected-bg: var(--accent-soft);
+  --selected-icon-bg: var(--accent-soft-hover);
+
+  --green: #30d158;
+  --amber: #ffb340;
+  --red: #ff6369;
+  --pink: #ff6fae;
+  --cyan: #5ac8fa;
+
+  --hue-gold: #f5b301;
+  --hue-orange: #ff7a1a;
+  --hue-rose: #ff3d7f;
+  --hue-violet: #8b5cf6;
+  --hue-indigo: #5b6cff;
+  --hue-sky: #0ea5e9;
+  --hue-mint: #10d39e;
+  --wash-strong: 9%;
+  --wash-soft: 3%;
+  --hue-ink: 0%;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  --edge-light: 0 0 #0000;
+  --shadow-sm: 0 0 #0000;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.45), 0 24px 56px -12px rgba(0, 0, 0, 0.7);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration: 180ms;
 
   --font: "Google Sans Flex", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font);
+  --font-auth-display: var(--font);
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --q-bg-subtle: var(--surface-2);
+  --q-surface: var(--surface);
+  --q-border: var(--border);
+  --q-fg: var(--text);
+  --q-fg-muted: var(--text-2);
+  --q-fg-faint: var(--muted);
+  --q-accent: var(--accent);
+  --q-cta: var(--cta);
+  --q-cta-hover: var(--cta-hover);
+  --q-cta-fg: var(--cta-fg);
+  --orbit-glow: 0 0 #0000;
+  --orbit-glow-focus: 0 0 0 3px var(--focus-ring);
+
+  color-scheme: dark;
 }
 
-[data-mantine-color-scheme='light'] {
-  --bg: #f5f5f5;
+[data-mantine-color-scheme="light"] {
+  --gray-1: #fcfcfd;
+  --gray-2: #f5f5f7;
+  --gray-3: #efeff2;
+  --gray-4: #e9e9ed;
+  --gray-5: #e5e5ea;
+  --gray-6: #dcdce1;
+  --gray-7: #d1d1d7;
+  --gray-8: #bcbcc4;
+  --gray-9: #8e8e96;
+  --gray-10: #6e6e78;
+  --gray-11: #55555e;
+  --gray-12: #1d1d1f;
+
+  --blue-1: #fbfcff;
+  --blue-2: #f4f7ff;
+  --blue-3: #e9efff;
+  --blue-4: #dce6ff;
+  --blue-5: #cbd9ff;
+  --blue-6: #b5c8ff;
+  --blue-7: #98b2ff;
+  --blue-8: #7095ff;
+  --blue-9: #2f6bff;
+  --blue-10: #255fef;
+  --blue-11: #1f55d6;
+  --blue-12: #142c66;
+
+  --bg: var(--gray-2);
   --bg-2: #ffffff;
-  --shell: #f5f5f5;
-  --rail: #f5f5f5;
+  --shell: var(--gray-2);
+  --rail: var(--gray-2);
   --surface: #ffffff;
-  --surface-2: #f5f5f5;
-  --border: #e5e5e5;
-  --border-strong: #d4d4d4;
-  --text: #171717;
-  --text-2: #525252;
-  --muted: #737373;
+  --surface-2: var(--gray-3);
+  --surface-hover: var(--gray-4);
+  --surface-active: var(--gray-5);
+  --border: var(--gray-5);
+  --border-strong: var(--gray-7);
+  --border-hover: var(--gray-8);
 
-  --accent: #0d9488;
-  --accent-2: #0b7e74;
-  --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+  --accent: var(--blue-9);
+  --accent-soft: color-mix(in srgb, var(--blue-9) 9%, transparent);
+  --accent-soft-hover: color-mix(in srgb, var(--blue-9) 14%, transparent);
+  --accent-text: var(--blue-11);
+  --focus-ring: color-mix(in srgb, var(--blue-9) 40%, transparent);
 
-  --cta: #171717;
-  --cta-hover: #333333;
+  --cta: #1d1d1f;
+  --cta-hover: #333336;
   --cta-fg: #ffffff;
 
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 16px -10px rgba(16, 24, 40, 0.1);
-  --shadow: 0 2px 6px rgba(16, 24, 40, 0.05), 0 18px 40px -18px rgba(16, 24, 40, 0.16);
+  --green: #1a9f4a;
+  --amber: #d98a00;
+  --red: #e5484d;
+  --pink: #db2777;
+  --cyan: #0891b2;
+
+  --wash-strong: 7%;
+  --wash-soft: 2%;
+  --hue-ink: 38%;
+
+  --shadow: 0 1px 2px rgba(16, 18, 24, 0.05), 0 12px 32px -10px rgba(16, 18, 24, 0.16);
+  --shadow-lg: 0 2px 6px rgba(16, 18, 24, 0.06), 0 24px 56px -14px rgba(16, 18, 24, 0.22);
+
+  color-scheme: light;
 }
 
 [data-mantine-color-scheme='dark'] {

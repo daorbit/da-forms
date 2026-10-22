@@ -8,6 +8,7 @@ import { SmallScreenGate } from '@/components/builder/SmallScreenGate';
 import { DEFAULT_WORKSPACE } from '@/lib/api';
 import { isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
+import { useDismissOnHostFocus } from '@/hooks/useDismissOnHostFocus';
 
  
 function NewFormRoute() {
@@ -37,6 +38,8 @@ function EntriesRoute() {
 }
 
 export function App() {
+  useDismissOnHostFocus();
+
   return (
     <BrowserRouter>
       <Routes>

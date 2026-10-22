@@ -7,12 +7,6 @@ const recent = new Map<string, number>();
 
 type ToastTone = 'neutral' | 'error' | 'warn';
 
-const TONE_CLASS: Record<ToastTone, string> = {
-  neutral: classes.toast,
-  error: `${classes.toast} ${classes.error}`,
-  warn: `${classes.toast} ${classes.warn}`,
-};
-
 function showDeduped(message: ReactNode, tone: ToastTone, autoClose: number) {
   const key = `${tone}|${String(message ?? '')}`;
   const now = Date.now();
@@ -27,7 +21,7 @@ function showDeduped(message: ReactNode, tone: ToastTone, autoClose: number) {
     autoClose,
     withCloseButton: false,
     classNames: {
-      root: TONE_CLASS[tone],
+      root: classes.toast,
       body: classes.body,
       description: classes.message,
     },

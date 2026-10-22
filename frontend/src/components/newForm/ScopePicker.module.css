@@ -24,8 +24,8 @@
 }
 
 .cardActive {
-  border-color: var(--accent-2) !important;
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--selected-border) !important;
+  background: var(--selected-bg);
 }
 
 .card:focus-visible {

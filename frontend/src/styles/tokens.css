@@ -42,7 +42,7 @@
   --faint: var(--gray-9);
 
   --accent: var(--blue-10);
-  --accent-2: var(--text);
+  --accent-2: var(--accent);
   --accent-soft: color-mix(in srgb, var(--blue-9) 16%, transparent);
   --accent-soft-hover: color-mix(in srgb, var(--blue-9) 22%, transparent);
   --accent-text: var(--blue-11);

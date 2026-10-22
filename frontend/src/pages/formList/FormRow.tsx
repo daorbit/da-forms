@@ -75,11 +75,13 @@ export function FormRow({ form, workspaceId, isDemo, compact, busy, actions }: P
       {!compact && !isDemo && (
         <div className={classes.stats}>
           <div className={classes.stat}>
-            <span className={classes.statValue}>{(form.viewCount ?? 0).toLocaleString()}</span>
+            <span className={classes.statValue} data-tone="views">{(form.viewCount ?? 0).toLocaleString()}</span>
             <span className={classes.statLabel}>Views</span>
           </div>
           <div className={classes.stat}>
-            <span className={classes.statValue}>{conversionRate(form.viewCount, form.submissionCount)}</span>
+            <span className={classes.statValue} data-tone="conversion">
+              {conversionRate(form.viewCount, form.submissionCount)}
+            </span>
             <span className={classes.statLabel}>Conversion</span>
           </div>
         </div>

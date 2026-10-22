@@ -1,40 +1,39 @@
 .toast.toast {
-  --toast-bg: color-mix(in srgb, var(--surface) 86%, transparent);
-  --toast-fg: var(--text);
-  --toast-edge: var(--border);
-  --toast-shadow: 0 6px 20px -10px rgba(15, 17, 21, 0.25);
   width: fit-content;
   max-width: min(520px, calc(100vw - 32px));
   margin-inline: auto;
   min-height: 0;
   padding: 6px 16px;
-  border: 1px solid var(--toast-edge);
+  border: 0;
   border-radius: var(--radius-pill);
-  background: var(--toast-bg);
-  box-shadow: var(--toast-shadow);
-  backdrop-filter: saturate(180%) blur(16px);
-  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  background: var(--accent);
+  box-shadow: 0 6px 20px -10px rgba(15, 17, 21, 0.35);
 }
 
 .toast.toast::before {
   display: none;
 }
 
-:global([data-mantine-color-scheme='dark']) .toast.toast {
-  --toast-bg: color-mix(in srgb, var(--surface-2) 90%, transparent);
-  --toast-edge: var(--border-strong);
-  --toast-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.7);
-}
-
 .body.body {
-  margin-inline-end: 0;
+  margin: 0;
 }
 
 .message.message {
-  color: var(--toast-fg);
+  margin: 0;
+  color: var(--accent-contrast);
   font-size: 12.5px;
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: -0.005em;
   text-align: center;
+}
+
+@supports (text-box: trim-both cap alphabetic) {
+  .toast.toast {
+    padding-block: 9px;
+  }
+
+  .message.message {
+    text-box: trim-both cap alphabetic;
+  }
 }

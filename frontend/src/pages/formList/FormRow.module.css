@@ -169,6 +169,14 @@
   color: var(--text);
 }
 
+.statValue[data-tone='views'] {
+  color: var(--accent-text);
+}
+
+.statValue[data-tone='conversion'] {
+  color: var(--green);
+}
+
 .statLabel {
   font-size: 11px;
   color: var(--muted);

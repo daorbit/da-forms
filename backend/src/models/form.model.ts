@@ -296,6 +296,7 @@ export interface FormTheme {
   cardWidth?: 'narrow' | 'regular' | 'wide';
   titleSize?: 'sm' | 'md' | 'lg' | 'xl';
   surface?: 'card' | 'flat';
+  showBrandHeader?: boolean;
 }
 
 export interface NotificationSettings {
@@ -521,6 +522,7 @@ const formSchema = new Schema<FormDocument>(
           cardWidth: { type: String, enum: ['narrow', 'regular', 'wide'] },
           titleSize: { type: String, enum: ['sm', 'md', 'lg', 'xl'] },
           surface: { type: String, enum: ['card', 'flat'] },
+          showBrandHeader: { type: Boolean },
         },
         { _id: false }
       ),

@@ -392,7 +392,7 @@ export function PublicFormPage() {
         initialData={editData ?? undefined}
         needsPayerPhone={form.needsPayerPhone}
         onSubmit={handleSubmit}
-        header={<BrandHeader branding={form.branding} />}
+        header={form.theme?.showBrandHeader ? <BrandHeader branding={form.branding} /> : undefined}
         footer={<PoweredBy branding={form.branding} />}
       />
     </FormPage>

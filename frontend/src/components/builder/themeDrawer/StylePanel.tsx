@@ -1,7 +1,7 @@
 import { SegmentedControl, Select } from '@mantine/core';
 import type { FontFamilyId, FormTheme } from '@/types';
 import { FONT_OPTIONS } from '@/lib/formFonts';
-import { SettingsGroup, SettingRow, SettingsStack } from '../settings/SettingsGroup';
+import { SettingsGroup, SettingRow, SettingsStack, SwitchRow } from '../settings/SettingsGroup';
 import { SliderRow } from '../settings/SliderRow';
 import { FieldStyleTiles } from './FieldStyleTiles';
 
@@ -32,6 +32,15 @@ export function StylePanel({ theme, onChange }: Props) {
 
   return (
     <SettingsStack>
+      <SettingsGroup title="Branding">
+        <SwitchRow
+          label="Show logo and name"
+          hint="Your workspace logo and name from Branding, shown above the form."
+          checked={Boolean(theme.showBrandHeader)}
+          onChange={(value) => onChange({ showBrandHeader: value })}
+        />
+      </SettingsGroup>
+
       <SettingsGroup title="Layout">
         <SettingRow label="Surface" hint="Flat drops the card for a clean, open page.">
           <Segmented

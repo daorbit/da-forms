@@ -177,6 +177,7 @@ export interface FormTheme {
   cardWidth?: CardWidth;
   titleSize?: TitleSize;
   surface?: FormSurface;
+  showBrandHeader?: boolean;
 }
 
 /** How a multi-step form shows the respondent where they are. */

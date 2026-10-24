@@ -525,10 +525,16 @@ export async function recordAuditEvent(workspaceId: string, event: AuditEvent): 
   }
 }
 
+export interface OpsAlertField {
+  label: string;
+  value: string;
+}
+
 export interface OpsAlert {
   title: string;
   where: string;
   detail: string;
+  fields?: OpsAlertField[];
 }
 
 export async function relayOpsAlert(alert: OpsAlert): Promise<boolean> {

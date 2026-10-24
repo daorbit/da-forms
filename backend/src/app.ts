@@ -7,6 +7,7 @@ import { connectDb } from './config/db.js';
 import { routes } from './routes/index.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { notFound } from './middleware/not-found.js';
+import { reportServerErrors } from './middleware/report-server-errors.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +22,7 @@ export function createApp() {
   // advance, and the management API is called by whichever product embeds the
   // builder. Nothing here is authorised by origin.
   app.use(cors());
+  app.use(reportServerErrors);
 
   // Before the JSON parser, and deliberately so: the gateways sign the exact
   // bytes they sent, and a parsed-then-re-serialised body would produce a

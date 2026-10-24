@@ -53,7 +53,7 @@ export function sortFor(sort: PipelineSort | undefined): Record<string, 1 | -1> 
 }
 
 export async function pipelineFacets(formId: string): Promise<PipelineFacets> {
-  const filter = { formId, status: 'complete' };
+  const filter = { formId, status: 'complete' as const };
   const [assignees, tags] = await Promise.all([
     SubmissionModel.distinct('assignee', filter),
     SubmissionModel.distinct('tags', filter),

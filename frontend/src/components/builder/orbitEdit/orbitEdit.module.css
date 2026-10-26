@@ -238,14 +238,14 @@
 
 .composer {
   position: relative;
-  border-radius: 24px;
+  border-radius: 12px;
   background: var(--panel-well);
-  box-shadow: inset 0 0 0 1px var(--border);
-  transition: box-shadow 200ms ease, background-color 200ms ease;
+  border: 1px solid var(--border);
+  transition: border-color 200ms ease, background-color 200ms ease;
 }
 
 .composer:focus-within {
-  box-shadow: inset 0 0 0 1.5px var(--accent);
+  border-color: var(--accent);
 }
 
 .composerInputWrapper {
@@ -260,6 +260,15 @@
   background: transparent;
   border: none;
   box-shadow: none;
+  outline: none;
+}
+
+.composer .composerInput.composerInput:focus,
+.composer .composerInput.composerInput:focus-within,
+.composer .composerInput.composerInput:focus-visible {
+  border: none;
+  box-shadow: none;
+  outline: none;
 }
 
 .composer .composerInput::placeholder {

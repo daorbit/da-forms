@@ -1,6 +1,6 @@
 .page {
   container-type: inline-size;
-  padding: 24px 24px 40px;
+  padding: 16px 16px 32px;
 }
 
 @media (max-width: 48em) {

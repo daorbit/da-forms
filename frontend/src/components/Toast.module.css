@@ -6,9 +6,9 @@
   padding: 8px 16px;
   border: 0;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--accent) 82%, transparent);
-  backdrop-filter: saturate(160%) blur(14px);
-  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  background: var(--toast-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 6px 20px -10px rgba(15, 17, 21, 0.35);
 }
 

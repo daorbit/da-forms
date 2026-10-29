@@ -3,6 +3,7 @@ import type {
   Form,
   FormField,
   Submission,
+  SubmissionInvoice,
   Paginated,
   PaymentRequired,
   PaymentSettings,
@@ -266,6 +267,12 @@ export function updateSubmission(
   return request<Submission>(`${ws(workspaceId)}/${formId}/submissions/${submissionId}`, {
     method: 'PATCH',
     body: JSON.stringify(patch),
+  });
+}
+
+export function createSubmissionInvoice(formId: string, submissionId: string, workspaceId = DEFAULT_WORKSPACE) {
+  return request<SubmissionInvoice>(`${ws(workspaceId)}/${formId}/submissions/${submissionId}/invoice`, {
+    method: 'POST',
   });
 }
 

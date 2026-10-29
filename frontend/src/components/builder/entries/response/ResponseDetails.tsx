@@ -81,7 +81,7 @@ export function ResponseDetails({ submission }: { submission: Submission }) {
       )}
       {submission.payment && (
         <Item term="Payment">
-          <PaymentCell payment={submission.payment} />
+          <PaymentCell payment={submission.payment} submission={submission} />
         </Item>
       )}
     </dl>

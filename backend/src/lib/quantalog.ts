@@ -18,6 +18,7 @@ export interface FormLimits {
   submissionCredits: number;
   notificationEmails: boolean;
   fileUploads: boolean;
+  invoicingEnabled?: boolean;
 }
 
 /** How long a workspace's limits are reused before asking again. */

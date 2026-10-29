@@ -31,7 +31,9 @@ export function hasAnswer(field: ResponseColumn, submission: Submission): boolea
 }
 
 export function AnswerValue({ field, submission, onOpenAttachment }: Props) {
-  if (field.type === 'payment') return <PaymentCell payment={submission.payment} />;
+  if (field.type === 'payment') {
+    return <PaymentCell payment={submission.payment} submission={submission} invoiceEnabled={Boolean(field.pay?.invoice?.enabled)} />;
+  }
   if (field.type === 'booking') return <BookingAnswer field={field} submission={submission} />;
 
   const raw = answerText(submission.data[field.id]);

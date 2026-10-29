@@ -5,8 +5,9 @@ import { recordSubmission } from '../lib/quantalog.js';
 import { sendSubmissionNotifications } from './notification.service.js';
 import { deliverWebhook } from './webhook.service.js';
 import { syncSubmissionToSheet } from './sheetsSync.service.js';
+import { issueSubmissionInvoice } from './submissionInvoice.service.js';
 
-const EFFECT_NAMES = ['notifications', 'webhook', 'google-sheets', 'quota'] as const;
+const EFFECT_NAMES = ['notifications', 'webhook', 'google-sheets', 'quota', 'invoice'] as const;
 
 export interface SubmissionEffectsInput {
   form: FormDocument & { _id: unknown };
@@ -34,6 +35,7 @@ async function runEffects(input: SubmissionEffectsInput): Promise<void> {
     deliverWebhook(form, data, submissionId, payment),
     syncSubmissionToSheet(form, data, submissionId, payment, booking),
     recordSubmission(form.workspaceId),
+    payment?.status === 'paid' ? issueSubmissionInvoice(form, submissionId) : Promise.resolve(),
   ]);
 
   results.forEach((result, i) => {

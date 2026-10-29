@@ -137,7 +137,13 @@ export interface FormField {
 
 export type PaymentMode = 'fixed' | 'field' | 'modifiable';
 
+export interface PaymentInvoiceConfig {
+  enabled?: boolean;
+  taxRate?: number;
+}
+
 export interface PaymentConfig {
+  invoice?: PaymentInvoiceConfig;
 
   mode: PaymentMode;
   provider?: PaymentProvider;

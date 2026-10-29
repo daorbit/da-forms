@@ -60,6 +60,8 @@ export function currencySymbol(code: string): string {
 }
 
 /** Minor units to a display string — 149900 paise reads as ₹1,499.00. */
+export const INVOICE_TAX_RATES = [0, 5, 12, 18, 28];
+
 export function formatAmount(minorUnits: number, currency: string): string {
   const major = minorUnits / 100;
   try {

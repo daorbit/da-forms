@@ -257,7 +257,13 @@ export interface FormField {
  
 export type PaymentMode = 'fixed' | 'field' | 'modifiable';
 
+export interface PaymentInvoiceConfig {
+  enabled?: boolean;
+  taxRate?: number;
+}
+
 export interface PaymentConfig {
+  invoice?: PaymentInvoiceConfig;
   /**
    * - 'fixed': every respondent pays `amount`.
    * - 'field': the price is another field's answer — a number typed, or the
@@ -552,6 +558,15 @@ export interface SubmissionPayment {
   method?: string;
 }
 
+export interface SubmissionInvoice {
+  status: 'created' | 'failed';
+  id?: string;
+  number?: string;
+  shareUrl?: string;
+  error?: string;
+  at: string;
+}
+
 export interface Submission {
   _id: string;
   formId: string;
@@ -562,6 +577,7 @@ export interface Submission {
   attribution?: SubmissionAttribution;
   status?: 'complete' | 'pending_payment';
   payment?: SubmissionPayment;
+  invoice?: SubmissionInvoice;
   booking?: SubmissionBooking;
 
   quiz?: { score: number; total: number; correct: number; questions: number };

@@ -16,6 +16,7 @@ import {
 import { GatewayLogo } from '@/components/builder/GatewayLogos';
 import payClasses from '@/components/builder/GatewayPicker.module.css';
 import { FieldPair, PropertySection } from './PropertySection';
+import { PaymentInvoiceSettings } from './PaymentInvoiceSettings';
 import type { SectionProps } from './types';
 import classes from './PaymentSection.module.css';
 
@@ -244,6 +245,8 @@ export function PaymentSection({ field, set, allFields, paymentSettings, onOpenP
           Your {providerLabel} account must be enabled for this currency, or checkout will fail.
         </div>
       )}
+
+      <PaymentInvoiceSettings invoice={field.pay?.invoice} onChange={(invoice) => setPay({ invoice })} />
 
       {problem && <div className={classes.problem}>{problem}</div>}
       {stepIssue && <div className={classes.problem}>{stepIssue}</div>}

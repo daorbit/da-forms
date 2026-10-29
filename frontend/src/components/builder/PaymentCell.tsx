@@ -13,12 +13,15 @@ import {
   Box,
 } from '@mantine/core';
 import { CheckIcon, CopyIcon } from 'lucide-react';
-import type { PaymentProvider, SubmissionPayment } from '@/types';
+import type { PaymentProvider, Submission, SubmissionPayment } from '@/types';
 import { formatAmount } from '@/lib/payment';
 import { GatewayLogo } from './GatewayLogos';
+import { PaymentInvoiceRow } from './PaymentInvoiceRow';
 
 interface Props {
   payment?: SubmissionPayment;
+  submission?: Submission;
+  invoiceEnabled?: boolean;
 }
 
  
@@ -58,7 +61,7 @@ function Row({ label, value }: { label: string; value?: string }) {
   );
 }
  
-export function PaymentCell({ payment }: Props) {
+export function PaymentCell({ payment, submission, invoiceEnabled = false }: Props) {
   const [open, setOpen] = useState(false);
  
   if (!payment) {
@@ -155,6 +158,7 @@ export function PaymentCell({ payment }: Props) {
             <Row label="Method" value={payment.method?.toUpperCase()} />
             <Row label="Email" value={payment.payerEmail} />
             <Row label="Phone" value={payment.payerContact} />
+            {submission && <PaymentInvoiceRow submission={submission} enabled={invoiceEnabled} />}
           </Stack>
 
           <Text size="xs" c="dimmed">

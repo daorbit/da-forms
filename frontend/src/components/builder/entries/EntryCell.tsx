@@ -17,7 +17,9 @@ interface Props {
 }
 
 export function EntryCell({ field, submission, onView, onOpenAttachment }: Props) {
-  if (field.type === 'payment') return <PaymentCell payment={submission.payment} />;
+  if (field.type === 'payment') {
+    return <PaymentCell payment={submission.payment} submission={submission} invoiceEnabled={Boolean(field.pay?.invoice?.enabled)} />;
+  }
 
   if (field.type === 'booking') return <BookingCell field={field} submission={submission} />;
 

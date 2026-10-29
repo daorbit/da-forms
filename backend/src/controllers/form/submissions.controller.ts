@@ -5,6 +5,7 @@ import * as importService from "../../services/submission-import.service.js";
 import { formLeadSources, formLegacyEmbeds, workspaceLeadSources } from "../../services/leadSources.service.js";
 import { loadOwnedForm, workspaceIdOf } from "./shared.js";
 import { audit, formTarget } from "../../lib/audit.js";
+import { issueSubmissionInvoice } from "../../services/submissionInvoice.service.js";
 
 const SORTS = ["newest", "oldest", "score"] as const;
 
@@ -245,4 +246,14 @@ export const getLeadSources: RequestHandler = async (req, res) => {
   const days = LEAD_SOURCE_RANGES[range];
   const since = days ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : undefined;
   res.json(await workspaceLeadSources(workspaceIdOf(req), since));
+};
+
+export const createSubmissionInvoice: RequestHandler = async (req, res) => {
+  const form = await loadOwnedForm(req, res);
+  if (!form) return;
+  const outcome = await issueSubmissionInvoice(form, req.params.subId);
+  if (!outcome.ok) {
+    return res.status(outcome.status).json({ error: outcome.code, message: outcome.error });
+  }
+  res.status(201).json(outcome.invoice);
 };

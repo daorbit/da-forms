@@ -10,6 +10,8 @@ export const env = {
   /** Where to ask what a workspace's plan allows. Unset disables plan limits entirely. */
   quantalogApiUrl: (process.env.QUANTALOG_API_URL ?? '').replace(/\/$/, ''),
   formsServiceSecret: process.env.FORMS_SERVICE_SECRET ?? '',
+  invoicesApiUrl: (process.env.INVOICES_API_BASE ?? '').replace(/\/$/, ''),
+  formsInvoiceSecret: process.env.FORMS_INVOICE_SECRET ?? '',
   /**
    * Shared secret the scheduled-cleanup route requires. Unset means the route
    * refuses every caller: a sweep that deletes uploads must never be reachable

@@ -26,6 +26,15 @@ export interface SubmissionPayment {
   method?: string;
 }
 
+export interface SubmissionInvoice {
+  status: 'created' | 'failed';
+  id?: string;
+  number?: string;
+  shareUrl?: string;
+  error?: string;
+  at: Date;
+}
+
 export interface SubmissionBooking {
   fieldId: string;
   start: Date;
@@ -98,6 +107,7 @@ export interface SubmissionDocument {
   /** Bumped on every autosave, so the sweep can age rows out by inactivity. */
   updatedAt?: Date;
   payment?: SubmissionPayment;
+  invoice?: SubmissionInvoice;
   booking?: SubmissionBooking;
   /**
    * What this response scored, on a form that has an answer key.
@@ -163,6 +173,19 @@ const submissionSchema = new Schema<SubmissionDocument>(
           payerEmail: { type: String },
           payerContact: { type: String },
           method: { type: String },
+        },
+        { _id: false }
+      ),
+    },
+    invoice: {
+      type: new Schema<SubmissionInvoice>(
+        {
+          status: { type: String, enum: ['created', 'failed'], required: true },
+          id: { type: String },
+          number: { type: String },
+          shareUrl: { type: String },
+          error: { type: String },
+          at: { type: Date, default: Date.now },
         },
         { _id: false }
       ),

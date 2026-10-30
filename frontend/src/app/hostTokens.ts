@@ -4,7 +4,7 @@ import { FONT_SIZE_PX, type HostTheme } from './themeParams';
 
 const FONT_BASE_PX: Record<string, number> = { xs: 12, sm: 14, md: 16, lg: 18, xl: 20 };
 
-const BRAND_ACCENT = '#2f6bff';
+const BRAND_ACCENT = '#0071e3';
 
 const NEUTRAL_SOFT = {
   light: 'color-mix(in srgb, var(--text) 6%, transparent)',

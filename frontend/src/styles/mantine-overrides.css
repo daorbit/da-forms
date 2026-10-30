@@ -42,8 +42,9 @@
 }
 
 .mantine-SegmentedControl-root {
-  background: color-mix(in srgb, var(--text) 6%, transparent);
+  background: var(--segment-track);
   border: 0;
+  padding: 3px;
 }
 
 .mantine-SegmentedControl-indicator {
@@ -55,22 +56,19 @@
   z-index: 0;
   color: var(--text-2);
   font-weight: 500;
+  letter-spacing: -0.005em;
 }
 
 .mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active]::before {
   display: block;
   z-index: -1;
-  background-color: var(--surface);
-  box-shadow: 0 0 0 1px var(--border);
-}
-
-[data-mantine-color-scheme='dark'] .mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active]::before {
-  background-color: var(--gray-7);
-  box-shadow: none;
+  background-color: var(--segment-thumb);
+  box-shadow: 0 0 0 1px var(--segment-thumb-edge);
 }
 
 .mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active] {
   color: var(--text);
+  font-weight: 600;
 }
 
 .mantine-ScrollArea-scrollbar {
@@ -347,4 +345,28 @@
   color: var(--text-2);
   font-size: 13px;
   line-height: 1.5;
+}
+
+html:root[data-mantine-color-scheme='light'] {
+  --mantine-color-default-border: var(--border-strong);
+  --mantine-color-gray-light: color-mix(in srgb, var(--text) 5%, transparent);
+  --mantine-color-gray-light-hover: color-mix(in srgb, var(--text) 9%, transparent);
+  --mantine-color-gray-light-color: var(--text-2);
+  --mantine-color-dark-light: color-mix(in srgb, var(--text) 5%, transparent);
+  --mantine-color-dark-light-hover: color-mix(in srgb, var(--text) 9%, transparent);
+}
+
+:is(.mantine-Button-root, .mantine-ActionIcon-root):not(.da-forms-light-surface *) {
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+}
+
+:root[data-mantine-color-scheme='light'] :is(.mantine-Button-root, .mantine-ActionIcon-root)[data-variant='default']:not(.da-forms-light-surface *):not([data-disabled]):hover {
+  border-color: var(--border-hover);
+}
+
+:root .mantine-Input-input:not(.da-forms-light-surface *):hover:not(:focus):not(:focus-within):not([data-disabled]):not([data-error]) {
+  border-color: var(--border-hover);
 }

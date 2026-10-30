@@ -46,13 +46,17 @@ export const theme = createTheme({
   spacing: { xs: rem(8), sm: rem(12), md: rem(16), lg: rem(24), xl: rem(32) },
   cursorType: 'pointer',
   colors: {
+    gray: [
+      '#f8f8fa', '#f2f2f4', '#e9e9ed', '#dedee3', '#d2d2d7',
+      '#aeaeb2', '#86868b', '#48484a', '#333336', '#1d1d1f',
+    ],
     emerald: [
-      '#eef3ff', '#dce6ff', '#b5c8ff', '#8fadff', '#5f8bff',
-      '#4776ff', '#2f6bff', '#255fef', '#1f55d6', '#142c66',
+      '#e6f0fd', '#cce2fb', '#99c5f6', '#66a8f1', '#338ced',
+      '#1a7fe8', '#0071e3', '#0066cc', '#0058b0', '#00305f',
     ],
     dark: [
-      '#d4d5da', '#b0b2ba', '#8a8c95', '#6b6d76', '#303137',
-      '#222327', '#1c1d21', '#16171a', '#111214', '#0b0c0e',
+      '#d1d1d6', '#aeaeb2', '#8e8e93', '#636366', '#3a3a3c',
+      '#2c2c2e', '#242426', '#1c1c1e', '#0b0b0c', '#000000',
     ],
   },
   shadows: {
@@ -142,6 +146,7 @@ export const theme = createTheme({
     Card: { defaultProps: { radius: 'lg' } },
     Button: Button.extend({
       defaultProps: { radius: 'md' },
+      styles: { label: { fontWeight: 550, letterSpacing: '-0.01em' } },
       vars: (_theme, props) =>
         (props.variant === undefined || props.variant === 'filled') &&
         (!props.color || props.color === 'emerald')

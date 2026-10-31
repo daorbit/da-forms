@@ -185,9 +185,9 @@
   --segment-thumb: #ffffff;
   --segment-thumb-edge: color-mix(in srgb, var(--text) 9%, transparent);
 
-  --green: #1a9f4a;
-  --amber: #d98a00;
-  --red: #e5484d;
+  --green: #15803d;
+  --amber: #b25e00;
+  --red: #d1242a;
   --pink: #db2777;
   --cyan: #0891b2;
 

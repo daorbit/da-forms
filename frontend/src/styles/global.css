@@ -8,14 +8,20 @@
   box-sizing: border-box;
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
 }
 
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
 }
 
 *::-webkit-scrollbar-track {

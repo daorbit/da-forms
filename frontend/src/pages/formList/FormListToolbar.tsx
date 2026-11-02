@@ -1,5 +1,6 @@
-import { ActionIcon, Button, Menu, Tooltip } from '@mantine/core';
-import { CheckIcon, ChevronDownIcon, RefreshCwIcon } from 'lucide-react';
+import { Button, Menu } from '@mantine/core';
+import { CheckIcon, ChevronDownIcon } from 'lucide-react';
+import { RefreshButton } from '@/components/ui/RefreshButton';
 import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
 import { SearchField } from '@/components/ui/SearchField';
 import toolbar from '@/components/ui/toolbar.module.css';
@@ -62,11 +63,7 @@ export function FormListToolbar({
           </Menu.Dropdown>
         </Menu>
 
-        <Tooltip label="Refresh" withArrow>
-          <ActionIcon variant="subtle" className={toolbar.iconButton} size={34} radius="xl" onClick={onRefresh} aria-label="Refresh">
-            <RefreshCwIcon size={16} className={loading ? toolbar.spinning : undefined} />
-          </ActionIcon>
-        </Tooltip>
+        <RefreshButton hint="Load the latest forms" refreshing={loading} onRefresh={onRefresh} />
       </div>
     </div>
   );

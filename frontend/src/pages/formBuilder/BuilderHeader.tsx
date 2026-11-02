@@ -148,7 +148,7 @@ export function BuilderHeader({
               </Button>
             </>
           )}
-          {embedded && <HostNotificationsBell variant="subtle" iconSize={18} />}
+          {embedded && <HostNotificationsBell />}
         </Group>
       </Group>
     </AppShell.Header>

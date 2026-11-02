@@ -5,12 +5,7 @@ import { useHostUnreadCount } from '@/hooks/useHostUnreadCount';
 import { useHostPhone } from '@/hooks/useHostPhone';
 import classes from './HostNotificationsBell.module.css';
 
-interface Props {
-  variant?: 'default' | 'subtle';
-  iconSize?: number;
-}
-
-export function HostNotificationsBell({ variant = 'default', iconSize = 17 }: Props) {
+export function HostNotificationsBell() {
   const count = useHostUnreadCount();
   const hostPhone = useHostPhone();
   if (hostPhone) return null;
@@ -20,15 +15,8 @@ export function HostNotificationsBell({ variant = 'default', iconSize = 17 }: Pr
   return (
     <Tooltip label={label} withArrow>
       <span className={classes.bell}>
-        <ActionIcon
-          variant={variant}
-          color={variant === 'subtle' ? 'gray' : undefined}
-          size="lg"
-          radius="md"
-          aria-label={label}
-          onClick={requestOpenNotifications}
-        >
-          <Bell size={iconSize} />
+        <ActionIcon variant="default" size="lg" radius="md" aria-label={label} onClick={requestOpenNotifications}>
+          <Bell size={17} />
         </ActionIcon>
         {count > 0 && (
           <span className={classes.badge} data-wide={badge.length > 2 || undefined} aria-hidden>

@@ -1,17 +1,15 @@
 import type { ReactNode } from 'react';
-import { ActionIcon, Tooltip } from '@mantine/core';
 import {
   ArrowDownUpIcon,
   CalendarDaysIcon,
   LayoutListIcon,
-  RefreshCwIcon,
   SquareKanbanIcon,
   TableIcon,
 } from 'lucide-react';
 import type { PipelineFacets, PipelineSort } from '@/types';
+import { RefreshButton } from '@/components/ui/RefreshButton';
 import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
 import { SearchField } from '@/components/ui/SearchField';
-import toolbar from '@/components/ui/toolbar.module.css';
 import { FilterMenu } from './FilterMenu';
 import { FilterPopover } from './toolbar/FilterPopover';
 import { ActiveFilters } from './toolbar/ActiveFilters';
@@ -128,18 +126,12 @@ export function EntriesFilterBar(props: Props) {
               onSelect={(sort) => props.onPipelineChange({ sort: (sort as PipelineSort | undefined) ?? 'newest' })}
             />
           )}
-          <Tooltip label="Refresh" withArrow>
-            <ActionIcon
-              variant="subtle"
-              size={34}
-              radius="xl"
-              className={toolbar.iconButton}
-              onClick={props.onRefresh}
-              aria-label="Refresh responses"
-            >
-              <RefreshCwIcon size={16} className={props.loading ? toolbar.spinning : undefined} />
-            </ActionIcon>
-          </Tooltip>
+          <RefreshButton
+            hint="Load the latest responses"
+            label="Refresh responses"
+            refreshing={props.loading}
+            onRefresh={props.onRefresh}
+          />
         </div>
       </div>
 

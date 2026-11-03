@@ -88,9 +88,9 @@ export function refreshWorkspaceToken(timeoutMs = 5000): Promise<string> {
 
     function onMessage(event: MessageEvent) {
       // The host's origin is not known here — it is whatever product embedded
-      // this — so the message is identified by its shape instead. Nothing
-      // secret is being sent outward, and a forged token simply fails
-      // verification at the server, which is the check that actually matters.
+      // this — so only the parent window is listened to. A forged token still
+      // fails verification at the server, which is the check that matters.
+      if (event.source !== window.parent) return;
       if (event.data?.type !== 'quantalog:workspace-token') return;
       settle(typeof event.data.token === 'string' ? event.data.token : '');
     }

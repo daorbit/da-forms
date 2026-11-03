@@ -62,4 +62,10 @@ export const env = {
   googleCalendarClientId: process.env.GOOGLE_CALENDAR_CLIENT_ID ?? '',
   googleCalendarClientSecret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET ?? '',
   googleCalendarRedirectUri: process.env.GOOGLE_CALENDAR_REDIRECT_URI ?? '',
+  dashboardOrigins: originList(process.env.DASHBOARD_ORIGINS),
 };
+
+function originList(raw: string | undefined): string[] {
+  const value = raw || 'https://studio-quantalog.daorbit.in,http://localhost:5173,http://localhost:5174';
+  return value.split(',').map((origin) => origin.trim().replace(/\/$/, '')).filter(Boolean);
+}

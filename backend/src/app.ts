@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { env } from './config/env.js';
@@ -8,6 +7,7 @@ import { routes } from './routes/index.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { notFound } from './middleware/not-found.js';
 import { reportServerErrors } from './middleware/report-server-errors.js';
+import { serviceCors } from './middleware/service-cors.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,10 +18,7 @@ export function createApp() {
   // always the proxy's address, breaking both the rate limiter and view dedup.
   app.set('trust proxy', true);
 
-  // Open to every origin: the forms are embedded on sites we do not know in
-  // advance, and the management API is called by whichever product embeds the
-  // builder. Nothing here is authorised by origin.
-  app.use(cors());
+  app.use(serviceCors);
   app.use(reportServerErrors);
 
   // Before the JSON parser, and deliberately so: the gateways sign the exact

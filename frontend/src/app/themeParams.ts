@@ -31,6 +31,7 @@ export interface HostTheme {
   fontSize: FontSize;
   table: TableStyle;
   motion: boolean;
+  texturedBg: boolean;
 }
 
 function pick<T extends string>(value: string | null, allowed: readonly T[], fallback: T): T {
@@ -53,6 +54,7 @@ export function readHostTheme(search: string): HostTheme {
     fontSize: pick<FontSize>(params.get('font'), ['small', 'default', 'large'], 'default'),
     table: pick<TableStyle>(params.get('table'), ['plain', 'striped'], 'plain'),
     motion: params.get('motion') !== 'off',
+    texturedBg: params.get('bg') === 'textured',
   };
 }
 

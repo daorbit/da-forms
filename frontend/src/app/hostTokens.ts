@@ -1,4 +1,4 @@
-import { HOST_BG_WASH, HOST_TEXTURED_BG, IS_EMBEDDED } from '@/lib/bootParams';
+import { HOST_BG_WASH, IS_EMBEDDED } from '@/lib/bootParams';
 import { buildScale } from '@/lib/color';
 import { FONT_SIZE_PX, type HostTheme } from './themeParams';
 
@@ -18,6 +18,7 @@ const NEUTRAL_SOFT_HOVER = {
 
 function applyAccent(root: HTMLElement, host: HostTheme) {
   if (host.accent) root.style.setProperty('--accent', host.accent);
+  else root.style.removeProperty('--accent');
   const scale = buildScale(BRAND_ACCENT, 6);
   const soft = host.dark ? NEUTRAL_SOFT.dark : NEUTRAL_SOFT.light;
   const softHover = host.dark ? NEUTRAL_SOFT_HOVER.dark : NEUTRAL_SOFT_HOVER.light;
@@ -41,10 +42,18 @@ function applyAccent(root: HTMLElement, host: HostTheme) {
 
 function applyFontSize(root: HTMLElement, px: number) {
   const scale = px / FONT_SIZE_PX.default;
-  if (scale === 1) return;
   for (const [step, base] of Object.entries(FONT_BASE_PX)) {
-    root.style.setProperty(`--mantine-font-size-${step}`, `${Math.round(base * scale * 10) / 10}px`);
+    const name = `--mantine-font-size-${step}`;
+    if (scale === 1) root.style.removeProperty(name);
+    else root.style.setProperty(name, `${Math.round(base * scale * 10) / 10}px`);
   }
+}
+
+function applyBackground(root: HTMLElement, textured: boolean) {
+  if (textured) root.setAttribute('data-host-bg', 'textured');
+  else root.removeAttribute('data-host-bg');
+  if (textured && HOST_BG_WASH) root.style.setProperty('--host-bg-wash', HOST_BG_WASH);
+  else root.style.removeProperty('--host-bg-wash');
 }
 
 export function applyHostTokens(host: HostTheme) {
@@ -58,6 +67,5 @@ export function applyHostTokens(host: HostTheme) {
   root.setAttribute('data-motion', host.motion ? 'on' : 'off');
 
   if (IS_EMBEDDED) root.setAttribute('data-embedded', '');
-  if (HOST_TEXTURED_BG) root.setAttribute('data-host-bg', 'textured');
-  if (HOST_BG_WASH) root.style.setProperty('--host-bg-wash', HOST_BG_WASH);
+  applyBackground(root, IS_EMBEDDED && host.texturedBg);
 }

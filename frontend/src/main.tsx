@@ -16,25 +16,23 @@ import '@/styles/global.css';
 import '@/styles/mobile.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { PlanLimitDialog } from './components/PlanLimitDialog';
 import { App } from '@/app/App';
-import { readHostTheme, themeFromHost } from '@/app/themeParams';
+import { HostThemeProvider } from '@/app/HostThemeProvider';
+import { readHostTheme } from '@/app/themeParams';
 import { applyHostTokens } from '@/app/hostTokens';
 import { BOOT_SEARCH } from '@/lib/bootParams';
 
 const host = readHostTheme(BOOT_SEARCH);
 applyHostTokens(host);
-const theme = themeFromHost(host);
-const { colorScheme } = host;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <MantineProvider theme={theme} defaultColorScheme={colorScheme} forceColorScheme={colorScheme === 'auto' ? undefined : colorScheme}>
+    <HostThemeProvider initial={host}>
       <Notifications position="top-center" limit={3} />
       <PlanLimitDialog />
       <App />
-    </MantineProvider>
+    </HostThemeProvider>
   </React.StrictMode>,
 );

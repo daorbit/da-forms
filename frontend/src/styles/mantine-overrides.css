@@ -91,7 +91,7 @@
 
 .mantine-Modal-content:not([data-full-screen]) {
   border-radius: 18px;
-  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  background: var(--overlay-bg);
   backdrop-filter: saturate(180%) blur(40px);
   -webkit-backdrop-filter: saturate(180%) blur(40px);
 }

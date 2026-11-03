@@ -31,6 +31,7 @@
   --rail: var(--gray-1);
   --surface: var(--gray-3);
   --surface-2: var(--gray-4);
+  --overlay-bg: color-mix(in srgb, var(--surface-2) 96%, transparent);
   --surface-hover: var(--gray-5);
   --surface-active: var(--gray-6);
   --border: var(--gray-6);
@@ -158,12 +159,13 @@
   --blue-11: #0066cc;
   --blue-12: #00305f;
 
-  --bg: var(--gray-2);
+  --bg: var(--gray-1);
   --bg-2: #ffffff;
-  --shell: var(--gray-2);
-  --rail: var(--gray-2);
+  --shell: var(--gray-1);
+  --rail: var(--gray-1);
   --surface: #ffffff;
   --surface-2: var(--gray-3);
+  --overlay-bg: color-mix(in srgb, var(--surface) 96%, transparent);
   --surface-hover: var(--gray-4);
   --surface-active: var(--gray-5);
   --border: var(--gray-5);

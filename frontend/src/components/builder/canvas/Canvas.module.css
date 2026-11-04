@@ -153,7 +153,7 @@
 }
 
 .quickItem[data-active] {
-  background-color: var(--surface-2);
+  background-color: var(--accent-soft);
 }
 
 .quickIcon {

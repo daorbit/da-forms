@@ -238,7 +238,7 @@
   padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--surface-2);
+  background: var(--card-bg);
 }
 
 .summaryIcon {

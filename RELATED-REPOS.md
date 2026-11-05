@@ -56,7 +56,7 @@ Both tokens have the same format (`workspaceId.expiresAt.actorId.signature`, HMA
 ## Calls between the backends
 
 **Quantalog → da-forms** (`FORMS_API_BASE`, workspace token)
-- Apps screen (`real-ana-fe/src/features/integrations`, `lib/formsClient.ts`) manages form connections through da-forms `/api/workspaces/:id/settings/*`: email (Brevo, SMTP), Slack, Discord, Teams, Google Chat, payments (Razorpay, Cashfree, PayU), Google Calendar, Google Sheets, webhook. da-forms has no connections UI of its own.
+- Apps screen (`real-ana-fe/src/features/integrations`, `lib/formsClient.ts`) manages form connections through da-forms `/api/workspaces/:id/settings/*`: email (Brevo, Resend, SMTP), Slack, Discord, Teams, Google Chat, payments (Razorpay, Cashfree, PayU), Google Calendar, Google Sheets, webhook. da-forms has no connections UI of its own.
 - The MCP connector for Claude and ChatGPT reads forms and submissions from da-forms (`real-ana-be/src/infra/http-client/forms-service.ts`).
 - Quantalog Popups shows published da-forms forms on customer sites through `tracker.js`.
 - Workspace deletion calls da-forms `DELETE /api/internal/workspaces/:id` (`Bearer FORMS_SERVICE_SECRET`).

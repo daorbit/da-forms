@@ -1,4 +1,5 @@
-import nodemailer, { type Transporter } from 'nodemailer';
+import nodemailer from 'nodemailer';
+import { createResendTransport, type MailAttachment, type MailTransport } from './resendTransport.js';
 import {
   resolveEmailConnection,
   resolveConnection,
@@ -11,7 +12,7 @@ import type { AppId } from '../models/appConnection.model.js';
  * Outbound mail, sent through whatever email app the workspace has connected.
  *
  * There is no server-wide fallback transport any more: a workspace that has not
- * connected Custom SMTP or Brevo sends nothing, and `mailConfigured` says so
+ * connected Custom SMTP, Brevo or Resend sends nothing, and `mailConfigured` says so
  * before a caller builds a message it cannot deliver.
  *
  * Transports are built per workspace and cached briefly — a form being filled
@@ -20,7 +21,7 @@ import type { AppId } from '../models/appConnection.model.js';
  */
 
 interface CachedTransport {
-  transporter: Transporter;
+  transporter: MailTransport;
   from: string;
   appId: ResolvedConnection['appId'];
   at: number;
@@ -48,8 +49,10 @@ function fromHeader(conn: ResolvedConnection): string {
   return name ? `"${name}" <${email}>` : email;
 }
 
-/** A nodemailer transport for one resolved connection. */
-function buildTransport(conn: ResolvedConnection): Transporter {
+/** A mail transport for one resolved connection. */
+function buildTransport(conn: ResolvedConnection): MailTransport {
+  if (conn.appId === 'resend') return createResendTransport(conn.secrets.apiKey);
+
   if (conn.appId === 'brevo') {
     // Brevo's SMTP relay — no extra dependency. The username is the account's
     // own login email and the password is a dedicated SMTP key (not a REST API
@@ -127,7 +130,7 @@ export async function sendMail(
    * a template decision, and the mailer's job is only to put the part on the
    * wire beside it.
    */
-  attachments: { filename: string; content: Buffer; cid: string; contentType?: string }[] = []
+  attachments: MailAttachment[] = []
 ): Promise<void> {
   const entry = await getCached(workspaceId);
   if (!entry) throw new Error(`No email app connected for workspace ${workspaceId}`);

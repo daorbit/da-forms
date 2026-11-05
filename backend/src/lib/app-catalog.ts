@@ -80,6 +80,32 @@ export const APP_CATALOG: AppDescriptor[] = [
     ],
   },
   {
+    id: 'resend',
+    name: 'Resend',
+    category: 'email',
+    description: 'Send notification emails through your Resend account.',
+    docsUrl: 'https://resend.com/docs/dashboard/domains/introduction',
+    testable: true,
+    fields: [
+      {
+        key: 'apiKey',
+        label: 'API key',
+        type: 'password',
+        secret: true,
+        required: true,
+        placeholder: 're_…',
+        help: 'Create one on the API Keys page in Resend. Sending access is enough.',
+      },
+      {
+        ...FROM_FIELDS[0],
+      },
+      {
+        ...FROM_FIELDS[1],
+        help: 'Must be on a domain you have verified in Resend.',
+      },
+    ],
+  },
+  {
     id: 'smtp',
     name: 'Custom SMTP',
     category: 'email',

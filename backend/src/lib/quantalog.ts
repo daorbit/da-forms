@@ -69,6 +69,26 @@ export async function getFormLimits(workspaceId: string): Promise<FormLimits | n
 }
 
 
+export type EmailSuppressionReason = 'bounced' | 'complained';
+
+export async function reportEmailSuppressions(
+  workspaceId: string,
+  emails: string[],
+  reason: EmailSuppressionReason
+): Promise<void> {
+  if (!isConfigured()) return;
+  const res = await fetch(
+    `${env.quantalogApiUrl}/api/internal/forms/email-suppressions/${encodeURIComponent(workspaceId)}`,
+    {
+      method: 'POST',
+      headers: { authorization: `Bearer ${env.formsServiceSecret}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ emails, reason }),
+      signal: AbortSignal.timeout(8000),
+    }
+  );
+  if (!res.ok) throw new Error(`Quantalog refused the email suppression (${res.status})`);
+}
+
 export interface Branding {
   name: string;
   logoUrl?: string;

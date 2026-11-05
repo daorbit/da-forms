@@ -103,6 +103,15 @@ export const APP_CATALOG: AppDescriptor[] = [
         ...FROM_FIELDS[1],
         help: 'Must be on a domain you have verified in Resend.',
       },
+      {
+        key: 'webhookSecret',
+        label: 'Webhook signing secret',
+        type: 'password',
+        secret: true,
+        required: false,
+        placeholder: 'whsec_…',
+        help: 'Optional. Lets Quantalog stop emailing addresses that bounce or mark you as spam.',
+      },
     ],
   },
   {

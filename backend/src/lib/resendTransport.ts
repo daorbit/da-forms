@@ -12,6 +12,7 @@ export interface MailMessage {
   html: string;
   text: string;
   attachments?: MailAttachment[];
+  headers?: Record<string, string>;
 }
 
 export interface MailTransport {
@@ -62,7 +63,7 @@ function toResendAttachment(attachment: MailAttachment) {
 
 export function createResendTransport(apiKey: string): MailTransport {
   return {
-    async sendMail({ from, to, subject, html, text, attachments }) {
+    async sendMail({ from, to, subject, html, text, attachments, headers }) {
       const res = await request(apiKey, '/emails', {
         method: 'POST',
         body: JSON.stringify({
@@ -72,6 +73,7 @@ export function createResendTransport(apiKey: string): MailTransport {
           html,
           text,
           ...(attachments?.length ? { attachments: attachments.map(toResendAttachment) } : {}),
+          ...(headers ? { headers } : {}),
         }),
       });
       if (!res.ok) throw failure(res.status, await readError(res));

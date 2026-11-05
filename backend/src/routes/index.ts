@@ -9,6 +9,7 @@ import {
 } from './form.route.js';
 import { cronRouter } from './cron.route.js';
 import { internalRouter } from './internal.route.js';
+import { publicEmailRouter } from './email-webhook.route.js';
 
 export const routes = Router();
 
@@ -19,4 +20,5 @@ routes.use('/workspaces/:workspaceId/forms', workspaceFormRouter);
 routes.use('/workspaces/:workspaceId/settings', workspaceSettingsRouter);
 routes.use('/public/forms', publicFormRouter);
 routes.use('/public/workspaces', publicPaymentRouter);
+routes.use('/public/workspaces', publicEmailRouter);
 routes.use('/google-calendar', googleCalendarRouter);

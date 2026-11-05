@@ -130,7 +130,8 @@ export async function sendMail(
    * a template decision, and the mailer's job is only to put the part on the
    * wire beside it.
    */
-  attachments: MailAttachment[] = []
+  attachments: MailAttachment[] = [],
+  headers?: Record<string, string>
 ): Promise<void> {
   const entry = await getCached(workspaceId);
   if (!entry) throw new Error(`No email app connected for workspace ${workspaceId}`);
@@ -142,6 +143,7 @@ export async function sendMail(
     html,
     text,
     ...(attachments.length ? { attachments } : {}),
+    ...(headers ? { headers } : {}),
   });
   await markUsed(workspaceId, entry.appId);
 }

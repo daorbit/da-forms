@@ -44,6 +44,10 @@ export function createApp() {
     '/api/public/workspaces/:workspaceId/payments/return/:provider',
     express.raw({ type: () => true, limit: '1mb' })
   );
+  app.use(
+    '/api/public/workspaces/:workspaceId/email/webhook/:provider',
+    express.raw({ type: () => true, limit: '1mb' })
+  );
   /*
    * Stated rather than left at the 100kb default.
    *

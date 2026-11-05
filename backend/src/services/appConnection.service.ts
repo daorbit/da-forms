@@ -236,6 +236,7 @@ function decryptConnection(
     if (!field.secret) continue;
     const enc = doc.secrets?.[field.key];
     if (!enc) {
+      if (!field.required) continue;
       console.warn(
         `[apps] ${doc.appId}: no stored value for secret "${field.key}" — treating the connection as unconfigured`
       );

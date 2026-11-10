@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
-import { InfoIcon, BlocksIcon, PlusIcon, ChartPieIcon } from 'lucide-react';
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { InfoIcon, PlusIcon } from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
@@ -18,13 +17,11 @@ import { NewFormModal } from '@/components/NewFormModal';
 import { CreateFormPage } from './CreateFormPage';
 import { ShareModal } from '@/components/share/ShareModal';
 import { PreviewModal } from '@/components/builder/PreviewModal';
-import { openConnections } from '@/lib/hostConnections';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FormListToolbar } from './formList/FormListToolbar';
 import { FormList } from './formList/FormList';
 import { FormListEmpty } from './formList/FormListEmpty';
 import { DeleteFormModal } from './formList/DeleteFormModal';
-import { LeadSourcesModal } from '@/components/leadSources/LeadSourcesModal';
 import { useFormList } from './formList/useFormList';
 import type { FormRowActions } from './formList/FormRow';
 import classes from './FormListPage.module.css';
@@ -41,7 +38,6 @@ export function FormListPage() {
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [copyingConfigId, setCopyingConfigId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<Form | null>(null);
-  const [sourcesOpen, setSourcesOpen] = useState(false);
   const builderTooSmall = useBuilderTooSmall();
   const { ref: pageRef, width: pageWidth } = useElementSize();
   const compact = pageWidth > 0 && pageWidth <= 640;
@@ -155,8 +151,6 @@ export function FormListPage() {
                 New form
               </Button>
             )}
-            <HeaderIconButton label="Lead sources" icon={ChartPieIcon} tone="teal" onClick={() => setSourcesOpen(true)} />
-            <HeaderIconButton label="Apps" icon={BlocksIcon} tone="violet" onClick={() => openConnections()} />
             {!hostPhone && <DocsButton path="/lead-capture" />}
             {IS_EMBEDDED && <HostNotificationsBell />}
           </>
@@ -254,7 +248,6 @@ export function FormListPage() {
         />
       )}
 
-      <LeadSourcesModal opened={sourcesOpen} workspaceId={workspaceId} onClose={() => setSourcesOpen(false)} />
 
       <DeleteFormModal
         form={pendingDelete}

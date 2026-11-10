@@ -13,6 +13,8 @@ import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useDismissOnHostFocus } from '@/hooks/useDismissOnHostFocus';
 
 const FormAnalyticsPage = lazy(() => import('@/pages/formAnalytics/FormAnalyticsPage'));
+const LeadSourcesPage = lazy(() => import('@/pages/leadSources/LeadSourcesPage'));
+const BookingsPage = lazy(() => import('@/pages/bookings/BookingsPage'));
 
  
 function NewFormRoute() {
@@ -58,6 +60,22 @@ export function App() {
           element={
             <Suspense fallback={<AnalyticsPageSkeleton />}>
               <FormAnalyticsPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/:workspaceId/forms/sources"
+          element={
+            <Suspense fallback={<AnalyticsPageSkeleton />}>
+              <LeadSourcesPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/:workspaceId/forms/bookings"
+          element={
+            <Suspense fallback={<AnalyticsPageSkeleton />}>
+              <BookingsPage />
             </Suspense>
           }
         />

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
-import { InfoIcon, BlocksIcon, PlusIcon, SignpostIcon } from 'lucide-react';
+import { InfoIcon, BlocksIcon, PlusIcon, ChartPieIcon } from 'lucide-react';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
@@ -154,12 +155,8 @@ export function FormListPage() {
                 New form
               </Button>
             )}
-            <Button variant="default" leftSection={<SignpostIcon size={16} />} onClick={() => setSourcesOpen(true)}>
-              Lead sources
-            </Button>
-            <Button variant="default" leftSection={<BlocksIcon size={16} />} onClick={() => openConnections()}>
-              Apps
-            </Button>
+            <HeaderIconButton label="Lead sources" icon={ChartPieIcon} onClick={() => setSourcesOpen(true)} />
+            <HeaderIconButton label="Apps" icon={BlocksIcon} onClick={() => openConnections()} />
             {!hostPhone && <DocsButton path="/lead-capture" />}
             {IS_EMBEDDED && <HostNotificationsBell />}
           </>

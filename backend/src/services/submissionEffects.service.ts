@@ -6,8 +6,9 @@ import { sendSubmissionNotifications } from './notification.service.js';
 import { deliverWebhook } from './webhook.service.js';
 import { syncSubmissionToSheet } from './sheetsSync.service.js';
 import { issueSubmissionInvoice } from './submissionInvoice.service.js';
+import { pushLeadToCrm } from './crmSync.service.js';
 
-const EFFECT_NAMES = ['notifications', 'webhook', 'google-sheets', 'quota', 'invoice'] as const;
+const EFFECT_NAMES = ['notifications', 'webhook', 'google-sheets', 'quota', 'invoice', 'crm'] as const;
 
 export interface SubmissionEffectsInput {
   form: FormDocument & { _id: unknown };
@@ -17,10 +18,11 @@ export interface SubmissionEffectsInput {
   booking?: SubmissionBooking;
   emailsAllowed: boolean;
   allowEditLink: boolean;
+  leadSource?: string;
 }
 
 async function runEffects(input: SubmissionEffectsInput): Promise<void> {
-  const { form, data, submissionId, payment, booking, emailsAllowed, allowEditLink } = input;
+  const { form, data, submissionId, payment, booking, emailsAllowed, allowEditLink, leadSource } = input;
 
   const results = await Promise.allSettled([
     sendSubmissionNotifications(
@@ -36,6 +38,7 @@ async function runEffects(input: SubmissionEffectsInput): Promise<void> {
     syncSubmissionToSheet(form, data, submissionId, payment, booking),
     recordSubmission(form.workspaceId),
     payment?.status === 'paid' ? issueSubmissionInvoice(form, submissionId) : Promise.resolve(),
+    pushLeadToCrm({ form, data, payment, booking, leadSource }),
   ]);
 
   results.forEach((result, i) => {

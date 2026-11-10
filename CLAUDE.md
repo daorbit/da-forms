@@ -54,7 +54,7 @@ Form builder with drag and drop, steps, matrix, ranking, repeater, signature and
 8. A/B variants with a traffic split, compared through the per-form view analytics.
 9. Per-form data retention and deletion of one respondent's data.
 10. Receipt PDF attached to the respondent email. `lib/submissionPdf.ts` is frontend only, so the backend needs its own.
-11. HubSpot and Zoho CRM apps in `lib/app-catalog.ts`. Booking follow-ups: reschedule and cancel links for respondents, reminder emails through `cron.route.ts`.
+11. More CRM apps (HubSpot, Pipedrive, Freshsales) next to Zoho CRM (`lib/zohoCrm.ts`, `services/crmSync.service.ts`). Booking follow-ups: reschedule and cancel links for respondents, reminder emails through `cron.route.ts`.
 12. Replace the remaining inline `style={{}}` props in the frontend (about 80) with CSS modules.
 13. Add tests for submission validation and the payment webhooks. `formula`, `conditions`, `attribution` and `summaryWindow` already have tests.
 

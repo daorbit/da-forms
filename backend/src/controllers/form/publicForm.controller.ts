@@ -568,6 +568,7 @@ export const submitForm: RequestHandler = async (req, res) => {
       booking,
       emailsAllowed: !limits || limits.notificationEmails,
       allowEditLink: true,
+      leadSource: attribution?.channel,
     });
   } catch (err) {
     if (hold && !attached) await bookingService.dropHold(hold._id);

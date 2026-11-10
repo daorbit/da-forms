@@ -75,6 +75,7 @@ async function applyPaymentEvent(
     booking,
     emailsAllowed: !limits || limits.notificationEmails,
     allowEditLink: false,
+    leadSource: submission.attribution?.channel,
   });
   runAfterResponse(`mark ${provider} charged`, () =>
     workspaceSettingsService.markCharged(workspaceId, provider),

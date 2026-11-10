@@ -241,12 +241,58 @@ export const APP_CATALOG: AppDescriptor[] = [
       },
     ],
   },
+  {
+    id: 'zoho-crm',
+    name: 'Zoho CRM',
+    category: 'crm',
+    description: 'Add every new response to Zoho CRM as a lead, with its answers and lead source.',
+    docsUrl: 'https://www.zoho.com/crm/developer/docs/api/v2/self-client-overview.html',
+    testable: true,
+    fields: [
+      {
+        key: 'region',
+        label: 'Zoho data centre',
+        type: 'text',
+        secret: false,
+        required: true,
+        default: 'com',
+        placeholder: 'com',
+        help: 'The end of your Zoho address: com, in, eu, com.au, jp or ca.',
+      },
+      {
+        key: 'clientId',
+        label: 'Client ID',
+        type: 'text',
+        secret: false,
+        required: true,
+        placeholder: '1000.XXXXXXXXXXXX',
+        help: 'In the Zoho API Console, create a Self Client and copy its Client ID.',
+      },
+      {
+        key: 'clientSecret',
+        label: 'Client secret',
+        type: 'password',
+        secret: true,
+        required: true,
+      },
+      {
+        key: 'refreshToken',
+        label: 'Refresh token',
+        type: 'password',
+        secret: true,
+        required: true,
+        help: 'Generate a code with the scope ZohoCRM.modules.leads.CREATE, then exchange it for a refresh token.',
+      },
+    ],
+  },
 ];
 
 /** App ids in the 'email' category — the mailer's candidate transports. */
 export const EMAIL_APP_IDS = APP_CATALOG.filter((a) => a.category === 'email').map((a) => a.id);
 
 export const CHAT_APP_IDS = APP_CATALOG.filter((a) => a.category === 'notification').map((a) => a.id);
+
+export const CRM_APP_IDS = APP_CATALOG.filter((a) => a.category === 'crm').map((a) => a.id);
 
 export function getDescriptor(appId: string): AppDescriptor | undefined {
   return APP_CATALOG.find((a) => a.id === appId);

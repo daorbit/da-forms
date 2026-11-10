@@ -8,6 +8,7 @@ import {
   CHAT_APP_IDS,
 } from '../lib/app-catalog.js';
 import { isValidChatSecret, sendChatAlert } from '../lib/chatAlert.js';
+import { zohoAccessToken } from '../lib/zohoCrm.js';
 import { encrypt, decrypt, maskTail, isEncryptionConfigured } from '../lib/crypto.js';
 import { invalidateMailCache } from '../lib/mailer.js';
 
@@ -353,6 +354,23 @@ export async function testApp(
       return { ok: true, message: 'Test message sent.' };
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : 'The message could not be sent.' };
+    }
+  }
+
+  if (descriptor.category === 'crm') {
+    const connection = await resolveConnection(workspaceId, appId);
+    if (!connection) return { ok: false, message: 'Save the connection details first.' };
+    try {
+      await zohoAccessToken({
+        region: String(connection.config.region ?? 'com'),
+        clientId: String(connection.config.clientId ?? ''),
+        clientSecret: connection.secrets.clientSecret ?? '',
+        refreshToken: connection.secrets.refreshToken ?? '',
+      });
+      await markVerified(workspaceId, appId);
+      return { ok: true, message: 'Connected to Zoho CRM. New responses will be added as leads.' };
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : 'Zoho CRM could not be reached.' };
     }
   }
 

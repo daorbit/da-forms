@@ -1,5 +1,6 @@
 import type { RequestHandler, Response } from "express";
 import { bookingSummary, pipelineSummary } from "../../services/workspaceSummary.service.js";
+import { bookingsCalendar } from "../../services/bookingsCalendar.service.js";
 import { MAX_WINDOW_DAYS, readWindow } from "../../lib/summaryWindow.js";
 import { workspaceIdOf } from "./shared.js";
 
@@ -21,4 +22,10 @@ export const getBookingSummary: RequestHandler = async (req, res) => {
   const window = windowOr400(req.query, res);
   if (!window) return;
   res.json({ window, ...(await bookingSummary(workspaceIdOf(req), window)) });
+};
+
+export const getBookingsCalendar: RequestHandler = async (req, res) => {
+  const window = windowOr400(req.query, res);
+  if (!window) return;
+  res.json({ window, ...(await bookingsCalendar(workspaceIdOf(req), window)) });
 };

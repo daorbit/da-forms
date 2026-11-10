@@ -8,7 +8,9 @@ export type BookingEventState = 'upcoming' | 'live' | 'past';
 
 export interface BookingEvent {
   id: string;
-  submission: Submission;
+  submission?: Submission;
+  formId?: string;
+  formName?: string;
   start: Date;
   end: Date;
   title: string;
@@ -27,7 +29,7 @@ export interface PlacedEvent {
   lanes: number;
 }
 
-function stateOf(start: Date, end: Date, now: number): BookingEventState {
+export function stateOf(start: Date, end: Date, now: number): BookingEventState {
   if (end.getTime() <= now) return 'past';
   if (start.getTime() <= now) return 'live';
   return 'upcoming';

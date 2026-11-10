@@ -1,5 +1,4 @@
 import { VideoIcon } from 'lucide-react';
-import type { Submission } from '@/types';
 import type { BookingEvent } from './bookingEvents';
 import { DAY_NAMES, rangeLabel, type CalendarDay } from './calendarDates';
 import { BookingEventPopover } from './BookingEventPopover';
@@ -10,7 +9,7 @@ const VISIBLE = 2;
 interface Props {
   days: CalendarDay[];
   byDay: Map<string, BookingEvent[]>;
-  onOpen: (submission: Submission) => void;
+  onOpen: (event: BookingEvent) => void;
   onShowWeek: (date: Date) => void;
 }
 

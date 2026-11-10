@@ -1,12 +1,11 @@
 import type { ReactElement } from 'react';
 import { Popover } from '@mantine/core';
-import type { Submission } from '@/types';
 import type { BookingEvent } from './bookingEvents';
 import { BookingEventCard } from './BookingEventCard';
 
 interface Props {
   event: BookingEvent;
-  onOpen: (submission: Submission) => void;
+  onOpen: (event: BookingEvent) => void;
   children: ReactElement;
 }
 

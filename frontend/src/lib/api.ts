@@ -354,20 +354,28 @@ export function getLeadSources(range: LeadSourceRange, workspaceId = DEFAULT_WOR
   return request<WorkspaceLeadSources>(`${ws(workspaceId)}/lead-sources?range=${range}`);
 }
 
-export type BookingRange = '30d' | '90d' | '365d';
-
-export interface BookingSummary {
-  window: { since: string; until: string };
-  total: number;
-  byForm: { formId: string; name: string; bookings: number }[];
-  upcoming: { formId: string; formName: string; start: string; end: string }[];
+export interface CalendarBooking {
+  id: string;
+  formId: string;
+  formName: string;
+  start: string;
+  end: string;
+  submissionId?: string;
+  name?: string;
+  email?: string;
+  meetLink?: string;
+  eventLink?: string;
 }
 
-const BOOKING_RANGE_DAYS: Record<BookingRange, number> = { '30d': 30, '90d': 90, '365d': 365 };
+export interface BookingsCalendar {
+  window: { since: string; until: string };
+  bookings: CalendarBooking[];
+  truncated: boolean;
+}
 
-export function getBookingSummary(range: BookingRange, workspaceId = DEFAULT_WORKSPACE) {
-  const from = new Date(Date.now() - BOOKING_RANGE_DAYS[range] * 86_400_000).toISOString();
-  return request<BookingSummary>(`${ws(workspaceId)}/booking-summary?from=${encodeURIComponent(from)}`);
+export function getBookingsCalendar(from: Date, to: Date, workspaceId = DEFAULT_WORKSPACE) {
+  const query = `from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`;
+  return request<BookingsCalendar>(`${ws(workspaceId)}/bookings?${query}`);
 }
 
 export function getFormsAnalytics(

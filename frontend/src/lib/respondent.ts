@@ -16,7 +16,7 @@ function answerOf(fields: FormField[], submission: Submission, match: (field: Fo
   return undefined;
 }
 
-function initialsOf(text: string | undefined): string {
+export function initialsOf(text: string | undefined): string {
   if (!text) return '?';
   const words = text.replace(/@.*$/, '').split(/[\s._-]+/).filter(Boolean);
   const letters = words.length > 1 ? words[0][0] + words[words.length - 1][0] : (words[0] ?? '?').slice(0, 2);

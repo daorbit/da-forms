@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { VideoIcon } from 'lucide-react';
-import type { Submission } from '@/types';
 import { placeDay, type BookingEvent } from './bookingEvents';
 import { DAY_NAMES, HOUR_PX, hourLabel, minutesOfDay, rangeLabel, type CalendarDay } from './calendarDates';
 import { BookingEventPopover } from './BookingEventPopover';
@@ -11,7 +10,7 @@ const HOURS = Array.from({ length: 24 }, (_, h) => h);
 interface Props {
   days: CalendarDay[];
   byDay: Map<string, BookingEvent[]>;
-  onOpen: (submission: Submission) => void;
+  onOpen: (event: BookingEvent) => void;
 }
 
 function vars(values: Record<string, string | number>): CSSProperties {

@@ -1,6 +1,5 @@
 import { ActionIcon, Button, Tooltip } from '@mantine/core';
 import { CalendarCheckIcon, VideoIcon } from 'lucide-react';
-import type { Submission } from '@/types';
 import type { BookingEvent } from './bookingEvents';
 import { dayKey, timeLabel } from './calendarDates';
 import classes from './UpcomingBookings.module.css';
@@ -9,7 +8,7 @@ const LIMIT = 8;
 
 interface Props {
   events: BookingEvent[];
-  onOpen: (submission: Submission) => void;
+  onOpen: (event: BookingEvent) => void;
 }
 
 function dayHeading(date: Date): { label: string; date: string } {
@@ -85,7 +84,7 @@ export function UpcomingBookings({ events, onOpen }: Props) {
               <span className={classes.pulse} />
               {startsIn(next)}
             </span>
-            <button type="button" className={classes.person} onClick={() => onOpen(next.submission)}>
+            <button type="button" className={classes.person} onClick={() => onOpen(next)}>
               <Person event={next} />
             </button>
             <span className={classes.nextWhen}>
@@ -119,7 +118,7 @@ export function UpcomingBookings({ events, onOpen }: Props) {
                     <span>{timeLabel(event.start)}</span>
                     <span className={classes.duration}>{durationOf(event)}</span>
                   </span>
-                  <button type="button" className={classes.person} onClick={() => onOpen(event.submission)}>
+                  <button type="button" className={classes.person} onClick={() => onOpen(event)}>
                     <Person event={event} />
                   </button>
                   {event.meetLink && (

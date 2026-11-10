@@ -12,12 +12,20 @@ export interface LeadContact {
   name?: string;
 }
 
-function contactFields(fields: FormField[]) {
+export function contactFields(fields: FormField[]) {
   const all = flattenFields(fields);
   return {
     emailIds: all.filter((field) => field.type === 'email').map((field) => field.id),
     nameId: all.find((field) => field.type === 'name')?.id,
   };
+}
+
+export function contactOf(data: Record<string, unknown>, fields: ReturnType<typeof contactFields>): Partial<LeadContact> {
+  const email = fields.emailIds
+    .map((id) => String(data[id] ?? '').trim().toLowerCase())
+    .find((value) => EMAIL.test(value));
+  const name = fields.nameId ? String(data[fields.nameId] ?? '').trim() : '';
+  return { ...(email ? { email } : {}), ...(name ? { name } : {}) };
 }
 
 export async function leadSources(workspaceId: string) {
@@ -48,14 +56,10 @@ async function contactsFromForm(formId: Types.ObjectId, fields: FormField[]): Pr
     .limit(MAX_CONTACTS)
     .lean();
 
+  const fieldsFor = { emailIds, nameId };
   return rows.flatMap((row) => {
-    const data = (row.data ?? {}) as Record<string, unknown>;
-    const email = emailIds
-      .map((id) => String(data[id] ?? '').trim().toLowerCase())
-      .find((value) => EMAIL.test(value));
-    if (!email) return [];
-    const name = nameId ? String(data[nameId] ?? '').trim() : '';
-    return [{ email, ...(name ? { name } : {}) }];
+    const contact = contactOf((row.data ?? {}) as Record<string, unknown>, fieldsFor);
+    return contact.email ? [{ email: contact.email, ...(contact.name ? { name: contact.name } : {}) }] : [];
   });
 }
 

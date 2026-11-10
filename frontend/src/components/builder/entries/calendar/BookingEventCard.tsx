@@ -1,6 +1,5 @@
 import { Button, CopyButton, Tooltip, ActionIcon } from '@mantine/core';
-import { CalendarIcon, CheckIcon, ClockIcon, CopyIcon, ExternalLinkIcon, VideoIcon } from 'lucide-react';
-import type { Submission } from '@/types';
+import { CalendarIcon, CheckIcon, ClockIcon, CopyIcon, ExternalLinkIcon, InboxIcon, VideoIcon } from 'lucide-react';
 import type { BookingEvent } from './bookingEvents';
 import { timeLabel } from './calendarDates';
 import classes from './EntriesCalendar.module.css';
@@ -9,7 +8,7 @@ const STATE_LABEL = { upcoming: 'Upcoming', live: 'In progress', past: 'Complete
 
 interface Props {
   event: BookingEvent;
-  onOpen: (submission: Submission) => void;
+  onOpen: (event: BookingEvent) => void;
 }
 
 export function BookingEventCard({ event, onOpen }: Props) {
@@ -39,6 +38,12 @@ export function BookingEventCard({ event, onOpen }: Props) {
         {timeLabel(event.start)} – {timeLabel(event.end)}
         <span className={classes.cardMuted}>· {minutes} min</span>
       </div>
+      {event.formName && (
+        <div className={classes.cardRow}>
+          <InboxIcon size={14} />
+          {event.formName}
+        </div>
+      )}
 
       {event.meetLink && (
         <div className={classes.meetRow}>
@@ -86,7 +91,7 @@ export function BookingEventCard({ event, onOpen }: Props) {
             Calendar
           </Button>
         )}
-        <Button size="xs" radius="xl" variant="subtle" color="gray" onClick={() => onOpen(event.submission)}>
+        <Button size="xs" radius="xl" variant="subtle" color="gray" onClick={() => onOpen(event)}>
           Open response
         </Button>
       </div>

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getBookingsCalendar, type BookingsCalendar } from '@/lib/api';
 import { notify } from '@/lib/notify';
 
 export function useBookingsCalendar(workspaceId: string, period: { from: Date; to: Date } | null) {
   const [data, setData] = useState<BookingsCalendar | null>(null);
   const [loading, setLoading] = useState(false);
+  const [version, setVersion] = useState(0);
   const fromKey = period?.from.getTime();
   const toKey = period?.to.getTime();
 
@@ -25,7 +26,8 @@ export function useBookingsCalendar(workspaceId: string, period: { from: Date; t
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, fromKey, toKey]);
+  }, [workspaceId, fromKey, toKey, version]);
 
-  return { data, loading };
+  const reload = useCallback(() => setVersion((v) => v + 1), []);
+  return { data, loading, reload };
 }

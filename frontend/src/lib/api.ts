@@ -369,6 +369,7 @@ export interface CalendarBooking {
 
 export interface BookingsCalendar {
   window: { since: string; until: string };
+  forms: { id: string; title: string }[];
   bookings: CalendarBooking[];
   truncated: boolean;
 }

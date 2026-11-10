@@ -11,6 +11,7 @@ export interface BookingEvent {
   submission?: Submission;
   formId?: string;
   formName?: string;
+  tone?: number;
   start: Date;
   end: Date;
   title: string;

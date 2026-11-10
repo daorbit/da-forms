@@ -188,6 +188,8 @@ submissionSchema.index({ formId: 1, status: 1, stage: 1, createdAt: -1 });
 
 submissionSchema.index({ formId: 1, status: 1, leadScore: -1 });
 
+submissionSchema.index({ formId: 1, status: 1, 'booking.start': 1 }, { sparse: true });
+
 submissionSchema.index({ formId: 1, status: 1, createdAt: -1 });
 
 submissionSchema.index({ formId: 1, status: 1, createdAt: -1 });

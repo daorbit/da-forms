@@ -40,7 +40,7 @@ export function CalendarMonthGrid({ days, byDay, onOpen, onShowWeek }: Props) {
             <div className={classes.monthStack}>
               {events.slice(0, VISIBLE).map((event) => (
                 <BookingEventPopover key={event.id} event={event} onOpen={onOpen}>
-                  <button type="button" className={classes.chip} data-state={event.state}>
+                  <button type="button" className={classes.chip} data-state={event.state} data-tone={event.tone}>
                     <span className={classes.chipName}>{event.title}</span>
                     <span className={classes.chipMeta}>
                       <span className={classes.chipTime}>{rangeLabel(event.start, event.end)}</span>

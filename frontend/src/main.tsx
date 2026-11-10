@@ -23,6 +23,9 @@ import { HostThemeProvider } from '@/app/HostThemeProvider';
 import { readHostTheme } from '@/app/themeParams';
 import { applyHostTokens } from '@/app/hostTokens';
 import { BOOT_SEARCH } from '@/lib/bootParams';
+import { installStaleChunkReload } from '@/lib/staleChunkReload';
+
+installStaleChunkReload();
 
 const host = readHostTheme(BOOT_SEARCH);
 applyHostTokens(host);

@@ -35,6 +35,7 @@ import {
 } from '@/lib/formSkin';
 import { useFormFont } from '@/hooks/useFormFont';
 import skinClasses from './FormSkin.module.css';
+import honeypotClasses from './FormHoneypot.module.css';
 import { resolveSteps, splitIntoPages } from '@/lib/formSteps';
 import { activePageIndexes, shownFieldIds } from '@/utils/conditionalLogic';
 import {
@@ -175,7 +176,7 @@ export function FormRenderer({
     () => initialData ?? initialValues(fields)
   );
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
-  const [honeypot, setHoneypot] = useState('');
+  const honeypotRef = useRef<HTMLInputElement>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [payerPhone, setPayerPhone] = useState('');
   const [payerPhoneError, setPayerPhoneError] = useState<string | null>(null);
@@ -371,7 +372,7 @@ export function FormRenderer({
     const accepted = await onSubmit?.(
       {
         ...withFileMeta,
-        ...(honeypot ? { _hp: honeypot } : {}),
+        ...(honeypotRef.current?.value ? { _hp: honeypotRef.current.value } : {}),
         // Absent when the challenge has not resolved. The server decides what
         // that means — a missing token is refused only when it could have
         // verified one.
@@ -575,17 +576,16 @@ export function FormRenderer({
             <>
               {currentPageFields.map(renderField)}
 
-              {/* Invisible to a real respondent (off-screen, no tab stop) —
-                  a bot's form-filler script still finds and fills it. */}
               <input
+                ref={honeypotRef}
                 type="text"
                 name="_hp"
-                value={honeypot}
-                onChange={(e) => setHoneypot(e.target.value)}
+                defaultValue=""
+                readOnly
                 tabIndex={-1}
                 autoComplete="off"
                 aria-hidden="true"
-                style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+                className={honeypotClasses.honeypot}
               />
 
          

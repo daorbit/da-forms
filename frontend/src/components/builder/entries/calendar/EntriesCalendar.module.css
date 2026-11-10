@@ -13,8 +13,8 @@
 .main {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--seo-hairline, var(--border));
+  border-radius: 16px;
   background: var(--surface);
 }
 
@@ -24,8 +24,8 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--seo-hairline, var(--border));
 }
 
 .nav {
@@ -42,9 +42,10 @@
 
 .period {
   margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   white-space: nowrap;
   color: var(--text);
 }
@@ -65,8 +66,8 @@
 }
 
 .monthHead {
-  padding: 10px 12px 8px;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 12px 9px;
+  border-bottom: 1px solid var(--seo-hairline, var(--border));
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -79,10 +80,11 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  min-height: 128px;
-  padding: 8px;
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  min-height: 124px;
+  padding: 8px 8px 10px;
+  border-right: 1px solid var(--seo-hairline, var(--border));
+  border-bottom: 1px solid var(--seo-hairline, var(--border));
+  transition: background-color 120ms ease;
 }
 
 .monthDay:nth-child(7n) {
@@ -94,7 +96,7 @@
 }
 
 .monthDay[data-weekend] {
-  background: color-mix(in srgb, var(--text) 1.5%, transparent);
+  background: color-mix(in srgb, var(--text) 1.2%, transparent);
 }
 
 .monthDay[data-outside] .monthDate {
@@ -113,12 +115,12 @@
   place-items: center;
   min-width: 26px;
   height: 26px;
-  padding: 0 6px;
-  border-radius: 999px;
+  padding: 0 7px;
+  border-radius: 8px;
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--text-2);
 }
 
 .monthDay[data-today] .monthDate {
@@ -130,76 +132,85 @@
 .monthStack {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 .chip {
   position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
   width: 100%;
   min-width: 0;
-  padding: 6px 8px;
+  height: 24px;
+  padding: 0 7px;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-2);
+  border: 0;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
   font: inherit;
   text-align: left;
   color: var(--text);
   cursor: pointer;
-  transition: border-color 0.12s ease;
+  transition: background-color 0.12s ease;
 }
 
 .chip:hover {
-  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .chip[data-state='past'] {
-  background: transparent;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
   color: var(--text-2);
 }
 
 .chip[data-state='past']:hover {
-  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--text) 9%, transparent);
 }
 
 .chipName {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.chipMeta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  min-width: 0;
-  color: var(--text-2);
+  font-weight: 550;
+  line-height: 1;
 }
 
 .chipTime {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  line-height: 1.3;
+  line-height: 1;
+  color: var(--accent-text, var(--accent));
 }
 
 .chipIcon {
   flex-shrink: 0;
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
+  opacity: 0.85;
 }
 
-.chip[data-state='past'] .chipIcon {
+.chip[data-state='past'] .chipIcon,
+.chip[data-state='past'] .chipTime {
   color: var(--muted);
+}
+
+.chip[data-state='live'] {
+  background: color-mix(in srgb, var(--green) 16%, transparent);
+}
+
+.chip[data-state='live'] .chipTime,
+.chip[data-state='live'] .chipIcon {
+  color: var(--green);
+}
+
+.monthDay:hover {
+  background: color-mix(in srgb, var(--text) 2.5%, transparent);
 }
 
 .more {
@@ -228,7 +239,7 @@
 .weekHead {
   display: grid;
   grid-template-columns: 64px repeat(7, minmax(0, 1fr));
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--seo-hairline, var(--border));
 }
 
 .weekGutterHead {
@@ -244,9 +255,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 10px 0 8px;
-  border-left: 1px solid var(--border);
+  gap: 3px;
+  padding: 10px 0 9px;
+  border-left: 1px solid var(--seo-hairline, var(--border));
 }
 
 .weekDayName {
@@ -260,11 +271,12 @@
 .weekDayNum {
   display: grid;
   place-items: center;
-  width: 32px;
+  min-width: 32px;
   height: 32px;
-  border-radius: 50%;
+  padding: 0 6px;
+  border-radius: 10px;
   font-size: 17px;
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
@@ -312,7 +324,7 @@
 
 .weekCol {
   position: relative;
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--seo-hairline, var(--border));
 }
 
 .weekCol[data-weekend] {
@@ -325,7 +337,7 @@
 
 .weekSlot {
   height: var(--hour);
-  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-top: 1px solid var(--seo-hairline, var(--border));
 }
 
 .weekSlot:first-child {
@@ -361,34 +373,47 @@
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   width: calc(100% / var(--lanes) - 6px / var(--lanes) - 2px);
   height: calc(var(--len) / 60 * var(--hour) - 3px);
   min-height: 20px;
   overflow: hidden;
-  padding: 4px 7px;
-  border: 1px solid var(--border-strong);
-  border-radius: 7px;
-  background: var(--surface-2);
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
   font: inherit;
   text-align: left;
   color: var(--text);
   cursor: pointer;
-  transition: border-color 0.12s ease;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
 }
 
 .block:hover {
-  border-color: var(--text-2);
+  border-color: var(--accent);
 }
 
 .block[data-state='past'] {
-  border-color: var(--border);
-  background: var(--surface);
+  border-color: var(--seo-hairline, var(--border));
+  background: color-mix(in srgb, var(--text) 4%, var(--surface));
   color: var(--text-2);
 }
 
 .block[data-state='past']:hover {
   border-color: var(--border-strong);
+}
+
+.block[data-state='live'] {
+  border-color: color-mix(in srgb, var(--green) 45%, transparent);
+  background: color-mix(in srgb, var(--green) 16%, var(--surface));
+}
+
+.block[data-state='past'] .blockTime {
+  color: var(--muted);
+}
+
+.block[data-state='live'] .blockTime {
+  color: var(--green);
 }
 
 .block[data-compact] {
@@ -416,8 +441,9 @@
   overflow: hidden;
   white-space: nowrap;
   font-size: 11px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--text-2);
+  color: var(--accent-text, var(--accent));
 }
 
 .card {
@@ -564,7 +590,6 @@
     padding: 5px;
   }
 
-  .chipTime,
   .chipIcon {
     display: none;
   }

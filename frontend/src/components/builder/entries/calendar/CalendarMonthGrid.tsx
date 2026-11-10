@@ -1,6 +1,6 @@
 import { VideoIcon } from 'lucide-react';
 import type { BookingEvent } from './bookingEvents';
-import { DAY_NAMES, rangeLabel, type CalendarDay } from './calendarDates';
+import { DAY_NAMES, timeLabel, type CalendarDay } from './calendarDates';
 import { BookingEventPopover } from './BookingEventPopover';
 import classes from './EntriesCalendar.module.css';
 
@@ -41,11 +41,9 @@ export function CalendarMonthGrid({ days, byDay, onOpen, onShowWeek }: Props) {
               {events.slice(0, VISIBLE).map((event) => (
                 <BookingEventPopover key={event.id} event={event} onOpen={onOpen}>
                   <button type="button" className={classes.chip} data-state={event.state}>
+                    <span className={classes.chipTime}>{timeLabel(event.start)}</span>
                     <span className={classes.chipName}>{event.title}</span>
-                    <span className={classes.chipMeta}>
-                      <span className={classes.chipTime}>{rangeLabel(event.start, event.end)}</span>
-                      {event.meetLink && <VideoIcon size={12} className={classes.chipIcon} />}
-                    </span>
+                    {event.meetLink && <VideoIcon size={12} className={classes.chipIcon} />}
                   </button>
                 </BookingEventPopover>
               ))}

@@ -120,7 +120,7 @@ export default function FormAnalyticsPage() {
           </Tooltip>
           )
         }
-        title="Form analytics"
+        title="Lead insights"
         description={picked ? `How ${picked.title || 'this form'} is performing.` : 'How every form in this workspace is performing.'}
         actions={
           <>

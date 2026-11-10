@@ -7,14 +7,40 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--seo-hairline, var(--border));
 }
 
 .formSelect {
-  width: 260px;
+  width: 240px;
   max-width: 100%;
+}
+
+.formSelectInput {
+  height: 36px;
+  min-height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--segment-track);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  transition: background-color 150ms ease;
+}
+
+.formSelectInput:hover {
+  background: color-mix(in srgb, var(--text) 11%, transparent);
+}
+
+.formSelectInput:focus {
+  outline: 2px solid var(--focus-ring, var(--accent));
+  outline-offset: 1px;
+}
+
+.formSelectIcon {
+  color: var(--muted);
 }
 
 .stack {
@@ -389,8 +415,28 @@
   animation: pulse 1.4s ease-in-out infinite;
 }
 
-.skeleton[data-size='kpis'] {
-  height: 128px;
+.skeletonTiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@container (max-width: 960px) {
+  .skeletonTiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.skeleton[data-size='tile'] {
+  height: 168px;
+  border-radius: 14px;
+}
+
+.skeleton[data-size='header'] {
+  width: 260px;
+  height: 44px;
+  margin-bottom: 20px;
+  border-radius: 10px;
 }
 
 .skeleton[data-size='chart'] {

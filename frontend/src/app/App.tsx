@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { FormLoader } from '@/components/FormLoader';
 import { FormListPage } from '@/pages/FormListPage';
+import { AnalyticsPageSkeleton } from '@/pages/formAnalytics/AnalyticsSkeleton';
 import { FormBuilderPage } from '@/pages/FormBuilderPage';
 import { CreateFormPage } from '@/pages/CreateFormPage';
 import { EntriesPage } from '@/pages/EntriesPage';
@@ -56,7 +56,7 @@ export function App() {
         <Route
           path="/:workspaceId/forms/analytics"
           element={
-            <Suspense fallback={<FormLoader label="Loading analytics" fullPage />}>
+            <Suspense fallback={<AnalyticsPageSkeleton />}>
               <FormAnalyticsPage />
             </Suspense>
           }

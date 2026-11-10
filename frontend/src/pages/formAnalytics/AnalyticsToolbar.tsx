@@ -1,4 +1,5 @@
 import { Select } from '@mantine/core';
+import { FileTextIcon } from 'lucide-react';
 import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
 import type { AnalyticsFormRef, AnalyticsRange } from '@/types/formsAnalytics';
 import classes from './FormAnalytics.module.css';
@@ -30,13 +31,15 @@ export function AnalyticsToolbar({ range, onRange, formId, onForm, forms }: Prop
       <SegmentedTabs value={range} onChange={onRange} data={RANGES} ariaLabel="Date range" />
       <Select
         className={classes.formSelect}
+        classNames={{ input: classes.formSelectInput, section: classes.formSelectIcon }}
         aria-label="Form"
         data={options}
         value={formId ?? ALL}
         onChange={(v) => onForm(!v || v === ALL ? null : v)}
         allowDeselect={false}
         searchable
-        radius="md"
+        leftSection={<FileTextIcon size={14} />}
+        comboboxProps={{ radius: 'md' }}
       />
     </div>
   );

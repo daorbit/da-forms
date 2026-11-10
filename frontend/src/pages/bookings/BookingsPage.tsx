@@ -11,8 +11,7 @@ import { useBookingsCalendar } from '@/hooks/useBookingsCalendar';
 import analytics from '@/pages/formAnalytics/FormAnalytics.module.css';
 import { bookingCalendarEvents } from './bookingCalendarEvents';
 import { BookingsToolbar } from './BookingsToolbar';
-import { FormLegend } from './FormLegend';
-import { countByForm, filterBookings, filterByStatus, type BookingStatusFilter } from './filterBookings';
+import { filterBookings, filterByStatus, type BookingStatusFilter } from './filterBookings';
 
 const EMPTY: never[] = [];
 
@@ -28,11 +27,9 @@ export default function BookingsPage() {
 
   const forms = data?.forms ?? EMPTY;
   const bookings = data?.bookings ?? EMPTY;
-  const formIds = useMemo(() => forms.map((f) => f.id), [forms]);
-  const counts = useMemo(() => countByForm(bookings), [bookings]);
   const events = useMemo(
-    () => filterByStatus(bookingCalendarEvents(filterBookings(bookings, query, formId), formIds), status),
-    [bookings, query, formId, formIds, status],
+    () => filterByStatus(bookingCalendarEvents(filterBookings(bookings, query, formId)), status),
+    [bookings, query, formId, status],
   );
 
   const onPeriod = useCallback((from: Date, to: Date) => setPeriod({ from, to }), []);
@@ -65,7 +62,6 @@ export default function BookingsPage() {
         onStatus={setStatus}
         forms={forms}
       />
-      <FormLegend forms={forms} counts={counts} formId={formId} onForm={onForm} />
       <BookingsCalendarView
         events={events}
         loading={loading || !data}

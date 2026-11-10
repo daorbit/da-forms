@@ -15,9 +15,3 @@ export function filterBookings(bookings: CalendarBooking[], query: string, formI
 export function filterByStatus(events: BookingEvent[], status: BookingStatusFilter): BookingEvent[] {
   return status === 'all' ? events : events.filter((e) => e.state === status);
 }
-
-export function countByForm(bookings: CalendarBooking[]): Map<string, number> {
-  const counts = new Map<string, number>();
-  for (const b of bookings) counts.set(b.formId, (counts.get(b.formId) ?? 0) + 1);
-  return counts;
-}

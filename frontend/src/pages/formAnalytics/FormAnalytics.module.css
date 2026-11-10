@@ -42,37 +42,6 @@
   }
 }
 
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-  padding: 18px 20px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface);
-}
-
-.cardHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.cardTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.cardSub {
-  margin-top: 2px;
-  font-size: 12.5px;
-  color: var(--muted);
-}
-
 .kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -93,7 +62,7 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  padding: 18px 20px 12px;
+  padding: 18px 20px 14px;
   border-left: 1px solid var(--border);
 }
 
@@ -132,7 +101,7 @@
 
 .kpiFoot {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
   min-height: 34px;
@@ -163,24 +132,19 @@
 }
 
 .spark {
-  width: 84px;
-  height: 30px;
+  width: 96px;
+  height: 32px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
-.accentArea :global(.recharts-area-area) {
-  fill: var(--accent-soft);
-  fill-opacity: 1;
+.bars :global(.recharts-rectangle),
+.bars path {
+  fill: var(--accent);
 }
 
-.accentArea :global(.recharts-area-curve) {
-  stroke: var(--accent);
-  stroke-width: 2;
-  fill: none;
-}
-
-.sparkArea :global(.recharts-area-curve) {
-  stroke-width: 1.5;
+.barCursor {
+  fill: var(--viz-track);
 }
 
 .trend {
@@ -188,18 +152,8 @@
   height: 260px;
 }
 
-.trend :global(.recharts-active-dot circle),
-.trend :global(.recharts-active-dot) {
-  fill: var(--accent);
-  stroke: var(--surface);
-}
-
-.trend :global(.recharts-tooltip-cursor) {
-  stroke: var(--border-strong);
-}
-
 .trend :global(.recharts-cartesian-grid line) {
-  stroke: var(--border);
+  stroke: var(--viz-grid);
 }
 
 .trend :global(.recharts-cartesian-axis-tick-value) {
@@ -229,41 +183,47 @@
 .rows {
   display: flex;
   flex-direction: column;
-  margin: 0 -8px;
 }
 
 .row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 72px 88px 120px 64px;
+  grid-template-columns: minmax(0, 1fr) 72px 88px 140px 72px;
   align-items: center;
   gap: 12px;
-  padding: 10px 8px;
+  min-height: 48px;
+  padding: 8px 0;
   border: 0;
   border-top: 1px solid var(--border);
-  border-radius: 0;
   background: transparent;
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background-color 140ms ease;
 }
 
-.row:hover {
-  background: var(--surface-hover);
+.row:hover .formTitle {
+  color: var(--accent-text);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 .row[data-head] {
+  min-height: 0;
   border-top: 0;
-  padding-block: 0 6px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--border);
   font-size: 11.5px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--muted);
   cursor: default;
 }
 
-.row[data-head]:hover {
-  background: transparent;
+.row[data-head] + .row {
+  border-top: 0;
 }
 
 @container (max-width: 640px) {
@@ -280,7 +240,7 @@
 .formName {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   font-size: 13.5px;
   font-weight: 500;
@@ -290,6 +250,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 150ms ease;
 }
 
 .statusDot {
@@ -306,9 +267,10 @@
 
 .num {
   font-size: 13px;
+  font-weight: 600;
   text-align: right;
   font-variant-numeric: tabular-nums;
-  color: var(--text-2);
+  color: var(--text);
 }
 
 .rateCell {
@@ -322,7 +284,7 @@
 }
 
 .rateText {
-  width: 40px;
+  width: 44px;
   font-size: 12.5px;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -364,35 +326,39 @@
 
 .subhead {
   margin: 4px 0 -4px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
   color: var(--muted);
+}
+
+.heatWrap {
+  overflow-x: auto;
 }
 
 .heatmap {
   display: grid;
-  grid-template-columns: 36px repeat(24, minmax(0, 1fr));
+  grid-template-columns: 30px repeat(24, 14px);
   gap: 3px;
   align-items: center;
+  width: max-content;
 }
 
 .heatLabel {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--muted);
 }
 
 .heatHour {
-  font-size: 10px;
-  text-align: center;
+  font-size: 9.5px;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .cell {
-  aspect-ratio: 1;
+  width: 14px;
+  height: 14px;
   border-radius: 3px;
-  background: var(--border);
+  background: var(--viz-track);
 }
 
 .cell[data-level='1'] {
@@ -411,6 +377,15 @@
   background: var(--accent);
 }
 
+.heatLegend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .callouts {
   display: flex;
   flex-direction: column;
@@ -419,7 +394,7 @@
 .callout {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 0;
   border-top: 1px solid var(--border);
   font-size: 13.5px;
@@ -435,11 +410,11 @@
 .calloutIcon {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   border-radius: 8px;
-  background: var(--surface-2);
+  background: var(--viz-track);
   color: var(--muted);
 }
 
@@ -454,16 +429,20 @@
 .facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 0;
 }
 
 .fact {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  gap: 4px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.fact:nth-child(-n + 2) {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .factLabel {
@@ -472,22 +451,16 @@
 }
 
 .factValue {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
 
-.empty {
-  padding: 24px 0;
-  font-size: 13px;
-  text-align: center;
-  color: var(--muted);
-}
-
 .skeleton {
   border-radius: 16px;
-  background: var(--surface-2);
+  background: var(--viz-track);
   animation: pulse 1.4s ease-in-out infinite;
 }
 

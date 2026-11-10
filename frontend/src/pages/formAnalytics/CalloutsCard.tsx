@@ -1,4 +1,5 @@
-import { InfoIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
+import { InfoIcon, LightbulbIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
+import { RankEmpty } from '@/components/rank/RankCard';
 import type { FormsAnalytics } from '@/types/formsAnalytics';
 import { AnalyticsCard } from './AnalyticsCard';
 import { analyticsCallouts, type CalloutTone } from './analyticsCallouts';
@@ -15,7 +16,7 @@ export function CalloutsCard({ data }: { data: FormsAnalytics }) {
   return (
     <AnalyticsCard title="Worth a look" subtitle="Worked out from the numbers on this page">
       {callouts.length === 0 ? (
-        <div className={classes.empty}>Nothing stands out yet. Check back once more responses arrive.</div>
+        <RankEmpty icon={LightbulbIcon}>Nothing stands out yet. Check back once more responses arrive.</RankEmpty>
       ) : (
         <div className={classes.callouts}>
           {callouts.map((callout) => {

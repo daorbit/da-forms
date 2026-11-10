@@ -76,7 +76,8 @@ async function compute({ workspaceId, range, timezone, formId }: Query): Promise
   };
 }
 
-export function formsAnalytics(query: Query): Promise<FormsAnalytics | null> {
+export function formsAnalytics(query: Query, fresh = false): Promise<FormsAnalytics | null> {
   const key = [query.workspaceId, query.range, query.timezone, query.formId ?? 'all'].join(':');
+  if (fresh) cache.forget(key);
   return cache.load(key, () => compute(query));
 }

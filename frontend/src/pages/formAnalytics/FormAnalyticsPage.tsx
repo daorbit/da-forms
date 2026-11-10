@@ -3,6 +3,7 @@ import { ActionIcon, Tooltip } from '@mantine/core';
 import { ArrowLeftIcon, ChartNoAxesColumnIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
+import { RefreshButton } from '@/components/ui/RefreshButton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import { IS_EMBEDDED } from '@/lib/bootParams';
@@ -41,29 +42,35 @@ function Dashboard({ data, onOpen }: { data: FormsAnalytics; onOpen: (id: string
         <FunnelCard data={data} />
         <BreakdownCard
           title="Where responses come from"
+          chart="donut"
+          tone="teal"
           items={data.sources.map((s) => ({ key: s.source, label: s.source, value: s.count }))}
           empty="No responses in this period."
         />
-        <QualityCard data={data} />
-      </div>
-      <HeatmapCard heatmap={data.heatmap} />
-      <div className={classes.thirds}>
-        <BreakdownCard
-          title="Campaigns"
-          subtitle="From utm_campaign on the form link"
-          items={data.campaigns.map((c) => ({ key: c.campaign, label: c.campaign, value: c.count }))}
-          empty="No tagged campaigns yet."
-        />
         <BreakdownCard
           title="Devices"
-          subtitle="Recorded on new responses"
+          chart="donut"
+          tone="violet"
           items={data.devices
             .filter((d) => d.device !== 'unknown')
             .map((d) => ({ key: d.device, label: label(d.device), value: d.count }))}
           empty="Devices appear as new responses arrive."
         />
+      </div>
+      <div className={classes.split}>
+        <HeatmapCard heatmap={data.heatmap} />
+        <QualityCard data={data} />
+      </div>
+      <div className={classes.split}>
+        <BreakdownCard
+          title="Campaigns"
+          tone="orange"
+          items={data.campaigns.map((c) => ({ key: c.campaign, label: c.campaign, value: c.count }))}
+          empty="Add utm_campaign to a form link to see campaigns here."
+        />
         <BreakdownCard
           title="Pipeline"
+          tone="emerald"
           items={data.stages.map((s) => ({ key: s.stage, label: label(s.stage), value: s.count }))}
           empty="No responses in this period."
         />
@@ -78,7 +85,7 @@ export default function FormAnalyticsPage() {
   const [params, setParams] = useSearchParams();
   const range = readRange(params.get('range'));
   const formId = params.get('form');
-  const { data, loading } = useFormsAnalytics(workspaceId, range, formId);
+  const { data, loading, refreshing, refresh } = useFormsAnalytics(workspaceId, range, formId);
 
   const update = (next: { range?: AnalyticsRange; form?: string | null }) => {
     const search = new URLSearchParams(params);
@@ -107,6 +114,7 @@ export default function FormAnalyticsPage() {
         description={picked ? `How ${picked.title || 'this form'} is performing.` : 'How every form in this workspace is performing.'}
         actions={
           <>
+            <RefreshButton onRefresh={refresh} refreshing={refreshing} hint="Refresh numbers" />
             <DocsButton path="/lead-capture" />
             {IS_EMBEDDED && <HostNotificationsBell />}
           </>

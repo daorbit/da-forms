@@ -1,7 +1,10 @@
-import { Progress } from '@mantine/core';
+import { InboxIcon } from 'lucide-react';
+import { RankEmpty } from '@/components/rank/RankCard';
+import { RankList } from '@/components/rank/RankList';
+import { DonutBreakdown } from '@/components/rank/DonutBreakdown';
+import type { RankTone } from '@/components/rank/tones';
 import { AnalyticsCard } from './AnalyticsCard';
-import { share } from './analyticsFormat';
-import classes from './FormAnalytics.module.css';
+import { compact, share } from './analyticsFormat';
 
 export interface BreakdownItem {
   key: string;
@@ -14,31 +17,38 @@ interface Props {
   subtitle?: string;
   items: BreakdownItem[];
   empty: string;
+  chart?: 'list' | 'donut';
+  tone?: RankTone;
+  totalLabel?: string;
 }
 
 const LIMIT = 6;
 
-export function BreakdownCard({ title, subtitle, items, empty }: Props) {
+export function BreakdownCard({ title, subtitle, items, empty, chart = 'list', tone, totalLabel = 'Responses' }: Props) {
   const total = items.reduce((n, item) => n + item.value, 0);
+  const summary = total ? `${compact(total)} total · ${items.length} ${items.length === 1 ? 'item' : 'items'}` : undefined;
+
   return (
-    <AnalyticsCard title={title} subtitle={subtitle}>
-      {items.length === 0 || total === 0 ? (
-        <div className={classes.empty}>{empty}</div>
+    <AnalyticsCard title={title} subtitle={subtitle ?? summary} tone={tone}>
+      {total === 0 ? (
+        <RankEmpty icon={InboxIcon}>{empty}</RankEmpty>
+      ) : chart === 'donut' ? (
+        <DonutBreakdown
+          totalLabel={totalLabel}
+          items={items.map((item) => ({ id: item.key, label: item.label, value: item.value }))}
+        />
       ) : (
-        <div className={classes.funnel}>
-          {items.slice(0, LIMIT).map((item) => (
-            <div key={item.key} className={classes.step}>
-              <div className={classes.stepHead}>
-                <span className={classes.formTitle}>{item.label}</span>
-                <span className={classes.stepValue}>
-                  {item.value.toLocaleString()}
-                  <span className={classes.deltaNote}>{share(item.value, total)}%</span>
-                </span>
-              </div>
-              <Progress size={6} radius="xl" value={share(item.value, total)} color="var(--accent)" />
-            </div>
-          ))}
-        </div>
+        <RankList
+          limit={LIMIT}
+          columns={{ label: title, value: 'Responses', aside: 'Share' }}
+          items={items.map((item) => ({
+            id: item.key,
+            label: item.label,
+            weight: item.value,
+            value: compact(item.value),
+            aside: `${share(item.value, total)}%`,
+          }))}
+        />
       )}
     </AnalyticsCard>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getFormsAnalytics } from '@/lib/api';
 import { notify } from '@/lib/notify';
 import type { AnalyticsRange, FormsAnalytics } from '@/types/formsAnalytics';
@@ -19,19 +19,17 @@ export function useFormsAnalytics(workspaceId: string, range: AnalyticsRange, fo
   const key = `${workspaceId}:${range}:${formId ?? 'all'}`;
   const [data, setData] = useState<FormsAnalytics | null>(() => loaded.get(key) ?? null);
   const [loading, setLoading] = useState(!loaded.has(key));
-  const [failed, setFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const cached = loaded.get(key);
     if (cached) {
       setData(cached);
       setLoading(false);
-      setFailed(false);
       return;
     }
     let live = true;
     setLoading(true);
-    setFailed(false);
     getFormsAnalytics({ range, formId, timezone: TIMEZONE }, workspaceId)
       .then((result) => {
         if (!live) return;
@@ -39,9 +37,7 @@ export function useFormsAnalytics(workspaceId: string, range: AnalyticsRange, fo
         setData(result);
       })
       .catch(() => {
-        if (!live) return;
-        setFailed(true);
-        notify.error('Could not load form analytics.');
+        if (live) notify.error('Could not load form analytics.');
       })
       .finally(() => {
         if (live) setLoading(false);
@@ -51,5 +47,18 @@ export function useFormsAnalytics(workspaceId: string, range: AnalyticsRange, fo
     };
   }, [key, workspaceId, range, formId]);
 
-  return { data, loading, failed };
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const result = await getFormsAnalytics({ range, formId, timezone: TIMEZONE, fresh: true }, workspaceId);
+      loaded.set(key, result);
+      setData(result);
+    } catch {
+      notify.error('Could not refresh form analytics.');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [key, workspaceId, range, formId]);
+
+  return { data, loading, refreshing, refresh };
 }

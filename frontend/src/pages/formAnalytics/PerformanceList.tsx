@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Progress } from '@mantine/core';
+import { FileTextIcon } from 'lucide-react';
+import { RankEmpty } from '@/components/rank/RankCard';
 import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
 import type { FormPerformance } from '@/types/formsAnalytics';
 import { AnalyticsCard } from './AnalyticsCard';
@@ -32,7 +34,7 @@ export function PerformanceList({ forms, onOpen }: { forms: FormPerformance[]; o
       actions={<SegmentedTabs size="sm" value={sort} onChange={setSort} data={SORTS} ariaLabel="Sort forms" />}
     >
       {rows.length === 0 ? (
-        <div className={classes.empty}>No forms yet.</div>
+        <RankEmpty icon={FileTextIcon}>No forms yet.</RankEmpty>
       ) : (
         <div className={classes.rows}>
           <div className={classes.row} data-head>

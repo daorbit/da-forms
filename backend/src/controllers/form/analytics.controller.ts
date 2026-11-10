@@ -14,7 +14,7 @@ export const getFormsAnalytics: RequestHandler = async (req, res) => {
     range: analyticsRange(req.query.range),
     timezone: analyticsTimezone(req.query.tz),
     formId,
-  });
+  }, req.query.fresh === "1");
   if (!result) return res.status(404).json({ error: "not_found" });
   res.json(result);
 };

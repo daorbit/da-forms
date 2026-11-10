@@ -130,6 +130,27 @@
   --orbit-glow: 0 0 #0000;
   --orbit-glow-focus: 0 0 0 3px var(--focus-ring);
 
+  --viz-1: #3987e5;
+  --viz-2: #e5642e;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-6: #008300;
+  --viz-7: #9085e9;
+  --viz-8: #e66767;
+  --metric-blue: #0a84ff;
+  --metric-orange: #ff9f0a;
+  --metric-purple: #bf5af2;
+  --metric-pink: #ff375f;
+  --metric-teal: #64d2ff;
+  --metric-indigo: #5e5ce6;
+  --metric-yellow: #ffd60a;
+  --metric-green: #30d158;
+  --viz-other: var(--gray-9);
+  --viz-grid: color-mix(in srgb, var(--text) 7%, transparent);
+  --viz-track: color-mix(in srgb, var(--text) 7%, transparent);
+  --viz-cursor: color-mix(in srgb, var(--text) 22%, transparent);
+
   color-scheme: dark;
 }
 
@@ -201,6 +222,25 @@
 
   --shadow: 0 1px 2px rgba(16, 18, 24, 0.05), 0 12px 32px -10px rgba(16, 18, 24, 0.16);
   --shadow-lg: 0 2px 6px rgba(16, 18, 24, 0.06), 0 24px 56px -14px rgba(16, 18, 24, 0.22);
+
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-6: #008300;
+  --viz-7: #6250d6;
+  --viz-8: #e34948;
+  --metric-blue: #007aff;
+  --metric-orange: #f28a00;
+  --metric-purple: #a550d6;
+  --metric-pink: #ff2d55;
+  --metric-teal: #1d9bc7;
+  --metric-indigo: #5856d6;
+  --metric-yellow: #d9a400;
+  --metric-green: #28a745;
+  --viz-grid: color-mix(in srgb, var(--text) 8%, transparent);
+  --viz-track: color-mix(in srgb, var(--text) 6%, transparent);
 
   color-scheme: light;
 }

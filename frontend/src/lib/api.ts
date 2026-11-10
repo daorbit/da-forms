@@ -355,11 +355,12 @@ export function getLeadSources(range: LeadSourceRange, workspaceId = DEFAULT_WOR
 }
 
 export function getFormsAnalytics(
-  query: { range: AnalyticsRange; formId: string | null; timezone: string },
+  query: { range: AnalyticsRange; formId: string | null; timezone: string; fresh?: boolean },
   workspaceId = DEFAULT_WORKSPACE
 ) {
   const params = new URLSearchParams({ range: query.range, tz: query.timezone });
   if (query.formId) params.set('formId', query.formId);
+  if (query.fresh) params.set('fresh', '1');
   return request<FormsAnalytics>(`${ws(workspaceId)}/analytics?${params.toString()}`);
 }
 

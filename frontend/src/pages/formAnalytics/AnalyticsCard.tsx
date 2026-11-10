@@ -1,24 +1,19 @@
 import type { ReactNode } from 'react';
-import classes from './FormAnalytics.module.css';
+import { RankCard } from '@/components/rank/RankCard';
+import type { RankTone } from '@/components/rank/tones';
 
 interface Props {
   title: string;
   subtitle?: ReactNode;
   actions?: ReactNode;
+  tone?: RankTone;
   children: ReactNode;
 }
 
-export function AnalyticsCard({ title, subtitle, actions, children }: Props) {
+export function AnalyticsCard({ title, subtitle, actions, tone = 'blue', children }: Props) {
   return (
-    <section className={classes.card}>
-      <div className={classes.cardHead}>
-        <div>
-          <div className={classes.cardTitle}>{title}</div>
-          {subtitle && <div className={classes.cardSub}>{subtitle}</div>}
-        </div>
-        {actions}
-      </div>
+    <RankCard title={title} subtitle={subtitle} actions={actions} tone={tone}>
       {children}
-    </section>
+    </RankCard>
   );
 }

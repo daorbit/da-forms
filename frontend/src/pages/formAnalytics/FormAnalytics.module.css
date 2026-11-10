@@ -1,6 +1,17 @@
 .page {
+  --seo-hairline: color-mix(in srgb, var(--text) 6%, transparent);
+  --surface: #1c1c1e;
+  --surface-2: #242426;
+  --card-bg: var(--surface-2);
   container-type: inline-size;
   padding: 16px 16px 40px;
+}
+
+:global([data-mantine-color-scheme='light']) .page {
+  --seo-hairline: color-mix(in srgb, var(--text) 10%, transparent);
+  --surface: #ffffff;
+  --surface-2: var(--gray-3);
+  --card-bg: #ffffff;
 }
 
 .toolbar {

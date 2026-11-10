@@ -1,0 +1,24 @@
+.button[data-tone] {
+  --ai-color: var(--tone);
+  color: var(--tone);
+}
+
+.button[data-tone='blue'] {
+  --tone: var(--metric-blue);
+}
+
+.button[data-tone='teal'] {
+  --tone: var(--viz-3);
+}
+
+.button[data-tone='violet'] {
+  --tone: var(--metric-purple);
+}
+
+.button[data-tone='orange'] {
+  --tone: var(--metric-orange);
+}
+
+.button[data-tone='pink'] {
+  --tone: var(--metric-pink);
+}

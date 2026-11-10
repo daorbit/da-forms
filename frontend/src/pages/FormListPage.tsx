@@ -158,10 +158,11 @@ export function FormListPage() {
             <HeaderIconButton
               label="Form analytics"
               icon={ChartNoAxesColumnIcon}
+              tone="blue"
               onClick={() => navigate(`/${workspaceId}/forms/analytics`)}
             />
-            <HeaderIconButton label="Lead sources" icon={ChartPieIcon} onClick={() => setSourcesOpen(true)} />
-            <HeaderIconButton label="Apps" icon={BlocksIcon} onClick={() => openConnections()} />
+            <HeaderIconButton label="Lead sources" icon={ChartPieIcon} tone="teal" onClick={() => setSourcesOpen(true)} />
+            <HeaderIconButton label="Apps" icon={BlocksIcon} tone="violet" onClick={() => openConnections()} />
             {!hostPhone && <DocsButton path="/lead-capture" />}
             {IS_EMBEDDED && <HostNotificationsBell />}
           </>

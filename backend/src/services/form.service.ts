@@ -12,6 +12,7 @@ import { FormDailyViewModel } from '../models/formDailyView.model.js';
 import { evaluateFormula, numericValues } from '../lib/formula.js';
 import { leadScoreOf } from '../lib/leadScore.js';
 import { NOT_TRACKED, type SubmissionAttribution } from '../lib/attribution.js';
+import type { RespondentMeta } from '../lib/respondentMeta.js';
 import {
   pipelineFacets,
   sortFor,
@@ -544,7 +545,8 @@ async function promotePartial(
   fileMeta?: Record<string, { bytes: number }>,
   quiz?: QuizScore,
   leadScore?: number,
-  attribution?: SubmissionAttribution
+  attribution?: SubmissionAttribution,
+  respondent?: RespondentMeta
 ) {
   return SubmissionModel.findOneAndUpdate(
     { formId, partialKey, status: 'partial' },
@@ -554,6 +556,7 @@ async function promotePartial(
         fileMeta,
         sourceUrl,
         ...(attribution ? { attribution } : {}),
+        ...(respondent ? { respondent } : {}),
         status: payment ? 'pending_payment' : 'complete',
         ...(payment ? { payment } : {}),
         ...(quiz ? { quiz } : {}),
@@ -734,7 +737,8 @@ export async function submitForm(
   fileMeta?: Record<string, { bytes: number }>,
 
   partialKey?: string,
-  attribution?: SubmissionAttribution
+  attribution?: SubmissionAttribution,
+  respondent?: RespondentMeta
 ) {
 
   applyCalculatedFields(fields, data);
@@ -746,7 +750,7 @@ export async function submitForm(
 
   const submission =
     (partialKey
-      ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta, quiz, leadScore, attribution)
+      ? await promotePartial(formId, partialKey, data, sourceUrl, payment, fileMeta, quiz, leadScore, attribution, respondent)
       : null) ??
     (await SubmissionModel.create({
       formId,
@@ -754,6 +758,7 @@ export async function submitForm(
       fileMeta,
       sourceUrl,
       attribution,
+      respondent,
       status: payment ? 'pending_payment' : 'complete',
       payment,
       quiz,

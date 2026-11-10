@@ -36,6 +36,7 @@ import {
 import { useFormFont } from '@/hooks/useFormFont';
 import skinClasses from './FormSkin.module.css';
 import honeypotClasses from './FormHoneypot.module.css';
+import { respondentDevice } from '@/lib/respondentDevice';
 import { resolveSteps, splitIntoPages } from '@/lib/formSteps';
 import { activePageIndexes, shownFieldIds } from '@/utils/conditionalLogic';
 import {
@@ -177,6 +178,7 @@ export function FormRenderer({
   );
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const honeypotRef = useRef<HTMLInputElement>(null);
+  const startedAt = useRef(Date.now());
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [payerPhone, setPayerPhone] = useState('');
   const [payerPhoneError, setPayerPhoneError] = useState<string | null>(null);
@@ -372,6 +374,8 @@ export function FormRenderer({
     const accepted = await onSubmit?.(
       {
         ...withFileMeta,
+        _device: respondentDevice(),
+        _durationMs: String(Date.now() - startedAt.current),
         ...(honeypotRef.current?.value ? { _hp: honeypotRef.current.value } : {}),
         // Absent when the challenge has not resolved. The server decides what
         // that means — a missing token is refused only when it could have

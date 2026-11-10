@@ -75,6 +75,7 @@ workspaceFormRouter.post(
 
 workspaceFormRouter.get('/', asyncHandler(formController.listForms));
 workspaceFormRouter.get('/lead-sources', asyncHandler(formController.getLeadSources));
+workspaceFormRouter.get('/analytics', asyncHandler(formController.getFormsAnalytics));
 workspaceFormRouter.get('/pipeline-summary', asyncHandler(formController.getPipelineSummary));
 workspaceFormRouter.get('/booking-summary', asyncHandler(formController.getBookingSummary));
 workspaceFormRouter.post('/', asyncHandler(formController.createForm));

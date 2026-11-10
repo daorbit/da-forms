@@ -13,7 +13,7 @@ const MAX_SOURCES = 50;
 const MAX_FORMS = 500;
 const LEGACY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
-function breakdown(match: PipelineStage.Match['$match']): Promise<LeadSourceEntry[]> {
+export function sourceBreakdown(match: PipelineStage.Match['$match']): Promise<LeadSourceEntry[]> {
   return SubmissionModel.aggregate<LeadSourceEntry>([
     { $match: match },
     {
@@ -39,7 +39,7 @@ function recentLegacyEmbeds(formId: Types.ObjectId | { $in: Types.ObjectId[] }):
 }
 
 export function formLeadSources(formId: string): Promise<LeadSourceEntry[]> {
-  return breakdown({ formId: new Types.ObjectId(formId), status: 'complete' });
+  return sourceBreakdown({ formId: new Types.ObjectId(formId), status: 'complete' });
 }
 
 export function formLegacyEmbeds(formId: string): Promise<number> {
@@ -52,7 +52,7 @@ export async function workspaceLeadSources(workspaceId: string, since?: Date) {
 
   const formIds = { $in: forms.map((f) => f._id) };
   const [sources, legacyEmbeds] = await Promise.all([
-    breakdown({
+    sourceBreakdown({
       formId: formIds,
       status: 'complete',
       ...(since ? { createdAt: { $gte: since } } : {}),

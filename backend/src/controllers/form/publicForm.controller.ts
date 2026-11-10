@@ -8,6 +8,7 @@ import { getFormLimits, getBranding } from "../../lib/quantalog.js";
 import { turnstileConfigured, verifyTurnstileToken } from "../../lib/turnstile.js";
 import { readEditToken, mintResumeToken } from "../../lib/edit-token.js";
 import { attributionFrom } from "../../lib/attribution.js";
+import { respondentMetaFrom } from "../../lib/respondentMeta.js";
 import { env } from "../../config/env.js";
 import { paymentReturnUrl } from "./payments.controller.js";
 import { fingerprintOf } from "./shared.js";
@@ -155,7 +156,7 @@ export const updateSubmissionByToken: RequestHandler = async (req, res) => {
       });
   }
 
-  const { _token, _fileMeta, ...data } = req.body;
+  const { _token, _fileMeta, _device: _ignoredDevice, _durationMs: _ignoredDuration, ...data } = req.body;
 
   const found = await resolveEditToken(_token, req.params.id);
   if ("error" in found) {
@@ -372,6 +373,8 @@ export const submitForm: RequestHandler = async (req, res) => {
     _partialKey,
     _payerPhone: _ignoredPayerPhone,
     _attribution,
+    _device,
+    _durationMs,
     ...data
   } = req.body;
   if (_hp) {
@@ -416,6 +419,7 @@ export const submitForm: RequestHandler = async (req, res) => {
 
   const sourceUrl = req.get("referer");
   const attribution = attributionFrom(_attribution);
+  const respondent = respondentMetaFrom(_device, _durationMs);
 
   const payField = paymentService.activePaymentField(form.fields, data);
   const bookingField = bookingService.activeBookingField(form.fields, data);
@@ -488,6 +492,7 @@ export const submitForm: RequestHandler = async (req, res) => {
         fileMeta,
         typeof _partialKey === "string" ? _partialKey : undefined,
         attribution,
+        respondent,
       );
       if (hold) {
         await bookingService.attachBooking(hold._id, submission._id, false);
@@ -539,6 +544,7 @@ export const submitForm: RequestHandler = async (req, res) => {
       fileMeta,
       typeof _partialKey === "string" ? _partialKey : undefined,
       attribution,
+      respondent,
     );
 
     let booking;

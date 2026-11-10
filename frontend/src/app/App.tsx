@@ -1,4 +1,6 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { FormLoader } from '@/components/FormLoader';
 import { FormListPage } from '@/pages/FormListPage';
 import { FormBuilderPage } from '@/pages/FormBuilderPage';
 import { CreateFormPage } from '@/pages/CreateFormPage';
@@ -9,6 +11,8 @@ import { DEFAULT_WORKSPACE } from '@/lib/api';
 import { isDemoWorkspace } from '@/lib/demoWorkspace';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
 import { useDismissOnHostFocus } from '@/hooks/useDismissOnHostFocus';
+
+const FormAnalyticsPage = lazy(() => import('@/pages/formAnalytics/FormAnalyticsPage'));
 
  
 function NewFormRoute() {
@@ -49,6 +53,14 @@ export function App() {
         <Route path="/:workspaceId/forms" element={<FormListPage />} />
         <Route path="/:workspaceId/forms/new" element={<NewFormRoute />} />
         <Route path="/:workspaceId/forms/create" element={<CreateFormRoute />} />
+        <Route
+          path="/:workspaceId/forms/analytics"
+          element={
+            <Suspense fallback={<FormLoader label="Loading analytics" fullPage />}>
+              <FormAnalyticsPage />
+            </Suspense>
+          }
+        />
         <Route
           path="/:workspaceId/forms/:id/edit"
           element={<FormBuilderPage />}

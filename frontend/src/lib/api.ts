@@ -21,6 +21,7 @@ import { handlePlanLimit, type PlanLimitInfo } from './planLimit';
 import type { GeneratedForm } from './generatedForm';
 import type { EditOp, EditSnapshot } from './editOps';
 import { workspaceToken, refreshWorkspaceToken, ensureWorkspaceToken } from './workspaceToken';
+import type { AnalyticsRange, FormsAnalytics } from '@/types/formsAnalytics';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -351,6 +352,15 @@ export interface WorkspaceLeadSources {
 
 export function getLeadSources(range: LeadSourceRange, workspaceId = DEFAULT_WORKSPACE) {
   return request<WorkspaceLeadSources>(`${ws(workspaceId)}/lead-sources?range=${range}`);
+}
+
+export function getFormsAnalytics(
+  query: { range: AnalyticsRange; formId: string | null; timezone: string },
+  workspaceId = DEFAULT_WORKSPACE
+) {
+  const params = new URLSearchParams({ range: query.range, tz: query.timezone });
+  if (query.formId) params.set('formId', query.formId);
+  return request<FormsAnalytics>(`${ws(workspaceId)}/analytics?${params.toString()}`);
 }
 
 export interface DropOffEntry {

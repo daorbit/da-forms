@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Badge, Box, Button, Group, Text, Tooltip } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
-import { InfoIcon, BlocksIcon, PlusIcon, ChartPieIcon, ChartNoAxesColumnIcon } from 'lucide-react';
+import { InfoIcon, BlocksIcon, PlusIcon, ChartPieIcon } from 'lucide-react';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { IS_EMBEDDED } from '@/lib/bootParams';
@@ -155,12 +155,6 @@ export function FormListPage() {
                 New form
               </Button>
             )}
-            <HeaderIconButton
-              label="Form analytics"
-              icon={ChartNoAxesColumnIcon}
-              tone="blue"
-              onClick={() => navigate(`/${workspaceId}/forms/analytics`)}
-            />
             <HeaderIconButton label="Lead sources" icon={ChartPieIcon} tone="teal" onClick={() => setSourcesOpen(true)} />
             <HeaderIconButton label="Apps" icon={BlocksIcon} tone="violet" onClick={() => openConnections()} />
             {!hostPhone && <DocsButton path="/lead-capture" />}

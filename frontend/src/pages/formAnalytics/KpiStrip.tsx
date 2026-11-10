@@ -1,91 +1,86 @@
-import type { FormsAnalytics } from '@/types/formsAnalytics';
-import { change, compact, duration, money, pct } from './analyticsFormat';
-import { DeltaBadge } from './DeltaBadge';
-import { Sparkline } from './Sparkline';
-import classes from './FormAnalytics.module.css';
+import { CheckCheckIcon, EyeIcon, InboxIcon, TimerIcon, WalletIcon } from 'lucide-react';
+import type { AnalyticsRange, FormsAnalytics } from '@/types/formsAnalytics';
+import { change, compact, duration, money, pct, shortDate } from './analyticsFormat';
+import { StatTile, type StatTileProps } from './StatTile';
+import classes from './StatTile.module.css';
 
-interface Tile {
-  key: string;
-  label: string;
-  value: string;
-  delta: number | null;
-  series?: number[];
-  money?: boolean;
-  note?: string;
-}
+const RANGE_LABEL: Record<AnalyticsRange, string> = {
+  '7d': 'previous 7 days',
+  '30d': 'previous 30 days',
+  '90d': 'previous 90 days',
+};
 
-function completionSeries(data: FormsAnalytics): number[] {
-  return data.daily.map((d) => (d.views ? Math.min(1, d.responses / d.views) : 0));
-}
-
-function lastTile(data: FormsAnalytics): Tile {
+function lastTile(data: FormsAnalytics): StatTileProps & { key: string } {
   const revenue = data.revenue[0];
   if (revenue) {
     return {
       key: 'revenue',
+      icon: WalletIcon,
+      tone: 'green',
       label: 'Paid revenue',
       value: money(revenue.amount, revenue.currency),
-      delta: null,
       money: true,
-      note: `${revenue.payments.toLocaleString()} payments`,
+      subline: `${revenue.payments.toLocaleString()} payments`,
     };
   }
   return {
     key: 'duration',
-    label: 'Average time to complete',
+    icon: TimerIcon,
+    tone: 'green',
+    label: 'Avg. time to complete',
     value: data.duration ? duration(data.duration.averageMs) : '—',
-    delta: null,
-    note: data.duration ? `From ${data.duration.timed.toLocaleString()} responses` : 'Recorded from new responses',
+    subline: data.duration ? `From ${data.duration.timed.toLocaleString()} responses` : 'Recorded from new responses',
   };
 }
 
-export function KpiStrip({ data }: { data: FormsAnalytics }) {
+export function KpiStrip({ data, range }: { data: FormsAnalytics; range: AnalyticsRange }) {
   const { totals, previous } = data;
-  const rateNow = totals.completionRate;
+  const period = RANGE_LABEL[range];
+  const series = (pick: (d: FormsAnalytics['daily'][number]) => number) =>
+    data.daily.map((d) => ({ label: shortDate(d.date), value: pick(d) }));
   const rateBefore = previous.completionRate;
 
-  const tiles: Tile[] = [
+  const tiles: (StatTileProps & { key: string })[] = [
     {
       key: 'views',
+      icon: EyeIcon,
+      tone: 'blue',
       label: 'Views',
       value: compact(totals.views),
       delta: change(totals.views, previous.views),
-      series: data.daily.map((d) => d.views),
+      subline: `vs ${compact(previous.views)} · ${period}`,
+      points: series((d) => d.views),
+      format: (v) => v.toLocaleString(),
     },
     {
       key: 'responses',
+      icon: InboxIcon,
+      tone: 'orange',
       label: 'Responses',
       value: compact(totals.responses),
       delta: change(totals.responses, previous.responses),
-      series: data.daily.map((d) => d.responses),
+      subline: `vs ${compact(previous.responses)} · ${period}`,
+      points: series((d) => d.responses),
+      format: (v) => v.toLocaleString(),
     },
     {
       key: 'completion',
+      icon: CheckCheckIcon,
+      tone: 'purple',
       label: 'Completion rate',
-      value: pct(rateNow),
-      delta: rateBefore > 0 ? Math.round(((rateNow - rateBefore) / rateBefore) * 100) : null,
-      series: completionSeries(data),
+      value: pct(totals.completionRate),
+      delta: rateBefore > 0 ? Math.round(((totals.completionRate - rateBefore) / rateBefore) * 100) : null,
+      subline: `vs ${pct(rateBefore)} · ${period}`,
+      points: series((d) => (d.views ? Math.min(1, d.responses / d.views) : 0)),
+      format: pct,
     },
     lastTile(data),
   ];
 
   return (
-    <div className={classes.kpis}>
-      {tiles.map((tile) => (
-        <div key={tile.key} className={classes.kpi}>
-          <span className={classes.kpiLabel}>{tile.label}</span>
-          <span className={classes.kpiValue} data-money={tile.money || undefined}>
-            {tile.value}
-          </span>
-          <div className={classes.kpiFoot}>
-            {tile.note ? (
-              <span className={classes.delta}>{tile.note}</span>
-            ) : (
-              <DeltaBadge value={tile.delta} note="vs before" />
-            )}
-            {tile.series && <Sparkline values={tile.series} />}
-          </div>
-        </div>
+    <div className={classes.grid}>
+      {tiles.map(({ key, ...tile }) => (
+        <StatTile key={key} {...tile} />
       ))}
     </div>
   );

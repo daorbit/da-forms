@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
 import type { AnalyticsDay } from '@/types/formsAnalytics';
 import { AnalyticsCard } from './AnalyticsCard';
@@ -53,7 +53,7 @@ export function TrendCard({ daily }: { daily: AnalyticsDay[] }) {
     >
       <div className={classes.trend}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -12 }} barCategoryGap="28%">
+          <AreaChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -12 }}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -70,9 +70,22 @@ export function TrendCard({ daily }: { daily: AnalyticsDay[] }) {
               width={48}
               allowDecimals={metric === 'completion'}
             />
-            <Tooltip content={<TrendTooltip metric={metric} />} cursor={{ className: classes.barCursor }} />
-            <Bar dataKey="value" className={classes.bars} radius={[4, 4, 0, 0]} minPointSize={2} animationDuration={500} />
-          </BarChart>
+            <Tooltip
+              content={<TrendTooltip metric={metric} />}
+              cursor={{ stroke: 'currentColor', strokeOpacity: 0.35, strokeWidth: 1 }}
+            />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="currentColor"
+              strokeWidth={2}
+              fill="currentColor"
+              fillOpacity={0.14}
+              dot={false}
+              activeDot={{ r: 4, stroke: 'var(--surface)', strokeWidth: 2, fill: 'currentColor' }}
+              animationDuration={500}
+            />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </AnalyticsCard>

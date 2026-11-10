@@ -29,10 +29,18 @@ function readRange(value: string | null): AnalyticsRange {
   return RANGES.includes(value as AnalyticsRange) ? (value as AnalyticsRange) : '30d';
 }
 
-function Dashboard({ data, onOpen }: { data: FormsAnalytics; onOpen: (id: string) => void }) {
+function Dashboard({
+  data,
+  range,
+  onOpen,
+}: {
+  data: FormsAnalytics;
+  range: AnalyticsRange;
+  onOpen: (id: string) => void;
+}) {
   return (
     <div className={classes.stack}>
-      <KpiStrip data={data} />
+      <KpiStrip data={data} range={range} />
       <div className={classes.split}>
         <TrendCard daily={data.daily} />
         <CalloutsCard data={data} />
@@ -104,11 +112,13 @@ export default function FormAnalyticsPage() {
     <div className={classes.page}>
       <PageHeader
         leading={
+          IS_EMBEDDED ? undefined : (
           <Tooltip label="Back to forms" withArrow>
             <ActionIcon variant="default" size="lg" radius="md" aria-label="Back to forms" onClick={back}>
               <ArrowLeftIcon size={17} />
             </ActionIcon>
           </Tooltip>
+          )
         }
         title="Form analytics"
         description={picked ? `How ${picked.title || 'this form'} is performing.` : 'How every form in this workspace is performing.'}
@@ -139,7 +149,7 @@ export default function FormAnalyticsPage() {
           action={{ label: 'Go to forms', onClick: back }}
         />
       ) : (
-        <Dashboard data={data} onOpen={(id) => update({ form: id })} />
+        <Dashboard data={data} range={range} onOpen={(id) => update({ form: id })} />
       )}
     </div>
   );

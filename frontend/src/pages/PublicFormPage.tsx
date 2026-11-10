@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Text, Stack, Button } from '@mantine/core';
 import { CheckIcon, CirclePauseIcon } from 'lucide-react';
@@ -26,6 +26,7 @@ import { StatusScreen } from '@/components/public/StatusScreen';
 import { PoweredBy } from '@/components/public/PoweredBy';
 import { BrandHeader } from '@/components/public/BrandHeader';
 import { FormPage } from '@/components/FormPage';
+import { layoutFromSearch, withLayout } from '@/lib/formLayout';
 import { FormLoader } from '@/components/FormLoader';
 import { notify } from '@/lib/notify';
 import { resolveEnding } from '@/utils/conditionalLogic';
@@ -74,7 +75,9 @@ export function PublicFormPage() {
   const isPreview = searchParams.get("preview") === "1";
   const editToken = searchParams.get("edit");
   const resumeToken = searchParams.get("resume");
-  const [form, setForm] = useState<Form | null>(null);
+  const [loadedForm, setForm] = useState<Form | null>(null);
+  const layout = layoutFromSearch(searchParams);
+  const form = useMemo(() => withLayout(loadedForm, layout), [loadedForm, layout]);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [endingMessage, setEndingMessage] = useState<string | null>(null);

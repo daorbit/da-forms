@@ -1,4 +1,4 @@
-import { CrownIcon, EyeIcon, InboxIcon, TrophyIcon } from 'lucide-react';
+import { CircleCheckIcon, EyeIcon, MegaphoneIcon, UsersRoundIcon } from 'lucide-react';
 import type { AnalyticsRange, FormsAnalytics } from '@/types/formsAnalytics';
 import { NOT_TRACKED } from '@/lib/leadSource';
 import { change, compact, shortDate } from '@/pages/formAnalytics/analyticsFormat';
@@ -24,7 +24,7 @@ export function LeadSourcesTiles({ data, range }: { data: FormsAnalytics; range:
   return (
     <div className={tiles.grid}>
       <StatTile
-        icon={InboxIcon}
+        icon={UsersRoundIcon}
         tone="blue"
         label="Leads"
         value={compact(leads)}
@@ -44,14 +44,14 @@ export function LeadSourcesTiles({ data, range }: { data: FormsAnalytics; range:
         format={(v) => v.toLocaleString()}
       />
       <StatTile
-        icon={TrophyIcon}
+        icon={CircleCheckIcon}
         tone="green"
         label="Won"
         value={compact(won)}
         subline={leads ? `${Math.round((won / leads) * 100)}% of leads won` : 'Mark leads Won in their pipeline'}
       />
       <StatTile
-        icon={CrownIcon}
+        icon={MegaphoneIcon}
         tone="purple"
         label="Top source"
         value={top ? top.source : '—'}

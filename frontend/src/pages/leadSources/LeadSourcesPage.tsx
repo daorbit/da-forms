@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { ChartPieIcon } from 'lucide-react';
+import { MegaphoneIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { RefreshButton } from '@/components/ui/RefreshButton';
@@ -119,7 +119,7 @@ export default function LeadSourcesPage() {
         <AnalyticsSkeleton />
       ) : !data || data.forms.length === 0 ? (
         <EmptyState
-          icon={ChartPieIcon}
+          icon={MegaphoneIcon}
           title="No leads to trace yet"
           description="Share a form with UTM tags on its links. Each lead's source shows up here."
         />

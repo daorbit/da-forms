@@ -16,6 +16,7 @@ import { useRememberedParams } from '@/hooks/useRememberedParams';
 import analytics from '@/pages/formAnalytics/FormAnalytics.module.css';
 import { bookingCalendarEvents } from './bookingCalendarEvents';
 import { BookingsToolbar } from './BookingsToolbar';
+import { BookingsEmpty } from './BookingsEmpty';
 import { bookingCounts } from './bookingStats';
 import { exportBookingsCsv } from './bookingsExport';
 import { legendForms } from './bookingLegend';
@@ -78,6 +79,10 @@ export default function BookingsPage() {
           </>
         }
       />
+      {data && forms.length === 0 ? (
+        <BookingsEmpty />
+      ) : (
+        <>
       <BookingsToolbar
         query={query}
         onQuery={setQuery}
@@ -99,6 +104,8 @@ export default function BookingsPage() {
           if (event.formId) navigate(`/${workspaceId}/forms/${event.formId}/entries`);
         }}
       />
+        </>
+      )}
     </div>
   );
 }

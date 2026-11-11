@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ActionIcon, Tooltip } from '@mantine/core';
-import { ArrowLeftIcon, ChartNoAxesColumnIcon } from 'lucide-react';
+import { ArrowLeftIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { ViewFormsLink } from '@/components/ui/ViewFormsLink';
@@ -9,7 +9,7 @@ import { UpdatedAgo } from '@/components/ui/UpdatedAgo';
 import { ExportButton } from '@/components/ui/ExportButton';
 import { useRememberedParams } from '@/hooks/useRememberedParams';
 import { exportInsightsCsv } from './analyticsExport';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { InsightsEmpty } from './InsightsEmpty';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import { useWorkspaceId } from '@/hooks/useWorkspaceId';
@@ -156,12 +156,7 @@ export default function FormAnalyticsPage() {
       {loading ? (
         <AnalyticsSkeleton />
       ) : !data || data.forms.length === 0 ? (
-        <EmptyState
-          icon={ChartNoAxesColumnIcon}
-          title="No forms to measure yet"
-          description="Create and share a form. Views and responses show up here as they arrive."
-          action={{ label: 'Go to forms', onClick: back }}
-        />
+        <InsightsEmpty />
       ) : (
         <Dashboard data={data} range={range} onOpen={(id) => update({ form: id })} />
       )}

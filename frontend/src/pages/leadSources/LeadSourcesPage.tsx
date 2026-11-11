@@ -1,5 +1,4 @@
 import { useSearchParams } from 'react-router-dom';
-import { MegaphoneIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { ViewFormsLink } from '@/components/ui/ViewFormsLink';
@@ -8,7 +7,6 @@ import { UpdatedAgo } from '@/components/ui/UpdatedAgo';
 import { ExportButton } from '@/components/ui/ExportButton';
 import { useRememberedParams } from '@/hooks/useRememberedParams';
 import { exportSourcesCsv } from '@/pages/formAnalytics/analyticsExport';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import { LeadSourcesCard } from '@/components/builder/insights/LeadSourcesCard';
 import { LeadSourcesHint } from '@/components/builder/insights/LeadSourcesHint';
@@ -23,6 +21,7 @@ import { TrendCard } from '@/pages/formAnalytics/TrendCard';
 import { label } from '@/pages/formAnalytics/analyticsFormat';
 import analytics from '@/pages/formAnalytics/FormAnalytics.module.css';
 import { LeadSourcesTiles } from './LeadSourcesTiles';
+import { SourcesEmpty } from './SourcesEmpty';
 
 const RANGES: AnalyticsRange[] = ['7d', '30d', '90d'];
 const REMEMBERED = ['form', 'range'];
@@ -128,11 +127,7 @@ export default function LeadSourcesPage() {
       {loading ? (
         <AnalyticsSkeleton />
       ) : !data || data.forms.length === 0 ? (
-        <EmptyState
-          icon={MegaphoneIcon}
-          title="No leads to trace yet"
-          description="Share a form with UTM tags on its links. Each lead's source shows up here."
-        />
+        <SourcesEmpty />
       ) : (
         <Sections data={data} range={range} />
       )}

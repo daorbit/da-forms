@@ -1,0 +1,137 @@
+.columns {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+  height: 92px;
+}
+
+.column {
+  flex: 1;
+  border-radius: 5px 5px 2px 2px;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.column[data-height='34'] { height: 34%; }
+.column[data-height='41'] { height: 41%; }
+.column[data-height='52'] { height: 52%; }
+.column[data-height='57'] { height: 57%; }
+.column[data-height='63'] { height: 63%; }
+.column[data-height='68'] { height: 68%; }
+.column[data-height='80'] { height: 80%; }
+.column[data-height='92'] { height: 92%; background: var(--accent); }
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.rowLabel {
+  overflow: hidden;
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-2);
+}
+
+.track {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.fill[data-width='full'] { width: 100%; }
+.fill[data-width='most'] { width: 72%; }
+.fill[data-width='half'] { width: 46%; }
+.fill[data-width='third'] { width: 28%; }
+
+.heat {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+}
+
+.heatCell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.heatCell[data-level='1'] { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+.heatCell[data-level='2'] { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.heatCell[data-level='3'] { background: var(--accent); }
+
+.stages {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.stage {
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.stage[data-step='2'] {
+  border-color: color-mix(in srgb, var(--green) 45%, var(--border));
+  color: var(--green);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 78%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fieldLabel {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.fieldInput {
+  height: 14px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+}
+
+.submit {
+  align-self: flex-start;
+  width: 64px;
+  height: 16px;
+  margin-top: 2px;
+  border-radius: 6px;
+  background: var(--accent);
+}

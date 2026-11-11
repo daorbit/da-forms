@@ -395,6 +395,25 @@ html:root[data-mantine-color-scheme='light'] {
     color var(--duration-fast) ease;
 }
 
+:root :is(.mantine-Button-root, .mantine-ActionIcon-root)[data-variant='default']:not(.da-forms-light-surface *):not([data-keep-color]):not([data-disabled]) {
+  --button-bg: var(--segment-track) !important;
+  --button-hover: color-mix(in srgb, var(--text) 14%, transparent) !important;
+  --button-bd: 1px solid transparent !important;
+  --ai-bg: var(--segment-track) !important;
+  --ai-hover: color-mix(in srgb, var(--text) 14%, transparent) !important;
+  --ai-bd: 1px solid transparent !important;
+  background-clip: padding-box;
+}
+
+:root[data-mantine-color-scheme='light'] :is(.mantine-Button-root, .mantine-ActionIcon-root)[data-variant='default']:not(.da-forms-light-surface *):not([data-keep-color]):not([data-disabled]) {
+  --button-bg: var(--surface) !important;
+  --button-hover: var(--gray-2) !important;
+  --button-bd: 1px solid var(--border-strong) !important;
+  --ai-bg: var(--surface) !important;
+  --ai-hover: var(--gray-2) !important;
+  --ai-bd: 1px solid var(--border-strong) !important;
+}
+
 :root[data-mantine-color-scheme='light'] :is(.mantine-Button-root, .mantine-ActionIcon-root)[data-variant='default']:not(.da-forms-light-surface *):not([data-disabled]):hover {
   border-color: var(--border-hover);
 }

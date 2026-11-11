@@ -4,6 +4,7 @@ import { ActionIcon, Tooltip } from '@mantine/core';
 import { ChartColumnIcon } from 'lucide-react';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import { hostInsightsUrl, openHostInsights } from '@/lib/hostConnections';
+import { rememberParam } from '@/hooks/useRememberedParams';
 
 const LABEL = 'Insights';
 
@@ -12,6 +13,7 @@ export function FormInsightsLink({ workspaceId, formId }: { workspaceId: string;
     const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
       event.preventDefault();
+      rememberParam('form', formId);
       openHostInsights(formId);
     };
     return (

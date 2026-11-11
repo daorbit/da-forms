@@ -11,6 +11,10 @@ function read(name: string): string | null {
   }
 }
 
+export function rememberParam(name: string, value: string | null) {
+  write(name, value);
+}
+
 function write(name: string, value: string | null) {
   try {
     if (value) sessionStorage.setItem(PREFIX + name, value);

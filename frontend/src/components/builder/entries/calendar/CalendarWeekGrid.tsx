@@ -78,6 +78,7 @@ export function CalendarWeekGrid({ days, byDay, onOpen }: Props) {
                     type="button"
                     className={classes.block}
                     data-state={event.state}
+                    data-tone={event.tone ?? 0}
                     data-compact={duration < 45 || undefined}
                     style={vars({ '--top': top, '--len': duration, '--lane': lane, '--lanes': lanes })}
                   >

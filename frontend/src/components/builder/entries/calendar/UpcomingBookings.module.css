@@ -36,7 +36,7 @@
   gap: 10px;
   padding: 14px 16px 16px;
   border-bottom: 1px solid var(--seo-hairline, var(--border));
-  background: color-mix(in srgb, var(--accent) 4%, transparent);
+  background: color-mix(in srgb, var(--tone, var(--accent)) 6%, transparent);
 }
 
 .nextLabel {
@@ -59,10 +59,87 @@
   background: currentColor;
 }
 
+.nextBody {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.nextBody:hover .nextName {
+  color: var(--tone, var(--accent));
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  width: 48px;
+  overflow: hidden;
+  border: 1px solid var(--seo-hairline, var(--border));
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.tileMonth {
+  width: 100%;
+  padding: 2px 0;
+  background: var(--tone, var(--accent));
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.tileDay {
+  padding: 3px 0 4px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.nextText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nextName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  transition: color 0.12s ease;
+}
+
 .nextWhen {
   font-size: 12.5px;
   font-variant-numeric: tabular-nums;
   color: var(--text-2);
+}
+
+.bar {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--tone, var(--accent));
 }
 
 .person {
@@ -82,21 +159,6 @@
 
 .person:hover .name {
   color: var(--accent);
-}
-
-.avatar {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--seo-hairline, var(--border));
-  border-radius: 50%;
-  background: var(--surface-2);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--text-2);
 }
 
 .who {
@@ -221,7 +283,8 @@
 }
 
 [data-motion='off'] .row,
-[data-motion='off'] .name {
+[data-motion='off'] .name,
+[data-motion='off'] .nextName {
   transition: none;
 }
 

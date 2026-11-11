@@ -19,6 +19,7 @@ export interface BookingEvent {
   meetLink?: string;
   eventLink?: string;
   state: BookingEventState;
+  tone?: number;
 }
 
 export interface PlacedEvent {

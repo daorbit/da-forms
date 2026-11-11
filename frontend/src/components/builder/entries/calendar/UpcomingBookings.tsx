@@ -37,14 +37,21 @@ function durationOf(event: BookingEvent): string {
 }
 
 function Person({ event }: { event: BookingEvent }) {
+  const sub = event.formName ?? event.email;
   return (
-    <>
-      <span className={classes.avatar}>{event.initials}</span>
-      <span className={classes.who}>
-        <span className={classes.name}>{event.title}</span>
-        {event.email && <span className={classes.email}>{event.email}</span>}
-      </span>
-    </>
+    <span className={classes.who}>
+      <span className={classes.name}>{event.title}</span>
+      {sub && <span className={classes.email}>{sub}</span>}
+    </span>
+  );
+}
+
+function DateTile({ date }: { date: Date }) {
+  return (
+    <span className={classes.tile}>
+      <span className={classes.tileMonth}>{date.toLocaleDateString('en-US', { month: 'short' })}</span>
+      <span className={classes.tileDay}>{date.getDate()}</span>
+    </span>
   );
 }
 
@@ -79,17 +86,21 @@ export function UpcomingBookings({ events, onOpen }: Props) {
         </div>
       ) : (
         <>
-          <div className={classes.next} data-live={next.state === 'live' || undefined}>
+          <div className={classes.next} data-live={next.state === 'live' || undefined} data-tone={next.tone ?? 0}>
             <span className={classes.nextLabel}>
               <span className={classes.pulse} />
               {startsIn(next)}
             </span>
-            <button type="button" className={classes.person} onClick={() => onOpen(next)}>
-              <Person event={next} />
+            <button type="button" className={classes.nextBody} onClick={() => onOpen(next)}>
+              <DateTile date={next.start} />
+              <span className={classes.nextText}>
+                <span className={classes.nextName}>{next.title}</span>
+                <span className={classes.nextWhen}>
+                  {dayHeading(next.start).label} · {timeLabel(next.start)} – {timeLabel(next.end)}
+                </span>
+                {next.formName && <span className={classes.email}>{next.formName}</span>}
+              </span>
             </button>
-            <span className={classes.nextWhen}>
-              {dayHeading(next.start).label}, {dayHeading(next.start).date} · {timeLabel(next.start)} – {timeLabel(next.end)}
-            </span>
             {next.meetLink && (
               <Button
                 component="a"
@@ -113,11 +124,12 @@ export function UpcomingBookings({ events, onOpen }: Props) {
                 <span className={classes.dayDate}>{group.heading.date}</span>
               </div>
               {group.items.map((event) => (
-                <div key={event.id} className={classes.row}>
+                <div key={event.id} className={classes.row} data-tone={event.tone ?? 0}>
                   <span className={classes.time}>
                     <span>{timeLabel(event.start)}</span>
                     <span className={classes.duration}>{durationOf(event)}</span>
                   </span>
+                  <span className={classes.bar} />
                   <button type="button" className={classes.person} onClick={() => onOpen(event)}>
                     <Person event={event} />
                   </button>

@@ -1,6 +1,7 @@
 import type { CalendarBooking } from '@/lib/api';
 import { initialsOf } from '@/lib/respondent';
 import { stateOf, type BookingEvent } from '@/components/builder/entries/calendar/bookingEvents';
+import { toneOf } from '@/components/builder/entries/calendar/bookingTone';
 
 export function bookingCalendarEvents(bookings: CalendarBooking[]): BookingEvent[] {
   const now = Date.now();
@@ -19,6 +20,7 @@ export function bookingCalendarEvents(bookings: CalendarBooking[]): BookingEvent
       state: stateOf(start, end, now),
       formId: b.formId,
       formName: b.formName || 'Untitled form',
+      tone: toneOf(b.formId),
     };
   });
 }

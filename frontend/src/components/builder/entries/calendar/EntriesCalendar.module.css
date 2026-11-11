@@ -773,14 +773,95 @@
 }
 
 @media (max-width: 48em) {
-  .monthDay {
-    min-height: 84px;
-    padding: 5px;
+  .toolbar {
+    padding: 12px;
   }
 
+  .nav {
+    gap: 6px;
+  }
+
+  .period {
+    font-size: 16px;
+  }
+
+  .periodCount {
+    display: none;
+  }
+
+  .monthHead {
+    padding: 8px 0 7px;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+
+  .monthDay {
+    align-items: center;
+    gap: 5px;
+    min-height: 58px;
+    padding: 5px 2px 6px;
+  }
+
+  .monthDate {
+    min-width: 24px;
+    height: 24px;
+    padding: 0 5px;
+    font-size: 12px;
+  }
+
+  .monthStack {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px;
+  }
+
+  .chip {
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--tone, var(--accent));
+  }
+
+  .chip:hover {
+    background: var(--tone, var(--accent));
+  }
+
+  .chip[data-state='past'] {
+    background: color-mix(in srgb, var(--text) 25%, transparent);
+  }
+
+  .chip::before,
+  .chipTime,
+  .chipName,
   .chipIcon,
   .shortcutHint {
     display: none;
+  }
+
+  .more {
+    padding: 0 3px;
+    font-size: 10.5px;
+  }
+
+  .legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .legend::-webkit-scrollbar {
+    display: none;
+  }
+
+  .legendItem {
+    flex-shrink: 0;
+  }
+
+  .emptyNote {
+    padding: 12px 16px;
   }
 
   .weekHead,

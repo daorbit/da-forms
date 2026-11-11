@@ -52,7 +52,9 @@ export function BookingsToolbar({
 
   return (
     <div className={classes.toolbar}>
-      <SegmentedTabs ariaLabel="Booking status" value={status} onChange={onStatus} data={tabs} />
+      <div className={classes.tabsScroll}>
+        <SegmentedTabs ariaLabel="Booking status" value={status} onChange={onStatus} data={tabs} />
+      </div>
       <div className={classes.filters}>
         <SearchField
           value={query}

@@ -15,13 +15,18 @@
 }
 
 .toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
+  margin: 0 -16px 20px;
+  padding: 10px 16px 16px;
   border-bottom: 1px solid var(--seo-hairline, var(--border));
+  background: color-mix(in srgb, var(--shell) 86%, transparent);
+  backdrop-filter: blur(14px);
 }
 
 .formSelect {

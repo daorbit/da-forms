@@ -5,6 +5,10 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { ViewFormsLink } from '@/components/ui/ViewFormsLink';
 import { RefreshButton } from '@/components/ui/RefreshButton';
+import { UpdatedAgo } from '@/components/ui/UpdatedAgo';
+import { ExportButton } from '@/components/ui/ExportButton';
+import { useRememberedParams } from '@/hooks/useRememberedParams';
+import { exportInsightsCsv } from './analyticsExport';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import { IS_EMBEDDED } from '@/lib/bootParams';
@@ -25,6 +29,7 @@ import { label } from './analyticsFormat';
 import classes from './FormAnalytics.module.css';
 
 const RANGES: AnalyticsRange[] = ['7d', '30d', '90d'];
+const REMEMBERED = ['form', 'range'];
 
 function readRange(value: string | null): AnalyticsRange {
   return RANGES.includes(value as AnalyticsRange) ? (value as AnalyticsRange) : '30d';
@@ -91,10 +96,11 @@ function Dashboard({
 export default function FormAnalyticsPage() {
   const workspaceId = useWorkspaceId();
   const navigate = useNavigate();
+  useRememberedParams(REMEMBERED);
   const [params, setParams] = useSearchParams();
   const range = readRange(params.get('range'));
   const formId = params.get('form');
-  const { data, loading, refreshing, refresh } = useFormsAnalytics(workspaceId, range, formId);
+  const { data, updatedAt, loading, refreshing, refresh } = useFormsAnalytics(workspaceId, range, formId);
 
   const update = (next: { range?: AnalyticsRange; form?: string | null }) => {
     const search = new URLSearchParams(params);
@@ -126,6 +132,12 @@ export default function FormAnalyticsPage() {
         actions={
           <>
             <ViewFormsLink />
+            <UpdatedAgo at={updatedAt} />
+            <ExportButton
+              onExport={() => data && exportInsightsCsv(data)}
+              disabled={!data}
+              hint="Export per-form numbers"
+            />
             <RefreshButton onRefresh={refresh} refreshing={refreshing} hint="Refresh numbers" />
             <DocsButton path="/lead-capture" />
             {IS_EMBEDDED && <HostNotificationsBell />}

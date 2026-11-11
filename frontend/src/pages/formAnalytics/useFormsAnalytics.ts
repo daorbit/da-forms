@@ -3,7 +3,12 @@ import { getFormsAnalytics } from '@/lib/api';
 import { notify } from '@/lib/notify';
 import type { AnalyticsRange, FormsAnalytics } from '@/types/formsAnalytics';
 
-const loaded = new Map<string, FormsAnalytics>();
+interface Loaded {
+  data: FormsAnalytics;
+  at: number;
+}
+
+const loaded = new Map<string, Loaded>();
 
 function browserTimezone(): string {
   try {
@@ -17,14 +22,14 @@ const TIMEZONE = browserTimezone();
 
 export function useFormsAnalytics(workspaceId: string, range: AnalyticsRange, formId: string | null) {
   const key = `${workspaceId}:${range}:${formId ?? 'all'}`;
-  const [data, setData] = useState<FormsAnalytics | null>(() => loaded.get(key) ?? null);
+  const [entry, setEntry] = useState<Loaded | null>(() => loaded.get(key) ?? null);
   const [loading, setLoading] = useState(!loaded.has(key));
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const cached = loaded.get(key);
     if (cached) {
-      setData(cached);
+      setEntry(cached);
       setLoading(false);
       return;
     }
@@ -33,8 +38,9 @@ export function useFormsAnalytics(workspaceId: string, range: AnalyticsRange, fo
     getFormsAnalytics({ range, formId, timezone: TIMEZONE }, workspaceId)
       .then((result) => {
         if (!live) return;
-        loaded.set(key, result);
-        setData(result);
+        const next = { data: result, at: Date.now() };
+        loaded.set(key, next);
+        setEntry(next);
       })
       .catch(() => {
         if (live) notify.error('Could not load form analytics.');
@@ -51,8 +57,9 @@ export function useFormsAnalytics(workspaceId: string, range: AnalyticsRange, fo
     setRefreshing(true);
     try {
       const result = await getFormsAnalytics({ range, formId, timezone: TIMEZONE, fresh: true }, workspaceId);
-      loaded.set(key, result);
-      setData(result);
+      const next = { data: result, at: Date.now() };
+      loaded.set(key, next);
+      setEntry(next);
     } catch {
       notify.error('Could not refresh form analytics.');
     } finally {
@@ -60,5 +67,5 @@ export function useFormsAnalytics(workspaceId: string, range: AnalyticsRange, fo
     }
   }, [key, workspaceId, range, formId]);
 
-  return { data, loading, refreshing, refresh };
+  return { data: entry?.data ?? null, updatedAt: entry?.at ?? null, loading, refreshing, refresh };
 }

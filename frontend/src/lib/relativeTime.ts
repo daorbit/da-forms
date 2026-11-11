@@ -1,4 +1,3 @@
-/** "just now" / "5m ago" / "3h ago" / "4d ago", then a short date past a month. */
 export function relativeTime(iso: string): string {
   const then = new Date(iso);
   const s = Math.floor((Date.now() - then.getTime()) / 1000);
@@ -10,4 +9,8 @@ export function relativeTime(iso: string): string {
   const d = Math.floor(h / 24);
   if (d < 30) return `${d}d ago`;
   return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+export function updatedAgoLabel(at: number): string {
+  return `Updated ${relativeTime(new Date(at).toISOString())}`;
 }

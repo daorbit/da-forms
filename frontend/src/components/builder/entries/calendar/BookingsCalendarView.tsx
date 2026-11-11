@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ActionIcon, Button } from '@mantine/core';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ActionIcon, Button, Tooltip } from '@mantine/core';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import type { BookingEvent } from './bookingEvents';
 import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
@@ -16,6 +16,7 @@ import { CalendarMonthGrid } from './CalendarMonthGrid';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 import { UpcomingBookings } from './UpcomingBookings';
 import { CalendarMonthSkeleton, UpcomingSkeleton } from './CalendarSkeleton';
+import { useCalendarShortcuts } from './useCalendarShortcuts';
 import classes from './EntriesCalendar.module.css';
 
 const SCOPE_TABS: { value: CalendarScope; label: string }[] = [
@@ -27,11 +28,23 @@ interface Props {
   events: BookingEvent[];
   loading: boolean;
   skeleton?: boolean;
+  legend?: ReactNode;
+  emptyHint?: string;
   onOpen: (event: BookingEvent) => void;
   onPeriod?: (from: Date, to: Date) => void;
 }
 
-export function BookingsCalendarView({ events, loading, skeleton, onOpen, onPeriod }: Props) {
+function ShortcutHint() {
+  return (
+    <span className={classes.shortcutHint}>
+      <kbd>T</kbd> today · <kbd>←</kbd>
+      <kbd>→</kbd> move · <kbd>M</kbd>
+      <kbd>W</kbd> view
+    </span>
+  );
+}
+
+export function BookingsCalendarView({ events, loading, skeleton, legend, emptyHint, onOpen, onPeriod }: Props) {
   const [cursor, setCursor] = useState(() => new Date());
   const [scope, setScope] = useState<CalendarScope>('month');
 
@@ -48,7 +61,15 @@ export function BookingsCalendarView({ events, loading, skeleton, onOpen, onPeri
     onPeriod(from, to);
   }, [firstKey, lastKey]);
 
+  useCalendarShortcuts({
+    onToday: () => setCursor(new Date()),
+    onStep: (direction) => setCursor((c) => stepCursor(c, scope, direction)),
+    onScope: setScope,
+  });
+
   const inView = days.reduce((sum, day) => sum + (day.inMonth || scope === 'week' ? byDay.get(day.key)?.length ?? 0 : 0), 0);
+  const label = periodLabel(scope, cursor, days);
+  const showEmpty = !skeleton && !loading && inView === 0;
 
   const showWeek = (date: Date) => {
     setCursor(date);
@@ -60,20 +81,22 @@ export function BookingsCalendarView({ events, loading, skeleton, onOpen, onPeri
       <div className={classes.main}>
         <div className={classes.toolbar}>
           <div className={classes.nav}>
-            <Button
-              variant="default"
-              size="xs"
-              radius="xl"
-              onClick={() => setCursor(new Date())}
-              disabled={isCurrentPeriod(cursor, scope)}
-            >
-              Today
-            </Button>
+            <Tooltip label="Today (T)" withArrow>
+              <Button
+                variant="default"
+                size="xs"
+                radius="md"
+                onClick={() => setCursor(new Date())}
+                disabled={isCurrentPeriod(cursor, scope)}
+              >
+                Today
+              </Button>
+            </Tooltip>
             <div className={classes.arrows}>
               <ActionIcon
                 variant="subtle"
                 color="gray"
-                radius="xl"
+                radius="md"
                 onClick={() => setCursor((c) => stepCursor(c, scope, -1))}
                 aria-label="Previous"
               >
@@ -82,30 +105,43 @@ export function BookingsCalendarView({ events, loading, skeleton, onOpen, onPeri
               <ActionIcon
                 variant="subtle"
                 color="gray"
-                radius="xl"
+                radius="md"
                 onClick={() => setCursor((c) => stepCursor(c, scope, 1))}
                 aria-label="Next"
               >
                 <ChevronRightIcon size={17} />
               </ActionIcon>
             </div>
-            <h2 className={classes.period}>{periodLabel(scope, cursor, days)}</h2>
+            <h2 className={classes.period}>{label}</h2>
             {!skeleton && (
               <span className={classes.periodCount}>
                 {inView} {inView === 1 ? 'booking' : 'bookings'}
               </span>
             )}
           </div>
-          <SegmentedTabs ariaLabel="Calendar range" size="sm" value={scope} onChange={setScope} data={SCOPE_TABS} />
+          <div className={classes.nav}>
+            <ShortcutHint />
+            <SegmentedTabs ariaLabel="Calendar range" size="sm" value={scope} onChange={setScope} data={SCOPE_TABS} />
+          </div>
         </div>
 
-        {skeleton ? (
-          <CalendarMonthSkeleton days={scope === 'week' ? monthDays(cursor) : days} />
-        ) : scope === 'week' ? (
-          <CalendarWeekGrid days={days} byDay={byDay} onOpen={onOpen} />
-        ) : (
-          <CalendarMonthGrid days={days} byDay={byDay} onOpen={onOpen} onShowWeek={showWeek} />
-        )}
+        {!skeleton && legend}
+
+        <div className={classes.gridWrap}>
+          {skeleton ? (
+            <CalendarMonthSkeleton days={scope === 'week' ? monthDays(cursor) : days} />
+          ) : scope === 'week' ? (
+            <CalendarWeekGrid days={days} byDay={byDay} onOpen={onOpen} />
+          ) : (
+            <CalendarMonthGrid days={days} byDay={byDay} onOpen={onOpen} onShowWeek={showWeek} />
+          )}
+          {showEmpty && (
+            <div className={classes.emptyNote}>
+              <span className={classes.emptyTitle}>No bookings {scope === 'week' ? 'this week' : `in ${label}`}</span>
+              {emptyHint && <span className={classes.emptyText}>{emptyHint}</span>}
+            </div>
+          )}
+        </div>
       </div>
 
       {skeleton ? <UpcomingSkeleton /> : <UpcomingBookings events={events} onOpen={onOpen} />}

@@ -2,6 +2,7 @@ import { Button, CopyButton, Tooltip, ActionIcon } from '@mantine/core';
 import { CalendarIcon, CheckIcon, ClockIcon, CopyIcon, ExternalLinkIcon, InboxIcon, VideoIcon } from 'lucide-react';
 import type { BookingEvent } from './bookingEvents';
 import { timeLabel } from './calendarDates';
+import { bookingDetailsText } from './bookingDetailsText';
 import classes from './EntriesCalendar.module.css';
 
 const STATE_LABEL = { upcoming: 'Upcoming', live: 'In progress', past: 'Completed' } as const;
@@ -71,7 +72,7 @@ export function BookingEventCard({ event, onOpen }: Props) {
             target="_blank"
             rel="noopener noreferrer"
             size="xs"
-            radius="xl"
+            radius="md"
             leftSection={<VideoIcon size={14} />}
           >
             Join Google Meet
@@ -84,14 +85,28 @@ export function BookingEventCard({ event, onOpen }: Props) {
             target="_blank"
             rel="noopener noreferrer"
             size="xs"
-            radius="xl"
+            radius="md"
             variant="default"
             leftSection={<ExternalLinkIcon size={13} />}
           >
             Calendar
           </Button>
         )}
-        <Button size="xs" radius="xl" variant="subtle" color="gray" onClick={() => onOpen(event)}>
+        <CopyButton value={bookingDetailsText(event)}>
+          {({ copied, copy }) => (
+            <Button
+              size="xs"
+              radius="md"
+              variant="subtle"
+              color="gray"
+              onClick={copy}
+              leftSection={copied ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
+            >
+              {copied ? 'Copied' : 'Copy details'}
+            </Button>
+          )}
+        </CopyButton>
+        <Button size="xs" radius="md" variant="subtle" color="gray" onClick={() => onOpen(event)}>
           Open response
         </Button>
       </div>

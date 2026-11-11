@@ -4,6 +4,10 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { ViewFormsLink } from '@/components/ui/ViewFormsLink';
 import { RefreshButton } from '@/components/ui/RefreshButton';
+import { UpdatedAgo } from '@/components/ui/UpdatedAgo';
+import { ExportButton } from '@/components/ui/ExportButton';
+import { useRememberedParams } from '@/hooks/useRememberedParams';
+import { exportSourcesCsv } from '@/pages/formAnalytics/analyticsExport';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import { LeadSourcesCard } from '@/components/builder/insights/LeadSourcesCard';
@@ -21,6 +25,7 @@ import analytics from '@/pages/formAnalytics/FormAnalytics.module.css';
 import { LeadSourcesTiles } from './LeadSourcesTiles';
 
 const RANGES: AnalyticsRange[] = ['7d', '30d', '90d'];
+const REMEMBERED = ['form', 'range'];
 
 function readRange(value: string | null): AnalyticsRange {
   return RANGES.includes(value as AnalyticsRange) ? (value as AnalyticsRange) : '30d';
@@ -79,10 +84,11 @@ function Sections({ data, range }: { data: FormsAnalytics; range: AnalyticsRange
 
 export default function LeadSourcesPage() {
   const workspaceId = useWorkspaceId();
+  useRememberedParams(REMEMBERED);
   const [params, setParams] = useSearchParams();
   const range = readRange(params.get('range'));
   const formId = params.get('form');
-  const { data, loading, refreshing, refresh } = useFormsAnalytics(workspaceId, range, formId);
+  const { data, updatedAt, loading, refreshing, refresh } = useFormsAnalytics(workspaceId, range, formId);
 
   const update = (next: { range?: AnalyticsRange; form?: string | null }) => {
     const search = new URLSearchParams(params);
@@ -102,6 +108,8 @@ export default function LeadSourcesPage() {
         actions={
           <>
             <ViewFormsLink />
+            <UpdatedAgo at={updatedAt} />
+            <ExportButton onExport={() => data && exportSourcesCsv(data)} disabled={!data} hint="Export sources" />
             <RefreshButton onRefresh={refresh} refreshing={refreshing} hint="Refresh numbers" />
             <DocsButton path="/lead-capture" />
             {IS_EMBEDDED && <HostNotificationsBell />}

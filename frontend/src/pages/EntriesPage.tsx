@@ -52,6 +52,7 @@ import {
 } from "@/components/builder/entries/entriesTypes";
 import classes from "./EntriesPage.module.css";
 import { notify } from "@/lib/notify";
+import { downloadCsv } from "@/lib/csv";
 import { isDemoWorkspace } from "@/lib/demoWorkspace";
 import { STAGE_BY_ID, formHasLeadScore, stageOf } from "@/lib/stages";
 import type { PipelineFilterState } from "@/components/builder/entries/entriesTypes";
@@ -325,33 +326,24 @@ export function EntriesPage() {
       "Lead source",
       ...(scored ? ["Score"] : []),
       "Added Time",
-    ].map((label) => JSON.stringify(label));
+    ];
     const body = rows.map((s) => [
       ...columns.map((f) =>
-        JSON.stringify(
-          f.type === "payment"
-            ? paymentCellText(s.payment)
-            : f.type === "repeater"
-              ? repeaterSummaryText(f, s.data[f.id] ?? "")
-              : formatAnswer(f.type, s.data[f.id] ?? ""),
-        ),
+        f.type === "payment"
+          ? paymentCellText(s.payment)
+          : f.type === "repeater"
+            ? repeaterSummaryText(f, s.data[f.id] ?? "")
+            : formatAnswer(f.type, s.data[f.id] ?? ""),
       ),
-      ...(hasBooking ? [JSON.stringify(s.booking?.meetLink ?? "")] : []),
-      JSON.stringify(STAGE_BY_ID[stageOf(s)].label),
-      JSON.stringify(s.assignee ?? ""),
-      JSON.stringify((s.tags ?? []).join(", ")),
-      JSON.stringify(leadSourceText(s)),
-      ...(scored ? [JSON.stringify(s.leadScore ?? "")] : []),
-      JSON.stringify(formatDateTime(s.createdAt)),
+      ...(hasBooking ? [s.booking?.meetLink ?? ""] : []),
+      STAGE_BY_ID[stageOf(s)].label,
+      s.assignee ?? "",
+      (s.tags ?? []).join(", "),
+      leadSourceText(s),
+      ...(scored ? [s.leadScore ?? ""] : []),
+      formatDateTime(s.createdAt),
     ]);
-    const csv = [header.join(","), ...body.map((r) => r.join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${form.title || "entries"}${filenameSuffix}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadCsv(`${form.title || "entries"}${filenameSuffix}`, [header, ...body]);
   }
 
   const currentColumns = form

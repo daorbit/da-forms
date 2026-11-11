@@ -8,7 +8,7 @@ import {
   CHAT_APP_IDS,
 } from '../lib/app-catalog.js';
 import { isValidChatSecret, sendChatAlert } from '../lib/chatAlert.js';
-import { zohoAccessToken } from '../lib/zohoCrm.js';
+import { CRM_PROVIDERS } from '../lib/crm/crmProviders.js';
 import { encrypt, decrypt, maskTail, isEncryptionConfigured } from '../lib/crypto.js';
 import { invalidateMailCache } from '../lib/mailer.js';
 
@@ -358,19 +358,16 @@ export async function testApp(
   }
 
   if (descriptor.category === 'crm') {
+    const provider = CRM_PROVIDERS[appId as AppId];
+    if (!provider) return { ok: false, message: 'This app has no test action.' };
     const connection = await resolveConnection(workspaceId, appId);
     if (!connection) return { ok: false, message: 'Save the connection details first.' };
     try {
-      await zohoAccessToken({
-        region: String(connection.config.region ?? 'com'),
-        clientId: String(connection.config.clientId ?? ''),
-        clientSecret: connection.secrets.clientSecret ?? '',
-        refreshToken: connection.secrets.refreshToken ?? '',
-      });
+      await provider.verify(connection);
       await markVerified(workspaceId, appId);
-      return { ok: true, message: 'Connected to Zoho CRM. New responses will be added as leads.' };
+      return { ok: true, message: `Connected to ${provider.name}. New responses will be added as leads.` };
     } catch (err) {
-      return { ok: false, message: err instanceof Error ? err.message : 'Zoho CRM could not be reached.' };
+      return { ok: false, message: err instanceof Error ? err.message : `${provider.name} could not be reached.` };
     }
   }
 

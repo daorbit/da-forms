@@ -285,6 +285,70 @@ export const APP_CATALOG: AppDescriptor[] = [
       },
     ],
   },
+  {
+    id: 'hubspot',
+    name: 'HubSpot',
+    category: 'crm',
+    description: 'Add every new response to HubSpot as a contact, with its answers saved as a note.',
+    docsUrl: 'https://developers.hubspot.com/docs/api/private-apps',
+    testable: true,
+    fields: [
+      {
+        key: 'accessToken',
+        label: 'Private app access token',
+        type: 'password',
+        secret: true,
+        required: true,
+        placeholder: 'pat-na1-…',
+        help: 'In HubSpot, open Settings → Integrations → Private apps, create an app with the crm.objects.contacts.read and crm.objects.contacts.write scopes, and copy its access token.',
+      },
+    ],
+  },
+  {
+    id: 'pipedrive',
+    name: 'Pipedrive',
+    category: 'crm',
+    description: 'Add every new response to Pipedrive as a person and a lead, with its answers saved as a note.',
+    docsUrl: 'https://pipedrive.readme.io/docs/how-to-find-the-api-token',
+    testable: true,
+    fields: [
+      {
+        key: 'apiToken',
+        label: 'API token',
+        type: 'password',
+        secret: true,
+        required: true,
+        help: 'In Pipedrive, open your profile → Personal preferences → API and copy your personal API token.',
+      },
+    ],
+  },
+  {
+    id: 'freshsales',
+    name: 'Freshsales',
+    category: 'crm',
+    description: 'Add every new response to Freshsales as a contact, with its answers saved as a note.',
+    docsUrl: 'https://developers.freshworks.com/crm/api/#authentication',
+    testable: true,
+    fields: [
+      {
+        key: 'domain',
+        label: 'Freshsales address',
+        type: 'text',
+        secret: false,
+        required: true,
+        placeholder: 'acme.myfreshworks.com',
+        help: 'The address you sign in at, like acme.myfreshworks.com or acme.freshsales.io.',
+      },
+      {
+        key: 'apiKey',
+        label: 'API key',
+        type: 'password',
+        secret: true,
+        required: true,
+        help: 'In Freshsales, open Personal settings → API settings and copy your API key.',
+      },
+    ],
+  },
 ];
 
 /** App ids in the 'email' category — the mailer's candidate transports. */

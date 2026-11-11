@@ -1,7 +1,19 @@
 import { Schema, model } from 'mongoose';
 
  
-export type AppId = 'smtp' | 'brevo' | 'resend' | 'slack' | 'discord' | 'teams' | 'google-chat' | 'telegram' | 'zoho-crm';
+export type AppId =
+  | 'smtp'
+  | 'brevo'
+  | 'resend'
+  | 'slack'
+  | 'discord'
+  | 'teams'
+  | 'google-chat'
+  | 'telegram'
+  | 'zoho-crm'
+  | 'hubspot'
+  | 'pipedrive'
+  | 'freshsales';
 
 export type AppCategory = 'email' | 'notification' | 'crm' | 'automation';
 

@@ -1,4 +1,5 @@
 import { createTtlCache } from './ttlCache.js';
+import { crmFetch as fetchJson, type CrmLead } from './crm/crmLead.js';
 
 const REGIONS: Record<string, { accounts: string; api: string }> = {
   com: { accounts: 'https://accounts.zoho.com', api: 'https://www.zohoapis.com' },
@@ -10,7 +11,6 @@ const REGIONS: Record<string, { accounts: string; api: string }> = {
 };
 
 const TOKEN_TTL_MS = 50 * 60 * 1000;
-const REQUEST_TIMEOUT_MS = 10_000;
 
 const tokens = createTtlCache<string>(TOKEN_TTL_MS, 200);
 
@@ -19,15 +19,6 @@ export interface ZohoCredentials {
   clientId: string;
   clientSecret: string;
   refreshToken: string;
-}
-
-export interface ZohoLead {
-  firstName?: string;
-  lastName: string;
-  email?: string;
-  phone?: string;
-  company: string;
-  description: string;
 }
 
 export class ZohoError extends Error {}
@@ -40,12 +31,6 @@ function endpoints(region: string) {
 
 export function isZohoRegion(region: string): boolean {
   return Boolean(REGIONS[region.trim().toLowerCase().replace(/^\./, '')]);
-}
-
-async function fetchJson(url: string, init: RequestInit) {
-  const res = await fetch(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
-  const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  return { ok: res.ok, status: res.status, body };
 }
 
 async function requestAccessToken(creds: ZohoCredentials): Promise<string> {
@@ -69,7 +54,7 @@ export function zohoAccessToken(creds: ZohoCredentials): Promise<string> {
   return tokens.load(`${creds.region}:${creds.clientId}:${creds.refreshToken.slice(-12)}`, () => requestAccessToken(creds));
 }
 
-export async function createZohoLead(creds: ZohoCredentials, lead: ZohoLead): Promise<string | undefined> {
+export async function createZohoLead(creds: ZohoCredentials, lead: CrmLead): Promise<string | undefined> {
   const { api } = endpoints(creds.region);
   const token = await zohoAccessToken(creds);
   const record = {

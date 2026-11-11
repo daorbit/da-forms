@@ -22,8 +22,16 @@ export function openConnections(appId?: string) {
   window.open(connectionsUrl(appId), '_blank', 'noopener');
 }
 
+const HOST_FORMS_PATH = '/app/lead-capture';
+const HOST_NAV_FALLBACK_MS = 600;
+
+export const HOST_FORMS_URL = `${QUANTALOG_APP_URL}${HOST_FORMS_PATH}`;
+
 export function openHostForms() {
   window.parent.postMessage({ type: 'quantalog:open-forms' }, '*');
+  window.setTimeout(() => {
+    window.top?.location.assign(HOST_FORMS_URL);
+  }, HOST_NAV_FALLBACK_MS);
 }
 
 export function onReturnFromConnections(handler: () => void): () => void {

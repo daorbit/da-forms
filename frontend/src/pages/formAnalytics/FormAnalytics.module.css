@@ -450,6 +450,19 @@
   border-radius: 10px;
 }
 
+.skeleton[data-size='tabs'] {
+  width: 230px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.skeleton[data-size='select'] {
+  width: 240px;
+  max-width: 100%;
+  height: 36px;
+  border-radius: 10px;
+}
+
 .skeleton[data-size='chart'] {
   height: 340px;
 }

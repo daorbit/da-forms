@@ -19,10 +19,20 @@ export function AnalyticsSkeleton() {
   );
 }
 
+export function AnalyticsToolbarSkeleton() {
+  return (
+    <div className={classes.toolbar}>
+      <div className={classes.skeleton} data-size="tabs" />
+      <div className={classes.skeleton} data-size="select" />
+    </div>
+  );
+}
+
 export function AnalyticsPageSkeleton() {
   return (
     <div className={classes.page}>
       <div className={classes.skeleton} data-size="header" />
+      <AnalyticsToolbarSkeleton />
       <AnalyticsSkeleton />
     </div>
   );

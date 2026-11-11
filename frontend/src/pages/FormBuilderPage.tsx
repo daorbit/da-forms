@@ -65,6 +65,7 @@ export function FormBuilderPage() {
   const [navOpened, { toggle: toggleNav, close: closeNav }] = useDisclosure(false);
   const [dragging, setDragging] = useState<DragData | null>(null);
   const [pendingLeave, setPendingLeave] = useState(false);
+  const [leaveTarget, setLeaveTarget] = useState<string | null>(null);
   const [insertOpen, setInsertOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -158,13 +159,18 @@ export function FormBuilderPage() {
     setShareOpen(true);
   }
 
-  function handleBack() {
+  function leaveTo(path: string) {
     if (state.isDirty) {
+      setLeaveTarget(path);
       setPendingLeave(true);
       return;
     }
-    navigate(`/${workspaceId}/forms`);
+    navigate(path);
   }
+
+  const handleBack = () => leaveTo(`/${workspaceId}/forms`);
+  const savedId = state.savedForm?._id;
+  const handleOpenResponses = savedId ? () => leaveTo(`/${workspaceId}/forms/${savedId}/entries`) : undefined;
 
   const editingField = state.editingId ? findField(state.fields, state.editingId) : null;
 
@@ -187,7 +193,7 @@ export function FormBuilderPage() {
       setPreviewOpen={setPreviewOpen}
       pendingLeave={pendingLeave}
       setPendingLeave={setPendingLeave}
-      onLeave={() => navigate(`/${workspaceId}/forms`)}
+      onLeave={() => navigate(leaveTarget ?? `/${workspaceId}/forms`)}
       updateField={updateField}
       aiSnapshot={aiSnapshot}
       applyAiRevision={applyAiRevision}
@@ -248,6 +254,7 @@ export function FormBuilderPage() {
           navOpened={navOpened}
           onToggleNav={toggleNav}
           onBack={handleBack}
+          onOpenResponses={handleOpenResponses}
           undo={state.undo}
           redo={state.redo}
           canUndo={state.canUndo}

@@ -1,5 +1,5 @@
 import { AppShell, Group, Button, ActionIcon, Tooltip, Burger, Badge, Divider, Text } from '@mantine/core';
-import { ArrowLeftIcon, EyeIcon, EyeOffIcon, GlobeIcon, KeyboardIcon, Redo2Icon, Undo2Icon } from 'lucide-react';
+import { ArrowLeftIcon, EyeIcon, EyeOffIcon, GlobeIcon, InboxIcon, KeyboardIcon, Redo2Icon, Undo2Icon } from 'lucide-react';
 import { DocsButton } from '@/components/ui/DocsButton';
 import { DOCS } from '@/lib/docs';
 import { MOD } from '@/lib/builderShortcuts';
@@ -17,6 +17,7 @@ interface Props {
   navOpened: boolean;
   onToggleNav: () => void;
   onBack: () => void;
+  onOpenResponses?: () => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
@@ -58,6 +59,7 @@ export function BuilderHeader({
   navOpened,
   onToggleNav,
   onBack,
+  onOpenResponses,
   undo,
   redo,
   canUndo,
@@ -109,6 +111,11 @@ export function BuilderHeader({
               </ActionIcon>
             </Tooltip>
           </Group>
+          {onOpenResponses && (
+            <IconButton label="Responses" onClick={onOpenResponses}>
+              <InboxIcon size={18} />
+            </IconButton>
+          )}
           <IconButton label={`Preview (${MOD}+Shift+P)`} onClick={onPreview}>
             <EyeIcon size={18} />
           </IconButton>

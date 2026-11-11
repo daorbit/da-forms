@@ -3,6 +3,7 @@ import { ActionIcon, Tooltip } from '@mantine/core';
 import { ArrowLeftIcon, ChartNoAxesColumnIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
+import { ViewFormsLink } from '@/components/ui/ViewFormsLink';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
@@ -124,6 +125,7 @@ export default function FormAnalyticsPage() {
         description={picked ? `How ${picked.title || 'this form'} is performing.` : 'How every form in this workspace is performing.'}
         actions={
           <>
+            <ViewFormsLink />
             <RefreshButton onRefresh={refresh} refreshing={refreshing} hint="Refresh numbers" />
             <DocsButton path="/lead-capture" />
             {IS_EMBEDDED && <HostNotificationsBell />}

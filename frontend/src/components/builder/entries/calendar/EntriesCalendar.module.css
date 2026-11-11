@@ -620,6 +620,39 @@
   margin-top: 4px;
 }
 
+.skeletonNext {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  border-bottom: 1px solid var(--seo-hairline, var(--border));
+}
+
+.skeletonItem {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.skeletonItem + .skeletonItem {
+  border-top: 1px solid var(--seo-hairline, var(--border));
+}
+
+.skeletonRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skeletonLines {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
 [data-motion='off'] .root,
 [data-motion='off'] .chip,
 [data-motion='off'] .block {

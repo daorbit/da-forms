@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
+import { ViewFormsLink } from '@/components/ui/ViewFormsLink';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import { BookingsCalendarView } from '@/components/builder/entries/calendar/BookingsCalendarView';
@@ -11,8 +12,7 @@ import { useBookingsCalendar } from '@/hooks/useBookingsCalendar';
 import analytics from '@/pages/formAnalytics/FormAnalytics.module.css';
 import { bookingCalendarEvents } from './bookingCalendarEvents';
 import { BookingsToolbar } from './BookingsToolbar';
-import { BookingsStats } from './BookingsStats';
-import { bookingStats } from './bookingStats';
+import { bookingCounts } from './bookingStats';
 import { filterBookings, filterByStatus, type BookingStatusFilter } from './filterBookings';
 
 const EMPTY: never[] = [];
@@ -34,7 +34,7 @@ export default function BookingsPage() {
     [bookings, query, formId],
   );
   const events = useMemo(() => filterByStatus(matched, status), [matched, status]);
-  const stats = useMemo(() => bookingStats(matched), [matched]);
+  const counts = useMemo(() => bookingCounts(matched), [matched]);
 
   const onPeriod = useCallback((from: Date, to: Date) => setPeriod({ from, to }), []);
   const onForm = (id: string | null) => {
@@ -51,6 +51,7 @@ export default function BookingsPage() {
         description="Every meeting booked through your forms, on one calendar."
         actions={
           <>
+            <ViewFormsLink />
             <RefreshButton onRefresh={reload} refreshing={loading && Boolean(data)} hint="Refresh bookings" />
             <DocsButton path="/lead-capture" />
             {IS_EMBEDDED && <HostNotificationsBell />}
@@ -65,11 +66,12 @@ export default function BookingsPage() {
         status={status}
         onStatus={setStatus}
         forms={forms}
+        counts={counts}
       />
-      <BookingsStats stats={stats} />
       <BookingsCalendarView
         events={events}
-        loading={loading || !data}
+        loading={loading && Boolean(data)}
+        skeleton={!data}
         onPeriod={onPeriod}
         onOpen={(event) => {
           if (event.formId) navigate(`/${workspaceId}/forms/${event.formId}/entries`);

@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { FormListPage } from '@/pages/FormListPage';
 import { AnalyticsPageSkeleton } from '@/pages/formAnalytics/AnalyticsSkeleton';
+import { BookingsPageSkeleton } from '@/pages/bookings/BookingsPageSkeleton';
 import { FormBuilderPage } from '@/pages/FormBuilderPage';
 import { CreateFormPage } from '@/pages/CreateFormPage';
 import { EntriesPage } from '@/pages/EntriesPage';
@@ -74,7 +75,7 @@ export function App() {
         <Route
           path="/:workspaceId/forms/bookings"
           element={
-            <Suspense fallback={<AnalyticsPageSkeleton />}>
+            <Suspense fallback={<BookingsPageSkeleton />}>
               <BookingsPage />
             </Suspense>
           }

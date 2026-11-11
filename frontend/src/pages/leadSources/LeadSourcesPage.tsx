@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { MegaphoneIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
+import { ViewFormsLink } from '@/components/ui/ViewFormsLink';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HostNotificationsBell } from '@/components/HostNotificationsBell';
@@ -100,6 +101,7 @@ export default function LeadSourcesPage() {
         description="Which marketing brings leads, and which of them you win, across every form."
         actions={
           <>
+            <ViewFormsLink />
             <RefreshButton onRefresh={refresh} refreshing={refreshing} hint="Refresh numbers" />
             <DocsButton path="/lead-capture" />
             {IS_EMBEDDED && <HostNotificationsBell />}

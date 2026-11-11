@@ -15,6 +15,7 @@ import {
 import { CalendarMonthGrid } from './CalendarMonthGrid';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 import { UpcomingBookings } from './UpcomingBookings';
+import { CalendarMonthSkeleton, UpcomingSkeleton } from './CalendarSkeleton';
 import classes from './EntriesCalendar.module.css';
 
 const SCOPE_TABS: { value: CalendarScope; label: string }[] = [
@@ -25,11 +26,12 @@ const SCOPE_TABS: { value: CalendarScope; label: string }[] = [
 interface Props {
   events: BookingEvent[];
   loading: boolean;
+  skeleton?: boolean;
   onOpen: (event: BookingEvent) => void;
   onPeriod?: (from: Date, to: Date) => void;
 }
 
-export function BookingsCalendarView({ events, loading, onOpen, onPeriod }: Props) {
+export function BookingsCalendarView({ events, loading, skeleton, onOpen, onPeriod }: Props) {
   const [cursor, setCursor] = useState(() => new Date());
   const [scope, setScope] = useState<CalendarScope>('month');
 
@@ -88,21 +90,25 @@ export function BookingsCalendarView({ events, loading, onOpen, onPeriod }: Prop
               </ActionIcon>
             </div>
             <h2 className={classes.period}>{periodLabel(scope, cursor, days)}</h2>
-            <span className={classes.periodCount}>
-              {inView} {inView === 1 ? 'booking' : 'bookings'}
-            </span>
+            {!skeleton && (
+              <span className={classes.periodCount}>
+                {inView} {inView === 1 ? 'booking' : 'bookings'}
+              </span>
+            )}
           </div>
           <SegmentedTabs ariaLabel="Calendar range" size="sm" value={scope} onChange={setScope} data={SCOPE_TABS} />
         </div>
 
-        {scope === 'week' ? (
+        {skeleton ? (
+          <CalendarMonthSkeleton days={scope === 'week' ? monthDays(cursor) : days} />
+        ) : scope === 'week' ? (
           <CalendarWeekGrid days={days} byDay={byDay} onOpen={onOpen} />
         ) : (
           <CalendarMonthGrid days={days} byDay={byDay} onOpen={onOpen} onShowWeek={showWeek} />
         )}
       </div>
 
-      <UpcomingBookings events={events} onOpen={onOpen} />
+      {skeleton ? <UpcomingSkeleton /> : <UpcomingBookings events={events} onOpen={onOpen} />}
     </div>
   );
 }

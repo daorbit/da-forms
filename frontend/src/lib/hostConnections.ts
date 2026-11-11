@@ -22,6 +22,10 @@ export function openConnections(appId?: string) {
   window.open(connectionsUrl(appId), '_blank', 'noopener');
 }
 
+export function openHostForms() {
+  window.parent.postMessage({ type: 'quantalog:open-forms' }, '*');
+}
+
 export function onReturnFromConnections(handler: () => void): () => void {
   const listener = () => {
     if (!awaitingReturn) return;

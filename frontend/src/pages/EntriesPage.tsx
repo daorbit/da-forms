@@ -25,7 +25,6 @@ import { EntriesExcel } from "@/components/builder/entries/EntriesExcel";
 import { EntriesCalendar } from "@/components/builder/entries/calendar/EntriesCalendar";
 import { findBookingField } from "@/lib/booking";
 import { ImportLeadsModal } from "@/components/builder/entries/import/ImportLeadsModal";
-import { ResponseInsightsModal } from "@/components/builder/entries/ResponseInsightsModal";
 import { paymentCellText } from "@/lib/payment";
 import { repeaterSummaryText } from "@/lib/repeater";
 import { EntriesTopbar } from "@/components/builder/entries/EntriesTopbar";
@@ -89,7 +88,6 @@ export function EntriesPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filesOpen, setFilesOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [insightsOpen, setInsightsOpen] = useState(false);
   const [files, setFiles] = useState<UploadedFile[] | null>(null);
   const [pipelineFilter, setPipelineFilter] = useState<PipelineFilterState>({ sort: "newest" });
 
@@ -391,7 +389,6 @@ export function EntriesPage() {
         onSaveName={saveName}
         onCancelEditingName={() => setEditingName(false)}
         onCopyShareLink={copyShareLink}
-        onOpenInsights={() => setInsightsOpen(true)}
         onExportCsv={() => exportCsv()}
         onImport={isDemoWorkspace(workspaceId) ? undefined : () => setImportOpen(true)}
         onOpenFiles={
@@ -527,13 +524,6 @@ export function EntriesPage() {
       <AttachmentModal
         attachment={attachment}
         onClose={() => setAttachment(null)}
-      />
-
-      <ResponseInsightsModal
-        opened={insightsOpen}
-        analytics={analytics}
-        fields={form?.fields ?? []}
-        onClose={() => setInsightsOpen(false)}
       />
 
       <ImportLeadsModal

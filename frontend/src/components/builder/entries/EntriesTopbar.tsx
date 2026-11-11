@@ -1,6 +1,6 @@
 import { ActionIcon, Button, Group, Skeleton, TextInput, Tooltip } from '@mantine/core';
 import { Link } from 'react-router-dom';
-import { ArrowLeftIcon, ChartColumnIcon, CheckIcon, LinkIcon, PencilIcon, XIcon } from 'lucide-react';
+import { ArrowLeftIcon, CheckIcon, LinkIcon, PencilIcon, XIcon } from 'lucide-react';
 import { StatusText } from '@/components/ui/StatusText';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { DocsButton } from '@/components/ui/DocsButton';
@@ -8,6 +8,7 @@ import { HostNotificationsBell } from '@/components/HostNotificationsBell';
 import { IS_EMBEDDED } from '@/lib/bootParams';
 import type { Form } from '@/types';
 import { EntriesMoreMenu } from './EntriesMoreMenu';
+import { FormInsightsLink } from './FormInsightsLink';
 import classes from '../../../pages/EntriesPage.module.css';
 
 export function EntriesTopbar({
@@ -21,14 +22,12 @@ export function EntriesTopbar({
   onSaveName,
   onCancelEditingName,
   onCopyShareLink,
-  onOpenInsights,
   onImport,
   onExportCsv,
   onOpenFiles,
   total,
 }: {
   total?: number;
-  onOpenInsights: () => void;
   onImport?: () => void;
   onExportCsv: () => void;
   onOpenFiles?: () => void;
@@ -125,12 +124,12 @@ export function EntriesTopbar({
       }
       actions={
         <>
-          <Button variant="default" leftSection={<ChartColumnIcon size={16} />} onClick={onOpenInsights}>
-            Insights
-          </Button>
-          <Button variant="default" leftSection={<LinkIcon size={16} />} onClick={onCopyShareLink}>
-            Share
-          </Button>
+          <FormInsightsLink workspaceId={workspaceId} formId={form._id} />
+          <Tooltip label="Copy share link" withArrow>
+            <ActionIcon variant="default" size={36} radius="md" onClick={onCopyShareLink} aria-label="Copy share link">
+              <LinkIcon size={16} />
+            </ActionIcon>
+          </Tooltip>
           <Button component={Link} to={`/${workspaceId}/forms/${form._id}/edit`} leftSection={<PencilIcon size={16} />}>
             Edit form
           </Button>

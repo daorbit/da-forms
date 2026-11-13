@@ -38,7 +38,6 @@ export function PlanLimitDialog() {
       styles={{ content: { overflow: 'hidden' } }}
     >
       <div className="plan-limit">
-        <div className="plan-limit__aurora" />
         <Stack className="plan-limit__body" align="center" gap="lg">
           <div className="plan-limit__seal">
             <LockIcon size={24} strokeWidth={1.8} />

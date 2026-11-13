@@ -30,20 +30,21 @@ function badgeTextColor(color: string | undefined, themeColors: Record<string, u
 export const theme = createTheme({
   primaryColor: 'emerald',
   primaryShade: { light: 6, dark: 6 },
-  fontFamily: "'Google Sans Flex', ui-sans-serif, system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   fontFamilyMonospace: "ui-monospace, 'SF Mono', Menlo, monospace",
   headings: {
-    fontFamily: "'Google Sans Flex', ui-sans-serif, system-ui, sans-serif",
-    fontWeight: '650',
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    fontWeight: '600',
     sizes: {
-      h1: { fontSize: rem(26), lineHeight: '1.2' },
-      h2: { fontSize: rem(20), lineHeight: '1.25' },
-      h3: { fontSize: rem(16), lineHeight: '1.35' },
+      h1: { fontSize: rem(33), lineHeight: '1.21' },
+      h2: { fontSize: rem(24), lineHeight: '1.25' },
+      h3: { fontSize: rem(17), lineHeight: '1.4' },
     },
   },
   defaultRadius: 'md',
-  radius: { xs: rem(4), sm: rem(6), md: rem(8), lg: rem(12), xl: rem(16) },
+  radius: { xs: rem(4), sm: rem(4), md: rem(8), lg: rem(12), xl: rem(20) },
   spacing: { xs: rem(8), sm: rem(12), md: rem(16), lg: rem(24), xl: rem(32) },
+  fontSizes: { xs: rem(12), sm: rem(15), md: rem(17), lg: rem(20), xl: rem(24) },
   cursorType: 'pointer',
   colors: {
     gray: [
@@ -144,7 +145,8 @@ export const theme = createTheme({
     },
     Popover: { defaultProps: { radius: 'lg', shadow: 'lg' } },
     Tooltip: { defaultProps: { radius: 'sm', openDelay: 300 } },
-    Card: { defaultProps: { radius: 'lg' } },
+    Card: { defaultProps: { radius: 'md' } },
+    Anchor: { defaultProps: { c: 'var(--accent-text)' } },
     Button: Button.extend({
       defaultProps: { radius: 'md' },
       styles: { label: { fontWeight: 550, letterSpacing: '-0.01em' } },
@@ -186,7 +188,7 @@ export const theme = createTheme({
             }
           : { root: {} },
     }),
-    Paper: { defaultProps: { radius: 'lg' } },
+    Paper: { defaultProps: { radius: 'md' } },
     Input: { defaultProps: { radius: 8 } },
     TextInput: { defaultProps: { radius: 8 } },
     PasswordInput: { defaultProps: { radius: 8 } },

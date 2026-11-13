@@ -84,11 +84,7 @@
 .plan-limit__meter-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    var(--mantine-color-emerald-6),
-    var(--mantine-color-emerald-4)
-  );
+  background: var(--accent);
   transform-origin: left center;
   animation: pl-fill 620ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
 }
@@ -108,26 +104,3 @@
   }
 }
 
-/* Soft moving colour wash behind the dialog. Copied rather than imported: this
-   is a separate app with its own bundle, and the host's stylesheet is not one
-   of its assets. Keep it in step with `.aurora-wash` there. */
-.plan-limit__aurora {
-  position: absolute;
-  inset: -40%;
-  background:
-    radial-gradient(38% 38% at 25% 25%, var(--mantine-color-emerald-6) 0%, transparent 70%),
-    radial-gradient(34% 34% at 75% 65%, var(--mantine-color-cyan-6) 0%, transparent 70%);
-  opacity: 0.16;
-  filter: blur(28px);
-  animation: pl-drift 9s ease-in-out infinite alternate;
-  pointer-events: none;
-}
-
-@keyframes pl-drift {
-  from { transform: translate3d(-4%, -3%, 0) scale(1); }
-  to   { transform: translate3d(5%, 4%, 0) scale(1.12); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .plan-limit__aurora { animation: none; }
-}

@@ -4,7 +4,6 @@
   align-items: center;
   padding: 36px 28px 22px;
   text-align: center;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--text) 4%, transparent) 0%, transparent 100%);
 }
 
 .badge {

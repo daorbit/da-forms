@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Stack, TextInput } from '@mantine/core';
+import { ActionIcon, Button, Stack, TextInput, Tooltip } from '@mantine/core';
 import { PlusIcon, XIcon } from 'lucide-react';
 
 interface Props {
@@ -43,15 +43,17 @@ export function ChoiceEditor({ options, onChange }: Props) {
           onChange={(e) => update(index, e.target.value)}
           error={duplicate(opt, index) ? 'Already used' : undefined}
           rightSection={
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="sm"
-              aria-label={`Remove choice ${index + 1}`}
-              onClick={() => remove(index)}
-            >
-              <XIcon size={15} />
-            </ActionIcon>
+            <Tooltip label="Remove choice" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="sm"
+                aria-label={`Remove choice ${index + 1}`}
+                onClick={() => remove(index)}
+              >
+                <XIcon size={15} />
+              </ActionIcon>
+            </Tooltip>
           }
         />
       ))}

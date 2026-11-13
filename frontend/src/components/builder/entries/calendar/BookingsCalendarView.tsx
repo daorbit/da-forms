@@ -93,24 +93,28 @@ export function BookingsCalendarView({ events, loading, skeleton, legend, emptyH
               </Button>
             </Tooltip>
             <div className={classes.arrows}>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                radius="md"
-                onClick={() => setCursor((c) => stepCursor(c, scope, -1))}
-                aria-label="Previous"
-              >
-                <ChevronLeftIcon size={17} />
-              </ActionIcon>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                radius="md"
-                onClick={() => setCursor((c) => stepCursor(c, scope, 1))}
-                aria-label="Next"
-              >
-                <ChevronRightIcon size={17} />
-              </ActionIcon>
+              <Tooltip label="Previous" withArrow>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  radius="md"
+                  onClick={() => setCursor((c) => stepCursor(c, scope, -1))}
+                  aria-label="Previous"
+                >
+                  <ChevronLeftIcon size={17} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Next" withArrow>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  radius="md"
+                  onClick={() => setCursor((c) => stepCursor(c, scope, 1))}
+                  aria-label="Next"
+                >
+                  <ChevronRightIcon size={17} />
+                </ActionIcon>
+              </Tooltip>
             </div>
             <h2 className={classes.period}>{label}</h2>
             {!skeleton && (

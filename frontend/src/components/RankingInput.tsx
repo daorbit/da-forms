@@ -1,7 +1,7 @@
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ActionIcon, Group, Paper, Stack, Text } from '@mantine/core';
+import { ActionIcon, Group, Paper, Stack, Text, Tooltip } from '@mantine/core';
 import { ChevronDownIcon, ChevronUpIcon, GripVerticalIcon } from 'lucide-react';
 
 interface Props {
@@ -66,37 +66,43 @@ function Row({
             {/* Buttons as well as a drag handle: dragging is unusable by
                 keyboard and awkward on a small screen, and a ranking with no
                 other way to reorder is a ranking some people cannot answer. */}
-            <ActionIcon
-              size="sm"
-              variant="subtle"
-              color="gray"
-              disabled={isFirst}
-              onClick={() => onMove(index, index - 1)}
-              aria-label={`Move ${option} up`}
-            >
-              <ChevronUpIcon size={14} />
-            </ActionIcon>
-            <ActionIcon
-              size="sm"
-              variant="subtle"
-              color="gray"
-              disabled={isLast}
-              onClick={() => onMove(index, index + 1)}
-              aria-label={`Move ${option} down`}
-            >
-              <ChevronDownIcon size={14} />
-            </ActionIcon>
-            <ActionIcon
-              size="sm"
-              variant="subtle"
-              color="gray"
-              style={{ cursor: 'grab' }}
-              {...attributes}
-              {...listeners}
-              aria-label={`Drag ${option}`}
-            >
-              <GripVerticalIcon size={14} />
-            </ActionIcon>
+            <Tooltip label="Move up" withArrow>
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                color="gray"
+                disabled={isFirst}
+                onClick={() => onMove(index, index - 1)}
+                aria-label={`Move ${option} up`}
+              >
+                <ChevronUpIcon size={14} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Move down" withArrow>
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                color="gray"
+                disabled={isLast}
+                onClick={() => onMove(index, index + 1)}
+                aria-label={`Move ${option} down`}
+              >
+                <ChevronDownIcon size={14} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Drag to reorder" withArrow>
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                color="gray"
+                style={{ cursor: 'grab' }}
+                {...attributes}
+                {...listeners}
+                aria-label={`Drag ${option}`}
+              >
+                <GripVerticalIcon size={14} />
+              </ActionIcon>
+            </Tooltip>
           </Group>
         )}
       </Group>

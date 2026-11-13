@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
-import { Box, Stack, Text, Paper, Title, ActionIcon } from '@mantine/core';
+import { Box, Stack, Text, Paper, Title, ActionIcon, Tooltip } from '@mantine/core';
+import { MOD } from '@/lib/builderShortcuts';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { CopyPlusIcon, SettingsIcon, Trash2Icon } from 'lucide-react';
@@ -207,6 +208,24 @@ export function FormCanvas({
 
         <Stack gap={2} p={4} className={classes.hoverToolbar}>
           {!isGrid && (
+            <Tooltip label="Field settings" position="left" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                radius="md"
+                size="lg"
+                style={TOOLBAR_ICON}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenProperties(field.id);
+                }}
+                aria-label="Field settings"
+              >
+                <SettingsIcon size={16} />
+              </ActionIcon>
+            </Tooltip>
+          )}
+          <Tooltip label={`Duplicate (${MOD}+D)`} position="left" withArrow>
             <ActionIcon
               variant="subtle"
               color="gray"
@@ -215,41 +234,29 @@ export function FormCanvas({
               style={TOOLBAR_ICON}
               onClick={(e) => {
                 e.stopPropagation();
-                onOpenProperties(field.id);
+                onDuplicate(field.id);
               }}
-              aria-label="Field settings"
+              aria-label="Duplicate field"
             >
-              <SettingsIcon size={16} />
+              <CopyPlusIcon size={16} />
             </ActionIcon>
-          )}
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            radius="md"
-            size="lg"
-            style={TOOLBAR_ICON}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDuplicate(field.id);
-            }}
-            aria-label="Duplicate field"
-          >
-            <CopyPlusIcon size={16} />
-          </ActionIcon>
-          <ActionIcon
-            variant="subtle"
-            color="red"
-            radius="md"
-            size="lg"
-            style={{ color: '#e03131' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(field.id);
-            }}
-            aria-label="Delete field"
-          >
-            <Trash2Icon size={16} />
-          </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Delete (Del)" position="left" withArrow>
+            <ActionIcon
+              variant="subtle"
+              color="red"
+              radius="md"
+              size="lg"
+              style={{ color: '#e03131' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(field.id);
+              }}
+              aria-label="Delete field"
+            >
+              <Trash2Icon size={16} />
+            </ActionIcon>
+          </Tooltip>
         </Stack>
       </SortableField>
     );

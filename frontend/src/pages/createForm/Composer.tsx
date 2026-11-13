@@ -82,16 +82,18 @@ export function Composer({
       {pendingImage && (
         <div className={classes.imageChip}>
           <img src={pendingImage} alt="Attached form" />
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            size="xs"
-            radius="xl"
-            onClick={() => onAttachImage(null)}
-            aria-label="Remove attached image"
-          >
-            <XIcon size={12} />
-          </ActionIcon>
+          <Tooltip label="Remove image" withArrow>
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="xs"
+              radius="xl"
+              onClick={() => onAttachImage(null)}
+              aria-label="Remove attached image"
+            >
+              <XIcon size={12} />
+            </ActionIcon>
+          </Tooltip>
         </div>
       )}
       <Textarea

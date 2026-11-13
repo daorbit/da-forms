@@ -1,4 +1,4 @@
-import { ActionIcon, Switch } from '@mantine/core';
+import { ActionIcon, Switch, Tooltip } from '@mantine/core';
 import { TimeInput } from '@mantine/dates';
 import { PlusIcon, XIcon } from 'lucide-react';
 import type { TimeRange } from '@/types';
@@ -66,28 +66,32 @@ export function WeeklyHoursEditor({ weekly, onChange }: Props) {
                         setDay(index, ranges.map((x, i) => (i === r ? { ...x, end: e.currentTarget.value } : x)))
                       }
                     />
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      size="sm"
-                      aria-label="Remove hours"
-                      onClick={() => setDay(index, ranges.filter((_, i) => i !== r))}
-                    >
-                      <XIcon size={14} />
-                    </ActionIcon>
+                    <Tooltip label="Remove hours" withArrow>
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        size="sm"
+                        aria-label="Remove hours"
+                        onClick={() => setDay(index, ranges.filter((_, i) => i !== r))}
+                      >
+                        <XIcon size={14} />
+                      </ActionIcon>
+                    </Tooltip>
                   </div>
                 );
               })}
             </div>
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="sm"
-              aria-label={`Add hours on ${name}`}
-              onClick={() => setDay(index, [...ranges, nextRange(ranges)])}
-            >
-              <PlusIcon size={14} />
-            </ActionIcon>
+            <Tooltip label="Add hours" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="sm"
+                aria-label={`Add hours on ${name}`}
+                onClick={() => setDay(index, [...ranges, nextRange(ranges)])}
+              >
+                <PlusIcon size={14} />
+              </ActionIcon>
+            </Tooltip>
           </div>
         );
       })}

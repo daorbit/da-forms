@@ -61,17 +61,19 @@ export function EntriesTopbar({
   }
 
   const back = (
-    <ActionIcon
-      component={Link}
-      to={`/${workspaceId}/forms`}
-      variant="default"
-      size={36}
-      radius="md"
-      mt={2}
-      aria-label="Back to all forms"
-    >
-      <ArrowLeftIcon size={18} />
-    </ActionIcon>
+    <Tooltip label="Back to all forms" withArrow>
+      <ActionIcon
+        component={Link}
+        to={`/${workspaceId}/forms`}
+        variant="default"
+        size={36}
+        radius="md"
+        mt={2}
+        aria-label="Back to all forms"
+      >
+        <ArrowLeftIcon size={18} />
+      </ActionIcon>
+    </Tooltip>
   );
 
   return (
@@ -91,12 +93,16 @@ export function EntriesTopbar({
               autoFocus
               disabled={savingName}
             />
-            <ActionIcon variant="subtle" size="lg" aria-label="Save name" onClick={onSaveName} loading={savingName}>
-              <CheckIcon size={16} />
-            </ActionIcon>
-            <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Cancel" onClick={onCancelEditingName} disabled={savingName}>
-              <XIcon size={16} />
-            </ActionIcon>
+            <Tooltip label="Save name (Enter)" withArrow>
+              <ActionIcon variant="subtle" size="lg" aria-label="Save name" onClick={onSaveName} loading={savingName}>
+                <CheckIcon size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Cancel (Esc)" withArrow>
+              <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Cancel" onClick={onCancelEditingName} disabled={savingName}>
+                <XIcon size={16} />
+              </ActionIcon>
+            </Tooltip>
           </Group>
         ) : (
           <Group gap={8} wrap="nowrap" component="span" className={classes.titleRow}>

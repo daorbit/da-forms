@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { ActionIcon, Button, SegmentedControl, Select, TextInput } from '@mantine/core';
+import { ActionIcon, Button, SegmentedControl, Select, TextInput, Tooltip } from '@mantine/core';
 import { PlusIcon, XIcon } from 'lucide-react';
 import type { Condition, ConditionGroup, FormField, ShowIfOperator, ShowIfRule } from '@/types';
 import { toConditionGroup } from '@/utils/conditionalLogic';
@@ -101,15 +101,17 @@ export function ConditionEditor({ value, candidates, onChange, emptyText, addLab
                   onChange={(fieldId) => fieldId && patchRule(index, { fieldId, value: '' })}
                   aria-label="Question"
                 />
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  size="sm"
-                  onClick={() => removeRule(index)}
-                  aria-label="Remove condition"
-                >
-                  <XIcon size={14} />
-                </ActionIcon>
+                <Tooltip label="Remove condition" withArrow>
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    onClick={() => removeRule(index)}
+                    aria-label="Remove condition"
+                  >
+                    <XIcon size={14} />
+                  </ActionIcon>
+                </Tooltip>
               </div>
               <div className={classes.ruleBody} data-valueless={valueless || undefined}>
                 <Select

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ActionIcon } from '@mantine/core';
+import { ActionIcon, Tooltip } from '@mantine/core';
 import { Trash2Icon } from 'lucide-react';
 import classes from './RuleCardList.module.css';
 
@@ -14,9 +14,11 @@ export function RuleCard({ title, onRemove, children }: Props) {
     <div className={classes.card}>
       <div className={classes.cardHead}>
         <span className={classes.cardTitle}>{title}</span>
-        <ActionIcon variant="subtle" color="gray" size="sm" onClick={onRemove} aria-label={`Remove ${title}`}>
-          <Trash2Icon size={14} />
-        </ActionIcon>
+        <Tooltip label="Remove rule" withArrow>
+          <ActionIcon variant="subtle" color="gray" size="sm" onClick={onRemove} aria-label={`Remove ${title}`}>
+            <Trash2Icon size={14} />
+          </ActionIcon>
+        </Tooltip>
       </div>
       {children}
     </div>

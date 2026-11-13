@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Group, Paper, Select, Stack, Switch, TextInput } from '@mantine/core';
+import { ActionIcon, Button, Group, Paper, Select, Stack, Switch, TextInput, Tooltip } from '@mantine/core';
 import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import type { FieldType, FormField } from '@/types';
 import { makeField, optionTypes, paletteByType, repeaterSubTypes } from '@/lib/fieldPalette';
@@ -50,27 +50,33 @@ export function RepeaterFieldsEditor({ subFields, onChange }: Props) {
               value={sf.label}
               onChange={(e) => patch(index, { label: e.target.value })}
             />
-            <ActionIcon variant="subtle" color="gray" onClick={() => move(index, index - 1)} disabled={index === 0} aria-label="Move up">
-              <ChevronUpIcon size={16} />
-            </ActionIcon>
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              onClick={() => move(index, index + 1)}
-              disabled={index === subFields.length - 1}
-              aria-label="Move down"
-            >
-              <ChevronDownIcon size={16} />
-            </ActionIcon>
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              onClick={() => remove(index)}
-              disabled={subFields.length <= 1}
-              aria-label="Remove field"
-            >
-              <Trash2Icon size={16} />
-            </ActionIcon>
+            <Tooltip label="Move up" withArrow>
+              <ActionIcon variant="subtle" color="gray" onClick={() => move(index, index - 1)} disabled={index === 0} aria-label="Move up">
+                <ChevronUpIcon size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Move down" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                onClick={() => move(index, index + 1)}
+                disabled={index === subFields.length - 1}
+                aria-label="Move down"
+              >
+                <ChevronDownIcon size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Remove field" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="red"
+                onClick={() => remove(index)}
+                disabled={subFields.length <= 1}
+                aria-label="Remove field"
+              >
+                <Trash2Icon size={16} />
+              </ActionIcon>
+            </Tooltip>
           </Group>
 
           <Group grow align="flex-start">

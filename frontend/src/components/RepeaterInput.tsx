@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ActionIcon, Box, Button, Group, Paper, Stack, Text } from '@mantine/core';
+import { ActionIcon, Box, Button, Group, Paper, Stack, Text, Tooltip } from '@mantine/core';
 import { PlusIcon, Trash2Icon } from 'lucide-react';
 import type { FormField, LabelPlacement } from '@/types';
 import { FieldControl } from '@/components/FieldControl';
@@ -91,15 +91,17 @@ export function RepeaterInput({
               {(field.label || 'Item')} {rowIndex + 1}
             </Text>
             {!readOnly && rows.length > min && (
-              <ActionIcon
-                variant="subtle"
-                color="red"
-                size="sm"
-                aria-label={`Remove ${rowIndex + 1}`}
-                onClick={() => removeRow(rowIndex)}
-              >
-                <Trash2Icon size={14} />
-              </ActionIcon>
+              <Tooltip label="Remove" withArrow>
+                <ActionIcon
+                  variant="subtle"
+                  color="red"
+                  size="sm"
+                  aria-label={`Remove ${rowIndex + 1}`}
+                  onClick={() => removeRow(rowIndex)}
+                >
+                  <Trash2Icon size={14} />
+                </ActionIcon>
+              </Tooltip>
             )}
           </Group>
           <Stack gap="sm">

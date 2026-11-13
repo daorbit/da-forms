@@ -78,6 +78,7 @@ workspaceFormRouter.get('/lead-sources', asyncHandler(formController.getLeadSour
 workspaceFormRouter.get('/analytics', asyncHandler(formController.getFormsAnalytics));
 workspaceFormRouter.get('/pipeline-summary', asyncHandler(formController.getPipelineSummary));
 workspaceFormRouter.get('/booking-summary', asyncHandler(formController.getBookingSummary));
+workspaceFormRouter.get('/lead-pages', asyncHandler(formController.getLeadPages));
 workspaceFormRouter.get('/bookings', asyncHandler(formController.getBookingsCalendar));
 workspaceFormRouter.post('/', asyncHandler(formController.createForm));
 workspaceFormRouter.get('/:id', asyncHandler(formController.getForm));

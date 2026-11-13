@@ -20,6 +20,8 @@ export interface FormPerformance extends AnalyticsFormRef {
   abandoned: number;
   completionRate: number;
   responsesChange: number | null;
+  previousViews: number;
+  previousResponses: number;
 }
 
 export interface FormsAnalytics {
@@ -94,6 +96,8 @@ export function shapePeriods(forms: AnalyticsFormRef[], views: ViewRows, submiss
         ...current,
         completionRate: rate(current.responses, current.views),
         responsesChange: change(current.responses, previous.responses),
+        previousViews: previous.views,
+        previousResponses: previous.responses,
       };
     })
     .sort((a, b) => b.responses - a.responses || b.views - a.views);

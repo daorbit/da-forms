@@ -59,7 +59,11 @@ export function App() {
         <Route
           path="/:workspaceId/forms/analytics"
           element={
-            <Suspense fallback={<AnalyticsPageSkeleton />}>
+            <Suspense
+              fallback={
+                <AnalyticsPageSkeleton title="Lead insights" description="How every form in this workspace is performing." />
+              }
+            >
               <FormAnalyticsPage />
             </Suspense>
           }
@@ -67,7 +71,14 @@ export function App() {
         <Route
           path="/:workspaceId/forms/sources"
           element={
-            <Suspense fallback={<AnalyticsPageSkeleton />}>
+            <Suspense
+              fallback={
+                <AnalyticsPageSkeleton
+                  title="Lead sources"
+                  description="Which marketing brings leads, and which of them you win, across every form."
+                />
+              }
+            >
               <LeadSourcesPage />
             </Suspense>
           }

@@ -3,6 +3,7 @@ import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { AppShell, Stack, Skeleton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { getPaymentSettings } from '@/lib/api';
+import { FieldCardSkeleton } from '@/components/ui/skeleton/Skeletons';
 import { onReturnFromConnections, openConnections } from '@/lib/hostConnections';
 import { findPaymentField } from '@/lib/payment';
 import { isDemoWorkspace } from '@/lib/demoWorkspace';
@@ -278,10 +279,10 @@ export function FormBuilderPage() {
         <AppShell.Main>
           {state.loadingForm ? (
             <Stack gap="md" maw={640} mx="auto" py="xl" px="md">
-              <Skeleton height={32} width="50%" />
-              <Skeleton height={16} width="70%" />
+              <Skeleton height={32} width="50%" radius={8} />
+              <Skeleton height={14} width="70%" radius="sm" mb="sm" />
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} height={70} radius="md" />
+                <FieldCardSkeleton key={i} wide={i === 2} />
               ))}
             </Stack>
           ) : (

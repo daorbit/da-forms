@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, SegmentedControl, Skeleton, Stack, Textarea, TextInput } from '@mantine/core';
+import { Button, SegmentedControl, Stack, Textarea, TextInput } from '@mantine/core';
+import { FieldCardSkeleton } from '@/components/ui/skeleton/Skeletons';
 import { PlusIcon } from 'lucide-react';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
@@ -82,7 +83,7 @@ export function MobileBuilder({ state, actions, isDemo, saving, publishing, onBa
           {state.loadingForm ? (
             <Stack gap="sm">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} height={96} radius="lg" />
+                <FieldCardSkeleton key={i} wide={i === 1} />
               ))}
             </Stack>
           ) : state.fields.length === 0 ? (

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Box, Text, Group, Stack, Skeleton } from '@mantine/core';
+import { Box, Text, Group, Skeleton } from '@mantine/core';
 import { AreaChart, Area, ResponsiveContainer, YAxis } from 'recharts';
 import type { LucideIcon } from 'lucide-react';
 import classes from './StatTile.module.css';
@@ -90,10 +90,11 @@ export function StatTileSkeleton() {
   return (
     <Box className={classes.card}>
       <Box px="md" pt="md">
-        <Stack gap={10}>
-          <Skeleton height={10} width={70} />
-          <Skeleton height={28} width={64} />
-        </Stack>
+        <Group gap={6} wrap="nowrap" mb={10}>
+          <Skeleton height={14} width={14} radius={4} />
+          <Skeleton height={10} width={70} radius="sm" />
+        </Group>
+        <Skeleton height={28} width={64} radius={8} />
       </Box>
       <div className={classes.spark} />
     </Box>

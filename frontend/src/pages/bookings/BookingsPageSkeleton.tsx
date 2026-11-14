@@ -1,4 +1,5 @@
 import { Skeleton } from '@mantine/core';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { CalendarMonthSkeleton, UpcomingSkeleton } from '@/components/builder/entries/calendar/CalendarSkeleton';
 import { monthDays } from '@/components/builder/entries/calendar/calendarDates';
 import calendar from '@/components/builder/entries/calendar/EntriesCalendar.module.css';
@@ -8,7 +9,7 @@ import classes from './BookingsPage.module.css';
 export function BookingsPageSkeleton() {
   return (
     <div className={analytics.page} aria-busy="true" aria-label="Loading bookings">
-      <div className={analytics.skeleton} data-size="header" />
+      <PageHeader title="Bookings" description="Every meeting booked through your forms, on one calendar." />
       <div className={classes.toolbar}>
         <Skeleton height={36} width={380} radius={10} />
         <div className={classes.filters}>

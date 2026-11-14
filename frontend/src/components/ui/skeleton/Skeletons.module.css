@@ -1,0 +1,194 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  padding: 20px 20px 22px;
+  border-radius: 16px;
+  border: 1px solid var(--seo-hairline, var(--border));
+  background: var(--surface);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.columns {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--seo-hairline, var(--border));
+}
+
+.columnsEnd {
+  display: flex;
+  gap: 18px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--seo-hairline, var(--border));
+}
+
+.rowMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  min-height: 168px;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--seo-hairline, var(--border));
+  background: var(--surface);
+}
+
+.statBody {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 0;
+}
+
+.statHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.statSpark {
+  margin-top: auto;
+  height: 70px;
+  padding: 12px 0 0;
+}
+
+.wave {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: wavePulse 1.6s ease-in-out infinite;
+}
+
+.waveFill {
+  fill: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.waveLine {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 14%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.chartLegend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.chartArea {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.gridLine {
+  height: 1px;
+  background: var(--viz-grid);
+}
+
+.chartWave {
+  position: absolute;
+  inset: 12% 0 0;
+  width: 100%;
+  height: 88%;
+}
+
+.chartTicks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+.field {
+  height: auto;
+  padding: 16px 18px 18px;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 46px;
+}
+
+.tableRow > :first-child {
+  flex: 2;
+  min-width: 0;
+}
+
+.tableRow + .tableRow {
+  border-top: 1px solid var(--seo-hairline, var(--border));
+}
+
+.tableRow[data-head] {
+  min-height: 34px;
+}
+
+.tableCell {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+@keyframes wavePulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave {
+    animation: none;
+  }
+}

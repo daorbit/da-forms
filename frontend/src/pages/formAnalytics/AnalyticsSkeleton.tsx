@@ -1,3 +1,6 @@
+import { Skeleton } from '@mantine/core';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { ChartSkeleton, ListSkeleton, StatCardSkeleton } from '@/components/ui/skeleton/Skeletons';
 import classes from './FormAnalytics.module.css';
 
 const TILES = [0, 1, 2, 3];
@@ -7,14 +10,14 @@ export function AnalyticsSkeleton() {
     <div className={classes.stack} aria-busy="true" aria-label="Loading analytics">
       <div className={classes.skeletonTiles}>
         {TILES.map((i) => (
-          <div key={i} className={classes.skeleton} data-size="tile" />
+          <StatCardSkeleton key={i} />
         ))}
       </div>
       <div className={classes.split}>
-        <div className={classes.skeleton} data-size="chart" />
-        <div className={classes.skeleton} data-size="chart" />
+        <ChartSkeleton height={240} actions={0} />
+        <ListSkeleton rows={5} aside={false} />
       </div>
-      <div className={classes.skeleton} data-size="list" />
+      <ListSkeleton rows={6} />
     </div>
   );
 }
@@ -22,16 +25,16 @@ export function AnalyticsSkeleton() {
 export function AnalyticsToolbarSkeleton() {
   return (
     <div className={classes.toolbar}>
-      <div className={classes.skeleton} data-size="tabs" />
-      <div className={classes.skeleton} data-size="select" />
+      <Skeleton height={36} width={230} radius={10} />
+      <Skeleton height={36} width={240} maw="100%" radius={10} />
     </div>
   );
 }
 
-export function AnalyticsPageSkeleton() {
+export function AnalyticsPageSkeleton({ title, description }: { title: string; description: string }) {
   return (
     <div className={classes.page}>
-      <div className={classes.skeleton} data-size="header" />
+      <PageHeader title={title} description={description} />
       <AnalyticsToolbarSkeleton />
       <AnalyticsSkeleton />
     </div>

@@ -42,24 +42,6 @@ export function EntriesTopbar({
   onCancelEditingName: () => void;
   onCopyShareLink: () => void;
 }) {
-  if (!form) {
-    return (
-      <Group justify="space-between" mb="xl" wrap="nowrap">
-        <Group gap="sm" wrap="nowrap">
-          <Skeleton height={36} width={36} radius="md" />
-          <div>
-            <Skeleton height={28} width={220} radius="sm" />
-            <Skeleton height={12} width={160} radius="sm" mt={10} />
-          </div>
-        </Group>
-        <Group gap="xs">
-          <Skeleton height={32} width={80} radius="md" />
-          <Skeleton height={32} width={110} radius="md" />
-        </Group>
-      </Group>
-    );
-  }
-
   const back = (
     <Tooltip label="Back to all forms" withArrow>
       <ActionIcon
@@ -75,6 +57,26 @@ export function EntriesTopbar({
       </ActionIcon>
     </Tooltip>
   );
+
+  if (!form) {
+    return (
+      <Group justify="space-between" mb="xl" wrap="nowrap" aria-busy="true">
+        <Group gap="sm" wrap="nowrap" align="flex-start">
+          {back}
+          <div>
+            <Skeleton height={28} width={220} radius="sm" mt={4} />
+            <Skeleton height={12} width={160} radius="sm" mt={12} />
+          </div>
+        </Group>
+        <Group gap="xs" wrap="nowrap">
+          <Skeleton height={36} width={36} radius="md" />
+          <Skeleton height={36} width={112} radius={10} />
+          <DocsButton path="/forms-entries-and-links" />
+          {IS_EMBEDDED && <HostNotificationsBell />}
+        </Group>
+      </Group>
+    );
+  }
 
   return (
     <PageHeader

@@ -10,7 +10,7 @@ import type {
 import { SettingsDrawer } from './settings/SettingsDrawer';
 import { SettingsGroup, SettingRow, SwitchRow } from './settings/SettingsGroup';
 import { SubmitButtonPreview } from './settings/SubmitButtonPreview';
-import { toIso, toLocalInput } from './settings/dateInput';
+import { ScheduleDatePicker } from './settings/ScheduleDatePicker';
 import classes from './settings/settings.module.css';
 import { DocsLink } from '@/components/ui/DocsLink';
 import { DOCS } from '@/lib/docs';
@@ -160,19 +160,16 @@ export function QuickSettingsDrawer({ opened, onClose, settings, onChange, accen
       >
         <SettingRow stacked>
           <div className={classes.fieldGrid}>
-            <TextInput
-              type="datetime-local"
+            <ScheduleDatePicker
               label="Opens"
-              size="xs"
-              value={toLocalInput(schedule.opensAt)}
-              onChange={(e) => setSchedule({ opensAt: toIso(e.target.value) })}
+              value={schedule.opensAt}
+              onChange={(opensAt) => setSchedule({ opensAt })}
             />
-            <TextInput
-              type="datetime-local"
+            <ScheduleDatePicker
               label="Closes"
-              size="xs"
-              value={toLocalInput(schedule.closesAt)}
-              onChange={(e) => setSchedule({ closesAt: toIso(e.target.value) })}
+              value={schedule.closesAt}
+              minDate={schedule.opensAt}
+              onChange={(closesAt) => setSchedule({ closesAt })}
             />
             <NumberInput
               className={classes.fieldFull}

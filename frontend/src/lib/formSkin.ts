@@ -7,10 +7,10 @@ const DENSITY_GAP: Record<FormDensity, string> = {
   spacious: 'xl',
 };
 
-const DENSITY_PADDING: Record<FormDensity, string> = {
-  compact: '24px',
-  comfortable: '32px',
-  spacious: '48px',
+const DENSITY_PADDING: Record<FormDensity, number> = {
+  compact: 24,
+  comfortable: 32,
+  spacious: 48,
 };
 
 const DENSITY_INPUT_HEIGHT: Record<FormDensity, string> = {
@@ -40,6 +40,10 @@ const BUTTON_VARIANT: Record<ButtonStyle, 'filled' | 'light' | 'outline'> = {
 
 export function fieldGap(theme?: FormTheme): string {
   return DENSITY_GAP[theme?.density ?? 'comfortable'];
+}
+
+export function cardPadding(theme?: FormTheme): number {
+  return theme?.cardPadding ?? DENSITY_PADDING[theme?.density ?? 'comfortable'];
 }
 
 export function containerWidth(theme?: FormTheme): number | undefined {
@@ -74,9 +78,7 @@ export function skinVars(theme?: FormTheme): CSSProperties {
   if (theme?.fieldRadius !== undefined) vars['--fs-radius'] = `${theme.fieldRadius}px`;
   if (theme?.accentColor) vars['--fs-accent'] = theme.accentColor;
   if (theme?.cardWidth) vars['--fs-width'] = `${CARD_WIDTH[theme.cardWidth]}px`;
-  if (theme?.density) {
-    vars['--fs-pad'] = DENSITY_PADDING[theme.density];
-    vars['--fs-input-h'] = DENSITY_INPUT_HEIGHT[theme.density];
-  }
+  if (theme?.density) vars['--fs-input-h'] = DENSITY_INPUT_HEIGHT[theme.density];
+  if (theme?.density || theme?.cardPadding !== undefined) vars['--fs-pad'] = `${cardPadding(theme)}px`;
   return vars as CSSProperties;
 }

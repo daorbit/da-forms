@@ -26,6 +26,7 @@
 }
 
 .formCard {
+  --canvas-inset: var(--fs-pad, 28px);
   max-width: var(--fs-width, 760px);
   margin: 0 auto;
   background-color: #fff;
@@ -39,7 +40,7 @@
 
 .fieldRow {
   position: relative;
-  padding: 22px 28px;
+  padding: 22px var(--canvas-inset, 28px);
   border: 1px solid transparent;
   cursor: pointer;
   transition:
@@ -50,7 +51,7 @@
 /* After `.fieldRow`, which the header also carries — the later rule is what
    gives the title block its taller inset back. */
 .header {
-  padding: 30px 28px 26px;
+  padding: calc(var(--canvas-inset, 28px) + 2px) var(--canvas-inset, 28px) 26px;
   border-bottom: 1px solid var(--mantine-color-gray-2);
 }
 
@@ -121,6 +122,7 @@
 }
 
 .gridColumn {
+  --canvas-inset: 28px;
   border: 1px dashed var(--mantine-color-gray-3);
   border-radius: 6px;
   padding: 8px;

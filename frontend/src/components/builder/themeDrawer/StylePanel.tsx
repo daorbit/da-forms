@@ -1,6 +1,7 @@
 import { SegmentedControl, Select } from '@mantine/core';
 import type { FontFamilyId, FormTheme } from '@/types';
 import { FONT_OPTIONS } from '@/lib/formFonts';
+import { cardPadding } from '@/lib/formSkin';
 import { SettingsGroup, SettingRow, SettingsStack, SwitchRow } from '../settings/SettingsGroup';
 import { SliderRow } from '../settings/SliderRow';
 import { FieldStyleTiles } from './FieldStyleTiles';
@@ -156,6 +157,16 @@ export function StylePanel({ theme, onChange }: Props) {
               ]}
             />
           </SettingRow>
+          <SliderRow
+            label="Padding"
+            hint="Space between the card's edge and the form inside it."
+            value={cardPadding(theme)}
+            unit="px"
+            min={0}
+            max={64}
+            step={4}
+            onChange={(value) => onChange({ cardPadding: value })}
+          />
           <SliderRow
             label="Corner radius"
             value={theme.cardRadius ?? 8}

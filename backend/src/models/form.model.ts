@@ -285,6 +285,7 @@ export interface FormTheme {
   cardShadow?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   cardOpacity?: number;
   cardBlur?: number;
+  cardPadding?: number;
   fontFamily?: FontFamilyId;
   cardBg?: string;
   cardBorder?: string;
@@ -511,6 +512,7 @@ const formSchema = new Schema<FormDocument>(
           cardShadow: { type: String, enum: ['none', 'sm', 'md', 'lg', 'xl'] },
           cardOpacity: { type: Number, min: 0, max: 100 },
           cardBlur: { type: Number, min: 0, max: 40 },
+          cardPadding: { type: Number, min: 0, max: 64 },
           fontFamily: { type: String, enum: [...FONT_FAMILY_IDS] },
           cardBg: { type: String },
           cardBorder: { type: String },

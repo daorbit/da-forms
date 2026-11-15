@@ -9,6 +9,7 @@ const LOOK_KEYS: (keyof Omit<FormTheme, 'scope'>)[] = [
   'cardShadow',
   'cardOpacity',
   'cardBlur',
+  'cardPadding',
   'fontFamily',
   'cardBg',
   'cardBorder',

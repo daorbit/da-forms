@@ -151,6 +151,7 @@ export interface FormTheme {
   cardOpacity?: number;
   /** Backdrop blur behind a translucent card, in px — the frosted-glass look. */
   cardBlur?: number;
+  cardPadding?: number;
   /** Font used across the whole form. */
   fontFamily?: FontFamilyId;
   /** The form card's own background. */

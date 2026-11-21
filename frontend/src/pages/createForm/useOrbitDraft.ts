@@ -39,6 +39,7 @@ export function useOrbitDraft(workspaceId: string) {
     setPendingImage(null);
 
     let next: Draft | null = null;
+    let note: string | undefined;
 
     try {
       if (image) {
@@ -46,30 +47,33 @@ export function useOrbitDraft(workspaceId: string) {
         // follow-up turn — the vision model reads the image once and, given
         // the current draft as JSON, edits it the same way a typed follow-up
         // would. The edit-ops path has no way to take an image at all.
-        next = fromGenerated(
-          await generateFormDraft(
-            asked,
-            workspaceId,
-            template ? (toSnapshot(template) as unknown as GeneratedForm) : undefined,
-            image
-          )
+        const generated = await generateFormDraft(
+          asked,
+          workspaceId,
+          template ? (toSnapshot(template) as unknown as GeneratedForm) : undefined,
+          image
         );
+        next = fromGenerated(generated.form);
+        note = generated.note;
       } else if (template) {
-        const { ops } = await requestFormEdit(asked, toSnapshot(template), workspaceId);
+        const { ops, summary } = await requestFormEdit(asked, toSnapshot(template), workspaceId);
         const result = applyEditOps(ops, template.fields);
 
         if (!result.applied) {
           setTurns((t) => t.slice(0, -1));
-          notify.warn('Orbit did not find anything to change');
+          notify.warn(summary || 'Orbit did not find anything to change');
           return;
         }
 
         next = withEdit(template, result);
+        note = summary;
       } else {
-        next = fromGenerated(await generateFormDraft(asked, workspaceId));
+        const generated = await generateFormDraft(asked, workspaceId);
+        next = fromGenerated(generated.form);
+        note = generated.note;
       }
 
-      setTurns((t) => [...t.slice(0, -1), { prompt: asked, draft: next }]);
+      setTurns((t) => [...t.slice(0, -1), { prompt: asked, draft: next, note }]);
     } catch (err) {
       setTurns((t) => t.slice(0, -1));
       setDrafting(null);

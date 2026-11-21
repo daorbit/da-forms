@@ -34,7 +34,7 @@ export const generateForm: RequestHandler = async (req, res) => {
     });
   }
 
-  res.json(result.form);
+  res.json({ form: result.form, note: result.note });
 };
 
 /**

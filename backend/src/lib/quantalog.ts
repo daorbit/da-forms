@@ -243,7 +243,7 @@ export async function editForm(
 }
 
 export type GenerateOutcome =
-  | { ok: true; form: GeneratedForm }
+  | { ok: true; form: GeneratedForm; note?: string }
   | { ok: false; status: number; error: string; code?: string };
 
 /**
@@ -297,7 +297,7 @@ export async function generateForm(
     );
 
     const body = (await res.json().catch(() => null)) as
-      | { form?: GeneratedForm; error?: string; code?: string }
+      | { form?: GeneratedForm; note?: string; error?: string; code?: string }
       | null;
 
     if (!res.ok) {
@@ -311,7 +311,11 @@ export async function generateForm(
     if (!body?.form) {
       return { ok: false, status: 502, error: 'Generation returned nothing usable.' };
     }
-    return { ok: true, form: body.form };
+    return {
+      ok: true,
+      form: body.form,
+      note: typeof body.note === 'string' && body.note.trim() ? body.note.trim().slice(0, 600) : undefined,
+    };
   } catch (err) {
     console.error('[quantalog] generate failed:', err);
     return { ok: false, status: 504, error: 'The generator took too long to answer.' };

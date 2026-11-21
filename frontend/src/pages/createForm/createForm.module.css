@@ -766,6 +766,12 @@
   border-top: 1px solid color-mix(in srgb, var(--mantine-color-default-border) 55%, transparent);
 }
 
+.replyNote {
+  padding: 8px 11px 9px;
+  border-top: 1px solid var(--mantine-color-default-border);
+  color: var(--mantine-color-text);
+}
+
 /* A marker in place of the old type column at the front of the row: the type is
    detail, the label is the thing being scanned, and leading with the type meant
    every row started with the same handful of grey words. */

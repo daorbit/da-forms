@@ -90,6 +90,11 @@ export function OrbitThread({
                           </div>
                         ))}
                       </Stack>
+                      {turn.note && (
+                        <Text size="xs" lh={1.55} className={classes.replyNote}>
+                          {turn.note}
+                        </Text>
+                      )}
                     </div>
                   </div>
                 )}

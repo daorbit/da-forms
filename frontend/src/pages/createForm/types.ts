@@ -13,6 +13,7 @@ export interface Draft {
 export interface Turn {
   prompt: string;
   draft: Draft | null;
+  note?: string;
 }
 
 export type CreateMode = 'hero' | 'template' | 'import';

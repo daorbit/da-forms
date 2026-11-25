@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Button, SegmentedControl, Stack, Textarea, TextInput } from '@mantine/core';
-import { FieldCardSkeleton } from '@/components/ui/skeleton/Skeletons';
+import { Button, SegmentedControl, Textarea, TextInput } from '@mantine/core';
+import { Bricks } from '@/components/ui/skeleton/Bricks';
+import { brickRows } from '@/lib/brickRows';
 import { PlusIcon } from 'lucide-react';
 import { FormRenderer } from '@/components/FormRenderer';
 import { FormPage } from '@/components/FormPage';
@@ -11,6 +12,8 @@ import { MobileFieldCard, type FieldCardActions } from './MobileFieldCard';
 import classes from './mobileBuilder.module.css';
 
 type Tab = 'edit' | 'preview';
+
+const LOADING_ROWS = brickRows(4, 104);
 
 interface Props {
   state: FormBuilderState;
@@ -81,11 +84,7 @@ export function MobileBuilder({ state, actions, isDemo, saving, publishing, onBa
           </section>
 
           {state.loadingForm ? (
-            <Stack gap="sm">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <FieldCardSkeleton key={i} wide={i === 1} />
-              ))}
-            </Stack>
+            <Bricks rows={LOADING_ROWS} label="Loading questions" />
           ) : state.fields.length === 0 ? (
             <div className={classes.empty}>
               <p className={classes.emptyTitle}>No questions yet</p>

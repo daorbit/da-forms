@@ -75,7 +75,6 @@ export const theme = createTheme({
         },
       }),
     }),
-    Skeleton: { defaultProps: { className: 'skeleton-shimmer' } },
     Badge: Badge.extend({
       vars: (theme, props) => ({
         root: {

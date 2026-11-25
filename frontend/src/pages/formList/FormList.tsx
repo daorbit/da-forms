@@ -1,4 +1,6 @@
-import { Pagination, Skeleton } from '@mantine/core';
+import { Pagination } from '@mantine/core';
+import { Bricks } from '@/components/ui/skeleton/Bricks';
+import { brickRows } from '@/lib/brickRows';
 import type { Form } from '@/types';
 import { PAGE_SIZE } from './constants';
 import { FormRow, type FormRowActions } from './FormRow';
@@ -18,17 +20,7 @@ interface Props {
   actions: FormRowActions;
 }
 
-function SkeletonRow() {
-  return (
-    <div className={classes.skeleton}>
-      <Skeleton height={40} width={40} radius={10} />
-      <div>
-        <Skeleton height={14} width={200} radius="sm" />
-        <Skeleton height={10} width={260} radius="sm" mt={10} />
-      </div>
-    </div>
-  );
-}
+const LOADING_ROWS = brickRows(5, 76);
 
 export function FormList({
   forms,
@@ -43,26 +35,25 @@ export function FormList({
   copyingConfigId,
   actions,
 }: Props) {
-  const showSkeleton = loading && forms.length === 0;
+  if (loading && forms.length === 0) return <Bricks rows={LOADING_ROWS} label="Loading forms" />;
+
   const first = (page - 1) * PAGE_SIZE + 1;
   const last = Math.min(page * PAGE_SIZE, total);
 
   return (
     <>
-      <div className={classes.rows} data-loading={loading && !showSkeleton ? true : undefined}>
-        {showSkeleton
-          ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
-          : forms.map((form) => (
-              <FormRow
-                key={form._id}
-                form={form}
-                workspaceId={workspaceId}
-                isDemo={isDemo}
-                compact={compact}
-                busy={{ duplicating: duplicatingId === form._id, copyingConfig: copyingConfigId === form._id }}
-                actions={actions}
-              />
-            ))}
+      <div className={classes.rows} data-loading={loading || undefined}>
+        {forms.map((form) => (
+          <FormRow
+            key={form._id}
+            form={form}
+            workspaceId={workspaceId}
+            isDemo={isDemo}
+            compact={compact}
+            busy={{ duplicating: duplicatingId === form._id, copyingConfig: copyingConfigId === form._id }}
+            actions={actions}
+          />
+        ))}
       </div>
 
       {total > PAGE_SIZE && (

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { AppShell, Stack, Skeleton } from '@mantine/core';
+import { AppShell, Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { getPaymentSettings } from '@/lib/api';
-import { FieldCardSkeleton } from '@/components/ui/skeleton/Skeletons';
+import { Bricks } from '@/components/ui/skeleton/Bricks';
+import { brickRows, type BrickRow } from '@/lib/brickRows';
 import { onReturnFromConnections, openConnections } from '@/lib/hostConnections';
 import { findPaymentField } from '@/lib/payment';
 import { isDemoWorkspace } from '@/lib/demoWorkspace';
@@ -40,6 +41,8 @@ import { BuilderHeader } from './formBuilder/BuilderHeader';
 import { BuilderDrawers } from './formBuilder/BuilderDrawers';
 import classes from './FormBuilderPage.module.css';
 import { notify } from '@/lib/notify';
+
+const LOADING_ROWS: BrickRow[] = [{ height: 72 }, ...brickRows(4, 112)];
 
 export function FormBuilderPage() {
   const location = useLocation();
@@ -278,13 +281,9 @@ export function FormBuilderPage() {
 
         <AppShell.Main>
           {state.loadingForm ? (
-            <Stack gap="md" maw={640} mx="auto" py="xl" px="md">
-              <Skeleton height={32} width="50%" radius={8} />
-              <Skeleton height={14} width="70%" radius="sm" mb="sm" />
-              {Array.from({ length: 4 }).map((_, i) => (
-                <FieldCardSkeleton key={i} wide={i === 2} />
-              ))}
-            </Stack>
+            <Box maw={640} mx="auto" py="xl" px="md">
+              <Bricks rows={LOADING_ROWS} label="Loading the form" />
+            </Box>
           ) : (
             <FormCanvas
               title={state.title}

@@ -1,0 +1,60 @@
+.wall {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+}
+
+.row[data-cols='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.row[data-cols='3'] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.row[data-cols='4'] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.row[data-cols='5'] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.row[data-cols='6'] {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.row[data-split='lead'] {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+.row[data-split='trail'] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+}
+
+@media (max-width: 62em) {
+  .row[data-cols='3'],
+  .row[data-cols='4'],
+  .row[data-cols='5'],
+  .row[data-cols='6'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 48em) {
+  .row[data-cols='2'],
+  .row[data-cols='3'],
+  .row[data-split] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

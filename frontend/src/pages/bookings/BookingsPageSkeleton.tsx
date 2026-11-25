@@ -1,33 +1,22 @@
-import { Skeleton } from '@mantine/core';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { CalendarMonthSkeleton, UpcomingSkeleton } from '@/components/builder/entries/calendar/CalendarSkeleton';
-import { monthDays } from '@/components/builder/entries/calendar/calendarDates';
+import { Brick, Bricks } from '@/components/ui/skeleton/Bricks';
+import { UpcomingSkeleton } from '@/components/builder/entries/calendar/CalendarSkeleton';
+import { brickRows } from '@/lib/brickRows';
 import calendar from '@/components/builder/entries/calendar/EntriesCalendar.module.css';
 import analytics from '@/pages/formAnalytics/FormAnalytics.module.css';
 import classes from './BookingsPage.module.css';
 
+const TOOLBAR = brickRows(1, 40);
+
 export function BookingsPageSkeleton() {
   return (
-    <div className={analytics.page} aria-busy="true" aria-label="Loading bookings">
+    <div className={analytics.page}>
       <PageHeader title="Bookings" description="Every meeting booked through your forms, on one calendar." />
       <div className={classes.toolbar}>
-        <Skeleton height={36} width={380} radius={10} />
-        <div className={classes.filters}>
-          <Skeleton height={36} width={260} radius={10} />
-          <Skeleton height={36} width={240} radius={10} />
-        </div>
+        <Bricks rows={TOOLBAR} label="Loading bookings" />
       </div>
       <div className={calendar.root}>
-        <div className={calendar.main}>
-          <div className={calendar.toolbar}>
-            <div className={calendar.nav}>
-              <Skeleton height={28} width={60} radius={10} />
-              <Skeleton height={22} width={170} radius="sm" />
-            </div>
-            <Skeleton height={30} width={120} radius={10} />
-          </div>
-          <CalendarMonthSkeleton days={monthDays(new Date())} />
-        </div>
+        <Brick height={660} />
         <UpcomingSkeleton />
       </div>
     </div>

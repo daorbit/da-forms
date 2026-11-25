@@ -16,25 +16,6 @@
   opacity: 0.6;
 }
 
-.skeleton {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 72px;
-  padding: 14px 16px 14px 18px;
-}
-
-.skeleton + .skeleton::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 74px;
-  right: 0;
-  height: 1px;
-  background: var(--border);
-}
-
 .footer {
   display: flex;
   align-items: center;

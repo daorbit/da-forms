@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { Box, Text, Group, Skeleton } from '@mantine/core';
+import { Box, Text, Group } from '@mantine/core';
 import { AreaChart, Area, ResponsiveContainer, YAxis } from 'recharts';
 import type { LucideIcon } from 'lucide-react';
+import { Brick } from '@/components/ui/skeleton/Bricks';
 import classes from './StatTile.module.css';
 
  
@@ -85,18 +86,6 @@ export function StatTile({
   );
 }
 
-/** Matches the loaded tile's metrics, so nothing shifts when the data lands. */
 export function StatTileSkeleton() {
-  return (
-    <Box className={classes.card}>
-      <Box px="md" pt="md">
-        <Group gap={6} wrap="nowrap" mb={10}>
-          <Skeleton height={14} width={14} radius={4} />
-          <Skeleton height={10} width={70} radius="sm" />
-        </Group>
-        <Skeleton height={28} width={64} radius={8} />
-      </Box>
-      <div className={classes.spark} />
-    </Box>
-  );
+  return <Brick height={112} />;
 }

@@ -133,7 +133,7 @@ export function BookingsCalendarView({ events, loading, skeleton, legend, emptyH
 
         <div className={classes.gridWrap}>
           {skeleton ? (
-            <CalendarMonthSkeleton days={scope === 'week' ? monthDays(cursor) : days} />
+            <CalendarMonthSkeleton />
           ) : scope === 'week' ? (
             <CalendarWeekGrid days={days} byDay={byDay} onOpen={onOpen} />
           ) : (
